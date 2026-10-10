@@ -10,6 +10,9 @@ then redirect to either a special landing page (for newly-signed up users), or t
 (for existing users who just changed their email address).`,
 
 
+  sideEffects: '',
+
+
   inputs: {
 
     token: {
