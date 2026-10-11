@@ -1,4 +1,6 @@
-// The world's native (handcrafted, non-procedural) creatures, plants, and items.  All real.
+// The world's native (handcrafted, non-procedural) creatures, plants, and items.  Nearly all are
+// real; the few made up for this world (stone hummer, hushmouth, bell whelk, node reeds) have no
+// commonName or latin name, and their first realWorld line says they're made up.
 // Keys match the client's journal keys (assets/game/js/story.js NATIVE), so they line up with
 // what each squid remembers (`save.data.carried.remembered[key]`).
 //
@@ -202,6 +204,105 @@ const NATIVE_SPECIES = [
       'Has the biggest brain of any animal.',
     ],
   },
+  {
+    key: 'barreleye', kind: 'creature', name: 'Barreleye', commonName: 'Barreleye (spookfish)', latin: 'Macropinna microstoma',
+    regions: ['twilight', 'tether'], places: ['blue-dusk', 'tether-twilight'], teaches: '', smell: '',
+    blurb: 'A fish with a see-through head. Its green eyes are tubes inside it, and they turn to look up.',
+    role: 'Hangs still in the twilight water. Its eyes turn inside its clear head to follow the squid. Harmless.',
+    realWorld: [
+      'Its head is covered by a transparent, fluid-filled shield, and its eyes are green tubes inside it.',
+      'The eyes can rotate from pointing straight up to pointing forward, so it can watch prey above and then look ahead to eat.',
+      'The two spots above its mouth that look like eyes are actually its nostrils.',
+      'Lives about 600 to 800 m deep in the North Pacific. The clear head was only seen alive, intact, in 2008.',
+    ],
+  },
+  {
+    key: 'siphonophore', kind: 'creature', name: 'Siphonophore', commonName: 'Siphonophore', latin: 'Siphonophorae',
+    regions: ['tether'], places: ['tether-curtain'], teaches: '', smell: '',
+    blurb: 'Looks like one long animal. It\'s really thousands of small ones, holding on to each other.',
+    role: 'Long glowing curtains drifting in the deep. Brushing one stings and shoves the squid away. Flash at it and a wave of blue light runs all the way down its length.',
+    realWorld: [
+      'Looks like one animal, but is a colony of many small bodies (zooids), each specialized to swim, eat, sting, or reproduce.',
+      'Relatives of jellyfish. The Portuguese man o\' war is a siphonophore.',
+      'Some deep-sea siphonophores are among the longest animals on Earth: one seen off Australia in 2020 was estimated at about 45 m.',
+      'Many glow (bioluminescence), and their stinging tentacles hang down like a fishing net.',
+    ],
+  },
+  {
+    key: 'giant-isopod', kind: 'creature', name: 'Giant isopod', commonName: 'Giant isopod', latin: 'Bathynomus giganteus',
+    regions: ['abyss'], places: ['abyssal-plain', 'whale-fall'], teaches: '', smell: '',
+    blurb: 'A pill bug the size of my head. It can wait years for something to die.',
+    role: 'Walks slowly along the deep floor and at the whale fall, eating what has died. Curls up when the squid comes close.',
+    realWorld: [
+      'A relative of the pill bugs and woodlice on land, but up to about 50 cm long.',
+      'A scavenger on the deep seafloor, eating whatever falls from above (dead whales, fish, squid).',
+      'Can go a very long time without food: one in a Japanese aquarium went more than five years without eating.',
+      'Can roll partway into a ball for protection.',
+    ],
+  },
+  {
+    key: 'sea-pig', kind: 'creature', name: 'Sea pigs', commonName: 'Sea pig', latin: 'Scotoplanes',
+    regions: ['abyss'], places: ['abyssal-plain'], teaches: '', smell: '',
+    blurb: 'Soft, see-through, pink. They walk the mud on little legs and eat it.',
+    role: 'Small herds of them walk slowly across the abyssal plain, turning around when the squid gets close.',
+    realWorld: [
+      'A sea cucumber that walks on the seafloor on enlarged tube feet that work like legs.',
+      'Eats the mud, digesting the bits of dead plankton and other food in it.',
+      'Lives on abyssal plains, often 1,000 to 6,000 m deep, sometimes in herds of hundreds.',
+      'Little crabs and other small animals often ride on or inside them.',
+    ],
+  },
+  {
+    key: 'gulper-eel', kind: 'creature', name: 'Gulper eel', commonName: 'Gulper eel (pelican eel)', latin: 'Eurypharynx pelecanoides',
+    regions: ['twilight'], places: ['midnight'], teaches: '', smell: '',
+    blurb: 'Mostly mouth. The tip of its tail glows pink, so things come closer.',
+    role: 'Drifts in the dark with a glowing pink tail tip. A glowing squid draws it in: it opens its huge mouth and comes for the squid, slowly, and snaps (the squid is too big to swallow, but gets shoved away). Calm settles it for a while.',
+    realWorld: [
+      'Its loosely hinged mouth is far bigger than its body, and it can swallow prey almost as big as itself.',
+      'The tip of its long, whip-like tail has a light organ that glows pink and red, probably as a lure.',
+      'Lives about 500 to 3,000 m deep in oceans around the world.',
+      'Mostly eats small crustaceans, despite the enormous mouth.',
+    ],
+  },
+  {
+    key: 'yeti-crab', kind: 'creature', name: 'Yeti crab', commonName: 'Yeti crab', latin: 'Kiwa',
+    regions: ['seep', 'forge'], places: ['cold-seep', 'smokers'], teaches: '', smell: '',
+    blurb: 'A blind white crab with hairy arms. It grows food in the hair, and waves it around.',
+    role: 'Lives on the cold seep and the black smokers, waving its hairy arms. Flash "wake" and it waves faster.',
+    realWorld: [
+      'Pale and nearly blind, with arms covered in long silky bristles (setae).',
+      'Farms bacteria in those bristles, feeding on chemicals from vents and seeps, and eats them.',
+      'Some kinds wave their arms rhythmically over the vents, probably to keep fresh chemical-rich water flowing over their bacteria.',
+      'First described in 2005, from hydrothermal vents in the South Pacific.',
+    ],
+  },
+  {
+    key: 'stone-hummer', kind: 'creature', name: 'Stone hummer', commonName: '', latin: '',
+    regions: ['abyss', 'tether'], places: ['stone-choir', 'tether-anchor'], teaches: '', smell: '',
+    blurb: 'Hums one low chord all day, and the stones over it float. When it stops, they fall.',
+    role: 'Made up for this world. A creature on the deep floor that hums one low chord, and the sound holds stones floating above it. In the column over it the water pushes up, lifting the squid. "Calm" quiets it and the stones drop (puffing up silt); "wake" makes it louder and the stones (and the squid) rise higher.',
+    realWorld: [
+      'Not a real animal: made up for this world. In this sea, music is physics.',
+    ],
+  },
+  {
+    key: 'hushmouth', kind: 'creature', name: 'Hushmouth', commonName: '', latin: '',
+    regions: ['abyss', 'tether'], places: ['hadal-floor', 'tether-breathless'], teaches: '', smell: '',
+    blurb: 'It eats sound. Near it, the water is so quiet I can hear all three of my hearts.',
+    role: 'Made up for this world. A slow, unsettling thing in the deepest dark that eats sound. When the squid flashes its skin colors nearby, the hushmouth swallows the notes right out of the water and drifts after the squid for more. Passing cloud makes it lose interest.',
+    realWorld: [
+      'Not a real animal: made up for this world. (The three hearts are real, though: squids have three.)',
+    ],
+  },
+  {
+    key: 'bell-whelk', kind: 'creature', name: 'Bell whelk', commonName: '', latin: '',
+    regions: ['cliff', 'surface'], places: ['lantern-ledges', 'spray-zone'], teaches: '', smell: '',
+    blurb: 'A snail with a shell like a bell. It rings my notes back, hard enough to push me.',
+    role: 'Made up for this world. A sea snail whose shell rings back whatever skin color the squid flashes at it, with a ring of light and a push strong enough to shove the squid away. "Calm" puts it to sleep for a while.',
+    realWorld: [
+      'Not a real animal: made up for this world. Real whelks are large predatory sea snails, but none of them ring.',
+    ],
+  },
 
   // ── Plants (and plant-like animals) ──
   {
@@ -244,6 +345,48 @@ const NATIVE_SPECIES = [
     realWorld: [
       'Colonies of tiny coral animals with a flexible skeleton.',
       'They grow across the current, like a net, to catch plankton and "marine snow" drifting past.',
+    ],
+  },
+  {
+    key: 'sargassum', kind: 'plant', name: 'Sargassum', commonName: 'Sargassum (gulfweed)', latin: 'Sargassum',
+    regions: ['surface'], places: ['sargasso', 'spray-zone'], teaches: '', smell: '',
+    blurb: 'Gold weed that floats in mats, held up by little berries full of air. Things hide under it.',
+    role: 'Floats in golden mats at the surface west of the Bright, and in the sargassum drift of the procedural west.',
+    realWorld: [
+      'A brown seaweed that floats freely, held up by small gas-filled bladders that look like berries.',
+      'The Sargasso Sea, in the North Atlantic, is the only sea with no coastline, named for the sargassum that drifts there.',
+      'Floating mats shelter young sea turtles, crabs, shrimp, and fish, including the sargassum fish that lives nowhere else.',
+    ],
+  },
+  {
+    key: 'seagrass', kind: 'plant', name: 'Seagrass', commonName: 'Seagrass', latin: 'Zostera',
+    regions: ['kelp', 'surface'], places: ['meadow', 'spray-zone'], teaches: '', smell: '',
+    blurb: 'Real grass, under the sea. It even flowers. Turtles graze it.',
+    role: 'Grows in meadows in the shallows, swaying as the squid passes.',
+    realWorld: [
+      'A true flowering plant (not a seaweed) that lives fully underwater, with roots, flowers, and seeds, pollinated in the water.',
+      'Green sea turtles and dugongs graze on it.',
+      'Seagrass meadows store a lot of carbon and are nurseries for many young fish.',
+    ],
+  },
+  {
+    key: 'bacterial-mat', kind: 'plant', name: 'Bacterial mats', commonName: 'Bacterial mat', latin: 'Beggiatoa',
+    regions: ['seep', 'forge', 'abyss'], places: ['cold-seep', 'smokers', 'whale-fall', 'abyssal-plain'], teaches: '', smell: '',
+    blurb: 'White fuzz on the rock. It eats what leaks out of the ground, not light.',
+    role: 'White fuzz on the rock around the cold seep, the black smokers, and the whale fall. Not a plant at all, but it fills the same place in the journal.',
+    realWorld: [
+      'Not a plant: a mat of bacteria (such as Beggiatoa) that makes food from chemicals like hydrogen sulfide instead of sunlight (chemosynthesis).',
+      'Grows around cold seeps, hydrothermal vents, and whale falls, where those chemicals leak out.',
+      'Hydrogen sulfide smells like rotten eggs.',
+    ],
+  },
+  {
+    key: 'node-reeds', kind: 'plant', name: 'Node reeds', commonName: '', latin: '',
+    regions: ['forge', 'seep'], places: ['glass-caves', 'mud-volcanoes'], teaches: '', smell: '',
+    blurb: 'They only grow where a sound bounces back and forth. Each one is tuned to one of my colors.',
+    role: 'Made up for this world. Reeds that grow in evenly spaced rows, each stalk tuned to one of the four skin colors and lighting up when it is flashed. Flash all four near them and they ring together as a chord, and the water between them stands still in lines.',
+    realWorld: [
+      'Not a real plant: made up for this world. The idea comes from standing waves, where a sound bouncing back and forth makes still points (nodes) at even spacings.',
     ],
   },
 

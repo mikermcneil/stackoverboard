@@ -566,13 +566,13 @@
       update(a, dt) {
         a.x = a.home.x + Math.sin(a.t * 0.05 + a.seed) * 160; a.y = a.home.y + Math.sin(a.t * 0.11 + a.seed) * 40;
         if (a.wave >= 0) { a.wave += dt * 0.35; if (a.wave > 1) { a.wave = -1; } }
-        if (a.wave < 0 && near(a, 260) && !a._stung) { a._stung = true; a.wave = 0; }
+        if (near(a, 150) && !a._stung) { a._stung = true; LIFE.siphonophore.sting(a); }// brushing the curtain stings
         if (!near(a, 420)) { a._stung = false; }
       },
       draw(ctx, a, room, t) { A.siphonophore(ctx, a.x, a.y, a.s || 1, t, { n: a.n || 34, wave: a.wave === undefined ? -1 : a.wave, dir: a.dir || 1, seed: a.seed }); },
       light(a) { return a.wave >= 0 ? { x: a.x - (a.dir || 1) * a.wave * (a.n || 34) * 29 * (a.s || 1), y: a.y + 30, r: 320, a: 0.6, color: '#7fd8ff', add: 0.25 } : { x: a.x, y: a.y, r: 160, a: 0.25, color: '#ff8a9a', add: 0.05 }; },
       onPattern(a, name) { if (a.wave < 0 || a.wave === undefined) { a.wave = 0; } if (name === 'glow') { say('siphonophore', 'glow'); } },
-      onTouch(a) {
+      sting(a) {
         const s = SQ(), d = Math.max(1, U.dist(s.x, s.y, a.x, a.y));
         s.vx += (s.x - a.x) / d * 380; s.vy += (s.y - a.y) / d * 380; s.fear = 1;
         if (a.wave < 0 || a.wave === undefined) { a.wave = 0; }
@@ -631,12 +631,12 @@
         a.x += (tx - a.x) * Math.min(1, dt * (lured ? 0.5 : 0.25)); a.y += (ty - a.y) * Math.min(1, dt * 0.3);
         a.dir = (lured ? s.x : tx) > a.x ? 1 : -1;
         if (lured && !a._lureSaid) { a._lureSaid = true; say('gulper-eel', 'lured'); }
+        if (a.open > 0.55 && near(a, 140)) { LIFE['gulper-eel'].snap(a); }
       },
       draw(ctx, a, room, t) { A.gulper(ctx, a.x, a.y, a.s || 1, t, { dir: a.dir || 1, open: a.open }); },
       light(a) { const s = a.s || 1; return { x: a.x - (a.dir || 1) * 406 * s, y: a.y + Math.sin(SO.E.t * 1.6 - 6.75) * 28 * s, r: 180, a: 0.55, color: '#ff6aa8', add: 0.15 }; },
       onPattern(a, name) { if (name === 'calm') { a.calmT = 15; } },
-      onTouch(a) {
-        if ((a.open || 0) < 0.55) { return; }
+      snap(a) {
         const s = SQ(), d = Math.max(1, U.dist(s.x, s.y, a.x, a.y));
         s.vx += (s.x - a.x) / d * 520; s.vy += (s.y - a.y) / d * 520; s.fear = 1;
         a.open = 0; a.calmT = 6;
@@ -691,6 +691,7 @@
         if (a.hum > 0.4 && Math.abs(s.x - a.x) < 120 * sc && s.y < a.y && a.y - s.y < 360 * sc) { s.vy -= 170 * dt * a.hum * (a.boost ? 1.8 : 1); }
       },
       draw(ctx, a, room, t) { A.stoneHummer(ctx, a.x, a.y, a.s || 1, t, { hum: a.hum, lift: a.lift, stones: a.stones }); },
+      light(a) { return a.hum > 0.1 ? { x: a.x, y: a.y - 120, r: 360, a: 0.3 * a.hum, color: '#bcd4ff', add: 0.08 } : null; },
       onPattern(a, name) {
         if (name === 'calm') { a.quietT = 14; say('stone-hummer', 'calm'); }
         if (name === 'wake') { a.boost = 5; a.quietT = 0; say('stone-hummer', 'wake'); }
@@ -821,7 +822,7 @@
   };
 
   T.life = {
-    r: 60, touch: true,
+    r: 60, touch: true, talk: true,// quiet unless you choose it (click it)
     init(a, room) {
       const K = LIFE[a.kind] || {};
       a.r = a.r || K.r || 60;

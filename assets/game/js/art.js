@@ -1281,11 +1281,10 @@
     // the eyes, then the clear shield over them
     for (let i = 0; i < 2; i++) {
       ctx.save(); ctx.translate(12 + i * 7, -17 + i * 2); ctx.rotate(look);
-      ctx.fillStyle = i ? '#3fae78' : '#6fe0a2';
-      ctx.fillRect(-3, -4.5, 19, 9);
+      A.ellipse(ctx, 7, 0, 10, 3.6, 0, i ? 'rgba(63,174,120,0.85)' : 'rgba(111,224,162,0.9)', 'rgba(20,60,40,0.4)', 1);
       ctx.restore();
     }
-    addLight(ctx, () => speck(ctx, 15 + Math.cos(look) * 16, -16 + Math.sin(look) * 16, 6, '#8fffc0', 0.45));
+    addLight(ctx, () => speck(ctx, 15 + Math.cos(look) * 16, -16 + Math.sin(look) * 16, 3.5, '#8fffc0', 0.35));
     ctx.fillStyle = 'rgba(200,240,245,0.12)'; ctx.strokeStyle = 'rgba(220,250,255,0.45)'; ctx.lineWidth = 1.3;
     ctx.beginPath(); ctx.moveTo(-6, -9); ctx.bezierCurveTo(-4, -46, 38, -48, 42, -6); ctx.lineTo(30, -3); ctx.closePath(); ctx.fill(); ctx.stroke();
     ctx.restore();
@@ -1571,12 +1570,12 @@
   // Portraits for the journal: the new life, centered and posed.
   A.portraits = {
     'barreleye': (c, t) => A.barreleye(c, 0, 10, 1.5, t, { look: -1.4 + Math.sin(t * 0.6) * 0.5 }),
-    'siphonophore': (c, t) => A.siphonophore(c, 50, -20, 0.6, t, { n: 18, wave: (t * 0.3) % 1 }),
+    'siphonophore': (c, t) => A.siphonophore(c, 70, -30, 0.45, t, { n: 14, wave: (t * 0.3) % 1 }),
     'giant-isopod': (c, t) => A.isopod(c, -6, 10, 1.2, t, { walk: t }),
     'sea-pig': (c, t) => { A.seaPig(c, -20, 4, 1.1, t, { walk: t }); A.seaPig(c, 26, 20, 0.8, t + 1, { walk: t + 1 }); },
     'gulper-eel': (c, t) => A.gulper(c, -10, -10, 0.55, t, { open: 0.5 + 0.5 * Math.sin(t * 0.8) }),
     'yeti-crab': (c, t) => A.yetiCrab(c, 0, 30, 1.2, t),
-    'stone-hummer': (c, t) => A.stoneHummer(c, 0, 50, 0.4, t, { hum: 1, lift: 1, stones: [{ dx: -60, h: 150, r: 22, seed: 2 }, { dx: 30, h: 220, r: 30, seed: 5 }, { dx: 80, h: 110, r: 16, seed: 8 }] }),
+    'stone-hummer': (c, t) => A.stoneHummer(c, 0, 60, 0.55, t, { hum: 1, lift: 1, stones: [{ dx: -60, h: 150, r: 22, seed: 2 }, { dx: 30, h: 220, r: 30, seed: 5 }, { dx: 80, h: 110, r: 16, seed: 8 }] }),
     'hushmouth': (c, t) => A.hushmouth(c, 10, 0, 0.6, t, { face: 0.3 }),
     'bell-whelk': (c, t) => { const k = (t * 0.5) % 1; A.bellWhelk(c, -6, 26, 0.9, t, { ringT: k, color: NOTE_HEX['WRBG'[Math.floor(t * 0.5) % 4]] }); },
     'sargassum': (c, t) => A.sargassum(c, 0, -50, 0.9, t, 3),

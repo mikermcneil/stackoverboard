@@ -8,7 +8,9 @@ module.exports = {
 
 
   extendedDescription:
-`"native" species are the world's permanent inhabitants, all real.  They're stored in the database
+`"native" species are the world's permanent inhabitants, nearly all real.  A few are made up for
+this world (the stone hummer, the hushmouth, the bell whelk, and node reeds): those have an empty
+\`commonName\` and \`latin\`, and their first \`realWorld\` line says so.  They're stored in the database
 (NativeSpecies), each with \`key\`, \`kind\`, \`name\` (what it's called in the game), \`commonName\`,
 \`latin\`, \`regions\` and \`places\` (region and room keys where it lives; see get-lore), \`teaches\` (the skin
 word it teaches, if any; see get-skin-words), \`smell\` (the scent trail a squid can follow to it, if any),
@@ -24,9 +26,15 @@ The natives:
   octopus garden, Grandmother Seven (a seven-arm octopus who teaches "wake" for five pearls), the
   Humboldt squid (a gang at the reef), the Shoal (sardines that sweep the reef every 6 minutes), the
   sperm whale (hunts squid by clicking; calm her for the "gift" ending), glass squid, strawberry squid,
-  firefly squid (rise at night), and little fish.
+  firefly squid (rise at night), and little fish.  In the deep water past the old map: barreleyes
+  (see-through heads), siphonophores (long stinging colonies that light up in a wave), giant isopods
+  and sea pigs (abyssal plain), the gulper eel (drawn to a glowing squid), yeti crabs (cold seep and
+  black smokers), and three made-up ones: the stone hummer (hums a chord that holds stones up),
+  the hushmouth (eats the notes a squid flashes), and the bell whelk (rings a squid's notes back
+  hard enough to push it).
 - Plants (and plant-like animals): giant kelp, glowing sea pens ("lantern-weed"), glass sponges
-  ("glass-coral"), and sea fans ("bone-fan").
+  ("glass-coral"), sea fans ("bone-fan"), sargassum, seagrass, bacterial mats (which live on
+  chemicals, not light), and node reeds (made up: each stalk is tuned to one skin color).
 - Items: pearls (called gems in the API), a swan feather, and glass from home (three memories).
 
 "generated" species are procedurally generated and shared: each was introduced to the world by the

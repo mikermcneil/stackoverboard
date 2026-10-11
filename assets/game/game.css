@@ -191,3 +191,21 @@ body.ribbon-fixed #stage { height: calc(100vh - var(--ribbon-h)); }
 
 /* Text you might want to copy stays selectable. */
 .j-mcp code, #credits code { -webkit-user-select: text; user-select: text; }
+
+/* Naming your squid: on the first page, and in the memories screen. */
+.name-pick { display: flex; flex-direction: column; align-items: center; gap: 6px; margin-top: 18px; pointer-events: auto; font-family: var(--mono); font-size: 11px; letter-spacing: 0.12em; text-transform: uppercase; color: var(--ink, #192147); opacity: 0.85; }
+.name-pick input, .j-namerow input { -webkit-user-select: text; user-select: text; font: 500 18px/1.2 var(--sans); text-align: center; padding: 8px 14px; border-radius: 999px; outline: none; min-width: 240px; max-width: 80vw; }
+.name-pick input { border: 1px solid rgba(25, 33, 71, 0.25); background: rgba(255, 255, 255, 0.7); color: #192147; text-transform: none; letter-spacing: 0; }
+.name-pick input:focus { border-color: var(--fleet-green, #009A7D); }
+.j-namerow { display: flex; align-items: center; justify-content: center; gap: 10px; margin-top: 8px; }
+.j-namerow input { border: 1px solid rgba(244, 237, 228, 0.18); background: rgba(255, 255, 255, 0.04); color: #f4ede4; }
+.j-namerow input:focus { border-color: var(--fleet-green, #009A7D); }
+.j-namerow .j-namemsg { font-size: 12px; color: rgba(233, 239, 233, 0.6); min-width: 8em; }
+
+/* Chat: the line you type into, and the little Say button in the ribbon. */
+#chat-box { position: fixed; left: 50%; bottom: calc(var(--ribbon-h) + 18px); transform: translateX(-50%); z-index: 7; opacity: 0; pointer-events: none; transition: opacity 0.2s; width: min(560px, calc(100vw - 32px)); }
+#chat-box.show { opacity: 1; pointer-events: auto; }
+#chat-input { width: 100%; box-sizing: border-box; -webkit-user-select: text; user-select: text; font: 500 17px/1.3 var(--sans); padding: 12px 18px; border-radius: 999px; border: 1px solid rgba(255, 255, 255, 0.25); background: rgba(2, 6, 11, 0.85); color: #f4ede4; outline: none; }
+#chat-input:focus { border-color: var(--fleet-green, #009A7D); }
+#say-btn { position: absolute; right: 18px; bottom: calc(14px + env(safe-area-inset-bottom)); border: 1px solid rgba(255, 255, 255, 0.22); background: transparent; color: rgba(244, 237, 228, 0.7); border-radius: 999px; padding: 6px 14px; font: 500 12px var(--mono, monospace); letter-spacing: 0.08em; cursor: pointer; touch-action: none; }
+#say-btn:hover { color: #f4ede4; border-color: rgba(255, 255, 255, 0.5); }

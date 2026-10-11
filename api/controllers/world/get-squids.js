@@ -63,7 +63,7 @@ Use \`knows\` to list only squids who know a particular skin word (e.g. "Who kno
 
     success: {
       outputFriendlyName: 'Squids',
-      outputDescription: '`{ squids: [{ squidName, playthrough, chapter, endings, arrivedAt, lastSeenAt, skinWords, skinWordsEverLearned, nativesMet, placesVisited, location, pearls, memories, device, os, browser, place, timeZone, language, userAgent }] }` sorted by lastSeenAt, most recent first.  `device` is phone, tablet, desktop or unknown.  `place` is roughly where the player is playing from (from their browser\'s time zone, e.g. "Chicago, America").'
+      outputDescription: '`{ squids: [{ squidName, playthrough, chapter, endings, arrivedAt, lastSeenAt, skinWords, skinWordsEverLearned, nativesMet, placesVisited, location, pearls, memories, device, os, browser, place, placeSource, timeZone, language, userAgent }] }` sorted by lastSeenAt, most recent first.  `device` is phone, tablet, desktop or unknown.  `place` is roughly (city level) where the player is playing from, e.g. "Austin, Texas, US".  `placeSource` says how: "ip" (an offline lookup of their IP address in a city database, done once per session; the address is never stored), "cloudflare" (Cloudflare\'s location headers), or "timezone" (guessed from the browser\'s time zone, e.g. "Chicago, America", which only names the zone\'s main city).  Older squids may only have a time zone guess.  Exact locations are never stored.'
     },
 
   },
@@ -102,6 +102,7 @@ Use \`knows\` to list only squids who know a particular skin word (e.g. "Who kno
         os: save.os || 'unknown',
         browser: save.browser || 'unknown',
         place: save.place || 'unknown',
+        placeSource: save.placeSource || (save.place ? 'timezone' : ''),
         timeZone: save.timeZone || '',
         language: save.language || '',
         userAgent: save.userAgent || '',

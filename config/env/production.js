@@ -344,7 +344,7 @@ module.exports = {
     * (https://sailsjs.com/config/http)                                        *
     *                                                                          *
     ***************************************************************************/
-    // trustProxy: true,
+    trustProxy: true,// (Heroku's router sets X-Forwarded-For; this makes req.ip the player's address, for the city-level place lookup)
 
   },
 

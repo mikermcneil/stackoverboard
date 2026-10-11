@@ -50,12 +50,23 @@ sea is home and stayed with its friends), "gift" (the whale: calmed the sperm wh
 the open ocean with her), and "song" (the swans: called the swans, and the sky islands came down to
 rest on the sea).
 
+The world also gets older, on a fixed schedule counted from \`bornAt\`: eight stages lasting minutes,
+then hours, then minutes, hours, days, hours, days, and minutes (the first tide, the long calm, the
+glass rain, the bleaching, the settling, the swarm, the deep winter, the turning), and then the old sea
+for good.  Some changes last only while their stage does; some stay.  See get-world-age.
+
+West of the Bright, the surface goes on for 3600 made-up places that are the same for everyone (60
+crossings of 60, with a dozen landmarks always at the same distances, recalled in every crossing), and
+then wraps around to the east end of the map (see get-west-path).  Squids can talk out loud
+(see get-chat), and the sky at the surface follows each player's real local weather and time of day.
+
 All times are JS timestamps (milliseconds since the Unix epoch).  This is a good first call; use
 get-world-facts (a searchable encyclopedia of the whole world: every place and its exits, each
 chapter and how to get through it, endings, mechanics, creatures, oddities, cutscenes, trivia, and
 planned systems, each marked with a spoiler level and whether it's built or only planned),
 get-lore (story, places, smells, dirt), get-skin-words (the melodies), get-species (creatures and
-plants), get-squids (players, and what each knows), get-online (who's swimming right now), get-history,
+plants), get-squids (players, and what each knows), get-online (who's swimming right now), get-chat (what
+squids have said), get-world-age (the world's stages of life), get-west-path (the long way west), get-history,
 get-state, and get-map for detail.`,
 
 
@@ -71,9 +82,9 @@ get-state, and get-map for detail.`,
       outputFriendlyName: 'World overview',
       outputDescription:
         '`{ serverNow, worldSeed, bornAt, squids, finishedSquids, endingsTally: {return,lantern,gift,song}, tilesDiscovered, tilesTotal, '+
-        'speciesCount: {creature,plant,item}, nativeSpeciesCount, worldFactsCount, eruptionsTotal, state, recent }`.  `bornAt` is when the first world event happened (epoch ms, or null). '+
+        'speciesCount: {creature,plant,item}, nativeSpeciesCount, worldFactsCount, eruptionsTotal, state, age, recent }`.  `bornAt` is when the first world event happened (epoch ms, or null). '+
         '`devices` = how many squids were last played on each kind of device; `speciesCount` counts procedurally generated species; `nativeSpeciesCount` counts the native (real) ones; `worldFactsCount` counts the facts get-world-facts can search.  `squids` = squids ever hatched; `finishedSquids` = distinct squids who reached at least one ending.  `state` is the live world state '+
-        '(same as get-state).  `recent` is the 10 most recent world events, newest first.'
+        '(same as get-state).  `age` is the stage of life the world is in now, `{ index, key, name, progress, startsAt, endsAt, during }` (null before the world is made; see get-world-age for the whole schedule).  `recent` is the 10 most recent world events, newest first.'
     },
 
   },
@@ -111,6 +122,7 @@ get-state, and get-map for detail.`,
       worldFactsCount: await WorldFact.count().tolerate(() => sails.helpers.world.getWorldFacts().facts.length),
       eruptionsTotal: await WorldEvent.count({ kind: 'eruption' }),
       state: await sails.helpers.world.getWorldState(now),
+      age: (await sails.helpers.world.getWorldAge.with({ bornAt: first ? first.startsAt : null, at: now })).current,
       recent: await WorldEvent.find().sort([{ startsAt: 'DESC' }, { id: 'DESC' }]).limit(10),
     };
 

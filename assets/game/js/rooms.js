@@ -686,13 +686,14 @@
 
   def('rain-sea', {
     name: 'Where it rains', region: 'surface', map: [-3, 0], w: 1.4, depth: 0.04, surface: true,
-    exits: { right: 'sargasso', down: 'meadow' },
-    terrain: { walls: { left: true } },
+    exits: { right: 'sargasso', down: 'meadow' },// (west.js chains the endless west on to the left)
     rayColor: '#e8f6ff',
     isles: [[300, 0.6], [1800, 0.8]],
-    bg(ctx, t, room) {
+    // (Drawn after the sky, so it shows above the surface.)
+    props: [{ layer: 'back', draw(ctx, t, room) { room.def.sky(ctx, t, room); } }],
+    sky(ctx, t, room) {
       // An island hanging low over the sea, dripping. Its keel almost touches the water.
-      A.island(ctx, 1150, -170, 1100, { seed: 21, keel: 0.26, trees: 12, domes: [[0.18, 0.08]], cracked: true, t });
+      A.island(ctx, 1150, -60, 1100, { seed: 21, keel: 0.26, trees: 12, domes: [[0.18, 0.08]], cracked: true, t });
       // Rain from it: fresh water, falling into salt.
       ctx.strokeStyle = 'rgba(220,240,255,0.35)'; ctx.lineWidth = 1.5;
       ctx.beginPath();
@@ -722,11 +723,13 @@
     name: 'Under the anchored isle', region: 'surface', map: [5, 0], w: 1.6, depth: 0.08, surface: true, roar: 0.5,
     exits: { left: 'plunge', right: 'spray-zone', down: 'tether-twilight' },
     isles: [[300, 1.0], [2300, 0.7]],
-    bg(ctx, t, room) {
-      A.island(ctx, 1340, -230, 1200, { seed: 33, keel: 0.27, trees: 14, domes: [[-0.2, 0.1], [0.25, 0.06]], t });
-      chain(ctx, 1340, 80, room.h + 120, t);
+    // (Drawn after the sky, so it shows above the surface.)
+    props: [{ layer: 'back', draw(ctx, t, room) { room.def.sky(ctx, t, room); } }],
+    sky(ctx, t, room) {
+      A.island(ctx, 1340, -90, 1200, { seed: 33, keel: 0.27, trees: 14, domes: [[-0.2, 0.1], [0.25, 0.06]], t });
+      chain(ctx, 1340, 150, room.h + 120, t);
       // the iron-dark ring it hangs from, set into the keel
-      A.ellipse(ctx, 1340, 70, 50, 24, 0, '#3a4a50', 'rgba(20,30,36,0.6)', 3);
+      A.ellipse(ctx, 1340, 132, 50, 24, 0, '#3a4a50', 'rgba(20,30,36,0.6)', 3);
     },
     ambient: { fish: 6, jelly: 3 },
     entries: { default: [900, 440] },
@@ -738,7 +741,9 @@
     exits: { left: 'anchored-isle' },
     terrain: { floor: [0.3, 0.32, 0.28, 0.33, 0.37, 0.42], walls: { right: true } },
     sand: '#e2d6a8', rayColor: '#fffbe8',
-    bg(ctx, t, room) {
+    // (Drawn after the sky, so it shows above the surface.)
+    props: [{ layer: 'back', draw(ctx, t, room) { room.def.sky(ctx, t, room); } }],
+    sky(ctx, t, room) {
       // Mist off the far waterfall, and rainbows standing in it.
       const sy = room.surfaceY;
       const g = ctx.createLinearGradient(0, sy - 500, 0, sy);
@@ -869,6 +874,8 @@
         }
       } },
     ],
+    // The lake catches what little light there is and holds it, like a mirror.
+    lights: [{ x: 1440, y: 790, r: 900, color: '#9fd0e0', level: 0.4 }],
     ambient: { glass: 1 },
     snow: 0.4,
   });

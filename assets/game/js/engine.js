@@ -637,7 +637,7 @@
     const sq = this.squid;
     this.lastPatternAt = U.now();
     this.ring(sq.x, sq.y, '#9aa7b8', 300, 1.1);
-    AU.bell(AU.NOTE(66), { gain: 0.035, dur: 1.6 });
+    [83, 81, 78, 74].forEach((n, i) => AU.marimba(AU.NOTE(n), { when: i * 0.07, gain: 0.04, dur: 1.2 }));// a marimba run, falling
     let undid = false;
     if (name === 'cloud' && this.t < sq.hideUntil) {// the ink clears
       sq.hideUntil = this.t; undid = true;
@@ -657,7 +657,7 @@
     if (name === 'glow') {// gold, gold, gold reads the same backwards: there's no unglow, it just wears off
       sq.glowOn = true;
       sq.glowUntil = this.t + GLOW_SECONDS;
-      AU.bell(AU.NOTE(90), { gain: 0.04, dur: 2 });
+      [74, 78, 81, 83, 86].forEach((n, i) => AU.marimba(AU.NOTE(n), { when: i * 0.06, gain: 0.045, dur: 1.4 }));// a bright marimba roll
     } else if (name === 'cloud') {
       sq.hideUntil = this.t + 6;
       AU.noise({ dur: 1.2, freq: 260, q: 1.2, gain: 0.08, sweep: 0.5 });

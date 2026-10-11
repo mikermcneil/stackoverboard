@@ -73,6 +73,13 @@
       return { timeZone, language: navigator.language || '', touch: (navigator.maxTouchPoints || 0) > 1 };
     },
 
+    // Choose a name. Resolves { ok, squidName } or { ok: false, why: 'taken' | 'invalid' | 'offline' }.
+    async rename(name) {
+      const r = await api.put('/api/v1/game/rename-squid', { name });
+      if (r.ok && r.body && r.body.squidName) { this.squidName = r.body.squidName; return { ok: true, squidName: r.body.squidName }; }
+      return { ok: false, why: r.status === 409 ? 'taken' : r.status === 400 ? 'invalid' : 'offline' };
+    },
+
     async start(newPlaythrough = false) {
       const r = await api.post('/api/v1/game/start-game', Object.assign({ newPlaythrough }, this.client()));
       if (r.ok && r.body && r.body.save) {

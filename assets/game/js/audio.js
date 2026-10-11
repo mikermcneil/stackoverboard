@@ -183,9 +183,35 @@
     },
     whoosh() { this.noise({ dur: 1.4, freq: 300, q: 0.6, gain: 0.12, sweep: 6, attack: 0.5, type: 'bandpass', verb: 0.2 }); },
     wind(level = 1) { this.noise({ dur: 3, freq: 700, q: 0.3, gain: 0.05 * level, sweep: 1.5, attack: 1.2, verb: 0.3 }); },
+    // A marimba: a warm wooden bar struck with a soft mallet. A round fundamental, the bar's
+    // bright 4th-partial overtone that dies fast, a little knock of wood, and the tube resonating.
+    marimba(freq, { gain = 0.08, when = 0, dur = 1.6, pan = 0, verb = 0.5, dry = 1 } = {}) {
+      if (!this.ctx || this.muted) { return; }
+      const ctx = this.ctx, t = ctx.currentTime + when;
+      const bar = (f, g, d, type = 'sine') => {
+        const o = ctx.createOscillator(); o.type = type; o.frequency.setValueAtTime(f, t);
+        const v = ctx.createGain();
+        v.gain.setValueAtTime(0.0001, t);
+        v.gain.exponentialRampToValueAtTime(g, t + 0.004);
+        v.gain.exponentialRampToValueAtTime(0.0001, t + d);
+        o.connect(v); this._out(v, { pan, verb, dry });
+        o.start(t); o.stop(t + d + 0.05);
+      };
+      bar(freq, gain, dur);// the note
+      bar(freq * 3.93, gain * 0.32, dur * 0.18);// the bar's bright overtone
+      bar(freq * 9.2, gain * 0.08, dur * 0.06);
+      bar(freq * 0.5, gain * 0.12, dur * 0.7, 'triangle');// the resonator tube underneath
+      // the mallet: a tiny knock of wood
+      const src = ctx.createBufferSource(); src.buffer = this._noise;
+      const f = ctx.createBiquadFilter(); f.type = 'bandpass'; f.frequency.value = freq * 2.2; f.Q.value = 2.5;
+      const k = ctx.createGain(); k.gain.setValueAtTime(gain * 0.9, t); k.gain.exponentialRampToValueAtTime(0.0001, t + 0.03);
+      src.connect(f); f.connect(k); this._out(k, { pan, verb: 0.1, dry });
+      src.start(t, Math.random()); src.stop(t + 0.05);
+    },
+
     skin(color, opts = {}) {
       const n = SKIN_NOTES[color];
-      if (n) { this.bell(NOTE(n), Object.assign({ gain: 0.07, dur: 1.8 }, opts)); }
+      if (n) { this.marimba(NOTE(n), Object.assign({ gain: 0.09, dur: 1.7 }, opts)); }
     },
     // A tiny, soft bubble for each few letters of text appearing. Almost not there.
     blip() {
@@ -198,7 +224,7 @@
     // hear that it matches), just a little further away. Each voice only changes how far off it sounds.
     skinOther(color, voice = 0) {
       const n = SKIN_NOTES[color];
-      if (n) { this.bell(NOTE(n), { gain: 0.06 - Math.min(0.02, Math.abs(voice) / 600), dur: 2.2, verb: 1, dry: 0.5 }); }
+      if (n) { this.marimba(NOTE(n), { gain: 0.07 - Math.min(0.02, Math.abs(voice) / 600), dur: 2, verb: 1, dry: 0.55 }); }
     },
     learned() {
       [69, 74, 78, 81, 86].forEach((n, i) => this.bell(NOTE(n), { when: i * 0.12, gain: 0.05, dur: 3 }));

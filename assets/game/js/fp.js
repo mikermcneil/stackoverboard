@@ -341,6 +341,176 @@
       },
     },
 
+    // Back home (chapter 1): the pool under the dome, empty. Swans bend over it, looking. One
+    // keeps weaving a long pale strip of reed, and every so often pulls a row back out.
+    'home-pool': {
+      dur: 9,
+      start() { const a = AU(); [74, 78, 81, 78].forEach((n, i) => a.marimba && a.marimba(a.NOTE(n - 12), { when: 0.6 + i * 1.1, gain: 0.05, dur: 2.2 })); },
+      draw(c, W, H, t) {
+        // the dome overhead, white sky beyond
+        water(c, W, H, '#e8f2ee', '#9fc8c2');
+        c.strokeStyle = 'rgba(120,160,160,0.45)'; c.lineWidth = 2;
+        for (let i = -6; i <= 6; i++) { c.beginPath(); c.moveTo(W / 2, -H * 0.6); c.quadraticCurveTo(W / 2 + i * W * 0.12, H * 0.2, W / 2 + i * W * 0.18, H * 1.1); c.stroke(); }
+        for (let j = 1; j < 6; j++) { c.beginPath(); c.ellipse(W / 2, -H * 0.6, W * 0.2 * j, H * 0.22 * j, 0, 0, Math.PI); c.stroke(); }
+        // the pool, still, empty
+        const g = c.createRadialGradient(W / 2, H * 0.78, 0, W / 2, H * 0.78, W * 0.4);
+        g.addColorStop(0, 'rgba(120,200,200,0.8)'); g.addColorStop(1, 'rgba(120,200,200,0)');
+        c.fillStyle = g; c.beginPath(); c.ellipse(W / 2, H * 0.8, W * 0.38, H * 0.12, 0, 0, TAU); c.fill();
+        c.strokeStyle = 'rgba(255,255,255,0.4)'; c.lineWidth = 1.5;
+        for (let r = 0; r < 3; r++) { const k = ((t * 0.3 + r / 3) % 1); c.globalAlpha = 1 - k; c.beginPath(); c.ellipse(W / 2, H * 0.8, W * 0.38 * k, H * 0.12 * k, 0, 0, TAU); c.stroke(); }
+        c.globalAlpha = 1;
+        // swans at the edge, necks bent down to the water, looking
+        for (let i = 0; i < 3; i++) {
+          const x = W * (0.25 + i * 0.25), y = H * 0.62, dip = Math.sin(t * 0.6 + i * 2) * 10;
+          c.fillStyle = 'rgba(250,250,246,0.95)'; c.beginPath(); c.ellipse(x, y, 46, 20, 0, 0, TAU); c.fill();
+          c.strokeStyle = 'rgba(250,250,246,0.95)'; c.lineWidth = 9; c.lineCap = 'round';
+          c.beginPath(); c.moveTo(x + 30, y - 6); c.quadraticCurveTo(x + 64, y - 70, x + 50 + dip * 0.3, y + 26 + dip); c.stroke();
+          c.fillStyle = '#c87a3a'; c.beginPath(); c.moveTo(x + 50 + dip * 0.3, y + 26 + dip); c.lineTo(x + 58, y + 40 + dip); c.lineTo(x + 46, y + 34 + dip); c.fill();
+        }
+        // and one, apart, weaving a long strip of reed, then pulling a row back out
+        const wx = W * 0.85, wy = H * 0.45, len = 80 + 60 * Math.abs(Math.sin(t * 0.35));
+        c.fillStyle = 'rgba(214,200,150,0.9)'; c.fillRect(wx - len, wy + 30, len, 10);
+        c.strokeStyle = 'rgba(160,140,90,0.8)'; c.lineWidth = 1;
+        for (let x = wx - len; x < wx; x += 6) { c.beginPath(); c.moveTo(x, wy + 30); c.lineTo(x + 3, wy + 40); c.stroke(); }
+        c.fillStyle = 'rgba(250,250,246,0.95)'; c.beginPath(); c.ellipse(wx, wy, 34, 16, 0, 0, TAU); c.fill();
+        specks(c, W, H, t, 20, [0.1, 0.05], '255,255,255');
+        eye(c, W, H, t, { rim: 0.5, blink: blinkAt(t, 0.3, 0.8) + blinkAt(t, 8.5, 0.5) });
+      },
+    },
+
+    // Chapter 2: Bead, right up against your eye. You can see its heart beating through it.
+    'bead-meet': {
+      dur: 6,
+      start() { const a = AU(); [81, 83, 86].forEach((n, i) => a.marimba && a.marimba(a.NOTE(n), { when: 0.5 + i * 0.35, gain: 0.04, dur: 1.4 })); },
+      draw(c, W, H, t) {
+        water(c, W, H, '#2a5a52', '#0c2a26');
+        rays(c, W, H, t, 0.1);
+        c.save(); c.translate(W / 2 + Math.sin(t * 0.8) * 20, H / 2 + Math.sin(t * 1.1) * 12); c.rotate(Math.sin(t * 0.5) * 0.15);
+        const S = Math.min(W, H) / 260;
+        c.scale(S, S);
+        c.fillStyle = 'rgba(210,240,255,0.18)'; c.strokeStyle = 'rgba(210,245,255,0.7)'; c.lineWidth = 1.5;
+        c.beginPath(); c.ellipse(20, 0, 70, 22, 0, 0, TAU); c.fill(); c.stroke();// the clear mantle
+        c.beginPath(); c.moveTo(80, 0); c.lineTo(100, -18); c.lineTo(108, 0); c.lineTo(100, 18); c.closePath(); c.fill(); c.stroke();
+        const beat = 1 + 0.25 * Math.max(0, Math.sin(t * 7));
+        c.fillStyle = 'rgba(220,90,110,0.7)'; c.beginPath(); c.arc(10, 2, 6 * beat, 0, TAU); c.fill();// its heart, going
+        c.fillStyle = 'rgba(240,190,120,0.6)'; c.beginPath(); c.ellipse(36, 0, 14, 5, 0, 0, TAU); c.fill();// its little stomach
+        c.fillStyle = '#0a1418'; c.beginPath(); c.arc(-36, -4, 7, 0, TAU); c.fill();
+        c.fillStyle = 'rgba(255,255,255,0.8)'; c.beginPath(); c.arc(-34, -6, 2, 0, TAU); c.fill();
+        c.restore();
+        specks(c, W, H, t, 30, [0.05, -0.1]);
+        eye(c, W, H, t, { rim: 0.7, blink: blinkAt(t, 2.4) });
+      },
+    },
+
+    // Back home (chapter 4): strangers at your pool. Big dark birds, crowding the edge, eating
+    // the garden, splashing in the water that was yours. A swan turns away.
+    'home-suitors': {
+      dur: 8,
+      start() { const a = AU(); a.noise && a.noise({ dur: 7, freq: 1800, q: 0.6, gain: 0.03, sweep: 0.8 }); [70, 69, 66].forEach((n, i) => a.marimba && a.marimba(a.NOTE(n - 12), { when: 1 + i * 1.4, gain: 0.05, dur: 2 })); },
+      draw(c, W, H, t) {
+        water(c, W, H, '#d8e4e0', '#8fb0aa');
+        const g = c.createRadialGradient(W / 2, H * 0.8, 0, W / 2, H * 0.8, W * 0.4);
+        g.addColorStop(0, 'rgba(110,170,170,0.8)'); g.addColorStop(1, 'rgba(110,170,170,0)');
+        c.fillStyle = g; c.beginPath(); c.ellipse(W / 2, H * 0.8, W * 0.38, H * 0.12, 0, 0, TAU); c.fill();
+        // the strangers: hunched, black, glossy, too many of them
+        for (let i = 0; i < 9; i++) {
+          const x = W * (0.08 + i * 0.105) + Math.sin(t * 2 + i) * 6, y = H * (0.6 + 0.06 * Math.sin(i * 2.3)), bob = Math.abs(Math.sin(t * 3 + i * 1.3)) * 8;
+          c.fillStyle = '#1a1d22'; c.beginPath(); c.ellipse(x, y - bob, 26, 34, -0.2, 0, TAU); c.fill();
+          c.beginPath(); c.ellipse(x + 10, y - 40 - bob, 10, 12, 0, 0, TAU); c.fill();
+          c.fillStyle = '#d9a03a'; c.beginPath(); c.moveTo(x + 18, y - 40 - bob); c.lineTo(x + 36, y - 34 - bob + Math.sin(t * 8 + i) * 4); c.lineTo(x + 18, y - 34 - bob); c.fill();
+          c.fillStyle = '#e8e2a0'; c.beginPath(); c.arc(x + 12, y - 44 - bob, 2, 0, TAU); c.fill();
+        }
+        // splashes in the pool
+        c.strokeStyle = 'rgba(255,255,255,0.6)'; c.lineWidth = 2;
+        for (let i = 0; i < 4; i++) { const k = (t * 0.9 + i * 0.25) % 1; c.globalAlpha = 1 - k; c.beginPath(); c.ellipse(W * (0.35 + i * 0.1), H * 0.8, 30 * k + 4, 8 * k + 2, 0, 0, TAU); c.stroke(); }
+        c.globalAlpha = 1;
+        // a swan, at the back, turning away
+        const turn = U.smoothstep(4, 7, t);
+        c.fillStyle = 'rgba(250,250,246,0.9)'; c.beginPath(); c.ellipse(W * 0.82, H * 0.35, 36 * (1 - turn * 0.4), 16, 0, 0, TAU); c.fill();
+        specks(c, W, H, t, 16, [0.1, 0.05], '255,255,255');
+        eye(c, W, H, t, { rim: 0.55, blink: blinkAt(t, 0.3, 0.8) + blinkAt(t, 7.5, 0.5) });
+      },
+    },
+
+    // Chapter 5: somewhere warm and gold, something huge and kind wraps its arms around you and
+    // offers to keep you. Forever. Warm, safe, no more falling. Your eye almost closes. Almost.
+    calypso: {
+      dur: 9.5,
+      start() { const a = AU(); const tune = [74, 78, 81, 78, 74, 78, 81, 83, 81, 78]; tune.forEach((n, i) => a.marimba && a.marimba(a.NOTE(n - 12), { when: i * 0.75, gain: 0.05, dur: 2.4 })); },
+      draw(c, W, H, t) {
+        water(c, W, H, '#6a4a1a', '#2a1a08');
+        const g = c.createRadialGradient(W / 2, H / 2, 0, W / 2, H / 2, Math.max(W, H) * 0.7);
+        g.addColorStop(0, `rgba(255,210,120,${0.5 + 0.1 * Math.sin(t)})`); g.addColorStop(1, 'rgba(120,60,10,0)');
+        c.fillStyle = g; c.fillRect(0, 0, W, H);
+        // arms, slow and gentle, closing in from all sides
+        const close = U.smoothstep(0.5, 6.5, t) * (1 - U.smoothstep(8, 9.3, t) * 0.7);
+        for (let i = 0; i < 8; i++) {
+          const ang = i / 8 * TAU + Math.sin(t * 0.3) * 0.2;
+          const r0 = Math.max(W, H) * 0.75, r1 = U.lerp(r0, Math.min(W, H) * 0.18, close);
+          c.strokeStyle = `rgba(${230 - i * 6},${150 - i * 4},${110},0.85)`; c.lineCap = 'round';
+          c.lineWidth = 60 * (0.6 + 0.4 * close);
+          c.beginPath(); c.moveTo(W / 2 + Math.cos(ang) * r0, H / 2 + Math.sin(ang) * r0);
+          c.quadraticCurveTo(W / 2 + Math.cos(ang + 0.5) * (r0 + r1) / 2, H / 2 + Math.sin(ang + 0.5) * (r0 + r1) / 2, W / 2 + Math.cos(ang + 0.2) * r1, H / 2 + Math.sin(ang + 0.2) * r1);
+          c.stroke();
+        }
+        specks(c, W, H, t, 30, [0, -0.05], '255,230,180');
+        // the eye grows heavy... and at the last moment, opens wide
+        const heavy = U.smoothstep(3, 7.6, t) * 0.92 * (1 - U.smoothstep(7.7, 8.1, t));
+        eye(c, W, H, t, { rim: 0.6, blink: heavy });
+      },
+    },
+
+    // Back home (chapter 6): in the shallow end of your pool, an old pale axolotl, the one you
+    // grew up with. It lifts its head, as if it heard something. Then lies back down.
+    'home-dog': {
+      dur: 8,
+      start() { const a = AU(); [62, 66, 69].forEach((n, i) => a.marimba && a.marimba(a.NOTE(n), { when: 2.5 + i * 0.5, gain: 0.04, dur: 2.5 })); },
+      draw(c, W, H, t) {
+        water(c, W, H, '#a8cfc8', '#4f8a86');
+        rays(c, W, H, t, 0.18, '255,255,240');
+        // pebbles, the shallow end
+        for (let i = 0; i < 30; i++) { c.fillStyle = `rgba(${150 + i % 5 * 10},${150 + i % 4 * 8},${130},0.8)`; c.beginPath(); c.ellipse((i * 97) % W, H * 0.85 + (i * 13 % 40), 16 + i % 4 * 4, 8, 0, 0, TAU); c.fill(); }
+        // the old axolotl: pale, frilled, very still
+        const lift = U.window(t / 8, 0.3, 0.42, 0.62, 0.8);
+        c.save(); c.translate(W * 0.5, H * 0.78);
+        c.fillStyle = 'rgba(240,215,215,0.95)';
+        c.beginPath(); c.ellipse(0, 0, 120, 26, 0, 0, TAU); c.fill();
+        c.beginPath(); c.moveTo(-110, 0); c.quadraticCurveTo(-200, -10, -230, 6); c.quadraticCurveTo(-190, 12, -110, 10); c.fill();
+        c.save(); c.translate(110, -6); c.rotate(-0.5 * lift);
+        c.beginPath(); c.ellipse(30, 0, 44, 28, 0, 0, TAU); c.fill();
+        c.strokeStyle = 'rgba(220,120,140,0.85)'; c.lineWidth = 4;
+        for (const s2 of [-1, 1]) { for (let k = 0; k < 3; k++) { c.beginPath(); c.moveTo(10, s2 * 18); c.quadraticCurveTo(0, s2 * (34 + k * 8), -12 - k * 6, s2 * (40 + k * 10) + Math.sin(t * 3 + k) * 3); c.stroke(); } }
+        c.fillStyle = '#2a1a1a'; c.beginPath(); c.arc(48, -8, 3.5 * (0.4 + lift), 0, TAU); c.fill();// an old cloudy eye, opening
+        c.restore();
+        c.restore();
+        specks(c, W, H, t, 20, [0.05, -0.05], '255,255,255');
+        eye(c, W, H, t, { rim: 0.6, blink: blinkAt(t, 0.3, 0.8) + blinkAt(t, 7.4, 0.6) });
+      },
+    },
+
+    // Chapter 7: at the top of the waterfall, at home, a row of twelve glass rings stands in the
+    // water. Light goes through all twelve. Someone set them out. For someone.
+    bow: {
+      dur: 8,
+      start() { const a = AU(); for (let i = 0; i < 12; i++) { a.marimba && a.marimba(a.NOTE([74, 78, 81, 83][i % 4] + (i >= 8 ? 12 : 0)), { when: 2 + i * 0.22, gain: 0.04, dur: 1.4 }); } },
+      draw(c, W, H, t) {
+        water(c, W, H, '#cfe9e4', '#6fa7a2');
+        for (let i = 0; i < 12; i++) {
+          const k = i / 11, x = U.lerp(W * 0.12, W * 0.88, k), y = H * 0.55 - k * H * 0.08, r = U.lerp(70, 26, k);
+          c.strokeStyle = 'rgba(255,255,255,0.8)'; c.lineWidth = U.lerp(9, 3, k);
+          c.beginPath(); c.ellipse(x, y, r * 0.35, r, 0, 0, TAU); c.stroke();
+        }
+        // a thread of light, going through every one of them
+        const k = U.smoothstep(2, 4.6, t);
+        if (k > 0) {
+          c.strokeStyle = 'rgba(255,250,210,0.95)'; c.lineWidth = 3; c.shadowColor = 'rgba(255,240,180,1)';
+          c.beginPath(); c.moveTo(W * 0.04, H * 0.56); c.lineTo(U.lerp(W * 0.04, W * 0.96, k), U.lerp(H * 0.56, H * 0.46, k)); c.stroke();
+        }
+        specks(c, W, H, t, 30, [0.1, 0], '255,255,255');
+        eye(c, W, H, t, { rim: 0.5, blink: blinkAt(t, 0.3, 0.6) + blinkAt(t, 7.5, 0.5) });
+      },
+    },
+
     // Chapter 7, Home: under the waterfall, looking up the falling water to the light, and wings.
     ch7: {
       dur: 8,
@@ -369,9 +539,25 @@
     },
   };
 
+  // A further scene per chapter, once you've spent a while in it (and nothing else is going on).
+  const LATER = { 1: 'home-pool', 4: 'home-suitors', 5: 'calypso', 6: 'home-dog', 7: 'bow' };
+
   SO.fp = {
     SCENES,
     playing: null,
+    chT: 0,
+    lastCh: null,
+
+    tickChapter(dt) {
+      const ch = SO.story.ch || 0;
+      if (ch !== this.lastCh) { this.lastCh = ch; this.chT = 0; }
+      if (E.mode !== 'play' || E.locked || SO.ui.talking || document.hidden || this.playing) { return; }
+      this.chT += dt;
+      const name = LATER[ch];
+      if (!name || !SO.save.data || SO.save.data.flags['fp:' + name]) { return; }
+      const chase = SO.story.rt && SO.story.rt.chase;
+      if (this.chT > 150 && !(chase && chase.phase !== 'calm')) { SO.save.flag('fp:' + name); this.play(name); }
+    },
 
     // Play a cutscene (resolves when it's over). The game holds still meanwhile.
     play(name) {
@@ -427,5 +613,7 @@
       if (k >= 1) { E.removeActor('glimpse-whale'); }
     },
   };
+
+  setInterval(() => SO.fp.tickChapter(1), 1000);
 
 })();

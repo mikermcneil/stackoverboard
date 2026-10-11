@@ -8,6 +8,7 @@
     "@sailshq/connect-redis": "^6.1.3",
     "@sailshq/lodash": "^3.10.6",
     "@sailshq/socket.io-redis": "^6.1.2",
+    "geoip-lite": "^2.0.3",
     "sails": "^1.5.18",
     "sails-hook-apianalytics": "^2.0.6",
     "sails-hook-organics": "^3.0.0",

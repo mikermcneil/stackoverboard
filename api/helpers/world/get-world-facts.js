@@ -135,6 +135,14 @@ function readRoomsFromClient() {
       }
       return [s.key, str('name') || s.key, str('region') || 'unknown', num('depth'), num('dark') || 0, /\bsurface\s*:\s*true/.test(head), exits];
     });
+    // Some exits are wired up after the fact with `link('from', 'dir', 'to')` (one way: the
+    // new room's own exits are written inline), so apply those too.
+    var byKey = _.indexBy(rooms, (r) => r[0]);
+    var linkRe = /\blink\(\s*'([^']+)'\s*,\s*'(\w+)'\s*,\s*'([^']+)'\s*\)/g;
+    var l;
+    while ((l = linkRe.exec(src))) {
+      if (byKey[l[1]]) { byKey[l[1]][6][l[2]] = l[3]; }
+    }
     return rooms.length ? rooms : null;
   } catch (err) {
     sails.log.verbose('get-world-facts: could not read rooms from the client, using the snapshot:', err.message);
@@ -237,7 +245,7 @@ const MECHANICS = [
     related: ['region-forge', 'skin-word-wake', 'place-riser', 'chapter-5'], seeAlso: ['get-state', 'get-history', 'wake-vent'] },
   { key: 'mechanic-sea-day', title: 'The sea-day clock', tags: ['time', 'day', 'night', 'clock'],
     body: 'The sea follows a shared 2-hour day: dawn, day, dusk, and night, the same for everyone. Firefly squid rise in the Bright at night.',
-    related: ['mechanic-shoal', 'creature-firefly-squid'], seeAlso: ['get-state'] },
+    related: ['mechanic-shoal', 'creature-firefly-squid', 'mechanic-local-sky'], seeAlso: ['get-state'] },
   { key: 'mechanic-shoal', title: 'The Shoal\'s schedule', tags: ['shoal', 'sardines', 'reef', 'schedule', 'danger'],
     body: 'The Shoal, thousands of sardines, sweeps through the reef of the Shoal every 6 minutes and takes about 75 seconds to pass. A squid caught in the open gets swept away; hide in a crevice or use passing cloud.',
     related: ['creature-shoal', 'place-shoal-reef', 'chapter-6', 'mechanic-hiding'], seeAlso: ['get-state'] },
@@ -254,37 +262,60 @@ const MECHANICS = [
     body: 'Progress is saved on the server under the squid\'s name. After an ending, the squid can keep swimming, or fall again as a new playthrough: skin words are forgotten and must be found again, while the shared world (the map, species, endings, history) carries on.',
     related: ['chapter-8'], seeAlso: ['get-squids', 'get-history'] },
 
-  // Planned systems (designed, not built yet).
+  { key: 'mechanic-flora', title: 'Every place has its own plants', optional: true, tags: ['plants', 'flora', 'kelp', 'seagrass', 'sargassum', 'variety', 'deterministic'],
+    body: 'Besides the plants placed by hand, every place gets its own patch of the plants the sea already has (kelp, sea grass, sargassum, glowing sea pens, glass sponges, sea fans, and bacterial mats), in many variations: taller, shorter, leaning, in clumps, darker or paler, young or old, half eaten. Which plants grow where depends on the region, and the patch is worked out from the place\'s name, so every squid sees exactly the same plants in exactly the same spots. No new kinds of plant come from this.',
+    related: ['plant-kelp', 'plant-seagrass', 'plant-sargassum', 'plant-lantern-weed', 'plant-glass-coral', 'plant-bone-fan', 'plant-bacterial-mat'], seeAlso: ['get-species'] },
+  { key: 'mechanic-chat', title: 'Talking out loud (chat)', tags: ['chat', 'talk', 'say', 'speech bubble', 'multiplayer', 'other players'],
+    body: 'Squids can say short things out loud, up to 120 characters. Everyone in the same place sees the words float above the speaker\'s head for a few seconds. It\'s public: anyone in the room can see it, and the server keeps it for 30 days (then sweeps it away). A squid can say one thing every 1.5 seconds, at most 20 a minute. Nothing is filtered except control characters. Chat is what players said, so it isn\'t a source of facts about the game.',
+    related: ['mechanic-presence', 'mechanic-skin-words'], seeAlso: ['get-chat', 'get-online'] },
+  { key: 'mechanic-local-sky', title: 'The real local weather and time of day', tags: ['weather', 'day', 'night', 'sky', 'rain', 'snow', 'fog', 'thunder', 'time of day', 'real world', 'surface'],
+    body: 'The sky over the surface follows the player\'s real local weather and time of day. If it\'s night where the player is, it\'s night at the surface; if it\'s raining, snowing, foggy, cloudy, windy, or thundering there, the surface shows that too, with the light changing at the real sunrise and sunset. Where the player is comes from a city-level lookup (never stored as more than a city name), and the weather from Open-Meteo. Night brings different animals and plants out (see the night life). It never blocks the story: everything that matters can be done in any weather, at any hour.',
+    related: ['mechanic-night-life', 'mechanic-sea-day', 'region-surface'], seeAlso: ['get-squids'] },
+  { key: 'mechanic-night-life', title: 'Night life', tags: ['night', 'bioluminescence', 'lanternfish', 'comb jellies', 'coral', 'sea sparkle', 'noctiluca', 'glow'],
+    body: 'When it\'s night where the player is, different animals and plants come out. Lanternfish rise from the deep toward the surface (the biggest daily migration on Earth is real: deep animals rising at night to feed, and sinking again by day). Comb jellies drift past with rainbows running down their rows of tiny hairs. Coral polyps open up and put out their tentacles to feed. And the water fills with sea sparkle (Noctiluca, a real plankton) that flashes blue when something disturbs it, so a swimming squid leaves a glowing wake. None of it is needed for the story.',
+    related: ['mechanic-local-sky', 'creature-firefly-squid', 'mechanic-glow'] },
+  { key: 'mechanic-world-age', title: 'The world gets older (world age)', tags: ['world age', 'stages', 'schedule', 'time', 'shared', 'old sea', 'kelp', 'glass rain', 'bleaching', 'whale fall', 'krill', 'deep winter', 'sky islands'],
+    body: 'The shared sea gets older on a fixed schedule everyone can predict, counted from the moment the world was made (its first world event). Eight stages, lasting minutes, then hours, then minutes, hours, days, hours, days, and minutes: the first tide (12 minutes: murky, silt everywhere), the long calm (3 hours: the kelp grows tall, and stays tall), the glass rain (20 minutes: dome glass drifts down from the sky islands, and shards stay on the sand), the bleaching (6 hours: the coral in the Bright turns pale, and stays pale), the settling (2 days: the whale fall is picked down to bones, and stays bones), the swarm (8 hours: clouds of krill, and everything comes up to feed), the deep winter (4 days: cold, heavy marine snow, darker deep water, and more water elementals), and the turning (25 minutes: the sky islands drift lower, and stay lower). After that the sea is old, for good. Some changes last only while their stage does; others stay once it has passed.',
+    related: ['creature-water-elementals', 'region-surface', 'sky-islands', 'mechanic-sea-day'], seeAlso: ['get-world-age', 'get-state', 'get-overview'],
+    data: { stages: [['first-tide', '12 minutes'], ['long-calm', '3 hours'], ['glass-rain', '20 minutes'], ['bleaching', '6 hours'], ['settling', '2 days'], ['swarm', '8 hours'], ['deep-winter', '4 days'], ['turning', '25 minutes']], after: 'old-sea' } },
+
+  // Systems that were planned and are now built.
   { key: 'mechanic-blood', status: 'built', title: 'Blood in the water and on the squid', tags: ['blood', 'injury', 'smell', 'predators', 'strikers'],
-    body: 'things bleed down here. When something gets bitten, blood goes into the water in a slow red cloud (blue if it\'s the squid\'s own, since squid blood is blue). Clouds drift and thin out, but blood carries. Swimming through a cloud gets blood on the squid, which comes off as it swims; enough of it smears the squid\'s eye and makes it hard to see. Strikers (lean silver fish) dart in fast at the biggest globs of blood and at anything with blood on it, and if enough blood gathers in one place, worse things come.',
+    body: 'Things bleed down here. When something gets bitten, blood goes into the water in a slow red cloud (blue if it\'s the squid\'s own, since squid blood is blue). Clouds drift and thin out, but blood carries. Swimming through a cloud gets blood on the squid, which comes off as it swims; enough of it smears the squid\'s eye and makes it hard to see. Strikers (lean silver fish) dart in fast at the biggest globs of blood and at anything with blood on it, and if enough blood gathers in one place, worse things come.',
     related: ['mechanic-dirt', 'mechanic-smell', 'mechanic-hunger', 'mechanic-scales'] },
   { key: 'mechanic-scales', status: 'built', title: 'Fish scales', tags: ['scales', 'fish', 'glitter'],
-    body: 'when a fish gets bitten or eaten, scales come spinning off it, glinting as they drift and sink, alongside the blood.',
+    body: 'When a fish gets bitten or eaten, scales come spinning off it, glinting as they drift and sink, alongside the blood.',
     related: ['mechanic-dirt', 'mechanic-hunger', 'creature-shoal'] },
   { key: 'mechanic-hunger', status: 'built', title: 'Hunger and eating', tags: ['hunger', 'eating', 'food', 'krill', 'shrimp'],
-    body: 'from chapter 2 on, the squid slowly gets hungry. Hungry, it can\'t swim as hard; starving, it can barely hurry at all. Food is small and alive: drifting clouds of krill, shrimp picking along the bottom, and little fish that dart away. Touching one eats it. Fish bleed when eaten.',
+    body: 'From chapter 2 on, the squid slowly gets hungry. Hungry, it can\'t swim as hard; starving, it can barely hurry at all. Food is small and alive: drifting clouds of krill, shrimp picking along the bottom, and little fish that dart away. Touching one eats it. Fish bleed when eaten.',
     related: ['mechanic-blood', 'mechanic-scales'] },
 ];
 
 const PLANNED_THINGS = [
   { key: 'creature-water-elementals', topic: 'creature', status: 'built', spoilerLevel: 1, title: 'Water elementals', tags: ['water elementals', 'danger', 'enemies', 'chapter 5'],
-    body: 'some of the water here isn\'t just water. You notice them by the way the light bends: a slow lens of water with a few bubbles caught in it, lurching after the squid. They want to catch it but move badly: gather, surge a little way, stop, and get stuck on rock. Early on they can\'t hurt the squid (a cold squeeze, and they let go). Chapter by chapter they get twistier, quicker, and their grip gets worse, and from chapter 5 on they are a real danger: near the end they hold on, crush, and drag. Calm (pale, shimmer, pale) stills them.',
+    body: 'Some of the water here isn\'t just water. You notice them by the way the light bends: a slow lens of water with a few bubbles caught in it, lurching after the squid. They want to catch it but move badly: gather, surge a little way, stop, and get stuck on rock. Early on they can\'t hurt the squid (a cold squeeze, and they let go). Chapter by chapter they get twistier, quicker, and their grip gets worse, and from chapter 5 on they are a real danger: near the end they hold on, crush, and drag. Calm (pale, shimmer, pale) stills them.',
     related: ['chapter-5', 'chapter-6', 'chapter-7', 'skin-word-calm'] },
   { key: 'character-buddy', topic: 'character', status: 'built', spoilerLevel: 1, title: 'The buddy (Bead)', tags: ['buddy', 'bead', 'glass squid', 'friend', 'companion', 'recurring'],
     body: 'Bead, a little glass squid so clear you can see its insides, found tangled in the kelp in chapter 2. The squid frees it and names it, and after that it keeps turning up throughout the game: following along, flashing the squid\'s own skin words back, finding food, warning when something\'s coming, and tugging the squid loose when the water grabs it. The squid helps it too, sharing food and pulling it free.',
     related: ['character-buddy-fate', 'chapter-2', 'place-kelp-deep', 'creature-glass-squid'] },
   { key: 'character-buddy-fate', topic: 'character', status: 'built', spoilerLevel: 2, title: 'What happens to the buddy (spoiler)', tags: ['buddy', 'spoiler', 'later chapters', 'tragedy'],
-    body: 'Spoiler. in the later chapters, something awful happens to Bead. Glass squid can\'t take warm water, and in chapter 6 Bead follows the squid up into the warm shallows anyway. It drifts up into the warm water, goes white all the way through, and sinks. Its body stays where it fell, and the crabs find it. In chapter 7 the squid thinks of it once more.',
+    body: 'Spoiler. In the later chapters, something awful happens to Bead. Glass squid can\'t take warm water, and in chapter 6 Bead follows the squid up into the warm shallows anyway. It drifts up into the warm water, goes white all the way through, and sinks. Its body stays where it fell, and the crabs find it. In chapter 7 the squid thinks of it once more.',
     related: ['character-buddy', 'chapter-6', 'place-warm-shallows'] },
-  { key: 'place-west-surface', topic: 'place', status: 'planned', title: 'The surface to the west (procedural)', tags: ['west', 'surface', 'procedural', 'exploration', 'birds', 'sea spiders', 'planned'],
-    body: 'Design intent: past the Bright, the surface to the west goes on and on, generated procedurally like the Below, with its own creatures that aren\'t found anywhere else, including seabirds and sea spiders. Details are not settled.',
-    related: ['creature-birds', 'creature-sea-spiders', 'mechanic-procedural-species', 'region-surface'] },
-  { key: 'creature-birds', topic: 'creature', status: 'planned', title: 'Birds', tags: ['birds', 'seabirds', 'west', 'surface', 'planned'],
-    body: 'Design intent: seabirds at the procedurally generated surface to the west, diving and skimming the water. Not swans, which only belong to the sky islands. Details are not settled.',
-    related: ['place-west-surface'] },
-  { key: 'creature-sea-spiders', topic: 'creature', status: 'planned', title: 'Sea spiders', tags: ['sea spiders', 'pycnogonids', 'west', 'planned'],
-    body: 'Design intent: sea spiders (real animals, pycnogonids: long thin legs, tiny bodies) picking their way along the bottom in the procedurally generated west. Details are not settled.',
-    related: ['place-west-surface'] },
+  { key: 'creature-birds', topic: 'creature', title: 'Birds of the west', tags: ['birds', 'seabirds', 'gulls', 'dark birds', 'west', 'surface', 'danger'],
+    body: 'Out in the procedural west, gulls wheel over the surface, harmless and loud. Farther out, in the wet desert (from about 22 rooms west), big dark birds with red eyes circle over the water, and when a squid comes near the surface they dive, splash in, and hit it hard enough to draw blood. Stay deep out there. Not swans, which only belong to the sky islands.',
+    related: ['place-west-surface', 'mechanic-blood'], seeAlso: ['get-west-path'] },
+  { key: 'creature-sea-spiders', topic: 'creature', title: 'Sea spiders', tags: ['sea spiders', 'pycnogonids', 'west'],
+    body: 'Sea spiders pick their way slowly along the bottom of the western reef and the tidepool coast: tiny bodies, enormous legs. Real animals (pycnogonids). Their guts run down inside their legs, because there\'s nowhere else in the body to put them.',
+    related: ['place-west-surface'], seeAlso: ['get-west-path'] },
+  { key: 'creature-lungfish', topic: 'creature', optional: true, title: 'Lungfish', tags: ['lungfish', 'west', 'surface', 'air'],
+    body: 'On the lungfish steps (13 to 18 rooms west), lungfish lie out on stone plateaus at the surface, gulping air. Real lungfish breathe air and can sleep through a whole dry season in a cocoon of mud.',
+    related: ['place-west-surface', 'place-west-first-lungfish'], seeAlso: ['get-west-path'] },
+  { key: 'creature-light-drinkers', topic: 'creature', spoilerLevel: 0, optional: true, title: 'Light-drinkers', tags: ['light-drinkers', 'dark', 'light', 'west', 'procedural', 'day'],
+    body: 'In the procedural west, by day only, there are things that drink light. They suck the light in from around them, and wherever they are, it gets dark, even at noon under the open sky. They come out with the daylight and are gone at night. Made up for this world.',
+    related: ['place-west-surface', 'mechanic-local-sky'], seeAlso: ['get-west-path'] },
+  { key: 'creature-slow-hunter', topic: 'creature', spoilerLevel: 1, optional: true, title: 'The slow hunter', tags: ['slow hunter', 'danger', 'stalker', 'rare', 'chase', 'follows'],
+    body: 'Very rarely, something very slow and very nasty appears at the edge of the screen and starts following the squid. It never hurries, and it never gives up: it follows from room to room, however long it takes. The only way to lose it is to get several rooms ahead of it. Made up for this world, and never explained.',
+    related: ['mechanic-hiding'] },
   { key: 'creature-distant-crustaceans', topic: 'creature', status: 'planned', optional: true, title: 'Distant crustaceans', tags: ['crustaceans', 'crabs', 'background', 'unreachable', 'planned'],
     body: 'Design intent: crustaceans seen far off in the background, out of reach. The squid can watch them but never get to them. Details are not settled.',
     related: ['oddity-far-lights'] },
@@ -492,8 +523,41 @@ fallback when that table isn't available.  Places are read from the client's roo
       seeAlso: ['get-species'], source: 'api/helpers/world/get-native-species.js',
     }));
 
-    // Planned characters, creatures, places
-    PLANNED_THINGS.forEach((p) => add(Object.assign({ source: 'design' }, p)));
+    // Characters, creatures, places that started as plans
+    PLANNED_THINGS.forEach((p) => add(Object.assign({ source: p.status === 'planned' ? 'design' : 'assets/game/js' }, p)));
+
+    // The way west (procedural surface rooms, with landmarks at fixed distances)
+    var west = sails.helpers.world.getWestPath();
+    add({
+      key: 'place-west-surface', topic: 'place', title: 'The way west (the long surface west of the Bright)',
+      body: 'West of the Bright, the surface goes on and on. Past the last hand-built place, every step west is a made-up room with the key "west:N" (N = how far west), generated from the world seed so it\'s the same for everyone, and stranger the farther you go: '+
+        west.bands.map((b) => b.name.replace(/^The /, 'the ')+' ('+b.from+(b.to ? ' to '+b.to : ' on')+(b.about ? ': '+b.about.replace(/\.$/, '').replace(/^./, (c) => c.toLowerCase()) : '')+')').join('; ')+
+        '. Whatever the seed, '+west.path.length+' landmarks are always at the same distance, in the same order: '+west.path.map((p) => p.name.replace(/^The /, 'the ')+' ('+p.n+')').join(', ')+
+        '. It is '+west.end+' places long: '+west.crossings+' crossings of '+west.placesPerCrossing+'. Every later crossing brings the same landmarks back at the same distances within it, recalled and changed, with a word added to the name (such as "older", "half buried", or "in the dark"). '+
+        'The last place, west:'+west.end+', is '+west.endLandmark.name.replace(/^The /, 'the ')+'; going on west from there comes back into the world from the east, at the spray zone ('+west.wrapsTo+'), because the sea goes all the way around. '+
+        'In the daytime, light-drinkers can make it dark. None of it is on the way anywhere; it\'s just there, if you keep going.',
+      tags: ['west', 'surface', 'procedural', 'exploration', 'birds', 'sea spiders', 'lungfish', 'landmarks', 'crossings', 'end of the west'],
+      related: ['creature-birds', 'creature-sea-spiders', 'creature-lungfish', 'creature-light-drinkers', 'region-surface', 'place-bright-reef', 'place-west-end', 'place-'+west.wrapsTo].concat(west.path.map((p) => 'place-west-'+p.key)),
+      data: { room: 'west:N', end: west.end, crossings: west.crossings, placesPerCrossing: west.placesPerCrossing, wrapsTo: west.wrapsTo, recallWords: west.recallWords, bands: west.bands, landmarks: west.path.map((p) => ({ n: p.n, key: p.key, room: 'west:'+p.n })) },
+      seeAlso: ['get-west-path'], source: west.source,
+    });
+    west.path.forEach((p) => add({
+      key: 'place-west-'+p.key, topic: 'place', title: p.name+' (west:'+p.n+')', optional: true,
+      body: p.line+' It\'s always '+p.n+' rooms west of the Bright (room "west:'+p.n+'"), whatever the seed, and it comes back, recalled and changed, in every later crossing ('+p.n+' + '+west.placesPerCrossing+' for each crossing before'+(p.n === west.placesPerCrossing ? ', except at the very end' : '')+').',
+      tags: ['west', 'landmark', p.key, p.name.toLowerCase()],
+      related: ['place-west-surface'].concat(p.key === 'sand-cuts' ? ['dome-glass-sand'] : []),
+      data: { room: 'west:'+p.n, n: p.n, landmark: p.key },
+      seeAlso: ['get-west-path'], source: west.source,
+    }));
+
+    add({
+      key: 'place-west-end', topic: 'place', title: west.endLandmark.name+' (west:'+west.end+')', optional: true, spoilerLevel: 1,
+      body: west.endLandmark.line+' It\'s the last place west, '+west.end+' rooms west of the Bright, at the end of the '+west.crossings+'th crossing. Going on west from there comes back into the world from the east, at the spray zone ('+west.wrapsTo+'). There are no rooms past it.',
+      tags: ['west', 'end', 'wrap', 'around the world', 'spray zone'],
+      related: ['place-west-surface', 'place-'+west.wrapsTo],
+      data: { room: 'west:'+west.end, n: west.end, wrapsTo: west.wrapsTo },
+      seeAlso: ['get-west-path'], source: west.source,
+    });
 
     // Oddities
     lore.oddities.forEach((o) => add({

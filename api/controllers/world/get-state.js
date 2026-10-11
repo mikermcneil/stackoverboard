@@ -4,7 +4,7 @@ module.exports = {
   friendlyName: 'Get world state',
 
 
-  description: 'Get the live (or past/future) state of the shared world of Stack Overboard: time of sea-day, the volcano, and the Shoal.',
+  description: 'Get the live (or past/future) state of the shared world of Stack Overboard: time of sea-day, the volcano, the Shoal, and the world\'s stage of life.',
 
 
   extendedDescription:
@@ -19,6 +19,11 @@ module.exports = {
 - shoal: sardines in their thousands pass the surface reef every 6 minutes, for 75 seconds.
   \`passing\` says if they're passing right now; \`startedAt\`/\`endsAt\` are the current (or most recent) pass;
   \`nextAt\` is when the next pass begins.
+- age: the world's stage of life.  Counting from when the world was made, it goes through eight
+  stages on a fixed schedule (minutes, then hours, then minutes, hours, days, hours, days, minutes:
+  first-tide, long-calm, glass-rain, bleaching, settling, swarm, deep-winter, turning), then it's the
+  old sea ("old-sea") for good.  \`during\` says what the stage is doing.  See get-world-age for the
+  whole schedule and what each stage leaves behind.
 - ventEverErupted / lastEruption: whether the volcano had ever erupted by \`at\`, and the latest such eruption.
 
 How the volcano gets woken: a squid flashes the skin word "wake" at it (gold, red, gold, red; on a
@@ -56,7 +61,7 @@ wake it next).  All times are JS timestamps (epoch ms).`,
 
     success: {
       outputFriendlyName: 'World state',
-      outputDescription: '`{ at, seaDay: {phase, name}, vent: {phase, eruption, wokenBy, startsAt, endsAt, coolsAt, canWake, nextWakeAt}, shoal: {passing, startedAt, endsAt, nextAt}, ventEverErupted, lastEruption, serverNow }`.'
+      outputDescription: '`{ at, seaDay: {phase, name}, vent: {phase, eruption, wokenBy, startsAt, endsAt, coolsAt, canWake, nextWakeAt}, shoal: {passing, startedAt, endsAt, nextAt}, age: {index, key, name, progress, startsAt, endsAt, during}, ventEverErupted, lastEruption, serverNow }`.  `age` is the world\'s stage of life at `at` (null before the world was made; see get-world-age).'
     },
 
   },
@@ -70,6 +75,7 @@ wake it next).  All times are JS timestamps (epoch ms).`,
     }
     var state = await sails.helpers.world.getWorldState(at);
     return Object.assign(state, {
+      age: (await sails.helpers.world.getWorldAge.with({ at })).current,
       ventEverErupted: !!state.vent.eruption,
       lastEruption: state.vent.eruption,
       serverNow: now,

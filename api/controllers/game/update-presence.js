@@ -1,3 +1,5 @@
+var chatWarned = false;
+
 module.exports = {
 
 
@@ -10,7 +12,9 @@ module.exports = {
   extendedDescription:
 `The game calls this a couple of times a second while you play.  Each squid has one Presence row
 that gets overwritten (it's a live picture, not history), so other players, on any app process,
-can see your squid swimming around in the same room as theirs.`,
+can see your squid swimming around in the same room as theirs.  The response also carries what
+other squids in the room said out loud in the last 12 seconds (see say), so the game can show it
+above their heads.`,
 
 
   inputs: {
@@ -32,7 +36,7 @@ can see your squid swimming around in the same room as theirs.`,
   exits: {
 
     success: {
-      outputDescription: '`{ others: [{ squidName, x, y, yaw, pitch, glow, hidden, flash, dirt, grime, age }], serverNow }`: the other squids in the same room, seen in the last 10 seconds.'
+      outputDescription: '`{ others: [{ squidName, x, y, yaw, pitch, glow, hidden, flash, dirt, grime, age }], chat: [{ squidName, text, at }], serverNow }`: the other squids in the same room, seen in the last 10 seconds, and what other squids said out loud in this room in the last 12 seconds (oldest first; see say).  `at` is epoch ms, so the game can skip ones it has already shown.'
     },
 
     noSave: {
@@ -83,7 +87,15 @@ can see your squid swimming around in the same room as theirs.`,
 
     var rows = await Presence.find({ room, seenAt: { '>=': now - 10000 }, squidName: { '!=': squidName } });
     var others = rows.map((p) => ({ squidName: p.squidName, x: p.x, y: p.y, yaw: p.yaw, pitch: p.pitch, glow: p.glow, hidden: p.hidden, flash: p.flash, dirt: p.dirt || 0, grime: p.grime || '', age: now - p.seenAt }));
-    return { others, serverNow: now };
+
+    // What other squids here have said lately (shown above their heads).
+    var said = await ChatMessage.find({ room, at: { '>=': now - 12000 }, squidName: { '!=': squidName } }).sort([{ at: 'ASC' }, { id: 'ASC' }]).limit(50).tolerate((err) => {
+      if (!chatWarned) { chatWarned = true; sails.log.warn('game/update-presence: could not read chat (has the `chatmessage` table been created?):', err.message); }
+      return [];
+    });
+    var chat = said.map((m) => ({ squidName: m.squidName, text: m.text, at: m.at }));
+
+    return { others, chat, serverNow: now };
 
   }
 

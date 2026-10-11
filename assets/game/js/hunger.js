@@ -58,7 +58,7 @@
       this.level = before - F.feed;
       if (SO.buddy) { SO.buddy.onEat(a); }
       const lines = a.kind === 'minnow' ? ['Got it. It’s still moving a little.', 'Crunchy. Then soft.', 'Sorry, fish.'] : a.kind === 'krill' ? ['Krill. A mouthful of tiny legs.', 'Mm. Krill.'] : ['A shrimp. Shell and all.', 'Snap. Gone.'];
-      if (before > 0.35 && Math.random() < 0.7) { SO.ui.thought(lines[Math.floor(Math.random() * lines.length)]); }
+      if (!SO.save.data.flags.ateOnce && before > 0.35) { SO.ui.thought(lines[Math.floor(Math.random() * lines.length)]); }
       if (!SO.save.data.flags.ateOnce) { SO.save.flag('ateOnce'); }
       SO.save.touch();
       setTimeout(() => E.removeActor(a.id), 60);

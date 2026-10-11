@@ -91,9 +91,10 @@
       // Say something, now and then (not every time, and never over something more important).
       const k = KINDS[p.sk];
       const last = this.said[p.sk] || -99;
-      if (k && E.t - last > 40 && !SO.ui.talking) {
+      const first = SO.save.data && !SO.save.data.flags.smelled;
+      const worthSaying = first || ['pearl', 'home', 'food', 'squid', 'whale'].includes(p.sk);
+      if (k && worthSaying && E.t - last > 120 && !SO.ui.talking) {
         this.said[p.sk] = E.t;
-        const first = SO.save.data && !SO.save.data.flags.smelled;
         if (first) { SO.save.flag('smelled'); }
         SO.ui.thought(first ? 'Wait. I can smell that. ' + k.lines[0] : k.lines[Math.floor(Math.random() * k.lines.length)]);
       }

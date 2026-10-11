@@ -529,6 +529,7 @@
 
   SO.actorTypes.oddity = {
     r: 60, touch: true,
+    talk: true,// quiet unless you choose it: click it (or its picture), and the squid goes and looks
     init(a, room) { const K = KINDS[a.kind]; a.r = K.r || 60; a.touch = K.touch !== false; if (K.init) { K.init(a, room); } },
     update(a, dt, room) { const K = KINDS[a.kind]; if (K.update) { K.update(a, dt, room); } },
     draw(ctx, a, room, t) { KINDS[a.kind].draw(ctx, a, room, t); },
@@ -596,7 +597,7 @@
       room.actors.forEach((a) => {
         if (a.kind === 'spiral' && U.dist(E.squid.x, E.squid.y, a.x, a.y) < 700 && this.buf.join('') === a.seq.join('')) {
           a.lit = 1; this.buf = [];
-          [76, 81, 86].forEach((n, i) => AU.bell(AU.NOTE(n), { when: i * 0.15, gain: 0.05, dur: 3 }));
+          [76, 81, 86].forEach((n, i) => AU.marimba(AU.NOTE(n), { when: i * 0.15, gain: 0.06, dur: 2 }));
         }
       });
       // Anything else that hears single notes (see the life in actors.js).

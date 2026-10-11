@@ -23,7 +23,7 @@ save is returned unchanged.`,
       description: 'Whether to begin a new playthrough (only matters if a save already exists).'
     },
 
-    timeZone: { type: 'string', defaultsTo: '', maxLength: 64, description: 'The browser\'s IANA time zone (e.g. "America/Chicago"), used to tell roughly where the player is.' },
+    timeZone: { type: 'string', defaultsTo: '', maxLength: 64, description: 'The browser\'s IANA time zone (e.g. "America/Chicago"), used for the local time of day, and as a fallback for where the player is (the place normally comes from an offline, city-level IP lookup; see get-squids).' },
     language: { type: 'string', defaultsTo: '', maxLength: 35, description: 'The browser\'s language, e.g. "en-US".' },
     touch: { type: 'boolean', defaultsTo: false, description: 'Whether the device has a touch screen.' },
 
@@ -45,7 +45,7 @@ save is returned unchanged.`,
     var crypto = require('crypto');
     var now = Date.now();
 
-    var client = _.omit(sails.helpers.world.describeClient.with({ userAgent: this.req.get('user-agent') || '', timeZone, language, touch }), (v, k) => !v && k !== 'userAgent');
+    var client = sails.helpers.world.describeRequest.with({ req: this.req, timeZone, language, touch });
 
     var token = this.req.session.saveToken;
     var save = token ? await Save.findOne({ token }) : undefined;

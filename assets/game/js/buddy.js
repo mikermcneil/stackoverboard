@@ -27,7 +27,7 @@
   };
 
   SO.actorTypes.buddy = {
-    r: 46, touch: true,
+    r: 46, touch: true, talk: true,
     init(a) { a.vx = 0; a.vy = 0; a.white = a.white || 0; a.echo = []; a.mood = 0; },
     update(a, dt, room) {
       const sq = E.squid, b = st();
@@ -116,6 +116,7 @@
       b.met = true;
       AU().bubbles && AU().bubbles(8, 0.6);
       me('Hold still. There. You’re out.');
+      if (SO.fp && SO.fp.SCENES['bead-meet']) { setTimeout(() => SO.fp.play('bead-meet'), 1200); }
       setTimeout(() => me('A glass squid. I can see right through it. Its heart, its little stomach. I’ll call you Bead.'), 2500);
       this.closer(1.5);
       a.stay = 90;
@@ -175,7 +176,7 @@
       const sq = E.squid, dir = Math.random() < 0.5 ? 1 : -1;
       const f = E.findFree(sq.x + dir * 500, sq.y - 100);
       const a = E.addActor(room, { id: 'buddy', type: 'buddy', x: f[0], y: f[1], dir: -dir, home: {}, doomed: !!opts.doomed });
-      if (!opts.doomed && Math.random() < 0.5) { setTimeout(() => me(['Bead! There you are.', 'Hi, Bead.', 'Oh, it’s Bead.'][Math.floor(Math.random() * 3)]), 800); }
+      if (!opts.doomed && Math.random() < 0.2) { setTimeout(() => me(['Bead! There you are.', 'Hi, Bead.', 'Oh, it’s Bead.'][Math.floor(Math.random() * 3)]), 800); }
       if (opts.doomed) { a.stay = 9999; setTimeout(() => { if (E.actor('buddy') === a && !a.dead) { this.startCooking(a); } }, 22000); }
       return a;
     },

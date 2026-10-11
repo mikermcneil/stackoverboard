@@ -64,7 +64,8 @@ module.exports = {
     browser: { type: 'string', defaultsTo: '', description: 'The browser they were last using, e.g. "Safari".' },
     userAgent: { type: 'string', defaultsTo: '', description: 'Their browser\'s full user agent (first 255 characters).' },
     timeZone: { type: 'string', defaultsTo: '', description: 'Their browser\'s IANA time zone, e.g. "America/Chicago".' },
-    place: { type: 'string', defaultsTo: '', description: 'Roughly where they\'re playing from, from their time zone, e.g. "Chicago, America".' },
+    place: { type: 'string', defaultsTo: '', description: 'Roughly (city level) where they\'re playing from, e.g. "Austin, Texas, US" from an offline IP lookup, or "Chicago, America" when only their time zone is known.  See `placeSource`.  Never their IP address or exact location.' },
+    placeSource: { type: 'string', defaultsTo: '', isIn: ['', 'ip', 'cloudflare', 'timezone'], description: 'Where `place` came from: "ip" (offline city-level IP lookup), "cloudflare" (Cloudflare\'s location headers), "timezone" (guessed from the browser\'s time zone, less accurate), or "" (not known yet).' },
     language: { type: 'string', defaultsTo: '', description: 'Their browser\'s language, e.g. "en-US".' },
 
     lastSeenAt: {

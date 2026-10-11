@@ -48,6 +48,7 @@
       }
       setInterval(() => this.rememberPosition(), 8000);
       SO.others.start();
+      if (SO.age) { SO.age.load(); setInterval(() => { if (!document.hidden) { SO.age.load(); } }, 10 * 60 * 1000); }
       if (SO.rumble) { SO.rumble.start(); }
     },
 
@@ -55,6 +56,9 @@
     async beginPreface() {
       if (!save.enabled) { await save.start(false); }
       if (!save.data) { save.data = save.defaults(); }
+      // A name chosen on the first page.
+      const picked = (document.getElementById('name-pick') || {}).value;
+      if (picked && picked.trim() && save.enabled) { save.rename(picked.trim()); }
       save.data.chapter = 0;
       AU.setMuted(save.data.settings.muted);
       E.overlay = null;

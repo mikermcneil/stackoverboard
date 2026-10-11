@@ -113,6 +113,7 @@
       // The session lost track of our squid: saving again picks it back up.
       if (r.status === 404) { SO.save.flush(); return; }
       if (!r.ok || !r.body || E.roomKey !== room || !E.room) { return; }
+      if (SO.chat && r.body.chat) { SO.chat.receive(r.body.chat); }
       const seen = {};
       (r.body.others || []).forEach((p) => {
         const id = 'other:' + p.squidName;

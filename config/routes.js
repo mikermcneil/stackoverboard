@@ -77,6 +77,9 @@ module.exports.routes = {
   'POST  /api/v1/game/wake-vent':                     { action: 'game/wake-vent' },
   'POST  /api/v1/game/record-ending':                 { action: 'game/record-ending' },
   'PUT   /api/v1/game/update-presence':               { action: 'game/update-presence' },
+  'PUT   /api/v1/game/rename-squid':                  { action: 'game/rename-squid' },
+  'POST  /api/v1/game/say':                           { action: 'game/say' },
+  'GET   /api/v1/game/get-local-conditions':          { action: 'game/get-local-conditions' },
 
 
   //  ╦ ╦╔═╗╦═╗╦  ╔╦╗
@@ -93,5 +96,8 @@ module.exports.routes = {
   'GET   /api/v1/world/get-skin-words':               { action: 'world/get-skin-words' },
   'GET   /api/v1/world/get-lore':                     { action: 'world/get-lore' },
   'GET   /api/v1/world/get-world-facts':              { action: 'world/get-world-facts' },
+  'GET   /api/v1/world/get-chat':                     { action: 'world/get-chat' },
+  'GET   /api/v1/world/get-world-age':                { action: 'world/get-world-age' },
+  'GET   /api/v1/world/get-west-path':                { action: 'world/get-west-path' },
 
 };

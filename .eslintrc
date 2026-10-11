@@ -37,16 +37,21 @@
     "Promise": true,
     "sails": true,
     "_": true,
+    "Map": true,
+    "fetch": true,
+    "AbortSignal": true,
 
     // Models:
     "User": true,
     "Save": true,
     "Presence": true,
+    "NameClaim": true,
     "WorldEvent": true,
     "WorldTile": true,
     "Species": true,
     "NativeSpecies": true,
-    "WorldFact": true
+    "WorldFact": true,
+    "ChatMessage": true
     
     // …and any others.
     // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -

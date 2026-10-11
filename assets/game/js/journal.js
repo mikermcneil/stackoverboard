@@ -13,13 +13,13 @@
   const save = SO.save;
 
   const TABS = [
+    ['map', 'The sea'],
     ['now', 'Now'],
     ['creature', 'Living things'],
     ['plant', 'Growing things'],
     ['item', 'Things'],
     ['skin', 'Skin-words'],
     ['memory', 'Memories'],
-    ['map', 'The sea'],
     ['world', 'The world'],
   ];
 
@@ -59,7 +59,7 @@
 
   SO.journal = {
     open: false,
-    tab: 'now',
+    tab: 'map',
 
     init() {
       this.el = document.getElementById('journal');
@@ -72,6 +72,22 @@
         this.tabsEl.appendChild(b);
       });
       this.el.querySelector('.j-close').addEventListener('click', () => this.close());
+      // Your name, which you can change right here.
+      const row = document.createElement('div'); row.className = 'j-namerow';
+      this.nameInput = document.createElement('input'); this.nameInput.maxLength = 24; this.nameInput.spellcheck = false; this.nameInput.setAttribute('aria-label', 'Your name');
+      this.nameMsg = document.createElement('span'); this.nameMsg.className = 'j-namemsg';
+      row.appendChild(this.nameInput); row.appendChild(this.nameMsg);
+      this.el.querySelector('.j-head').insertAdjacentElement('afterend', row);
+      const commit = async () => {
+        const v = this.nameInput.value.trim();
+        if (!v || v === save.squidName) { this.nameInput.value = save.squidName; return; }
+        this.nameMsg.textContent = '…';
+        const r = await save.rename(v);
+        this.nameMsg.textContent = r.ok ? 'That’s me now.' : r.why === 'taken' ? 'Another squid has that name.' : r.why === 'invalid' ? '2 to 24 letters, please.' : 'Can’t reach the sea right now.';
+        if (!r.ok) { this.nameInput.value = v; } else { this.nameInput.value = r.squidName; SO.audio.page(); }
+      };
+      this.nameInput.addEventListener('keydown', (e) => { e.stopPropagation(); if (e.key === 'Enter') { this.nameInput.blur(); } });
+      this.nameInput.addEventListener('blur', commit);
       this.frame = this.el.querySelector('.j-frame');
       this.el.addEventListener('pointerdown', (e) => e.stopPropagation());
       this._loop();
@@ -82,6 +98,7 @@
       if (!save.data) { return; }
       this.open = true;
       this.el.classList.add('show');
+      if (this.nameInput) { this.nameInput.value = save.squidName || ''; this.nameMsg.textContent = 'Your name'; }
       SO.E.lock();
       SO.audio.page();
       this.render();
@@ -164,45 +181,88 @@
       const wrap = div('j-map');
       const cv = document.createElement('canvas'); cv.width = 760; cv.height = 620; cv.className = 'j-mapcanvas';
       wrap.appendChild(cv);
-      const legend = p('j-small', 'Bright: places I’ve been. Faint: dark places other squids found first.');
-      wrap.appendChild(legend);
+      wrap.appendChild(p('j-small', 'Flashing: where I am. Bright: places I’ve been. Faint: dark places other squids found first. Dots: other squids, right now.'));
+      const who = p('j-small', '');
+      wrap.appendChild(who);
       this.body.appendChild(wrap);
-      const r = await SO.api.get('/api/v1/world/get-map');
+      const [r, on] = await Promise.all([SO.api.get('/api/v1/world/get-map'), SO.api.get('/api/v1/world/get-online')]);
       const tiles = (r.ok && r.body && r.body.tiles) || [];
       const top = (r.ok && r.body && r.body.topDiscoverers) || [];
+      const online = ((on.ok && on.body && on.body.online) || []).filter((o) => o.squidName !== save.squidName);
       const ctx = cv.getContext('2d');
-      ctx.clearRect(0, 0, cv.width, cv.height);
       const cell = 34;
       const px = (x) => 380 + x * cell * 1.2, py = (y) => 30 + y * 36;
+      // Where any room is on this map.
+      const tileAt = {};
+      tiles.forEach((t) => { tileAt[t.key] = t; });
+      const where = (key) => {
+        if (!key) { return null; }
+        const d = SO.rooms.defs[key];
+        if (d && d.map) { const [x, y] = d.map; return [px(x), py(y >= 12 ? y - 0.5 : y)]; }
+        const t = tileAt[key];
+        if (t) { return [px(t.x), py(t.y)]; }
+        const m = /^below:(-?\d+),(-?\d+)$/.exec(key);// a tile nobody's mapped yet
+        return m ? [px(+m[1]), py(+m[2])] : null;
+      };
+      if (online.length) { who.textContent = 'Out there now: ' + online.slice(0, 6).map((o) => o.squidName + (o.place && o.place !== 'unknown' ? ' (' + o.place + ')' : '')).join(', ') + (online.length > 6 ? ', and more' : '') + '.'; }
       const visited = save.data.visited;
-      ctx.font = '11px Quicksand, sans-serif';
-      Object.values(SO.rooms.defs).forEach((d) => {
-        if (!d.map) { return; }
-        const [x, y] = d.map;
-        const yy = y >= 12 ? y - 0.5 : y;
-        const been = visited[d.key];
-        ctx.fillStyle = been ? 'rgba(191,248,234,0.9)' : 'rgba(191,248,234,0.06)';
-        ctx.strokeStyle = been ? 'rgba(191,248,234,1)' : 'rgba(191,248,234,0.12)';
-        ctx.beginPath(); ctx.roundRect ? ctx.roundRect(px(x) - 14, py(yy) - 12, 28, 24, 6) : ctx.rect(px(x) - 14, py(yy) - 12, 28, 24);
-        ctx.fill(); ctx.stroke();
-      });
-      tiles.forEach((t) => {
-        const been = visited[t.key];
-        ctx.fillStyle = been ? 'rgba(199,155,255,0.9)' : 'rgba(199,155,255,0.28)';
-        ctx.fillRect(px(t.x) - 12, py(t.y) - 12, 24, 24);
-        ctx.strokeStyle = 'rgba(199,155,255,0.6)';
-        const o = t.openings || {};
-        ctx.beginPath();
-        if (o.right) { ctx.moveTo(px(t.x) + 12, py(t.y)); ctx.lineTo(px(t.x) + 28, py(t.y)); }
-        if (o.down) { ctx.moveTo(px(t.x), py(t.y) + 12); ctx.lineTo(px(t.x), py(t.y) + 24); }
-        ctx.stroke();
-      });
-      ctx.fillStyle = 'rgba(255,255,255,0.35)';
-      ctx.fillText('the surface', 12, py(0) + 4);
-      ctx.fillText('the Below', 12, py(9) + 4);
-      ctx.fillText('the Undershine', 12, py(12.5) + 4);
+      const draw = (t) => {
+        ctx.clearRect(0, 0, cv.width, cv.height);
+        ctx.font = '11px Inter, sans-serif';
+        Object.values(SO.rooms.defs).forEach((d) => {
+          if (!d.map) { return; }
+          const [x, y] = d.map;
+          const yy = y >= 12 ? y - 0.5 : y;
+          const been = visited[d.key];
+          ctx.fillStyle = been ? 'rgba(191,248,234,0.9)' : 'rgba(191,248,234,0.06)';
+          ctx.strokeStyle = been ? 'rgba(191,248,234,1)' : 'rgba(191,248,234,0.12)';
+          ctx.beginPath(); if (ctx.roundRect) { ctx.roundRect(px(x) - 14, py(yy) - 12, 28, 24, 6); } else { ctx.rect(px(x) - 14, py(yy) - 12, 28, 24); }
+          ctx.fill(); ctx.stroke();
+        });
+        tiles.forEach((tl) => {
+          const been = visited[tl.key];
+          ctx.fillStyle = been ? 'rgba(199,155,255,0.9)' : 'rgba(199,155,255,0.28)';
+          ctx.fillRect(px(tl.x) - 12, py(tl.y) - 12, 24, 24);
+          ctx.strokeStyle = 'rgba(199,155,255,0.6)';
+          const o = tl.openings || {};
+          ctx.beginPath();
+          if (o.right) { ctx.moveTo(px(tl.x) + 12, py(tl.y)); ctx.lineTo(px(tl.x) + 28, py(tl.y)); }
+          if (o.down) { ctx.moveTo(px(tl.x), py(tl.y) + 12); ctx.lineTo(px(tl.x), py(tl.y) + 24); }
+          ctx.stroke();
+        });
+        ctx.fillStyle = 'rgba(255,255,255,0.35)';
+        ctx.fillText('the surface', 12, py(0) + 4);
+        ctx.fillText('the Below', 12, py(9) + 4);
+        ctx.fillText('the Undershine', 12, py(12.5) + 4);
+        // Other squids: small pale dots in the places they are (a few to a place, side by side).
+        const per = {};
+        online.forEach((o) => {
+          const pos = where(o.room);
+          if (!pos) { return; }
+          const n = (per[o.room] = (per[o.room] || 0) + 1) - 1;
+          const ox = (n % 3 - 1) * 8, oy = Math.floor(n / 3) * 8 - 4;
+          const pulse = 0.65 + 0.35 * Math.sin(t * 2 + n);
+          ctx.fillStyle = `rgba(230,236,245,${pulse})`; ctx.strokeStyle = 'rgba(10,20,30,0.8)'; ctx.lineWidth = 1.5;
+          ctx.beginPath(); ctx.arc(pos[0] + ox, pos[1] + oy, 4, 0, U.TAU); ctx.fill(); ctx.stroke();
+        });
+        // You: your place flashes.
+        const me = where(SO.E.roomKey);
+        if (me) {
+          const k = 0.5 + 0.5 * Math.sin(t * 6);
+          ctx.strokeStyle = `rgba(255,154,118,${0.4 + 0.6 * k})`; ctx.lineWidth = 3;
+          ctx.beginPath(); if (ctx.roundRect) { ctx.roundRect(me[0] - 18, me[1] - 16, 36, 32, 8); } else { ctx.rect(me[0] - 18, me[1] - 16, 36, 32); } ctx.stroke();
+          ctx.fillStyle = `rgba(255,154,118,${0.25 + 0.5 * k})`;
+          ctx.beginPath(); ctx.arc(me[0], me[1], 5, 0, U.TAU); ctx.fill();
+        }
+      };
+      const loop = () => {
+        if (!this.open || this.tab !== 'map' || !cv.isConnected) { return; }
+        draw(U.now() / 1000);
+        requestAnimationFrame(loop);
+      };
+      loop();
       if (top.length) {
-        wrap.appendChild(p('j-small', 'Most of the dark was found by: ' + top.slice(0, 3).map((t) => `${t.squidName} (${t.count})`).join(', ')));
+        wrap.appendChild(p('j-small', 'Most of the dark was found by: ' + top.slice(0, 3).map((x) => `${x.squidName} (${x.count})`).join(', ')));
       }
     },
 
@@ -219,6 +279,10 @@
       lines.push(`${t.return || 0} went home up the thread · ${t.lantern || 0} stayed below · ${t.gift || 0} gave their light away · ${t.song || 0} sang.`);
       lines.push(`${o.tilesDiscovered} of ${o.tilesTotal} dark places in the Below have been found.`);
       lines.push(`The Forge has erupted ${o.eruptionsTotal} time${o.eruptionsTotal === 1 ? '' : 's'}. Right now it is ${st.vent ? st.vent.phase : 'quiet'}${st.vent && st.vent.wokenBy && st.vent.phase !== 'dormant' ? ' (' + st.vent.wokenBy + ' woke it)' : ''}.`);
+      if (SO.age && SO.age.bornAt) {// how old the sea is, and what it's doing
+        const n = SO.age.now();
+        if (n.stage) { lines.push(`The sea is in ${n.stage.name.toLowerCase()}${n.endsAt ? ', for another ' + inTime(n.endsAt).replace(/^in /, '') : ''}. ${n.stage.during}`); }
+      }
       if (st.shoal) { lines.push(st.shoal.passing ? 'The Shoal is passing over the reef. Right now.' : `The Shoal will pass the reef again ${inTime(st.shoal.nextAt)}.`); }
       if (st.seaDay) { lines.push(`Up top, it is ${st.seaDay.name}.`); }
       const sc = o.speciesCount || {};

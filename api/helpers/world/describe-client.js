@@ -9,7 +9,8 @@ module.exports = {
 
   extendedDescription:
 `The place comes from the browser's IANA time zone (e.g. "America/Chicago" becomes "Chicago,
-America"), which is about city-level.  No IP addresses are looked up or stored.`,
+America"), which is only a rough guess (one zone covers many cities).  This helper never looks at IP
+addresses; describe-request combines it with locate-client, which does a better, city-level lookup.`,
 
 
   sync: true,

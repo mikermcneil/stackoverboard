@@ -29,7 +29,7 @@ and logs a "chapter-reached" world event for each newly reached chapter.`,
       description: 'The full game state (a dictionary, at most 100,000 characters as JSON).  `data.chapter` (0-8) and `data.location` are read by the server.'
     },
 
-    timeZone: { type: 'string', defaultsTo: '', maxLength: 64, description: 'The browser\'s IANA time zone (e.g. "America/Chicago"), used to tell roughly where the player is.' },
+    timeZone: { type: 'string', defaultsTo: '', maxLength: 64, description: 'The browser\'s IANA time zone (e.g. "America/Chicago"), used for the local time of day, and as a fallback for where the player is (the place normally comes from an offline, city-level IP lookup; see get-squids).' },
     language: { type: 'string', defaultsTo: '', maxLength: 35, description: 'The browser\'s language, e.g. "en-US".' },
     touch: { type: 'boolean', defaultsTo: false, description: 'Whether the device has a touch screen.' },
 
@@ -93,7 +93,7 @@ and logs a "chapter-reached" world event for each newly reached chapter.`,
     reported = Number.isFinite(reported) ? Math.max(0, Math.min(8, Math.floor(reported))) : 0;
     var chapter = Math.max(save.chapter, reported);
 
-    var updated = await sails.helpers.world.swapSave.with({ token, revision, values: Object.assign({ data, chapter, lastSeenAt: now }, _.omit(sails.helpers.world.describeClient.with({ userAgent: this.req.get('user-agent') || '', timeZone, language, touch }), (v, k) => !v && k !== 'userAgent')) });
+    var updated = await sails.helpers.world.swapSave.with({ token, revision, values: Object.assign({ data, chapter, lastSeenAt: now }, sails.helpers.world.describeRequest.with({ req: this.req, timeZone, language, touch })) });
     if (!updated) {
       let current = await Save.findOne({ token });
       if (!current) {

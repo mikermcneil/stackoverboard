@@ -25,18 +25,19 @@ Topics:
 - chapter: chapters 0 to 8, each with a summary and how to progress.
 - ending: the four endings and how to reach each (spoilers).
 - memory: the three pieces of glass from home and where they are.
-- region / place: every region, and every room in the sea (key, name, region, exits, depth,
+- region / place: the way west ("place-west-surface", the long procedural surface, and one fact per
+  landmark, "place-west-<key>"), every region, and every room in the sea (key, name, region, exits, depth,
   darkness, who lives there, oddities), read from the game's own room list.  Room keys match the
   ones used elsewhere (e.g. get-species \`places\`, get-online).
 - skin-word: the six color words (summary; get-skin-words has the full detail).
 - mechanic: how things work (smell, dirt, glow wearing off, the palindrome rule, air time and the
   splash, rumbles, other squids and presence, pearls, procedural species, the Below maze, the volcano,
-  the sea-day clock, the Shoal, golden bubbles, saving and playthroughs), plus planned ones (blood,
-  fish scales, hunger).
+  the sea-day clock, the Shoal, golden bubbles, saving and playthroughs, blood, fish scales, hunger,
+  chat, the real local weather and time of day, night life, and the world getting older).
 - creature / plant / item: the native real-world species (same keys as get-species, prefixed by kind,
-  e.g. "creature-whale"), plus planned creatures (water elementals, birds, sea spiders, distant
-  crustaceans).
-- character: recurring characters (the planned buddy).
+  e.g. "creature-whale"), plus water elementals, birds, sea spiders, lungfish, light-drinkers, the
+  slow hunter, and distant crustaceans (planned).
+- character: recurring characters (the buddy, Bead).
 - oddity: small strange things around the sea that don't matter to the story.
 - seafloor: dead things lying on the bottom, shown without comment.
 - behavior: what creatures do when they have nothing to do.
