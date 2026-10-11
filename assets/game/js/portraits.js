@@ -1222,13 +1222,13 @@
       g.fillStyle = gr; g.fillRect(0, 0, 256, 256);
       bgCache.vig = cv;
     }
-    c.save(); c.globalAlpha = who === 'swan' ? 0.45 : 1;
+    c.save(); c.globalAlpha = who === 'swan' || SO.portraits.AIR[who] ? 0.45 : 1;
     c.drawImage(bgCache.vig, -100, -100, 200, 200);
     c.restore();
   }
   // Marine snow drifting past.
   function snow(c, t, who) {
-    if (who === 'swan' || who === 'gold') { return; }// (the swans live in the air)
+    if (who === 'swan' || who === 'gold' || SO.portraits.AIR[who]) { return; }// (the swans live in the air, and so do the birds)
     c.fillStyle = 'rgba(220,235,240,0.32)';
     for (let i = 0; i < DOTS.snow.length; i++) {
       const d = DOTS.snow[i];
@@ -1244,6 +1244,9 @@
   SO.portraits = {
     MOODS,
     FACES,
+    BG,// (other files can add speakers: a face, its backdrop, its blink seed, and whether it lives in the air)
+    SEEDS,
+    AIR: {},
     states: {},
     infer,
     LINES,

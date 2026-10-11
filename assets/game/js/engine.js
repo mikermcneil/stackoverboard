@@ -641,6 +641,7 @@
   // A pattern, backwards: takes back what it did (if that's still yours to take back).
   E.undoPattern = function (name) {
     const sq = this.squid;
+    if (SO.main && SO.main.showSkinSeq && PATTERNS[name]) { SO.main.showSkinSeq({ colors: PATTERNS[name].slice().reverse(), name: 'Undone' }); }
     this.lastPatternAt = U.now();
     this.ring(sq.x, sq.y, '#9aa7b8', 300, 1.1);
     [83, 81, 78, 74].forEach((n, i) => AU.marimba(AU.NOTE(n), { when: i * 0.07, gain: 0.04, dur: 1.2 }));// a marimba run, falling
@@ -657,6 +658,7 @@
 
   E.castPattern = function (name) {
     const sq = this.squid;
+    if (SO.main && SO.main.showSkinSeq && PATTERNS[name]) { const W = SO.story.SKIN_WORDS && SO.story.SKIN_WORDS[name]; SO.main.showSkinSeq({ colors: PATTERNS[name], name: W ? W.name : name }); }
     this.lastPatternAt = U.now();
     const hex = { glow: '#ffd36a', open: '#e8656d', calm: '#bfeaf2', cloud: '#2b3b52', call: '#7fd8ff', wake: '#ff9a4a' }[name];
     this.ring(sq.x, sq.y, hex, name === 'cloud' ? 260 : 420);

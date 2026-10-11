@@ -494,6 +494,7 @@
       draw(ctx, a, room, t) { A.anenema(ctx, a.x, a.y, a.s || 1, t, { fill: a.fill, jet: a.jet, ang: a.ang, seed: a.seed }); },
       onTouch(a) { if (a.fill > 0.6) { KINDS.anenema.blast(a); } },
       onSkin(a) { if (a.fill > 0.95) { KINDS.anenema.blast(a); } },
+      onPattern(a) { if (a.fill > 0.95) { KINDS.anenema.blast(a); } },
       hearRange: 520,
       blast(a) {
         const s = SQ(), sc = a.s || 1, hx = a.x + 10 * sc, hy = a.y - 36 * sc;
@@ -516,8 +517,8 @@
         a.dir = Math.cos(a.t * 0.05 + a.seed) >= 0 ? 1 : -1;
         cool(a, 'stingT', dt);
         // the first good look: a dragon! then, a moment later, what it really is
-        if (a._seen && !a._slugT && !SO.story.has('saw:blue-dragon')) { a._slugT = E.t + 3.2; }
-        if (a._slugT && E.t > a._slugT && !SO.story.has('saw:blue-dragon')) { SO.story.flag('saw:blue-dragon'); say('blue-dragon', 'slug'); }
+        // (queued right behind the first thought, so nothing else gets between them)
+        if (a._seen && !SO.story.has('saw:blue-dragon')) { SO.story.flag('saw:blue-dragon'); say('blue-dragon', 'slug'); }
         if (near(a, 60) && !a.stingT) { a.stingT = 2.5; shove(a.x, a.y, 280); hurt(0.15); sting(); say('blue-dragon', 'sting'); }
       },
       draw(ctx, a, room, t) { A.blueDragon(ctx, a.x, a.y, a.s || 1.4, t, { dir: a.dir }); },

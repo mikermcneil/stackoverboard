@@ -412,6 +412,12 @@
       const lines = [];
       const been = L ? L.LEVELS.filter((l) => L.been(l.key)) : [];
       lines.push('Before the sea: the island tops, where I hatched. Then cloud, then rain, then the water. I remember falling through all of it.');
+      // The way back up through the sky, as far as I know it (so it's never a secret for long).
+      const B = (k) => L && L.been(k);
+      if (!B('rain')) { lines.push('Where it rains, west of the golden mat, the rain comes down off the low island so thick I might be able to swim up it. The waterfall’s spray, far to the east, too.'); }
+      else if (!B('clouds')) { lines.push('I climbed up into the rain. It goes higher, all the way to the cloud, if I keep swimming up.'); }
+      else if (!B('keels')) { lines.push('Above the cloud, under the island where it rains, there’s wind pouring off the rock. It pushes me back down. For now.'); }
+      if (!B('highwater') && Object.keys(d.visited).some((k) => /^west:/.test(k))) { lines.push('Far out west, the land rises out of the sea. Streams and lakes, higher and higher, and waterfalls to climb between them.'); }
       if (been.length) {
         lines.push(been.length === 1 ? 'I\u2019ve been to one level of the world so far.' : `I\u2019ve been to ${been.length} levels of the world, from ${been[0].name.replace(/^The /, 'the ')} down to ${been[been.length - 1].name.replace(/^The /, 'the ')}.`);
       }
@@ -453,7 +459,7 @@
       const t = o.endingsTally || {};
       lines.push(`${t.return || 0} went home up the thread · ${t.lantern || 0} stayed below · ${t.gift || 0} gave their light away · ${t.song || 0} sang.`);
       lines.push(`${o.tilesDiscovered} of ${o.tilesTotal} dark places in the Below have been found.`);
-      lines.push(`The Forge has erupted ${o.eruptionsTotal} time${o.eruptionsTotal === 1 ? '' : 's'}. Right now it is ${st.vent ? st.vent.phase : 'quiet'}${st.vent && st.vent.wokenBy && st.vent.phase !== 'dormant' ? ' (' + st.vent.wokenBy + ' woke it)' : ''}.`);
+      lines.push(`The volcano has erupted ${o.eruptionsTotal} time${o.eruptionsTotal === 1 ? '' : 's'}. Right now it is ${st.vent ? st.vent.phase : 'quiet'}${st.vent && st.vent.wokenBy && st.vent.phase !== 'dormant' ? ' (' + st.vent.wokenBy + ' woke it)' : ''}.`);
       if (SO.age && SO.age.bornAt) {// how old the sea is, and what it's doing
         const n = SO.age.now();
         if (n.stage) { lines.push(`The sea is in ${n.stage.name.toLowerCase()}${n.endsAt ? ', for another ' + inTime(n.endsAt).replace(/^in /, '') : ''}. ${n.stage.during}`); }

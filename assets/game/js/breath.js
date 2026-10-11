@@ -91,6 +91,7 @@
 
     async passOut() {
       const sq = E.squid;
+      if (SO.self) { SO.self.bump('blackouts'); }
       this.air = AIR;
       if (hud) { hud.style.opacity = '0'; }
       E.lock();

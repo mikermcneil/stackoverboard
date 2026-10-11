@@ -89,12 +89,13 @@
     // like learning a skin-word or naming someone: it can't be clicked past before it's read.)
     thought(text, opts) { return this.say(text, Object.assign({ who: 'squid' }, opts || {})); },
     // Lines that matter: anything a creature says (it's usually teaching), and lines marked key.
-    isKey(item) { return !!(item && ((item.opts && item.opts.key) || !['squid', 'world', 'gold', 'other'].includes(item.who))); },
+    // (opts.casual: small talk, like a bird passing the time of day. It matters less.)
+    isKey(item) { return !!(item && ((item.opts && item.opts.key) || (!['squid', 'world', 'gold', 'other'].includes(item.who) && !(item.opts && item.opts.casual)))); },
     // Something important is going on: a scene, or a creature talking (teaching a skin-word, say).
     get important() {
       const E = SO.E;
       if ((E && E.locked && !E._going) || (SO.fp && SO.fp.playing)) { return true; }
-      const creature = (q) => q && q.who && !['squid', 'world', 'gold', 'other'].includes(q.who);
+      const creature = (q) => q && q.who && !(q.opts && q.opts.casual) && !['squid', 'world', 'gold', 'other'].includes(q.who);
       // (and for a little while after a creature has spoken: that's usually 'now you try')
       return creature(this.current) || this.queue.some(creature) || U.now() - (this._creatureAt || -1e9) < 20000 || !!(SO.story && SO.story.rt && SO.story.rt.lesson);
     },
@@ -124,14 +125,14 @@
       this.line$.appendChild(item.shown$); this.line$.appendChild(item.rest$);
       const color = COLORS[item.who] || COLORS.other;
       this.line$.style.color = color;
-      this.speaker = PORTRAITS[item.who] ? item.who : null;
+      this.speaker = PORTRAITS[item.who] || (SO.portraits && SO.portraits.has(item.who)) ? item.who : null;
       this.portrait$.classList.toggle('show', !!this.speaker);
       this.portrait$.style.borderColor = color;
       this.ribbon$.classList.add('show');
       document.body.classList.add('ribbon-up');
       this.line$.classList.remove('in'); void this.line$.offsetWidth; this.line$.classList.add('in');
       item.shownAt = U.now();
-      if (!['squid', 'world', 'gold', 'other'].includes(item.who)) { this._creatureAt = item.shownAt; }
+      if (!['squid', 'world', 'gold', 'other'].includes(item.who) && !item.opts.casual) { this._creatureAt = item.shownAt; }
       item.chars = 0;
       item.fast = false;
       item.revealedAt = 0;

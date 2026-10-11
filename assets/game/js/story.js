@@ -166,6 +166,9 @@
     'smokers': 'Black chimneys, smoking. The water shakes with the heat.',
     'glass-caves': 'Black glass everywhere. When I flash, the walls flash back.',
     'hatchery': 'They’re hatching! Tiny see-through ones, swimming up. Their mothers aren’t moving.',
+    // up in the sky
+    'rain-cloud': 'Inside the cloud. Above me, the bottom of an island. Wind pours down off it.',
+    'cloud-sea': 'The islands are right up there. Home. I can’t get any higher than this. Not from here.',
   };
 
   // Golden bubbles hold true (and silly) facts about Sailsconfs past.
@@ -268,7 +271,7 @@
     learnSkin(name, quiet) {
       const fresh = save.learn(name);
       save.remember('skin:' + name, { kind: 'skin', name: SKIN_WORDS[name].name, line: SKIN_WORDS[name].line, colors: SKIN_WORDS[name].colors });
-      if (fresh && !quiet) { AU.learned(); UI.thought(SKIN_WORDS[name].learn); }
+      if (fresh && !quiet) { AU.learned(); UI.thought(SKIN_WORDS[name].learn, { key: true }); }
       if (!this.has('skinRevealed')) { this.flag('skinRevealed'); }
       SO.main.showSkin(true);
       this.rt.lastProgressAt = E.t;
@@ -434,6 +437,7 @@
     onBreach(room) {
       const n = (this.rt.breaches = (this.rt.breaches || 0) + 1);
       if (n === 1 && this.ch < 6) { UI.thought('Up there! That’s where I fell from. It’s a long way up.'); }
+      else if (n === 2 && !SO.save.data.flags['lvl:rain']) { UI.thought('The air won’t hold me. Rain might, though, if it’s thick enough. Or spray. Anything wet enough to swim in.'); }
       else if (n === 3) { UI.thought('Some squid can fly a little. I can mostly fall.'); }
       const h = ROOMS[room.key];
       if (h && h.breach) { h.breach.call(this, room); }
@@ -636,7 +640,7 @@
         if (k >= 1) {
           c.phase = 'calm'; c.t = 0; c.dur = 5 + Math.random() * 3 + caughtHere * 3;
           if (wh) { wh.alpha = 0; wh.x = -3000; }
-          if (!this.rt.sweptOnce) { this.rt.sweptOnce = true; this.remember('whale'); UI.thought('A sperm whale. They eat squid. Squid like me.'); }
+          if (!this.rt.sweptOnce) { this.rt.sweptOnce = true; this.remember('whale'); UI.thought('A sperm whale. They eat squid. Squid like me.', { key: true }); }
         }
       }
     },
@@ -762,8 +766,9 @@
     }
     E.unlock();
   }
-  // The squid answering someone.
-  const me = (text) => UI.say(text, { who: 'squid' });
+  // The squid answering someone (or saying something that matters: a chapter turning, a lesson
+  // learned). These wait to be read, however fast you click.
+  const me = (text) => UI.say(text, { who: 'squid', key: true });
 
   const ROOMS = {
 
@@ -835,6 +840,16 @@
         }
         return false;
       },
+    },
+
+    // Where the sky can be climbed: the sheet of rain, and the waterfall's spray. Say so, when I'm near.
+    'rain-sea': {
+      enter() { this.rt['climb:rain-sea'] = false; if (!this.has('saw:rain-sea')) { this.flag('saw:rain-sea'); setTimeout(() => { if (E.roomKey === 'rain-sea' && !UI.talking) { UI.thought(PLACE_THOUGHTS['rain-sea']); } }, 900); } },
+      update(room) { climbHint.call(this, room, 'rain', 'The rain’s so thick here I could almost climb it. Straight up, through the sheet.'); },
+    },
+    'spray-zone': {
+      enter() { this.rt['climb:spray-zone'] = false; if (!this.has('saw:spray-zone')) { this.flag('saw:spray-zone'); setTimeout(() => { if (E.roomKey === 'spray-zone' && !UI.talking) { UI.thought(PLACE_THOUGHTS['spray-zone']); } }, 900); } },
+      update(room) { climbHint.call(this, room, 'rain', 'The spray up there is so thick it’s almost water. I bet I could swim up into it.'); },
     },
 
     'cliff-face': {
@@ -1373,6 +1388,18 @@
     if (pick === 1) { this.ending('lantern'); return; }
     await speak(null, ['Then go fast. As fast as you can, straight up.'], who);
     this.rt.asked = false;
+  }
+
+  // Near the climbable wet (a room's first waterRect), the first few times, until I've climbed it.
+  function climbHint(room, level, line) {
+    const r = (room.def.waterRects || [])[0], sq = E.squid;
+    if (!r || E.locked || UI.queue.length > 1 || this.rt['climb:' + room.key] || (SO.save.data.flags['lvl:' + level] && this.has('climbSaid:' + room.key))) { return; }
+    const dx = sq.x < r.x ? r.x - sq.x : sq.x > r.x + r.w ? sq.x - (r.x + r.w) : 0;
+    if (dx < 420 && sq.y < (room.surfaceY || 0) + 320) {
+      this.rt['climb:' + room.key] = true;// (once a visit)
+      this.flag('climbSaid:' + room.key);
+      UI.thought(line, { key: true });
+    }
   }
 
   // ── Chapter 3 finale: the bottom of the trench ──────────────────────────────

@@ -24,7 +24,7 @@
   const U = SO.util;
   const E = SO.E;
 
-  const ZERO = () => ({ playSeconds: 0, roomsEntered: 0, westFarthest: 0, bestAirTime: 0, bestAirHeight: 0, splashes: 0, bellyFlops: 0, eaten: { krill: 0, shrimp: 0, minnow: 0 }, whaleCatches: 0, elementalGrabs: 0, stalkerEscapes: 0, stalkerCatches: 0, bloodSpilled: 0, chats: 0, interactions: 0, answers: 0, patterns: { glow: 0, open: 0, calm: 0, cloud: 0, call: 0, wake: 0 }, undone: 0, spins: 0, beadCloseness: 0, nightSeconds: 0, daySeconds: 0, deepest: 0, nearOthersSeconds: 0 });
+  const ZERO = () => ({ playSeconds: 0, roomsEntered: 0, westFarthest: 0, bestAirTime: 0, bestAirHeight: 0, splashes: 0, bellyFlops: 0, eaten: { krill: 0, shrimp: 0, minnow: 0 }, whaleCatches: 0, elementalGrabs: 0, stalkerEscapes: 0, stalkerCatches: 0, bloodSpilled: 0, chats: 0, interactions: 0, answers: 0, patterns: { glow: 0, open: 0, calm: 0, cloud: 0, call: 0, wake: 0 }, undone: 0, spins: 0, beadCloseness: 0, nightSeconds: 0, daySeconds: 0, deepest: 0, nearOthersSeconds: 0, blackouts: 0 });
 
   SO.self = {
     traits: {},

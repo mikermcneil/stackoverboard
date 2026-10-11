@@ -169,7 +169,15 @@
         if ((room.def.region === 'kelp' && ch >= 2) || (ch >= 3 && water && Math.random() < 0.3)) {
           const f = E.findFreeBody(room.w * 0.6, room.h * 0.55);
           E.addActor(room, { id: 'buddy', type: 'buddy', x: f[0], y: f[1], home: { x: f[0], y: f[1] }, tangled: true, dir: -1 });
-          setTimeout(() => { if (E.actor('buddy') && E.actor('buddy').tangled) { me('Something’s caught in the kelp over there. Something small.'); } }, 3000);
+          // (said when nobody's in the middle of talking, so it doesn't land inside a lesson)
+          let tries = 0;
+          const notice = () => {
+            const a = E.actor('buddy');
+            if (!a || !a.tangled || E.room !== room) { return; }
+            if ((SO.ui.important || SO.ui.talking) && tries++ < 20) { setTimeout(notice, 2000); return; }
+            me('Something’s caught in the kelp over there. Something small.');
+          };
+          setTimeout(notice, 3000);
         }
         return;
       }

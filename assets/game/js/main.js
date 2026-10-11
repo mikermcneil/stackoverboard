@@ -198,6 +198,25 @@
       const b = document.querySelector(`#skin button[data-c="${c}"]`);
       if (!b) { return; }
       b.classList.remove('pulse'); void b.offsetWidth; b.classList.add('pulse');
+      setTimeout(() => this.showSkinSeq(), 0);// (after the press is counted)
+    },
+    // What you've played so far, written out next to the orbs: dots in their colors, and names.
+    showSkinSeq(done) {
+      const host = $('skin');
+      if (!host) { return; }
+      let el = $('skin-seq');
+      if (!el) { el = document.createElement('div'); el.id = 'skin-seq'; host.appendChild(el); }
+      const NAMES = { W: 'Pale', R: 'Red', B: 'Shimmer', G: 'Gold' };
+      const seq = (done && done.colors) || E.skinBuffer || [];
+      el.textContent = '';
+      seq.forEach((c, i) => {
+        const dot = document.createElement('i'); dot.style.background = E.SKIN_HEX[c]; el.appendChild(dot);
+        el.appendChild(document.createTextNode(NAMES[c] + (i < seq.length - 1 ? ' ·' : '')));
+      });
+      if (done) { const w = document.createElement('b'); w.textContent = ' → ' + done.name; el.appendChild(w); }
+      el.classList.toggle('show', seq.length > 0);
+      clearTimeout(this._seqT);
+      this._seqT = setTimeout(() => { el.classList.remove('show'); }, done ? 1800 : 2000);// (same as how long the game waits for the next note)
     },
     echoSkin(c) {
       const b = document.querySelector(`#skin button[data-c="${c}"]`);
