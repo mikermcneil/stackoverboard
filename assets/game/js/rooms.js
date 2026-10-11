@@ -67,6 +67,8 @@
   def('splash', {
     name: 'Where you fell', region: 'surface', map: [0, 0], w: 1.5, depth: 0.08, surface: true,
     exits: { left: 'bright-reef', right: 'open-blue', down: 'sinking' },
+    // The reef's floor runs in from the left and stops: past it, the water just goes down.
+    terrain: { floor: [0.16, 0.12, 0.04, 0, 0, 0, 0, 0], floorGap: [0.24, 1] },
     ambient: { fish: 18, jelly: 2 },
     entries: { default: [1200, 520] },
     snow: 0.25,
@@ -75,6 +77,8 @@
   def('sinking', {
     name: 'The long sink', region: 'surface', map: [0, 1], depth: 0.3, dark: 0.3,
     exits: { up: 'splash', down: 'glow-below', left: 'kelp-edge', right: 'cliff-face' },
+    // The floor of the Swaying comes in from the left as a ledge, and drops away.
+    terrain: { floor: [0.1, 0.08, 0.02, 0, 0, 0, 0, 0], floorGap: [0.22, 1] },
     ambient: { fish: 6, jelly: 3 },
     bg(ctx, t, room) {
       // The glow below. It pulses: three, then rest.
@@ -94,7 +98,8 @@
   def('glow-below', {
     name: 'Something glowing', region: 'hollowglass', map: [0, 2], depth: 0.42, dark: 0.42,
     exits: { up: 'sinking', down: 'hollowglass-rim' },
-    terrain: { floor: null, ceiling: null, walls: { left: true, right: true } },
+    // (The underside of the ledge from the Swaying, above on the left.)
+    terrain: { floor: null, ceiling: [0.04, 0.03, 0, 0, 0, 0, 0, 0], ceilGap: [0.22, 1], walls: { left: true, right: true } },
     ambient: { fish: 3, jelly: 2 },
     bg(ctx, t) {
       // The top of an impossible shape, rising out of the dark below.
@@ -138,7 +143,7 @@
   });
 
   def('hollowglass-hall', {
-    name: 'Inside the dome', region: 'hollowglass', map: [0, 4], w: 1.5, depth: 0.52, dark: 0.5, palette: 'glass',
+    name: 'Inside the dome', region: 'hollowglass', map: null, inside: 'hollowglass-rim', w: 1.5, depth: 0.52, dark: 0.5, palette: 'glass',
     exits: { left: { key: 'hollowglass-rim', at: 'fromHall' }, right: { key: 'mural-room', at: 'fromHall' } },
     terrain: { floor: [0.13, 0.12, 0.12, 0.12, 0.12, 0.13], ceiling: [0.3, 0.2, 0.1, 0.08, 0.1, 0.2, 0.3], walls: { left: false, right: false } },
     floorTop: '#c8d9d4', rock: '#3f5e66', rockHi: '#7fa3a6',
@@ -184,7 +189,7 @@
   });
 
   def('mural-room', {
-    name: 'A room full of glass', region: 'hollowglass', map: [1, 4], w: 1.2, depth: 0.52, dark: 0.45, palette: 'glass',
+    name: 'A room full of glass', region: 'hollowglass', map: null, inside: 'hollowglass-rim', w: 1.2, depth: 0.52, dark: 0.45, palette: 'glass',
     exits: { left: { key: 'hollowglass-hall', at: 'fromMural' } },
     terrain: { floor: [0.12, 0.12, 0.13, 0.12, 0.12], ceiling: [0.25, 0.12, 0.1, 0.1, 0.12], walls: { left: false, right: true } },
     floorTop: '#c8d9d4', rock: '#3f5e66', rockHi: '#7fa3a6',
@@ -202,7 +207,7 @@
   // CHAPTER 2: the cliff, the kelp, the bright
   // ════════════════════════════════════════════════════════════════════════════
   def('cliff-face', {
-    name: 'The rock face', region: 'cliff', map: [1, 1], w: 1.5, depth: 0.32, dark: 0.3,
+    name: 'The rock face', region: 'cliff', map: [1, 1], mapH: 2, w: 1.5, depth: 0.32, dark: 0.3,
     exits: { left: 'sinking', up: 'open-blue', down: 'cliff-foot' },
     terrain: {},
     solids: [
@@ -341,6 +346,8 @@
   def('open-blue', {
     name: 'Open water', region: 'surface', map: [1, 0], w: 1.5, depth: 0.12, surface: true,
     exits: { left: 'splash', down: 'cliff-face', right: 'warm-shallows' },
+    // The bottom of the warm shallows comes in from the right; the rest drops away down the cliff.
+    terrain: { floor: [0, 0, 0, 0, 0.03, 0.08, 0.1], floorGap: [0, 0.7] },
     ambient: { fish: 6, jelly: 14 },
     isles: [[200, 0.4], [900, 0.5], [2000, 0.8]],
     bg(ctx, t, room) {
@@ -354,7 +361,7 @@
   // CHAPTER 3: down, away from the light
   // ════════════════════════════════════════════════════════════════════════════
   def('cliff-foot', {
-    name: 'The foot of the cliff', region: 'cliff', map: [1, 2], w: 1.6, depth: 0.56, dark: 0.55,
+    name: 'The foot of the cliff', region: 'cliff', map: [1, 3], w: 1.6, depth: 0.56, dark: 0.55,
     exits: { up: 'cliff-face', left: 'hollowglass-rim', down: 'trench-lip' },
     terrain: { floor: [0.14, 0.16, 0.12, 0.15, 0.13, 0.12, 0.1, 0.1, 0.12], floorGap: [0.72, 0.9], walls: { left: false, right: true } },
     solids: [
@@ -367,7 +374,7 @@
   });
 
   def('trench-lip', {
-    name: 'The lip of the trench', region: 'trench', map: [1, 3], w: 1.4, depth: 0.66, dark: 0.68,
+    name: 'The lip of the trench', region: 'trench', map: [1, 4], w: 1.4, depth: 0.66, dark: 0.68,
     exits: { up: 'cliff-foot', down: 'trench-wall' },
     terrain: { floor: [0.2, 0.18, 0.14, 0.06, 0.06, 0.14, 0.2], floorGap: [0.34, 0.62], ceilGap: [0.72, 0.92], ceiling: [0.12, 0.1, 0.08, 0.06, 0.06, 0.04, 0.04] },
     solids: [{ type: 'rect', x: 140, y: 470, w: 330, h: 54 }, { type: 'rect', x: 1600, y: 500, w: 360, h: 54 }],
@@ -376,7 +383,7 @@
   });
 
   def('trench-wall', {
-    name: 'The trench wall', region: 'trench', map: [1, 4], w: 1.1, h: 1.6, depth: 0.75, dark: 0.78,
+    name: 'The trench wall', region: 'trench', map: [1, 5], mapH: 1, w: 1.1, h: 1.6, depth: 0.75, dark: 0.78,
     exits: { up: 'trench-lip', down: 'trench-floor' },
     terrain: { walls: { left: true, right: true } },
     solids: [
@@ -390,7 +397,7 @@
   });
 
   def('trench-floor', {
-    name: 'The bottom of the trench', region: 'trench', map: [1, 5], w: 1.3, depth: 0.84, dark: 0.82,
+    name: 'The bottom of the trench', region: 'trench', map: [1, 6], w: 1.3, depth: 0.84, dark: 0.82,
     exits: { up: 'trench-wall', down: 'below:0,7' },
     terrain: { floor: [0.2, 0.16, 0.14, 0.12, 0.14, 0.18], walls: { left: true, right: true }, ceilGap: [0.3, 0.7], ceiling: [0.3, 0.1, 0.04, 0.04, 0.1, 0.3], floorGap: [0.42, 0.58] },
     solids: [{ type: 'rect', x: 790, y: 640, w: 500, h: 320, id: 'crack-plug', color: '#2a3a46' }],// covers the crack and its curved lips, so there are no pits to wedge into
@@ -517,7 +524,7 @@
   });
 
   def('riser', {
-    name: 'The Riser', region: 'undershine', map: [2, 6], w: 1, h: 3, depth: 0.5, dark: 0.3, palette: 'warm',
+    name: 'The Riser', region: 'undershine', map: [1, 12], w: 1, h: 3, depth: 0.5, dark: 0.3, palette: 'warm',
     exits: { down: 'keeper-hall', up: 'warm-shallows' },
     terrain: { walls: { left: true, right: true } },
     current: [0, -520],
@@ -951,7 +958,7 @@
   });
 
   def('lantern-ledges', {
-    name: 'The glowing ledges', region: 'cliff', map: [2, 2], w: 1.4, depth: 0.58, dark: 0.62,
+    name: 'The glowing ledges', region: 'cliff', map: [2, 3], w: 1.4, depth: 0.58, dark: 0.62,
     exits: { left: 'cliff-foot' },
     terrain: { floor: [0.14, 0.12, 0.14, 0.15, 0.16, 0.18], walls: { right: true } },
     solids: [
@@ -1002,7 +1009,7 @@
   });
 
   def('tether-curtain', {
-    name: 'The living curtain', region: 'tether', map: [5, 3], w: 1.3, h: 1.6, depth: 0.66, dark: 0.82,
+    name: 'The living curtain', region: 'tether', map: [5, 3], mapH: 3, w: 1.3, h: 1.6, depth: 0.66, dark: 0.82,
     exits: { up: 'tether-breathless', down: 'tether-anchor' },
     terrain: { walls: { left: true, right: true } },
     bg(ctx, t, room) { chain(ctx, 1040, -120, room.h + 120, t, 0.6); flickers(ctx, room, t, 6, 7.7); },
@@ -1015,7 +1022,7 @@
   });
 
   def('tether-anchor', {
-    name: 'The anchor', region: 'tether', map: [5, 5], w: 1.6, depth: 0.85, dark: 0.82,
+    name: 'The anchor', region: 'tether', map: [5, 6], w: 1.6, depth: 0.85, dark: 0.82,
     exits: { up: 'tether-curtain', left: 'stone-choir', down: 'hadal' },
     terrain: { floor: [0.16, 0.14, 0.12, 0.12, 0.12, 0.14, 0.18], floorGap: [0.7, 0.88], walls: { right: true } },
     bg(ctx, t, room) {
@@ -1036,7 +1043,7 @@
   });
 
   def('stone-choir', {
-    name: 'The stone choir', region: 'abyss', map: [4, 5], w: 1.6, depth: 0.88, dark: 0.8,
+    name: 'The stone choir', region: 'abyss', map: [4, 6], w: 1.6, depth: 0.88, dark: 0.8,
     exits: { left: 'abyssal-plain', right: 'tether-anchor' },
     terrain: { floor: [0.14, 0.12, 0.13, 0.12, 0.14, 0.12, 0.13] },
     actors: [
@@ -1049,7 +1056,7 @@
 
   // ── The bottom ──────────────────────────────────────────────────────────────
   def('whale-fall', {
-    name: 'The whale fall', region: 'abyss', map: [2, 5], w: 1.6, depth: 0.86, dark: 0.8,
+    name: 'The whale fall', region: 'abyss', map: [2, 6], w: 1.6, depth: 0.86, dark: 0.8,
     exits: { left: 'trench-floor', right: 'abyssal-plain' },
     terrain: { floor: [0.14, 0.12, 0.12, 0.12, 0.13, 0.14] },
     props: [
@@ -1077,7 +1084,7 @@
   });
 
   def('abyssal-plain', {
-    name: 'The abyssal plain', region: 'abyss', map: [3, 5], w: 2.4, depth: 0.88, dark: 0.82,
+    name: 'The abyssal plain', region: 'abyss', map: [3, 6], w: 2.4, depth: 0.88, dark: 0.82,
     exits: { left: 'whale-fall', right: 'stone-choir' },
     terrain: { floor: [0.12, 0.12, 0.13, 0.12, 0.12, 0.12, 0.13, 0.12, 0.12, 0.12] },
     props: [
@@ -1097,7 +1104,7 @@
   });
 
   def('hadal', {
-    name: 'The hadal deep', region: 'abyss', map: [5, 6], w: 1.2, h: 2, depth: 0.95, dark: 0.9,
+    name: 'The hadal deep', region: 'abyss', map: [5, 7], w: 1.2, h: 2, depth: 0.95, dark: 0.9,
     exits: { up: 'tether-anchor', down: 'hadal-floor' },
     terrain: { walls: { left: true, right: true } },
     solids: [{ type: 'rect', x: 60, y: 620, w: 400, h: 52 }, { type: 'rect', x: 1440, y: 1180, w: 420, h: 52 }],
@@ -1111,7 +1118,7 @@
   });
 
   def('hadal-floor', {
-    name: 'The bottom of everything', region: 'abyss', map: [5, 8], w: 1.3, depth: 0.99, dark: 0.95,
+    name: 'The bottom of everything', region: 'abyss', map: [5, 9], w: 1.3, depth: 0.99, dark: 0.95,
     exits: { up: 'hadal' },
     terrain: { floor: [0.16, 0.14, 0.12, 0.12, 0.14, 0.18], walls: { left: true, right: true } },
     actors: [life('hushmouth', 1500, 420, { s: 1.2, seed: 2 })],
@@ -1245,7 +1252,7 @@
   // Behind the ledges: a cave at the back of the glowing ledges. It opens when all the sea pens
   // on the ledges are lit at once.
   def('ledge-cave', {
-    name: 'Behind the ledges', region: 'cliff', map: [3, 2], w: 1.3, depth: 0.6, dark: 0.9,
+    name: 'Behind the ledges', region: 'cliff', map: [3, 3], w: 1.3, depth: 0.6, dark: 0.9,
     exits: { left: 'lantern-ledges' },
     terrain: { floor: [0.18, 0.14, 0.18, 0.2, 0.16], ceiling: [0, 0.06, 0.16, 0.12, 0.18], walls: { left: false, right: true } },
     props: [{ type: 'lantern-weed', x: 300, s: 0.6, lit: 0.5 }, { type: 'bone-fan', x: 1600, s: 0.8 }],
@@ -1288,7 +1295,7 @@
     if (opts && opts.dome) { A.dome(ctx, room.w / 2, sy + 40, room.w * 0.62, { alpha: 0.35, spire: false }); }
   };
   def('home-lip', {
-    name: 'The top of the waterfall', region: 'home', map: [5, -2], w: 1.6, depth: 0.02, surface: true, palette: 'glass', roar: 0.8,
+    name: 'The top of the waterfall', region: 'home', map: [5, -4], w: 1.6, depth: 0.02, surface: true, palette: 'glass', roar: 0.8,
     exits: { left: 'home-rings' },
     terrain: { floor: [0.32, 0.34, 0.36, 0.36, 0.34, 0.32, 0.3], walls: { right: true } },
     sand: '#cfe4dc', rayColor: '#fffbe8',
@@ -1303,7 +1310,7 @@
     snow: 0.05,
   });
   def('home-rings', {
-    name: 'The twelve rings', region: 'home', map: [4, -2], w: 2.2, depth: 0.02, surface: true, palette: 'glass',
+    name: 'The twelve rings', region: 'home', map: [4, -4], w: 2.2, depth: 0.02, surface: true, palette: 'glass',
     exits: { right: 'home-lip', left: 'home-pool' },
     terrain: { floor: [0.32, 0.3, 0.3, 0.29, 0.3, 0.3, 0.31, 0.3, 0.32] },
     sand: '#cfe4dc', rayColor: '#fffbe8',
@@ -1313,7 +1320,7 @@
     snow: 0.05,
   });
   def('home-pool', {
-    name: 'The pool', region: 'home', map: [3, -2], w: 1.6, depth: 0.03, surface: true, palette: 'glass',
+    name: 'The pool', region: 'home', map: [3, -4], w: 1.6, depth: 0.03, surface: true, palette: 'glass',
     exits: { right: 'home-rings' },
     terrain: { floor: [0.24, 0.2, 0.16, 0.14, 0.14, 0.2, 0.32], walls: { left: true } },
     sand: '#d8ece4', rayColor: '#fffbe8',

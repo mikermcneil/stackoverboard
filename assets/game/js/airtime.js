@@ -119,6 +119,7 @@
 
     replay(sY, power, sp) {
       if (E.replaying || E.locked || !this.frames.length) { return; }
+      setupHud();
       // from just before leaving the water to just after landing
       let start = this.frames.findIndex((f) => f.y < sY + 60 && f.vy < -100);
       if (start < 0) { start = 0; }

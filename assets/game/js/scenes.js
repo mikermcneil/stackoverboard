@@ -194,7 +194,7 @@
     AU.bell(AU.NOTE(81), { gain: 0.05, dur: 5 }); AU.bell(AU.NOTE(88), { gain: 0.03, dur: 5, when: 0.4 });
     await UI.fade(1, 700, '#fffaf0');
     let sq = null;
-    const dur = { 1: 15, 2: 16, 3: 17 }[n];
+    const dur = { 1: 19, 2: 20, 3: 17 }[n];// (long enough for every line to be said in it)
     const lines = {
       1: [[1.5, 'Look how big you’re getting.'], [6, 'Not too close to the edge, little one.'], [10.5, 'Good squid.']],
       2: [[1.5, 'Stay away from the edge!'], [5.5, 'It’s a long way down.'], [10.5, 'Come back to the middle.']],

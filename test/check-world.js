@@ -115,16 +115,29 @@ function check(SO) {
   }
   const span = (a) => a.reduce((s, [x0, x1]) => s + (x1 - x0), 0);
   const overlap = (a, b) => { let s = 0; a.forEach(([a0, a1]) => b.forEach(([b0, b1]) => { s += Math.max(0, Math.min(a1, b1) - Math.max(a0, b0)); })); return s; };
-  const rowsOf = (d) => { const y = d.map[1], n = Math.max(1, Math.ceil((d.h || 1) - 0.01)); return [y, y + n - 1]; };
+  // Rows a place covers on the map: one per screen of height, rounded (or `mapH`, for a place that's
+  // drawn taller or shorter than it is, like the rock face, which goes up past the light and down past the dark).
+  const rowsOf = (d) => { const y = d.map[1], n = Math.max(1, Math.round(d.mapH || d.h || 1)); return [y, y + n - 1]; };
+  // A door: an exit that comes out at a named spot in a place that has a door (a hotspot) leading back.
+  // Insides (`inside: 'parent'`, like the inside of the dome) aren't on the map grid themselves.
+  const doorBack = (fromKey, to) => !!(to && typeof to === 'object' && to.at && defs[to.key] && (defs[to.key].hotspots || []).some((h) => h.door === fromKey || (defs[h.door] && defs[h.door].inside === to.key && defs[fromKey].inside === to.key)));
 
   // Every place on the map, and in one level.
   const at = {};
   Object.keys(rooms).forEach((k) => {
     const d = defs[k];
-    if (!d.map) { err(k, null, 'map', 'has no map position'); return; }
-    const pos = d.map.join(',');
-    if (at[pos]) { err(k, null, 'map', `shares map position [${pos}] with ${at[pos]}`); }
-    at[pos] = k;
+    if (d.inside) {
+      // an inside is reached by a door in its parent, or through another inside of the same parent
+      const viaDoor = (defs[d.inside] && defs[d.inside].hotspots || []).some((h) => h.door === k);
+      const viaInside = Object.keys(defs).some((o) => defs[o].inside === d.inside && Object.keys(defs[o].exits || {}).some((dir) => keyOf(defs[o].exits[dir]) === k));
+      if (!defs[d.inside]) { err(k, null, 'map', `is inside ${d.inside}, which doesn't exist`); }
+      else if (!viaDoor && !viaInside) { err(k, null, 'map', `is inside ${d.inside}, but there's no door into it`); }
+    } else if (!d.map) { err(k, null, 'map', 'has no map position'); }
+    else {
+      const pos = d.map.join(',');
+      if (at[pos]) { err(k, null, 'map', `shares map position [${pos}] with ${at[pos]}`); }
+      at[pos] = k;
+    }
     if (SO.levels) {
       const l = SO.levels.of(d), claimed = SO.levels.LEVELS.filter((L) => L.rooms.indexOf(k) !== -1);
       if (!l) { err(k, null, 'level', 'is in no level'); }
@@ -159,6 +172,12 @@ function check(SO) {
       const B = rooms[to], db = defs[to];
       if (!B) { err(k, dir, 'missing', `leads to ${to}, which doesn't exist`); return; }
       const back = keyOf(B.exits[OPP[dir]]);
+      // Out through a door (the way out of a cave or a dome comes out at the door there): no edge to match.
+      const door = back !== k && doorBack(k, ex[dir]);
+      if (door) {
+        if (d.map && db.map && (dir === 'left' || dir === 'right') && db.map[0] !== d.map[0] + (dir === 'left' ? -1 : 1)) { err(k, dir, 'map', `goes out through a door in ${to}, which is on the wrong side on the map`); }
+        return;
+      }
       if (back !== k) { err(k, dir, 'reciprocal', `leads to ${to}, but ${to}'s ${OPP[dir]} goes to ${back || 'nowhere'}`); }
       // The map agrees with the exits.
       if (d.map && db.map) {
@@ -197,7 +216,14 @@ function check(SO) {
           if (span(b) * B.w < BODY) { err(to, 'up', 'opening', `the way up is only ${Math.round(span(b) * B.w)} units wide`); }
           const o = overlap(a, b);
           if (o * Math.min(R.w, B.w) < BODY) { err(k, dir, 'gaps', `the way down (${a.map((s) => s.map((v) => v.toFixed(2)).join('-')).join(', ')}) doesn't line up with ${to}'s way up (${b.map((s) => s.map((v) => v.toFixed(2)).join('-')).join(', ')})`); }
-          else if (Math.abs(span(a) - span(b)) > 0.3) { warn(k, dir, 'width', `the way down is ${Math.round(span(a) * 100)}% of the width but ${to}'s way up is ${Math.round(span(b) * 100)}%`); }
+          else {
+            // A hole in the floor should come out under rock with the same hole (or in open water, if
+            // the place below is open water); open water above shouldn't come down under a rock roof.
+            const holeA = !!(R.floor && R.floorGap), roofB = !!(B.ceiling && B.ceilGap), shaftB = B.wallL && B.wallR;
+            if (!R.floor && roofB && span(b) < 0.7) { err(k, dir, 'roof', `open water going down, but ${to} has a rock roof with a hole (${b.map((s) => s.map((v) => v.toFixed(2)).join('-')).join(', ')})`); }
+            else if (holeA && !roofB && shaftB) { err(k, dir, 'roof', `a hole in the floor here, but ${to} (a shaft) has no rock overhead to match`); }
+            else if (holeA && roofB && Math.abs(span(a) - span(b)) > 0.15) { warn(k, dir, 'width', `the hole down is ${Math.round(span(a) * 100)}% of the width but ${to}'s hole up is ${Math.round(span(b) * 100)}%`); }
+          }
         } else {
           // Down into a surface place from the sky: it has to be climbable back up somewhere under the way down.
           const up = spans(B, 'top');

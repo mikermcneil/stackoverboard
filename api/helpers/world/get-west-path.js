@@ -146,25 +146,61 @@ function readFromClient() {
 
     var scaryFrom = src.match(/scary\s*&&\s*n\s*>=\s*(\d+)/);
     var crossing = src.match(/\bCROSSING\s*=\s*(\d+)/);
-    var crossings = src.match(/\bCROSSINGS\s*=\s*(\d+)/);
+    var crossings = src.match(/\bCROSSINGS\s*=\s*(\d+|Infinity)/);
+    var westEnd = src.match(/\bWEST_END\s*=\s*(\d+|null)/);
+    var highFrom = src.match(/\bHIGH_FROM\s*=\s*(\d+)/);
     var recallLine = src.match(/const RECALL = \[(.*)\];/);
     var recall = recallLine ? (recallLine[1].match(/'((?:[^'\\]|\\.)*)'/g) || []).map((q) => unquote(q.slice(1, -1))) : [];
-    var endLine = src.split('\n').find((l) => /n === WEST_END\)\s*\{\s*return\s*\{/.test(l));
-    var wrapsTo = src.match(/n === WEST_END\)\s*\{\s*d\.exits\.left\s*=\s*'([^']+)'/);
-    return {
+    var out = {
       westPath: westPath.length ? westPath : null,
       bands: bands.length ? bands : null,
       scaryBirdsFrom: scaryFrom ? Number(scaryFrom[1]) : null,
       crossing: crossing ? Number(crossing[1]) : null,
-      crossings: crossings ? Number(crossings[1]) : null,
+      crossings: crossings ? Number(crossings[1]) : null,// Number('Infinity') is Infinity
+      westEnd: westEnd ? (westEnd[1] === 'null' ? null : Number(westEnd[1])) : undefined,
+      highFrom: highFrom ? Number(highFrom[1]) : null,
       recall: recall.length ? recall : null,
-      end: endLine && str(endLine, 'name') && str(endLine, 'line') ? { key: str(endLine, 'key') || 'west-end', name: str(endLine, 'name'), line: str(endLine, 'line') } : null,
-      wrapsTo: wrapsTo ? wrapsTo[1] : null,
     };
   } catch (err) {
     sails.log.verbose('world/get-west-path: could not read assets/game/js/west.js, using the snapshot:', err.message);
     return {};
   }
+  try {
+    var wl = fs.readFileSync(path.resolve(sails.config.appPath, 'assets/game/js/westlands.js'), 'utf8');
+    var landsAt = wl.indexOf('const LANDS = [');
+    var landsBlock = landsAt < 0 ? '' : wl.slice(landsAt, wl.indexOf('\n  ];', landsAt));
+    var list = (l, name) => { var m = l.match(new RegExp('\\b'+name+'\\s*:\\s*\\[([^\\]]*)\\]')); return m ? _.uniq((m[1].match(/'([^']+)'/g) || []).map((q) => q.slice(1, -1))) : []; };
+    var lands = landsBlock.split('\n').filter((l) => /^\s*\{/.test(l)).map((l) => ({ from: num(l, 'from'), name: str(l, 'name'), things: list(l, 'things'), birds: list(l, 'birds') }));
+    lands = lands.filter((l) => l.from !== null && l.name);
+    if (lands.length) { out.lands = lands; }
+    var features = wl.match(/const FEATURES = \[(.*)\];/);
+    if (features) { out.features = (features[1].match(/'([^']+)'/g) || []).map((q) => q.slice(1, -1)); }
+    // Interiors: IN['key'] = ... / IN.key = ..., with the names of the rooms inside, in order.
+    var interiors = {};
+    var inRe = /\bIN(?:\['([\w-]+)'\]|\.([\w]+))\s*=/g;
+    var hits = [];
+    var m;
+    while ((m = inRe.exec(wl))) { hits.push({ key: m[1] || m[2], at: m.index }); }
+    hits.forEach((h, i) => {
+      var chunk = wl.slice(h.at, i + 1 < hits.length ? hits[i + 1].at : wl.indexOf('SO.rooms.get', h.at));
+      var names = (chunk.match(/\bname\s*:\s*'((?:[^'\\]|\\.)*)'/g) || []).map((s) => unquote(s.replace(/^name\s*:\s*'/, '').slice(0, -1)).replace(/’/g, '\''));
+      if (names.length) { interiors[h.key] = names; }
+    });
+    if (Object.keys(interiors).length) { out.interiors = interiors; }
+    var hook = wl.match(/base >= (\d+) \|\| n > (\d+)\) \{ d\.actors\.push\(\{ id: 'hookbill'/);
+    var spear = wl.match(/base >= (\d+) \|\| n > (\d+)\) \{ d\.actors\.push\(\{ id: 'spearneck'/);
+    if (hook) { out.hookbills = { fromDistanceInCrossing: Number(hook[1]), everywherePast: Number(hook[2]) }; }
+    if (spear) { out.spearnecks = { fromDistanceInCrossing: Number(spear[1]), everywherePast: Number(spear[2]) }; }
+  } catch (err) {
+    sails.log.verbose('world/get-west-path: could not read assets/game/js/westlands.js, using the snapshot:', err.message);
+  }
+  return out;
+}
+
+// west.js itself, run in a sandbox: its own landmarkAt(), typeOf(), elevation() and room maker.
+function clientWest() {
+  var SO = sails.helpers.world.runClientScripts.with({ files: ['core.js', 'west.js'], engineStubs: true });
+  return SO && SO.rooms && SO.rooms.WEST && typeof SO.rooms.west === 'function' ? { WEST: SO.rooms.WEST, make: SO.rooms.west } : null;
 }
 
 module.exports = {
@@ -173,12 +209,14 @@ module.exports = {
   friendlyName: 'Get west path',
 
 
-  description: 'Get the way west: the bands of the procedural surface west of the Bright, its sixty crossings, and the landmarks that are always at the same distance.',
+  description: 'Get the way west: the bands and lands of the endless procedural surface west of the Bright, its crossings, the highlands it rises into, and the landmarks that are always at the same distance.',
 
 
   extendedDescription:
-`Read from the game's own lists (WEST_PATH, BANDS, CROSSING, CROSSINGS, RECALL, and the end of the
-west in assets/game/js/west.js) each time, falling back to a built-in copy if that file can't be read.`,
+`Read from the game's own lists (WEST_PATH, BANDS, CROSSING, CROSSINGS, WEST_END, HIGH_FROM and RECALL
+in assets/game/js/west.js; LANDS, FEATURES and the landmark interiors in assets/game/js/westlands.js)
+each time, falling back to a built-in copy if a file can't be read.  For one place (\`n\`), west.js is
+run in a sandbox so the answer is exactly the place the game makes.`,
 
 
   sync: true,
@@ -186,7 +224,7 @@ west in assets/game/js/west.js) each time, falling back to a built-in copy if th
 
   inputs: {
 
-    n: { type: 'number', description: 'Also describe the room this many places west of the Bright ("west:"+n), from 1 to the end.' },
+    n: { type: 'number', description: 'Also describe the room this many places west of the Bright ("west:"+n), from 1 up (it never ends).' },
 
   },
 
@@ -195,7 +233,7 @@ west in assets/game/js/west.js) each time, falling back to a built-in copy if th
 
     success: {
       outputType: 'ref',
-      outputDescription: '`{ path: [{ n, key, name, line }], bands: [{ from, to, name, about, spiders, birds, scaryBirds }], scaryBirdsFrom, placesPerCrossing, crossings, end, endLandmark, wrapsTo, recallWords, source, at? }`.  `at` (only when `n` is given) is `{ n, room, exists, crossing, crossingName, distanceInCrossing, band, scaryBirds, landmark, leadsWestTo }`.'
+      outputDescription: '`{ path, bands, lands, laterCrossings, highlands, interiors, birds, scaryBirdsFrom, placesPerCrossing, crossings, endless, end, endLandmark, wrapsTo, recallWords, source, at? }`.  See the world/get-west-path action for the shape.'
     },
 
   },

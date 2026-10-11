@@ -23,7 +23,8 @@ module.exports = {
     // Static files are cached for a year in production, so the game's scripts get a version
     // in their URLs: a hash of their contents.  Every app process computes the same one, and it
     // changes whenever the code does, so nobody gets stuck on an old copy of the game.
-    if (!sails.config.custom._gameAssetVersion) {
+    // (In development, work it out fresh every time, so edits always show up.)
+    if (!sails.config.custom._gameAssetVersion || sails.config.environment !== 'production') {
       var fs = require('fs');
       var path = require('path');
       var dir = path.resolve(sails.config.appPath, 'assets/game');
