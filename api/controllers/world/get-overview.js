@@ -45,7 +45,7 @@ use get-history, get-state, get-map, get-species, and get-squids for detail.`,
       outputDescription:
         '`{ serverNow, worldSeed, bornAt, squids, finishedSquids, endingsTally: {return,lantern,gift,song}, tilesDiscovered, tilesTotal, '+
         'speciesCount: {creature,plant,item}, eruptionsTotal, state, recent }`.  `bornAt` is when the first world event happened (epoch ms, or null). '+
-        '`squids` = squids ever hatched; `finishedSquids` = distinct squids who reached at least one ending.  `state` is the live world state '+
+        '`devices` = how many squids were last played on each kind of device; `squids` = squids ever hatched; `finishedSquids` = distinct squids who reached at least one ending.  `state` is the live world state '+
         '(same as get-state).  `recent` is the 10 most recent world events, newest first.'
     },
 
@@ -70,6 +70,7 @@ use get-history, get-state, get-map, get-species, and get-squids for detail.`,
       worldSeed: sails.config.custom.worldSeed,
       bornAt: first ? first.startsAt : null,
       squids: await Save.count(),
+      devices: { phone: await Save.count({ device: 'phone' }), tablet: await Save.count({ device: 'tablet' }), desktop: await Save.count({ device: 'desktop' }) },
       finishedSquids: _.uniq(_.pluck(endingEvents, 'squidName')).length,
       endingsTally,
       tilesDiscovered: await WorldTile.count(),

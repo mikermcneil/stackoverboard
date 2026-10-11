@@ -4,7 +4,7 @@ module.exports = {
   friendlyName: 'Get squids',
 
 
-  description: 'List the squids (players) of Stack Overboard, most recently active first.',
+  description: 'List the squids (players) of Stack Overboard, most recently active first, with what device each is playing on and roughly where in the world they are.',
 
 
   extendedDescription:
@@ -28,6 +28,12 @@ when it was last seen.  Times are JS timestamps (epoch ms).`,
       description: 'The maximum number of squids to return.'
     },
 
+    device: {
+      type: 'string',
+      isIn: ['phone', 'tablet', 'desktop', 'unknown'],
+      description: 'Only list squids whose player was last on this kind of device.'
+    },
+
   },
 
 
@@ -35,15 +41,15 @@ when it was last seen.  Times are JS timestamps (epoch ms).`,
 
     success: {
       outputFriendlyName: 'Squids',
-      outputDescription: '`{ squids: [{ squidName, playthrough, chapter, endings, arrivedAt, lastSeenAt }] }` sorted by lastSeenAt, most recent first.'
+      outputDescription: '`{ squids: [{ squidName, playthrough, chapter, endings, arrivedAt, lastSeenAt, device, os, browser, place, timeZone, language, userAgent }] }` sorted by lastSeenAt, most recent first.  `device` is phone, tablet, desktop or unknown.  `place` is roughly where the player is playing from (from their browser\'s time zone, e.g. "Chicago, America").'
     },
 
   },
 
 
-  fn: async function ({ limit }) {
+  fn: async function ({ limit, device }) {
 
-    var saves = await Save.find().sort([{ lastSeenAt: 'DESC' }, { id: 'DESC' }]).limit(Math.floor(limit));
+    var saves = await Save.find(device ? { device } : {}).sort([{ lastSeenAt: 'DESC' }, { id: 'DESC' }]).limit(Math.floor(limit));
     return {
       squids: saves.map((save) => ({
         squidName: save.squidName,
@@ -52,6 +58,13 @@ when it was last seen.  Times are JS timestamps (epoch ms).`,
         endings: save.endings || [],
         arrivedAt: save.createdAt,
         lastSeenAt: save.lastSeenAt,
+        device: save.device || 'unknown',
+        os: save.os || 'unknown',
+        browser: save.browser || 'unknown',
+        place: save.place || 'unknown',
+        timeZone: save.timeZone || '',
+        language: save.language || '',
+        userAgent: save.userAgent || '',
       }))
     };
 

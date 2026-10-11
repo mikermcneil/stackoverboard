@@ -23,6 +23,10 @@ save is returned unchanged.`,
       description: 'Whether to begin a new playthrough (only matters if a save already exists).'
     },
 
+    timeZone: { type: 'string', defaultsTo: '', maxLength: 64, description: 'The browser\'s IANA time zone (e.g. "America/Chicago"), used to tell roughly where the player is.' },
+    language: { type: 'string', defaultsTo: '', maxLength: 35, description: 'The browser\'s language, e.g. "en-US".' },
+    touch: { type: 'boolean', defaultsTo: false, description: 'Whether the device has a touch screen.' },
+
   },
 
 
@@ -36,10 +40,12 @@ save is returned unchanged.`,
   },
 
 
-  fn: async function ({ newPlaythrough }) {
+  fn: async function ({ newPlaythrough, timeZone, language, touch }) {
 
     var crypto = require('crypto');
     var now = Date.now();
+
+    var client = _.omit(sails.helpers.world.describeClient.with({ userAgent: this.req.get('user-agent') || '', timeZone, language, touch }), (v, k) => !v && k !== 'userAgent');
 
     var token = this.req.session.saveToken;
     var save = token ? await Save.findOne({ token }) : undefined;
@@ -57,17 +63,17 @@ save is returned unchanged.`,
       save = (await sails.helpers.world.createOnce.with({
         model: 'save',
         uniqueBy: 'token',
-        values: { token, squidName, revision: 0, playthrough: 1, chapter: 0, data: {}, endings: [], lastSeenAt: now }
+        values: Object.assign({ token, squidName, revision: 0, playthrough: 1, chapter: 0, data: {}, endings: [], lastSeenAt: now }, client)
       })).record;
       this.req.session.saveToken = token;
     } else if (newPlaythrough) {
       let carried = save.data && save.data.carried !== undefined ? save.data.carried : undefined;
-      let updated = await sails.helpers.world.swapSave.with({ token, revision: save.revision, values: {
+      let updated = await sails.helpers.world.swapSave.with({ token, revision: save.revision, values: Object.assign({
         playthrough: save.playthrough + 1,
         chapter: 0,
         data: carried !== undefined ? { carried } : {},
         lastSeenAt: now,
-      } });
+      }, client) });
       // If the compare-and-swap lost, a concurrent request changed the save first (most likely
       // a duplicate "new playthrough" request); don't increment twice -- return what's there.
       save = updated || await Save.findOne({ token });

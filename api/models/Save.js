@@ -59,6 +59,14 @@ module.exports = {
       description: 'A random stamp written with each save, used to tell which of two racing writes landed (see the swap-save helper).  Never sent to clients.'
     },
 
+    device: { type: 'string', defaultsTo: '', isIn: ['', 'phone', 'tablet', 'desktop', 'unknown'], description: 'What kind of device the player was last on: phone, tablet or desktop.' },
+    os: { type: 'string', defaultsTo: '', description: 'The operating system they were last on, e.g. "iOS" or "Windows".' },
+    browser: { type: 'string', defaultsTo: '', description: 'The browser they were last using, e.g. "Safari".' },
+    userAgent: { type: 'string', defaultsTo: '', description: 'Their browser\'s full user agent (first 255 characters).' },
+    timeZone: { type: 'string', defaultsTo: '', description: 'Their browser\'s IANA time zone, e.g. "America/Chicago".' },
+    place: { type: 'string', defaultsTo: '', description: 'Roughly where they\'re playing from, from their time zone, e.g. "Chicago, America".' },
+    language: { type: 'string', defaultsTo: '', description: 'Their browser\'s language, e.g. "en-US".' },
+
     lastSeenAt: {
       type: 'number',
       description: 'JS timestamp (epoch ms) of the last time this squid started or saved its game.'

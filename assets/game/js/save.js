@@ -66,8 +66,15 @@
       return null;
     },
 
+    // Roughly where in the world this player is (their time zone), and what they're on.
+    client() {
+      let timeZone = '';
+      try { timeZone = Intl.DateTimeFormat().resolvedOptions().timeZone || ''; } catch (err) { /* old browser */ }
+      return { timeZone, language: navigator.language || '', touch: (navigator.maxTouchPoints || 0) > 1 };
+    },
+
     async start(newPlaythrough = false) {
-      const r = await api.post('/api/v1/game/start-game', { newPlaythrough });
+      const r = await api.post('/api/v1/game/start-game', Object.assign({ newPlaythrough }, this.client()));
       if (r.ok && r.body && r.body.save) {
         this.adopt(r.body.save);
         this.enabled = true;
@@ -94,7 +101,7 @@
       this._syncing = true;
       try {
         for (let attempt = 0; attempt < 3; attempt++) {
-          const r = await api.put('/api/v1/game/save-game', { revision: this.revision, data: this.data }, { keepalive: !!opts.keepalive });
+          const r = await api.put('/api/v1/game/save-game', Object.assign({ revision: this.revision, data: this.data }, this.client()), { keepalive: !!opts.keepalive });
           if (r.ok && r.body && r.body.save) { this.revision = r.body.save.revision; break; }
           if (r.status === 409 && r.body && r.body.save) { this.merge(r.body.save); continue; }
           if (r.status === 404) {// session expired: start over with what we have

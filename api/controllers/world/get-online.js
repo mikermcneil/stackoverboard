@@ -20,7 +20,7 @@ overwritten as it swims), not history: for what squids have done over time, use 
   exits: {
 
     success: {
-      outputDescription: '`{ online: [{ squidName, room, lastSeenAt }], count, serverNow }`, most recently seen first.'
+      outputDescription: '`{ online: [{ squidName, room, lastSeenAt, device, os, browser, place }], count, serverNow }`, most recently seen first.  `room` is where the squid is in the game; `place` is roughly where the player is in the real world (from their time zone).'
     },
 
   },
@@ -29,7 +29,12 @@ overwritten as it swims), not history: for what squids have done over time, use 
   fn: async function () {
     var now = Date.now();
     var rows = await Presence.find({ seenAt: { '>=': now - 30000 } }).sort('seenAt DESC');
-    var online = rows.map((p) => ({ squidName: p.squidName, room: p.room, lastSeenAt: p.seenAt }));
+    var saves = rows.length ? await Save.find({ squidName: _.pluck(rows, 'squidName') }) : [];
+    var bySquid = _.indexBy(saves, 'squidName');
+    var online = rows.map((p) => {
+      var save = bySquid[p.squidName] || {};
+      return { squidName: p.squidName, room: p.room, lastSeenAt: p.seenAt, device: save.device || 'unknown', os: save.os || 'unknown', browser: save.browser || 'unknown', place: save.place || 'unknown' };
+    });
     return { online, count: online.length, serverNow: now };
   }
 
