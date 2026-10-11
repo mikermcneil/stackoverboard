@@ -15,6 +15,12 @@ _a [Sails v1](https://sailsjs.com) application built for [Sailsconf 2026](http:/
 > <img width="1372" height="753" alt="image" src="https://github.com/user-attachments/assets/7d3373ec-2bfd-43d3-b5ea-655fb618a038" />
 > <img width="766" height="646" alt="image" src="https://github.com/user-attachments/assets/733f933a-fec3-4b90-b1fd-e7aabeeefa68" />
 
+## How was this made?
+
+This was built on top of the conventions of sails.js using Claude in about 2 hours.
+
+<img width="676" height="125" alt="image" src="https://github.com/user-attachments/assets/ca60e0ea-ffcd-4d1f-99a4-57ea5b74aa84" />
+
 
 
 ### Links
