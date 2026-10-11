@@ -169,7 +169,6 @@
     const d = {
       key: 'west:' + n, name: b.name + FAR[Math.min(FAR.length - 1, Math.floor((split(n).base - b.from) / 2))],
       region: 'west', w, depth: b.depth, surface: true, palette: b.palette, sand: b.sand,
-      map: n <= 8 ? [-1 - n, 0] : undefined,
       exits: { left: 'west:' + (n + 1), right: n === 1 ? (SO.rooms.westGate || 'bright-reef') : 'west:' + (n - 1) },
       terrain: { floor },
       solids, props, actors,

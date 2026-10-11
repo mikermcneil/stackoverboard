@@ -144,7 +144,7 @@
 
     // Some rooms have one (more as the story goes on, and twice as many near the end).
     populate(room) {
-      if (room.surfaceY !== null && room.def.region === 'surface') { return; }
+      if ((room.surfaceY !== null && room.def.region === 'surface') || room.def.region === 'home' || room.def.safe) { return; }
       const c = ch();
       if (c < 2) { return; }
       const p = c >= 6 ? 0.45 : c >= 5 ? 0.35 : c >= 4 ? 0.3 : 0.17;

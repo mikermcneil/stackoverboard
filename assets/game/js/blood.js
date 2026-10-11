@@ -32,11 +32,13 @@
 
     // Blood goes into the water. `amount` ~0.2 (a nick) .. 2 (something big torn open).
     spill(x, y, amount = 0.6, blue = false) {
-      const n = Math.round(3 + amount * 7);
+      amount *= 0.55;// (less blood than there was)
+      const n = Math.round(2 + amount * 6);
       for (let i = 0; i < n && E.particles.length < 700; i++) {
         E.particles.push({ kind: 'blood', x: x + (Math.random() - 0.5) * 30 * amount, y: y + (Math.random() - 0.5) * 20 * amount, vx: (Math.random() - 0.5) * 40, vy: (Math.random() - 0.5) * 30 - 6, t: 0, life: 14 + Math.random() * 10, r: 10 + Math.random() * 14 * amount, grow: 6 + Math.random() * 8, col: blue ? BLUE : RED, amt: amount / n });
       }
-      this.level = Math.min(4, this.level + amount * 0.5);
+      this.level = Math.min(4, this.level + amount * 0.45);
+      this.stir = (this.stir || 0) + amount;
       if (SO.smell) { this.scent(x, y); }
     },
 
@@ -69,27 +71,51 @@
       // Blood on you: from clouds you swim through.
       let inBlood = 0;
       for (const p of E.particles) {
-        if (p.kind !== 'blood') { continue; }
+        if (p.kind !== 'blood' || p.trail) { continue; }// (not the trail you're leaving yourself)
         if (Math.abs(p.x - sq.x) > p.r + 60 || Math.abs(p.y - sq.y) > p.r + 60) { continue; }
         const a = this.alpha(p);
         if (a > 0.05 && U.dist(p.x, p.y, sq.x, sq.y) < p.r + 40) { inBlood += a; }
       }
-      sq.blood = U.clamp((sq.blood || 0) + inBlood * dt * 0.25, 0, 1);
+      sq.blood = U.clamp((sq.blood || 0) + inBlood * dt * 0.2, 0, 1);
       // ...and it comes off as you swim.
       const speed = Math.hypot(sq.vx, sq.vy);
-      sq.blood = Math.max(0, sq.blood - dt * (0.006 + U.clamp(speed / 500, 0, 1.2) * 0.07) * (sq.flourish && sq.flourish.kind === 'shiver' ? 5 : 1));
+      // ...and it comes off as you swim: hardly at all drifting, quickly if you really swim.
+      sq.blood = Math.max(0, sq.blood - dt * (0.004 + Math.pow(U.clamp(speed / 450, 0, 1.4), 2) * 0.22) * (sq.flourish && sq.flourish.kind === 'shiver' ? 4 : 1));
       if (sq.blood > 0.05 && Math.random() < dt * sq.blood * 6) {// a little trail of it, wherever you go
-        E.particles.push({ kind: 'blood', x: sq.x - sq.vx * 0.1, y: sq.y, vx: 0, vy: -4, t: 0, life: 6, r: 6 + Math.random() * 6, grow: 5, col: sq.bloodBlue ? BLUE : RED, amt: 0 });
+        E.particles.push({ kind: 'blood', trail: true, x: sq.x - sq.vx * 0.1, y: sq.y, vx: 0, vy: -4, t: 0, life: 6, r: 6 + Math.random() * 6, grow: 5, col: sq.bloodBlue ? BLUE : RED, amt: 0 });
       }
       if (sq.blood > 0.6 && !this.saidBloody) { this.saidBloody = true; SO.ui.aside('There’s blood all over me. I can hardly see. I need to swim it off.'); }
       if (sq.blood < 0.2) { this.saidBloody = false; }
       // Now and then: a striker takes one of the little fish.
       if (!E.locked && (room.surfaceY === null || sq.y > room.surfaceY + 200)) {
-        this.nextKill -= dt * (1 + this.level);
-        if (this.nextKill < 0) { this.nextKill = 50 + Math.random() * 70; this.huntFish(room); }
+        this.nextKill -= dt * (0.2 + this.level * 1.5);
+        if (this.nextKill < 0) { this.nextKill = 120 + Math.random() * 180; this.huntFish(room); }
+      }
+      // The dead seep: now and then a little cloud of blood from a body on the bottom (rub against it
+      // and it's on you).
+      room.actors.forEach((a) => {
+        if (a.type === 'oddity' && ['fish-corpse', 'half-squid', 'drowned-swan', 'sinking-fish'].includes(a.kind) && Math.random() < dt / 5) { this.spill(a.x + (Math.random() - 0.5) * 30, a.y - 6, 0.2); }
+      });
+      // Bump into little fish at speed and scales come off them (no blood, they just dart).
+      const spd = Math.hypot(sq.vx, sq.vy);
+      if (spd > 160 && E.ambient) {
+        E.ambient.forEach((f) => {
+          if (f.type !== 'fish' || (f._bumped && E.t - f._bumped < 2)) { return; }
+          if (Math.abs(f.x - sq.x) < 50 && Math.abs(f.y - sq.y) < 40) { f._bumped = E.t; this.scales(f.x, f.y, 4, f.hue || 200); f.vx = (f.x - sq.x) * 8; f.vy = (f.y - sq.y) * 8; this.stir += 0.6; }
+        });
+      }
+      // Stirring things up (dirt, scales, blood) draws fish in. Not too many.
+      this.stir = Math.max(0, (this.stir || 0) - dt * 0.08);
+      this.drawT = (this.drawT || 0) - dt;
+      if (this.stir > 2 && this.drawT < 0 && E.ambient && E.ambient.filter((f) => f.type === 'fish').length < 26) {
+        this.drawT = 2.5;
+        const vw = E.W / E.scale, left = Math.random() < 0.5;
+        E.ambient.push({ type: 'fish', x: left ? E.cam.x - 60 : E.cam.x + vw + 60, y: U.clamp(sq.y + (Math.random() - 0.5) * 300, 80, room.h - 80), vx: left ? 60 : -60, vy: 0, a: left ? 0 : Math.PI, t: 0, seed: Math.random() * 100, s: 0.8 + Math.random() * 0.5, hue: 20 + Math.random() * 60 });
       }
       // Blood draws strikers, and they go for the biggest glob, or you if you're bloody.
-      const want = Math.floor(this.level * 1.5 + (sq.blood > 0.35 ? 1 : 0));
+      this.rogueIn = (this.rogueIn === undefined ? 600 + Math.random() * 900 : this.rogueIn) - dt;// once in a long while, one comes for you anyway
+      if (this.rogueIn < 0 && !E.locked) { this.rogueIn = 900 + Math.random() * 1500; this.spawnStriker(room, null).rogue = true; }
+      const want = Math.floor(this.level * 1.2 + (sq.blood > 0.4 ? 1 : 0));
       this.strikers = (this.strikers || []).filter((s) => s.t < s.life);
       if (this.strikers.length < Math.min(5, want) && Math.random() < dt * 0.5) { this.spawnStriker(room, null); }
       this.strikers.forEach((s) => this.stepStriker(s, dt, room));
@@ -117,9 +143,9 @@
       let tx, ty;
       if (s.prey && !s.hit) { tx = s.prey.x; ty = s.prey.y; }
       else if (!s.hit) {
-        let best = null, bestV = (sq.blood || 0) * 2.2;
-        if (bestV > 0.4) { tx = sq.x; ty = sq.y; }
-        for (const p of E.particles) { if (p.kind === 'blood') { const v = this.alpha(p) * p.r / 20; if (v > bestV) { bestV = v; best = p; } } }
+        let best = null, bestV = (sq.blood || 0) > 0.4 || s.rogue ? 9 : 0;// only the bloody, or a rogue, get bitten
+        if (bestV > 0) { tx = sq.x; ty = sq.y; }
+        if (!bestV) { for (const p of E.particles) { if (p.kind === 'blood') { const v = this.alpha(p) * p.r / 20; if (v > bestV) { bestV = v; best = p; } } } }
         if (best) { tx = best.x; ty = best.y; }
       }
       if (tx === undefined) { tx = s.x + (s.vx >= 0 ? 400 : -400); ty = s.y; }// done: away it goes
@@ -133,7 +159,7 @@
           const i = E.ambient.indexOf(s.prey);
           if (i >= 0) { E.ambient.splice(i, 1); }
           this.wound(s.x, s.y, 0.8, { scales: 16, hue: s.prey.hue || 200 });
-        } else if (U.dist(s.x, s.y, sq.x, sq.y) < 70) {// it hits you
+        } else if (U.dist(s.x, s.y, sq.x, sq.y) < 70 && !E.locked) {// it hits you
           this.hitSquid(s.vx, s.vy);
         } else {// it tears through the cloud
           this.scales(s.x, s.y, 3, 200);

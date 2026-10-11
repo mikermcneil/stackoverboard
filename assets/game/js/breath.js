@@ -33,7 +33,7 @@
 
     tick(dt) {
       const sq = E.squid, room = E.room;
-      if (E.mode !== 'play' || !room || E.locked || E.replaying) { return; }
+      if (E.mode !== 'play' || !room || E.locked || E.replaying || (SO.journal && SO.journal.open)) { return; }
       if (!sq.inAir) {
         this.out = 0;
         this.last = { room: E.roomKey, x: sq.x, y: sq.y };

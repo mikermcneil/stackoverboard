@@ -90,7 +90,8 @@
         }
         if (below || above || beside || sq._touchingRock) {
           const side = below > above ? 1 : above > below ? -1 : 0;
-          this.add(sq, kind, dt * (0.2 + speed / 600) * (0.5 + 0.25 * (below + above + beside)), side);
+          this.add(sq, kind, dt * (0.2 + speed / 600) * (0.5 + 0.25 * (below + above + beside)) * (sq._touchingRock ? 2 : 1), side);
+          if (sq._touchingRock && SO.blood) { SO.blood.stir = (SO.blood.stir || 0) + dt * 0.4; }
         }
       }
       // Racing low over the floor kicks up silt.

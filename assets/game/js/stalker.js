@@ -32,10 +32,10 @@
     latched: false,
 
     tick(dt) {
-      if (E.mode !== 'play' || document.hidden || !E.room) { return; }
+      if (E.mode !== 'play' || document.hidden || !E.room || (SO.journal && SO.journal.open)) { return; }
       if (!this.active) {
         const ch = SO.story.ch || 0;
-        if (ch < 2 || ch >= 8 || E.locked || (SO.fp && SO.fp.playing) || SO.ui.important) { return; }
+        if (ch < 2 || ch >= 8 || E.locked || (SO.fp && SO.fp.playing) || SO.ui.important || E.room.def.region === 'home' || E.room.def.safe) { return; }
         this.nextIn -= dt;
         if (this.nextIn < 0) { this.start(); }
         return;
@@ -61,6 +61,7 @@
     // You went somewhere new (or back).
     onEnter(room) {
       if (!this.active) { return; }
+      if (room.def.region === 'home' || room.def.safe) { this.stop(true); return; }// it won't follow you home
       const wasHere = this.at === this.path.length - 1;// it was in the place you just left
       this.path.push(room.key);
       this.entrySide = E.squid.x < room.w / 2 ? 'left' : 'right';// it'll come in the way you did

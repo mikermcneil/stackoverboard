@@ -185,28 +185,33 @@
     wind(level = 1) { this.noise({ dur: 3, freq: 700, q: 0.3, gain: 0.05 * level, sweep: 1.5, attack: 1.2, verb: 0.3 }); },
     // A marimba: a warm wooden bar struck with a soft mallet. A round fundamental, the bar's
     // bright 4th-partial overtone that dies fast, a little knock of wood, and the tube resonating.
-    marimba(freq, { gain = 0.08, when = 0, dur = 1.6, pan = 0, verb = 0.5, dry = 1 } = {}) {
+    marimba(freq, { gain = 0.08, when = 0, dur = 1.6, pan = 0, verb = 0.8, dry = 1 } = {}) {
       if (!this.ctx || this.muted) { return; }
       const ctx = this.ctx, t = ctx.currentTime + when;
-      const bar = (f, g, d, type = 'sine') => {
-        const o = ctx.createOscillator(); o.type = type; o.frequency.setValueAtTime(f, t);
+      // Everything goes through water first: a soft low-pass, so it's warm and a little far off.
+      const water = ctx.createBiquadFilter(); water.type = 'lowpass'; water.frequency.setValueAtTime(Math.min(2600, freq * 3.2), t); water.frequency.exponentialRampToValueAtTime(Math.max(300, freq * 1.3), t + dur * 0.6); water.Q.value = 0.6;
+      this._out(water, { pan, verb, dry });
+      const bar = (f, g, d, detune = 0, type = 'sine') => {
+        const o = ctx.createOscillator(); o.type = type; o.frequency.setValueAtTime(f, t); o.detune.value = detune;
+        // a slow wobble, like sound coming through moving water
+        const lfo = ctx.createOscillator(), amt = ctx.createGain(); lfo.frequency.value = 3 + Math.random() * 2; amt.gain.value = 4; lfo.connect(amt); amt.connect(o.detune); lfo.start(t); lfo.stop(t + d + 0.1);
         const v = ctx.createGain();
         v.gain.setValueAtTime(0.0001, t);
-        v.gain.exponentialRampToValueAtTime(g, t + 0.004);
+        v.gain.exponentialRampToValueAtTime(g, t + 0.008);
         v.gain.exponentialRampToValueAtTime(0.0001, t + d);
-        o.connect(v); this._out(v, { pan, verb, dry });
+        o.connect(v); v.connect(water);
         o.start(t); o.stop(t + d + 0.05);
       };
-      bar(freq, gain, dur);// the note
-      bar(freq * 3.93, gain * 0.32, dur * 0.18);// the bar's bright overtone
-      bar(freq * 9.2, gain * 0.08, dur * 0.06);
-      bar(freq * 0.5, gain * 0.12, dur * 0.7, 'triangle');// the resonator tube underneath
-      // the mallet: a tiny knock of wood
+      bar(freq, gain, dur);// the wooden bar's note
+      bar(freq, gain * 0.35, dur * 0.9, 7);// a slightly detuned twin: a watery shimmer
+      bar(freq * 3.99, gain * 0.12, dur * 0.12);// its bright overtone, soft and short
+      bar(freq, gain * 0.25, dur * 1.3, 0, 'triangle');// the resonator tube, singing on a little
+      // the soft mallet: a muffled knock
       const src = ctx.createBufferSource(); src.buffer = this._noise;
-      const f = ctx.createBiquadFilter(); f.type = 'bandpass'; f.frequency.value = freq * 2.2; f.Q.value = 2.5;
-      const k = ctx.createGain(); k.gain.setValueAtTime(gain * 0.9, t); k.gain.exponentialRampToValueAtTime(0.0001, t + 0.03);
-      src.connect(f); f.connect(k); this._out(k, { pan, verb: 0.1, dry });
-      src.start(t, Math.random()); src.stop(t + 0.05);
+      const f = ctx.createBiquadFilter(); f.type = 'bandpass'; f.frequency.value = Math.min(1800, freq * 1.5); f.Q.value = 1.5;
+      const k = ctx.createGain(); k.gain.setValueAtTime(gain * 0.5, t); k.gain.exponentialRampToValueAtTime(0.0001, t + 0.04);
+      src.connect(f); f.connect(k); k.connect(water);
+      src.start(t, Math.random()); src.stop(t + 0.06);
     },
 
     skin(color, opts = {}) {
@@ -226,9 +231,10 @@
       const n = SKIN_NOTES[color];
       if (n) { this.marimba(NOTE(n), { gain: 0.07 - Math.min(0.02, Math.abs(voice) / 600), dur: 2, verb: 1, dry: 0.55 }); }
     },
-    learned() {
-      [69, 74, 78, 81, 86].forEach((n, i) => this.bell(NOTE(n), { when: i * 0.12, gain: 0.05, dur: 3 }));
+    learned() {// a skin-word learned: a little marimba run, under water
+      [74, 78, 81, 83, 86].forEach((n, i) => this.marimba(NOTE(n), { when: i * 0.11, gain: 0.06, dur: 1.8 }));
     },
+
     discover() {
       [76, 83, 88].forEach((n, i) => this.bell(NOTE(n), { when: i * 0.18, gain: 0.05, dur: 3.5 }));
     },

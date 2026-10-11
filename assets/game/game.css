@@ -229,3 +229,8 @@ body.ribbon-fixed #stage { height: calc(100vh - var(--ribbon-h)); }
 
 .j-section { margin: 26px 0 10px; text-align: center; }
 .j-body .j-map, .j-body .j-world { margin-top: 26px; }
+
+/* Skip ahead (bottom left of the first page), for anyone whose progress was lost. */
+#cheat { position: fixed; left: 16px; bottom: 14px; z-index: 4; font: 500 11px var(--mono, monospace); letter-spacing: 0.06em; color: rgba(25, 33, 71, 0.55); display: flex; align-items: center; gap: 6px; pointer-events: auto; }
+#cheat select { font: inherit; color: inherit; background: rgba(255, 255, 255, 0.6); border: 1px solid rgba(25, 33, 71, 0.2); border-radius: 6px; padding: 3px 6px; -webkit-user-select: auto; user-select: auto; }
+body.game-mode #cheat { display: none; }

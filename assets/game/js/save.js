@@ -75,7 +75,9 @@
 
     // Choose a name. Resolves { ok, squidName } or { ok: false, why: 'taken' | 'invalid' | 'offline' }.
     async rename(name) {
-      const r = await api.put('/api/v1/game/rename-squid', { name });
+      let r = await api.put('/api/v1/game/rename-squid', { name });
+      // The session lost its squid (say, the server restarted): get it back, then try again.
+      if (r.status === 404 && await this.start(false)) { r = await api.put('/api/v1/game/rename-squid', { name }); }
       if (r.ok && r.body && r.body.squidName) { this.squidName = r.body.squidName; return { ok: true, squidName: r.body.squidName }; }
       return { ok: false, why: r.status === 409 ? 'taken' : r.status === 400 ? 'invalid' : 'offline' };
     },

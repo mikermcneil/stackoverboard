@@ -136,22 +136,16 @@
         this.renderWorld();
         return;
       }
-      if (tab === 'life') {// living, growing, and other things, one after another
-        let any = false;
-        LIFE_KINDS.forEach(([kind, label]) => {
-          if (!this.entries(kind).length) { return; }
-          any = true;
-          this.body.appendChild(p('j-kicker j-section', label));
-          this.renderGrid(kind);
-        });
-        if (!any) { this.body.appendChild(p('j-empty', 'Nothing yet.')); }
+      if (tab === 'life') {// living, growing, and other things, all together in one place
+        const list = [].concat(...LIFE_KINDS.map(([kind]) => this.entries(kind))).sort((x, y) => (x.at || 0) - (y.at || 0));
+        this.renderGrid('life', list);
         return;
       }
       this.renderGrid(tab);
     },
 
-    renderGrid(tab) {
-      const list = this.entries(tab);
+    renderGrid(tab, given) {
+      const list = given || this.entries(tab);
       if (!list.length) {
         this.body.appendChild(p('j-empty', tab === 'memory' ? 'Nothing yet. Things come back to me when I’m lost.' : 'Nothing yet.'));
         return;
@@ -229,6 +223,8 @@
         if (!key) { return null; }
         const d = SO.rooms.defs[key];
         if (d && d.map) { const [x, y] = d.map; return [px(x), py(y >= 12 ? y - 0.5 : y)]; }
+        const wm = /^(?:west|aq2?):(\d+)$/.exec(key), g = SO.rooms.defs[SO.rooms.westGate || 'bright-reef'];
+        if (wm && g && g.map) { return [Math.max(34, px(g.map[0] - +wm[1])), py(g.map[1])]; }
         const t = tileAt[key];
         if (t) { return [px(t.x), py(t.y)]; }
         const m = /^below:(-?\d+),(-?\d+)$/.exec(key);// a tile nobody's mapped yet
@@ -260,6 +256,29 @@
           if (o.down) { ctx.moveTo(px(tl.x), py(tl.y) + 12); ctx.lineTo(px(tl.x), py(tl.y) + 24); }
           ctx.stroke();
         });
+        // The made-up west: dotted squares on along the surface, as far as the map goes (and on).
+        const gate = SO.rooms.defs[SO.rooms.westGate || 'bright-reef'];
+        if (gate && gate.map) {
+          ctx.save(); ctx.setLineDash([3, 3]);
+          let lastX = px(gate.map[0]);
+          for (let n = 1; ; n++) {
+            const cx = px(gate.map[0] - n);
+            if (cx < 34) { break; }
+            lastX = cx;
+            const been = visited['west:' + n];
+            ctx.strokeStyle = been ? 'rgba(191,248,234,0.9)' : 'rgba(191,248,234,0.3)';
+            ctx.fillStyle = been ? 'rgba(191,248,234,0.35)' : 'rgba(0,0,0,0)';
+            ctx.beginPath(); if (ctx.roundRect) { ctx.roundRect(cx - 14, py(gate.map[1]) - 12, 28, 24, 6); } else { ctx.rect(cx - 14, py(gate.map[1]) - 12, 28, 24); }
+            ctx.fill(); ctx.stroke();
+          }
+          ctx.restore();
+          ctx.fillStyle = 'rgba(191,248,234,0.6)'; ctx.font = '16px Inter, sans-serif';
+          ctx.fillText('…', lastX - 34, py(gate.map[1]) + 5);
+          ctx.font = '11px Inter, sans-serif';
+          const far = Object.keys(visited).filter((k) => /^west:\d+$/.test(k)).map((k) => +k.slice(5)).reduce((a, b) => Math.max(a, b), 0);
+          ctx.fillStyle = 'rgba(255,255,255,0.35)';
+          ctx.fillText(far ? 'the west goes on (I’ve been ' + far + ' out)' : 'the west goes on', 12, py(gate.map[1]) + 24);
+        }
         ctx.fillStyle = 'rgba(255,255,255,0.35)';
         ctx.fillText('the surface', 12, py(0) + 4);
         ctx.fillText('the Below', 12, py(9) + 4);

@@ -680,7 +680,10 @@
 
   function enrich(d, n) {
     const base = baseOf(n), c = crossOf(n), r = U.rng('westlands:' + n + ':' + SEED());
-    const W = d.w * RW, land = landFor(base), near = nearFor(base);
+    const W = d.w * RW, high = !!(WEST.typeOf && WEST.typeOf(n));
+    const land = high ? null : landFor(base), near = high ? null : nearFor(base);
+    // (Only the middle of the ground changes: the edges have to agree with the places next door.)
+    const mid = (fn) => { const f = d.terrain.floor; if (f && f.length > 2) { for (let i = 1; i < f.length - 1; i++) { f[i] = fn(f[i]); } } };
     const add = (kind, o) => { const x = 300 + r() * (W - 600); const t0 = thing(kind, x, 0, Object.assign({ seed: r() * 10 }, o || {})); t0.y = kind === 'flying-fish' || kind === 'sea-skaters' ? 160 : kind === 'golden-jelly' || kind === 'brine-shrimp' ? 300 + r() * 200 : fy(d, x) - 20; d.actors.push(t0); };
     if (land) {
       if (!d.landmark) { d.name = land.name + (c ? ' (' + WEST.crossingName(c) + ')' : ''); }
@@ -688,13 +691,13 @@
       d.sand = land.sand;
       // The stalagmites belong to the wet desert; out here the ground is other things.
       d.solids = d.solids.filter((s) => !(s.type === 'ellipse' && s.y === RH));
-      if (land.shallow) { d.terrain.floor = d.terrain.floor.map((v) => Math.min(0.46, v + 0.1)); }
+      if (land.shallow) { mid((v) => Math.min(0.46, v + 0.1)); }
       if (land.dunes) { d.props.push(dunesProp(U.hash('d' + n) % 1000, land.dunes)); }
       if (land.cactus) {
         for (let i = 0; i < 4; i++) { const x = 300 + i * 600 + r() * 160; d.actors.push(thing('spine-sponge', x, fy(d, x), { s: 0.9 + r() * 0.6, seed: r() * 10 })); }
       }
       if (land.bones) { d.props.push(bonesProp(U.hash('b' + n))); }
-      if (land.heads) { d.props.push(headsProp(U.hash('h' + n))); }
+      if (land.heads && !d.landmark) { d.props.push(headsProp(U.hash('h' + n))); }
       if (land.schools) { d.props.push(schoolProp(U.hash('s' + n))); }
       if (land.glassy) { d.props.push(glassFloorProp(U.hash('g' + n))); }
       if (land.columns) { d.props.push(columnsProp(U.hash('c' + n))); }
@@ -709,7 +712,7 @@
     if (base >= 40 || n > 240) { d.actors.push({ id: 'hookbill', type: 'hookbill', x: r() * W, y: -300, seed: r() * 10 }); }
     if (base >= 50 || n > 600) { d.actors.push({ id: 'spearneck', type: 'spearneck', x: r() * W, y: -300, seed: r() * 10 }); }
     // Later crossings: something extra, now and then.
-    if (c && r() < 0.55) { feature(d, FEATURES[Math.floor(r() * FEATURES.length)], r); }
+    if (c && !high && r() < 0.55) { const nm = d.name; feature(d, FEATURES[Math.floor(r() * FEATURES.length)], r); if (d.landmark) { d.name = nm; } }
     if (d.landmark) { buildLandmark(d, n, r); }
   }
 
@@ -828,7 +831,7 @@
       if (v.how === 'in the dark') { d.dark = 0.75; }
       if (v.how === 'crowded') { d.ambient.fish = (d.ambient.fish || 0) + 20; }
       if (v.how === 'empty') { d.ambient.fish = 0; }
-      if (v.how === 'half buried') { d.terrain.floor = d.terrain.floor.map((x) => Math.min(0.5, x + 0.08)); }
+      if (v.how === 'half buried') { const f = d.terrain.floor; for (let i = 1; i < f.length - 1; i++) { f[i] = Math.min(0.5, f[i] + 0.08); } }
       if (v.how === 'grown over') { for (let i = 0; i < 8; i++) { d.props.push({ type: 'kelp', x: 150 + i * 320, h: 200 + i * 20, seed: i * 3 + n }); } }
       if (v.how === 'singing') { d.onUpdate = chain(d.onUpdate, (room, dt) => { room.state.sing = (room.state.sing || 0) - dt; if (room.state.sing < 0) { room.state.sing = 6; if (AU().tone) { [50, 57, 62].forEach((nn, i) => AU().tone(AU().NOTE(nn), { dur: 4, gain: 0.025, attack: 1.4, when: i * 0.1, verb: 1 })); } } }); }
     }
@@ -1246,7 +1249,20 @@
       exits: {}, terrain: { floor: [0.18, 0.16, 0.15, 0.16, 0.18], ceiling: [0.18, 0.15, 0.14, 0.15, 0.18], walls: { left: true, right: true } },
       solids: [], props: [], actors: [], hotspots: [], entries: { fromOut: [360, 450] }, ambient: {}, snow: 0.3, west: n, far: null,
     }, o);
-    if (k === 1 && !d.exits.up) { d.exits.left = out; d.terrain.walls.left = false; }
+    // The first room inside has a way back out (a door, not an open edge: there's no matching
+    // neighbor on the other side of the wall).
+    if (k === 1 && !d.exits.up) {
+      d.terrain.walls.left = true;
+      d.hotspots = (d.hotspots || []).concat({ id: 'door-out', x: 210, y: (d.h || 1) * RH / 2, r: 120, door: out.key, at: out.at, label: 'The way out' });
+      d.entries.fromOut = [460, (d.h || 1) * RH / 2];
+    }
+    // Between rooms inside, the edges agree: the same floor and roof on both sides.
+    const T = d.terrain;
+    ['left', 'right'].forEach((side) => {
+      if (!d.exits[side]) { return; }
+      const i = side === 'left' ? 0 : -1, set = (arr) => { if (arr) { arr[i < 0 ? arr.length - 1 : 0] = 0.16; } };
+      set(T.floor); set(T.ceiling); T.walls[side] = false;
+    });
     return d;
   }
   const IN = {};

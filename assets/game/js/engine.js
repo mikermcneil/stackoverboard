@@ -705,6 +705,7 @@
   E.update = function (dt) {
     if (this.mode !== 'play' || !this.room) { return; }
     if (this.replaying) { if (SO.air) { SO.air.replayStep(dt); } return; }// an action replay is showing
+    if (SO.journal && SO.journal.open) { return; }// the sea holds still while you look at your memories (nothing gets you meanwhile)
     const sq = this.squid, room = this.room;
     sq.t += dt;
     // Long press on the squid: open what it remembers.
@@ -1628,6 +1629,8 @@
       if (d === 'up' && room.surfaceY !== null) { return; }
       if (blocked(d)) { this.drawCurrent(ctx, d); return; }
       if (ex[d]) { return; }
+      // a gap in the rock with nowhere to go through it: show the water pushing back there, too
+      if ((d === 'up' && room.ceilGap && room.ceiling) || (d === 'down' && room.floorGap && room.floor)) { this.drawCurrent(ctx, d); return; }
       const covered = d === 'left' ? room.wallL : d === 'right' ? room.wallR : d === 'up' ? !!room.ceiling : !!room.floor;
       if (!covered) { this.drawEdgeRock(ctx, d); }
     });

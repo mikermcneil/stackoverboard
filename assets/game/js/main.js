@@ -52,6 +52,38 @@
       if (SO.rumble) { SO.rumble.start(); }
     },
 
+    // Start partway through: as if you'd played up to just before that chapter (in case a squid's
+    // progress was lost). It sets what you'd know by then and puts you where the chapter begins.
+    async skipAhead(ch) {
+      const d = save.data;
+      const SKIP = {
+        2: { chapter: 1, room: 'hollowglass-hall', patterns: ['glow', 'open'], flags: ['skinRevealed', 'metVamp', 'petalOpen'] },
+        3: { chapter: 2, room: 'cliff-foot', patterns: ['glow', 'open', 'calm', 'cloud'], flags: ['skinRevealed', 'metVamp', 'petalOpen', 'morayCalmed'] },
+        4: { chapter: 3, room: 'below:0,7', patterns: ['glow', 'open', 'calm', 'cloud'], flags: ['skinRevealed', 'metVamp', 'petalOpen', 'morayCalmed', 'whaleIntro', 'fellThrough'] },
+        5: { chapter: 4, room: 'undershine-gate', patterns: ['glow', 'open', 'calm', 'cloud'], flags: ['skinRevealed', 'metVamp', 'petalOpen', 'morayCalmed', 'whaleIntro', 'fellThrough'] },
+        6: { chapter: 5, room: 'warm-shallows', patterns: ['glow', 'open', 'calm', 'cloud', 'wake'], flags: ['skinRevealed', 'metVamp', 'petalOpen', 'morayCalmed', 'whaleIntro', 'fellThrough'], memories: [1, 2] },
+        7: { chapter: 6, room: 'plunge', patterns: ['glow', 'open', 'calm', 'cloud', 'wake'], flags: ['skinRevealed', 'metVamp', 'petalOpen', 'morayCalmed', 'whaleIntro', 'fellThrough', 'plungeSaid'], memories: [1, 2, 3] },
+      }[ch];
+      if (!SKIP) { return; }
+      d.chapter = SKIP.chapter;
+      SKIP.patterns.forEach((p) => save.learn(p));
+      SKIP.flags.forEach((f) => save.flag(f));
+      (SKIP.memories || []).forEach((m) => { if (d.memories.indexOf(m) === -1) { d.memories.push(m); } });
+      for (let c = 1; c <= SKIP.chapter; c++) { save.flag('fp:ch' + c); }// (no catching up on old cutscenes)
+      save.flag('skippedTo', ch);
+      save.touch(100);
+      AU.setMuted(d.settings.muted);
+      E.overlay = null;
+      E.mode = 'play';
+      this.fixRibbon();
+      this.showSkin(true);
+      UI.fade(1, 0, '#000');
+      await E.goto(SKIP.room, { instant: true });
+      UI.fade(0, 1500);
+      // (Chapter 2 begins at the end of a conversation you've skipped, so begin it here.)
+      if (ch === 2 && d.chapter < 2) { await SO.story.chapter(2); }
+    },
+
     // After the fall and the long sink, you come to, several screens down.
     async beginPreface() {
       if (!save.enabled) { await save.start(false); }
@@ -59,6 +91,9 @@
       // A name chosen on the first page.
       const picked = (document.getElementById('name-pick') || {}).value;
       if (picked && picked.trim() && save.enabled) { save.rename(picked.trim()); }
+      // Skipping ahead (the first page's "Start at")?
+      const skipTo = +((document.getElementById('cheat-chapter') || {}).value || 1);
+      if (skipTo > 1) { return this.skipAhead(skipTo); }
       save.data.chapter = 0;
       AU.setMuted(save.data.settings.muted);
       E.overlay = null;

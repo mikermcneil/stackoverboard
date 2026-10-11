@@ -28,7 +28,7 @@
     set level(v) { if (SO.save.data) { SO.save.data.hunger = U.clamp(v, 0, 1); } },
 
     update(dt) {
-      if (!SO.save.data || E.locked || (SO.story.ch || 0) < 2) { return; }
+      if (!SO.save.data || E.locked || (SO.story.ch || 0) < 2 || (SO.journal && SO.journal.open)) { return; }
       this.level = this.level + dt / FULL_AFTER;
       const h = this.level;
       // Hungry squid can't hurry as hard.
