@@ -11,7 +11,18 @@ module.exports = {
 `Lists every squid whose game has reported in during the last 30 seconds, with the place it's
 in (a room key like "kelp-deep", "hollowglass-hall" or "below:2,9" for a tile of the deep maze)
 and when it was last seen (JS epoch milliseconds).  This is a live picture (one row per squid,
-overwritten as it swims), not history: for what squids have done over time, use get-history.`,
+overwritten as it swims), not history: for what squids have done over time, use get-history.
+
+Squids in the same place can see each other swimming (in the game, every other squid is a pale or
+near-black shade, never the player's own pink), smell each other, and get each other dirty.  So each
+row also says whether the squid is glowing (\`glow\`, from the "glow" skin word), how hidden it is
+(\`hidden\`, 0..1, e.g. from "passing cloud"), which skin color it's flashing right now (\`flash\`: R red,
+W pale, B shimmer, G gold glow; see get-skin-words), and how dirty it is: \`dirt\` (0..1) and \`grime\`, what
+it's mostly covered in: "sand" (sandy, from the shallows), "silt" (silty, from the cliff, trench, or
+Plunge), "mud" (muddy, from the Below or the octopus garden), "muck" (slimy, from the kelp), "soot"
+(sooty, from the volcano), or "glass" (glittery, from the glass sponges of Hollowglass).  Squids pick
+dirt up by scraping along the bottom, from clouds of silt other squids kick up, and from brushing past
+a dirty squid; it comes off as they swim.`,
 
 
   sideEffects: 'cacheable',
@@ -20,7 +31,7 @@ overwritten as it swims), not history: for what squids have done over time, use 
   exits: {
 
     success: {
-      outputDescription: '`{ online: [{ squidName, room, lastSeenAt, device, os, browser, place }], count, serverNow }`, most recently seen first.  `room` is where the squid is in the game; `place` is roughly where the player is in the real world (from their time zone).'
+      outputDescription: '`{ online: [{ squidName, room, lastSeenAt, glow, hidden, flash, dirt, grime, device, os, browser, place }], count, serverNow }`, most recently seen first.  `room` is where the squid is in the game; `place` is roughly where the player is in the real world (from their time zone).'
     },
 
   },
@@ -33,7 +44,7 @@ overwritten as it swims), not history: for what squids have done over time, use 
     var bySquid = _.indexBy(saves, 'squidName');
     var online = rows.map((p) => {
       var save = bySquid[p.squidName] || {};
-      return { squidName: p.squidName, room: p.room, lastSeenAt: p.seenAt, device: save.device || 'unknown', os: save.os || 'unknown', browser: save.browser || 'unknown', place: save.place || 'unknown' };
+      return { squidName: p.squidName, room: p.room, lastSeenAt: p.seenAt, glow: !!p.glow, hidden: p.hidden || 0, flash: p.flash || '', dirt: p.dirt || 0, grime: p.grime || '', device: save.device || 'unknown', os: save.os || 'unknown', browser: save.browser || 'unknown', place: save.place || 'unknown' };
     });
     return { online, count: online.length, serverNow: now };
   }

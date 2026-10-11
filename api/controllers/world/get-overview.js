@@ -9,27 +9,51 @@ module.exports = {
 
   extendedDescription:
 `Stack Overboard is an underwater adventure.  Each player is a squid (with a public name like
-"Pale-Ember-Drift") who fell from a sky island into the sea.  Players never meet, but they share one
-world: the map of the deep maze ("the Below") that squids have discovered, procedurally generated
-species introduced by whoever met them first, eruptions of the volcano, pearls (called gems in the
-API) gathered from the deep, and the endings squids have chosen.
+"Pale-Ember-Drift") who lived in a pool on one of the floating sky islands, under glass domes, with
+swans, until the island shook and it slipped over the edge of the waterfall into the sea.  It wants to
+go home.  Everyone it meets is a real sea creature.
 
-Places in the sea: the surface, a glass dome that fell from the sky (home of the vampire squid), the
-cliff (with a cave where the nautilus and the moray eel live), the kelp forest, the trench, the Below
-(a dark 7x5 procedurally generated maze), the octopus garden (a warm deep-sea spot where hundreds of
-octopuses brood their eggs), the volcano (an underwater volcano and hydrothermal vent next to the
-octopus garden, called "forge" in the API), and the waterfall that pours in from the sky.
+The story has 7 chapters: 1 "Light", 2 "Hiding", 3 "Clicks", 4 "Down", 5 "The octopus garden",
+6 "Warm water", 7 "Home" (chapter 8 = an ending was reached).  The squid lands, discovers it can glow,
+and finds a glass dome from home that fell too (Hollowglass), where a vampire squid lives.  The way home
+is the waterfall far to the east (the Plunge), but the current up top is too strong, so it learns to hide
+(from Sepia the cuttlefish in the kelp) and to calm things (from the nautilus in the cliff cave, on the
+moray eel), then goes the long way underneath: down the trench past a sperm whale that hunts by clicking,
+through the Below (a dark shared maze), to the octopus garden, where Grandmother Seven (a seven-arm
+octopus) teaches it to wake the volcano for five pearls.  The eruption's warm water carries it up to the
+warm shallows, past Humboldt squid and the Shoal of sardines, to the Plunge.
 
-Creatures squids meet include a sperm whale that hunts squid by clicking, Grandmother Seven (a
-seven-arm octopus who trades pearls), and the dumbo octopuses of the octopus garden.
+Squids talk with their skin: four colors that are also four notes (red D5, pale F#5, shimmer A5, gold
+B5), flashed in six patterns called skin words: glow, open, calm, passing cloud, call (the swans' song),
+and wake.  Each is a little melody anyone can play on a piano at home: see get-skin-words.
+
+Players never meet face to face, but they share one world: squids in the same place see each other
+swim, can smell each other, and can get each other dirty (see get-online).  Shared, permanent things: the
+map of the Below that squids have discovered (35 tiles), procedurally generated species introduced by
+whoever met them first, eruptions of the volcano (one squid wakes it for everyone; called "forge" in the
+API), pearls (called gems in the API) gathered from the deep, and the endings squids have chosen.
+
+Places in the sea: the surface, Hollowglass (the fallen glass dome), the cliff (with a cave, the Mouth,
+where the nautilus and the moray eel live), the Swaying (a kelp forest), the trench, the Below (a dark
+7x5 procedurally generated maze), the octopus garden (a warm deep-sea spot where hundreds of octopuses
+brood their eggs), the volcano (an underwater volcano and hydrothermal vent next to the octopus garden),
+and the Plunge (where the water from the sky islands pours into the sea).
+
+Creatures (all real, and all in the database; see get-species): the vampire squid, the nautilus, the
+moray eel, Sepia the cuttlefish, Old Drift the green sea turtle, crown jellies, moon jellies, dumbo
+octopuses, pearl octopuses, Grandmother Seven, Humboldt squid, the Shoal (sardines), the sperm whale,
+glass squid, strawberry squid, and firefly squid.  Plants: giant kelp, glowing sea pens, glass sponges,
+sea fans.
 
 Endings: "return" (home: leapt up the waterfall back to the sky island), "lantern" (stay: decided the
 sea is home and stayed with its friends), "gift" (the whale: calmed the sperm whale and swam off into
 the open ocean with her), and "song" (the swans: called the swans, and the sky islands came down to
 rest on the sea).
 
-All times are JS timestamps (milliseconds since the Unix epoch).  This is a good first call;
-use get-history, get-state, get-map, get-species, and get-squids for detail.`,
+All times are JS timestamps (milliseconds since the Unix epoch).  This is a good first call; use
+get-lore (story, places, smells, dirt), get-skin-words (the melodies), get-species (creatures and
+plants), get-squids (players, and what each knows), get-online (who's swimming right now), get-history,
+get-state, and get-map for detail.`,
 
 
   sideEffects: 'cacheable',
@@ -44,8 +68,8 @@ use get-history, get-state, get-map, get-species, and get-squids for detail.`,
       outputFriendlyName: 'World overview',
       outputDescription:
         '`{ serverNow, worldSeed, bornAt, squids, finishedSquids, endingsTally: {return,lantern,gift,song}, tilesDiscovered, tilesTotal, '+
-        'speciesCount: {creature,plant,item}, eruptionsTotal, state, recent }`.  `bornAt` is when the first world event happened (epoch ms, or null). '+
-        '`devices` = how many squids were last played on each kind of device; `squids` = squids ever hatched; `finishedSquids` = distinct squids who reached at least one ending.  `state` is the live world state '+
+        'speciesCount: {creature,plant,item}, nativeSpeciesCount, eruptionsTotal, state, recent }`.  `bornAt` is when the first world event happened (epoch ms, or null). '+
+        '`devices` = how many squids were last played on each kind of device; `speciesCount` counts procedurally generated species; `nativeSpeciesCount` counts the native (real) ones.  `squids` = squids ever hatched; `finishedSquids` = distinct squids who reached at least one ending.  `state` is the live world state '+
         '(same as get-state).  `recent` is the 10 most recent world events, newest first.'
     },
 
@@ -80,6 +104,7 @@ use get-history, get-state, get-map, get-species, and get-squids for detail.`,
         plant: await Species.count({ kind: 'plant' }),
         item: await Species.count({ kind: 'item' }),
       },
+      nativeSpeciesCount: await NativeSpecies.count().tolerate(() => sails.helpers.world.getNativeSpecies().length),
       eruptionsTotal: await WorldEvent.count({ kind: 'eruption' }),
       state: await sails.helpers.world.getWorldState(now),
       recent: await WorldEvent.find().sort([{ startsAt: 'DESC' }, { id: 'DESC' }]).limit(10),

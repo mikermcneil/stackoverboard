@@ -124,6 +124,46 @@
       src.start(t, Math.random() * 2); src.stop(t + dur + 0.1);
     },
 
+    // ── Dread: a low, dissonant drone that swells with danger (0..1) ─────────────
+    // Detuned low saws a half step apart, a tremolo that speeds up, and a filter that opens
+    // as it gets worse, so the whole thing crescendos instead of just getting louder.
+    dread(k) {
+      if (!this.ctx) { return; }
+      const ctx = this.ctx, now = ctx.currentTime;
+      k = U.clamp(k || 0, 0, 1);
+      if (!this._dread && k > 0.01 && !this.muted) {
+        const out = ctx.createGain(); out.gain.value = 0;
+        const lp = ctx.createBiquadFilter(); lp.type = 'lowpass'; lp.frequency.value = 120; lp.Q.value = 6;
+        const trem = ctx.createGain(); trem.gain.value = 1;
+        const lfo = ctx.createOscillator(); lfo.frequency.value = 3; const lfoAmt = ctx.createGain(); lfoAmt.gain.value = 0.3;
+        lfo.connect(lfoAmt); lfoAmt.connect(trem.gain); lfo.start();
+        const oscs = [41.2, 43.65, 61.7, 87.3, 92.5].map((f, i) => {// E1, F1, B1, F2, F#2: clusters of half steps
+          const o = ctx.createOscillator(); o.type = i < 2 ? 'sawtooth' : 'triangle'; o.frequency.value = f; o.detune.value = (i - 2) * 7;
+          o.connect(lp); o.start(); return o;
+        });
+        lp.connect(trem); trem.connect(out);
+        this._out(out, { verb: 0.9, dry: 0.8 });
+        this._dread = { out, lp, lfo, oscs };
+      }
+      const d = this._dread;
+      if (!d) { return; }
+      d.out.gain.setTargetAtTime(this.muted ? 0 : 0.22 * k * k, now, 0.4);
+      d.lp.frequency.setTargetAtTime(120 + 1400 * k * k, now, 0.5);
+      d.lfo.frequency.setTargetAtTime(2 + 9 * k, now, 0.5);
+      if (k <= 0.01 && !d.stopping) {
+        d.stopping = true;
+        setTimeout(() => { if (this._dread === d && d.stopping) { d.oscs.forEach((o) => o.stop()); d.lfo.stop(); this._dread = null; } }, 2500);
+      } else if (k > 0.01) { d.stopping = false; }
+    },
+
+    // A sudden orchestral-ish stab: a low cluster, a metallic shriek, a slam.
+    stinger(power = 1) {
+      if (!this.ctx || this.muted) { return; }
+      [36, 37, 43, 48, 49].forEach((n) => this.tone(NOTE(n), { type: 'sawtooth', dur: 1.8, gain: 0.07 * power, attack: 0.005, verb: 1.2, glide: 0.94 }));
+      [96, 97].forEach((n) => this.tone(NOTE(n), { type: 'square', dur: 0.9, gain: 0.012 * power, attack: 0.002, verb: 1.4, glide: 0.8 }));
+      this.noise({ dur: 0.7, freq: 140, q: 0.7, gain: 0.5 * power, type: 'lowpass', sweep: 0.4, verb: 0.6 });
+    },
+
     // ── Sound effects ─────────────────────────────────────────────────────────
     bubble(pan = 0, size = 1) {
       const f = U.lerp(500, 1400, Math.random()) / size;

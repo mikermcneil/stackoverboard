@@ -122,14 +122,13 @@
       if (item.opts.voice && SO.audio) { SO.audio.voice(item.opts.voice, item.opts.syllables || Math.min(5, 1 + Math.floor(item.text.length / 14))); }
       clearInterval(this._typeT);
       let last = U.now();
-      this._typeT = setInterval(() => this._type(item, (U.now() - last) / 1000, (last = U.now())), 30);
+      this._typeT = setInterval(() => { const now = U.now(); this._type(item, (now - last) / 1000); last = now; }, 30);
     },
 
     // Letters appear at a steady, readable pace (faster after one click, never instantly),
     // with a faint bubbling as they come.
-    _type(item) {
+    _type(item, dt) {
       if (this.current !== item) { clearInterval(this._typeT); return; }
-      const dt = arguments[1];
       const rate = item.fast ? 110 : 34;// letters per second
       const before = Math.floor(item.chars);
       item.chars = Math.min(item.text.length, item.chars + rate * dt);
@@ -163,8 +162,8 @@
       setTimeout(() => { if (!this.current) { this._next(); } }, 650);
     },
 
-    // Clicking (or space / enter) while someone's talking takes two goes: the first hurries the
-    // letters along, the second (once the line is all there, and you've had a moment) moves on.
+    // Clicking (or space / enter) while a line is still typing hurries it along; once it's all
+    // there, a click moves on.
     advance() {
       const item = this.current;
       if (!item) { return false; }
@@ -173,7 +172,8 @@
         if (now - item.shownAt > 350) { item.fast = true; }
         return false;
       }
-      if (now - item.revealedAt < 900) { return false; }
+      // (If you hurried it, a moment to actually read it first; if it played out, one click is enough.)
+      if (now - item.revealedAt < (item.fast ? 900 : 150)) { return false; }
       this._finish();
       return true;
     },

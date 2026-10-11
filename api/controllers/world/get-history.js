@@ -17,6 +17,8 @@ instantaneous events), and small public \`details\`.
 Kinds of events:
 - "arrival": a squid fell into the sea (started a playthrough).  subject "surface"; details.playthrough.
 - "chapter-reached": a squid reached a chapter (1-8) of the story.  subject is the chapter number as a string; details.location.
+  Chapters: 1 "Light" (the fallen glass dome), 2 "Hiding" (learning to hide and to calm things), 3 "Clicks" (the sperm whale in the trench),
+  4 "Down" (the Below), 5 "The octopus garden", 6 "Warm water" (riding the volcano's warm water up), 7 "Home" (the Plunge), 8 = reached an ending.
 - "tile-discovered": a squid was first to reach a tile of the Below (the deep maze).  subject is the tile key, e.g. "below:2,9".
 - "species-introduced": a squid met a procedurally generated species no one had seen before.  subject is the species key, e.g. "creature:3"; details.name.
 - "eruption": a squid woke the volcano (the underwater volcano next to the octopus garden).  subject "forge"; startsAt = when it was woken, endsAt = when the eruption

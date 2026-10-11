@@ -24,6 +24,8 @@
 
   const FAR_ISLES = [[1280, 1500, 260, 0.35, 31], [150, 2600, 340, 0.3, 32], [1250, 3600, 200, 0.28, 33], [300, 4800, 160, 0.25, 34], [1350, 6000, 140, 0.22, 35]];
   const PUFFS = (function () { const r = U.rng(77), out = []; for (let i = 0; i < 60; i++) { out.push({ x: r() * 2400 - 400, y: 900 + r() * 6800, w: 220 + r() * 380, h: 50 + r() * 60, f: 0.5 + r() * 0.4, seed: i }); } return out; })();
+  // Towering cloud masses, very far off, behind everything.
+  const HUGE = (function () { const r = U.rng(91), out = []; for (let i = 0; i < 16; i++) { out.push({ x: r() * 2800 - 600, y: 250 + i * 150 + r() * 120, w: 900 + r() * 900, h: 160 + r() * 140, seed: i * 5 + 1 }); } return out; })();
   const RUSH = (function () { const r = U.rng(5), out = []; for (let i = 0; i < 40; i++) { out.push({ a: r() * U.TAU, d: 0.25 + r() * 0.9, z0: r(), w: 0.6 + r() * 0.8, seed: 300 + i }); } return out; })();
   const TEXT = [['t1', 0.12, 0.2, 0.36, 0.44], ['t2', 0.42, 0.5, 0.62, 0.68], ['t3', 0.64, 0.7, 0.8, 0.86]];
 
@@ -141,12 +143,25 @@
     A.swan(ctx, 880 + Math.sin(t * 0.2 + 2) * 20 - live * 500, 320 + Math.sin(t) * 5, 0.25, t * 3.1 * k + 2, -1);
   }
 
+  function drawHugeClouds(ctx, t, depthK) {
+    const fill = U.mixHex('#ffffff', '#ffd9bf', Math.round(depthK * 6) / 6);
+    HUGE.forEach((c) => { A.cloud(ctx, c.x + t * 2, c.y, c.w, c.h, c.seed, { fill, alpha: 0.55, soft: 0.65 }); });
+  }
+
+  function sunGlare(ctx, W, H, a) {
+    ctx.save(); ctx.globalCompositeOperation = 'lighter';
+    const g = ctx.createRadialGradient(W * 0.82, H * 0.12, 0, W * 0.82, H * 0.12, Math.max(W, H) * 0.8);
+    g.addColorStop(0, `rgba(255,236,200,${a})`); g.addColorStop(0.3, `rgba(255,236,200,${a * 0.35})`); g.addColorStop(1, 'rgba(255,236,200,0)');
+    ctx.fillStyle = g; ctx.fillRect(0, 0, W, H);
+    ctx.restore();
+  }
+
   function drawFarStuff(ctx, t, depthK) {
     FAR_ISLES.forEach(([x, y, w, f, seed]) => {
       A.island(ctx, x, y + (seed === 33 ? (t * 3) % 60 : 0), w, { seed, t, domes: [[0, 0.14], [0.22, 0.08]], trees: 3, alpha: 0.5, lw: 1.2, fall: seed % 2 ? { at: 0.3, w: 6, h: 500 } : null });
     });
     PUFFS.forEach((c) => {
-      A.cloud(ctx, c.x + (t * 8 * c.f) % 400, c.y, c.w, c.h, c.seed, { alpha: 0.8, fill: U.mixHex('#ffffff', '#fbe3d2', depthK), line: 'rgba(0,0,0,0)' });
+      A.cloud(ctx, c.x + (t * 8 * c.f) % 400, c.y, c.w, c.h, c.seed, { alpha: 0.85, fill: U.mixHex('#ffffff', '#fbe3d2', Math.round(depthK * 6) / 6), soft: 0.35 });
     });
   }
 
@@ -205,6 +220,8 @@
     if (sh.topdown) { this.drawTopDown(ctx, W, H, t, tt, dt); return; }
 
     skyGradient(ctx, W, H, depthK);
+    sunGlare(ctx, W, H, 0.3 + depthK * 0.15);
+    withCam(ctx, W, H, S, cam, 0.15, () => drawHugeClouds(ctx, t, depthK));
     withCam(ctx, W, H, S, cam, 0.35, () => drawFarStuff(ctx, t, depthK));
     withCam(ctx, W, H, S, cam, 1, () => {
       if (cam[1] < 2600) { drawIslands(ctx, t); A.cloudBank(ctx, -1400, 3000, 860, 150, 11, { depth: 900 }); }
@@ -251,6 +268,7 @@
       ctx.fillStyle = g; ctx.fillRect(0, 0, W, H);
       ctx.restore();
     }
+    withCam(ctx, W, H, S, cam, 0.15, () => drawHugeClouds(ctx, t * (1 + live * 3), 0));
     withCam(ctx, W, H, S, cam, 0.4, () => drawFarStuff(ctx, t * (1 + live * 3), 0));
     withCam(ctx, W, H, S, cam, 1, () => {
       drawIslands(ctx, t * (1 + live));
@@ -341,15 +359,17 @@
 
   I.drawRush = function (ctx, W, H, tt, amt) {
     ctx.save();
+    // White haze first, then lit puffs tearing past through it.
+    ctx.fillStyle = `rgba(246,250,252,${amt * 0.55})`; ctx.fillRect(0, 0, W, H);
     RUSH.forEach((c) => {
       const z = 1 - ((tt * 0.9 + c.z0) % 1);// 1 = far away, 0 = in your face
       const sc = 1 / (z + 0.06);
       const x = W / 2 + Math.cos(c.a) * c.d * W * 0.25 * sc, y = H / 2 + Math.sin(c.a) * c.d * H * 0.25 * sc - (1 - z) * 100;
-      ctx.globalAlpha = amt * Math.min(1, (1 - z) * 2) * 0.8;
-      A.cloud(ctx, x, y, 140 * sc * c.w, 40 * sc * c.w, c.seed, { line: 'rgba(0,0,0,0)' });
+      ctx.globalAlpha = amt * Math.min(1, (1 - z) * 2) * Math.min(1, z * 4) * 0.85;
+      A.cloud(ctx, x, y, 140 * sc * c.w, 40 * sc * c.w, c.seed, { soft: 0.2 });
     });
     ctx.globalAlpha = 1;
-    ctx.fillStyle = `rgba(255,255,255,${amt * 0.75})`; ctx.fillRect(0, 0, W, H);
+    ctx.fillStyle = `rgba(255,255,255,${amt * 0.3})`; ctx.fillRect(0, 0, W, H);
     ctx.restore();
   };
 

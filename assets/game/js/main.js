@@ -48,6 +48,7 @@
       }
       setInterval(() => this.rememberPosition(), 8000);
       SO.others.start();
+      if (SO.rumble) { SO.rumble.start(); }
     },
 
     // After the fall and the long sink, you come to, several screens down.

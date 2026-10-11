@@ -91,23 +91,49 @@
   // The Tongue: asleep, coiled around something bright. Doesn't like visitors.
   T.tongue = {
     r: 110, touch: true,
-    init(a) { a.calm = 0; a.snap = 0; },
+    init(a) { a.calm = 0; a.snap = 0; a.rear = 0; },
     update(a, dt, room) {
-      a.snap = Math.max(0, a.snap - dt * 2);
+      a.snap = Math.max(0, a.snap - dt * 1.6);
       if (a.calmed) { a.leave = Math.min(1, (a.leave || 0) + dt * 0.25); }
+      // Awake, it lifts its head out of the coil and watches you, mouth working open and shut.
+      a.rear = U.lerp(a.rear || 0, a.awake && !a.calmed ? 1 : 0, Math.min(1, dt * 1.5));
+      const sq = SO.E.squid;
+      const d = U.dist(sq.x, sq.y, a.x, a.y);
+      if (a.awake && !a.calmed && d < 650) {
+        SO.E.dread = Math.max(SO.E.dread || 0, U.lerp(0.15, 0.6, 1 - d / 650));
+        a._beatT = (a._beatT || 0) - dt;
+        if (a._beatT < 0 && SO.audio) { a._beatT = 0.55 + d / 900; SO.audio.heartbeat && SO.audio.heartbeat(); }
+        // Now and then a fake-out: a hard clack of the jaws, without the lunge.
+        if (d > 280 && !a.snap && Math.random() < dt * 0.25) { a.clack = 1; SO.audio && SO.audio.tock(SO.audio.NOTE(34), { gain: 0.22 }); }
+      }
+      a.clack = Math.max(0, (a.clack || 0) - dt * 3);
     },
     draw(ctx, a, room, t) {
       const pts = [];
       const leave = a.leave || 0;
-      for (let k = 0; k < 22; k++) {
+      for (let k = 0; k < 24; k++) {
         const ang = k * 0.42 + t * 0.2 * (a.calmed ? 2 : 0.3);
-        const rad = 120 - k * 3.5;
+        const rad = 130 - k * 3.6;
         let px = a.x + Math.cos(ang) * rad, py = a.y + Math.sin(ang) * rad * 0.55;
         if (leave) { px = U.lerp(px, a.x + 700 + k * 40, leave); py = U.lerp(py, a.y - 300 - k * 4, leave); }
         pts.push({ x: px, y: py });
       }
-      if (a.snap > 0) { pts[0].x += (SO.E.squid.x - pts[0].x) * a.snap * 0.4; pts[0].y += (SO.E.squid.y - pts[0].y) * a.snap * 0.4; }
-      A.eel(ctx, pts, t, { asleep: !a.awake && !a.calmed, open: a.snap > 0 ? 1 : (a.awake ? 0.4 : 0), w: 30 });
+      const sq = SO.E.squid;
+      // Rearing: the front of the body lifts toward you, swaying.
+      const rear = a.rear || 0;
+      if (rear > 0.01 && !leave) {
+        const ang = Math.atan2(sq.y - a.y, sq.x - a.x);
+        for (let k = 0; k < 7; k++) {
+          const f = (1 - k / 7) * rear;
+          const tx = a.x + Math.cos(ang) * (190 - k * 22) + Math.sin(t * 1.6 + k * 0.5) * 10 * (1 - k / 7);
+          const ty = a.y + Math.sin(ang) * (140 - k * 16) - 60 * f + Math.cos(t * 1.3 + k) * 6;
+          pts[k].x = U.lerp(pts[k].x, tx, f); pts[k].y = U.lerp(pts[k].y, ty, f);
+        }
+      }
+      if (a.snap > 0) { const k = U.smooth(Math.min(1, a.snap * 1.3)); for (let i = 0; i < 3; i++) { pts[i].x += (sq.x - pts[i].x) * k * (0.75 - i * 0.2); pts[i].y += (sq.y - pts[i].y) * k * (0.75 - i * 0.2); } }
+      const breathe = 0.35 + 0.25 * Math.sin(t * 2.2);
+      const open = a.snap > 0 ? 1 : (a.clack > 0 ? 1 - a.clack : (a.awake && !a.calmed ? breathe : 0));
+      A.eel(ctx, pts, t, { asleep: !a.awake && !a.calmed, open, w: 36, headScale: 1.5, pharynx: a.snap > 0 ? Math.sin(Math.min(1, (1 - a.snap) * 2.2) * Math.PI) : 0, lookAngle: Math.atan2(sq.y - pts[0].y, sq.x - pts[0].x) });
     },
   };
 
@@ -452,6 +478,12 @@
       // wrinkles
       ctx.strokeStyle = 'rgba(255,255,255,0.05)'; ctx.lineWidth = 6;
       for (let i = 0; i < 14; i++) { const x = -500 + i * 60; ctx.beginPath(); ctx.moveTo(x, -150 + Math.abs(i - 7) * 6); ctx.lineTo(x - 30, 150 - Math.abs(i - 7) * 6); ctx.stroke(); }
+      // teeth along the lower jaw, when a light catches them
+      if (a.teeth > 0.02) {
+        ctx.fillStyle = `rgba(240,234,215,${Math.min(1, a.teeth)})`;
+        for (let i = 0; i < 14; i++) { const x = 440 + i * 22, y = 190 - i * 1.3; ctx.beginPath(); ctx.moveTo(x - 5, y); ctx.lineTo(x + 5, y); ctx.lineTo(x + 1, y - 22); ctx.closePath(); ctx.fill(); }
+        ctx.save(); ctx.globalCompositeOperation = 'lighter'; A.glow(ctx, 600, 180, 260, '#cfe4ff', 0.25 * a.teeth); ctx.restore();
+      }
       // small eye, far back near the jaw
       ctx.fillStyle = '#0c0d10'; ctx.beginPath(); ctx.ellipse(380, 120, 14, 9, 0, 0, U.TAU); ctx.fill();
       ctx.fillStyle = 'rgba(255,255,255,0.35)'; ctx.beginPath(); ctx.arc(384, 116, 3, 0, U.TAU); ctx.fill();

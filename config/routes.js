@@ -90,5 +90,7 @@ module.exports.routes = {
   'GET   /api/v1/world/get-species':                  { action: 'world/get-species' },
   'GET   /api/v1/world/get-squids':                   { action: 'world/get-squids' },
   'GET   /api/v1/world/get-online':                   { action: 'world/get-online' },
+  'GET   /api/v1/world/get-skin-words':               { action: 'world/get-skin-words' },
+  'GET   /api/v1/world/get-lore':                     { action: 'world/get-lore' },
 
 };

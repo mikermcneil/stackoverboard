@@ -11,6 +11,25 @@
 
 module.exports.bootstrap = async function() {
 
+  // Dev-only fake data (skipped in production / migrate: safe, see below).
+  await seedFakeData();
+
+  // The world's native creatures, plants, and items live in the database too, so they can be
+  // queried (e.g. over MCP).  This runs in every environment, on every process: it's idempotent
+  // and race-safe (see the seed-native-species helper).  If it can't run (e.g. the production
+  // table hasn't been created yet: `sails run create-native-species-table`), the app still lifts,
+  // and world/get-species falls back to the built-in list.
+  try {
+    let seeded = await sails.helpers.world.seedNativeSpecies();
+    sails.log.verbose('Native species seeded:', seeded);
+  } catch (err) {
+    sails.log.warn('Could not seed native species (has the `nativespecies` table been created?):', err.message);
+  }
+
+};
+
+async function seedFakeData() {
+
   // Import dependencies
   var path = require('path');
 
@@ -76,4 +95,4 @@ module.exports.bootstrap = async function() {
     sails.log.warn('For some reason, could not write bootstrap version .json file.  This could be a result of a problem with your configured paths, or, if you are in production, a limitation of your hosting provider related to `pwd`.  As a workaround, try updating app.js to explicitly pass in `appPath: __dirname` instead of relying on `chdir`.  Current sails.config.appPath: `'+sails.config.appPath+'`.  Full error details: '+err.stack+'\n\n(Proceeding anyway this time...)');
   });
 
-};
+}

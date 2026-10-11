@@ -189,7 +189,10 @@
 
   // Clicking near an edge that leads somewhere means "go there": aim past the edge.
   E.exitAware = function (x, y) {
-    const room = this.room, ex = room.exits, M = 170;
+    const room = this.room, M = 170;
+    // (Don't aim for exits that are closed for now: you'd just bump against them.)
+    const ex = {};
+    Object.keys(room.exits).forEach((d) => { if (room.exits[d] && !(SO.story.exitBlocked && SO.story.exitBlocked(room, d, room.exits[d]))) { ex[d] = room.exits[d]; } });
     if (ex.left && x < M) { return { x: -300, y, exit: 'left' }; }
     if (ex.right && x > room.w - M) { return { x: room.w + 300, y, exit: 'right' }; }
     const mid = (gap, fallback) => gap ? (gap[0] + gap[1]) / 2 * room.w : fallback;
@@ -691,6 +694,7 @@
   // ── Update ─────────────────────────────────────────────────────────────────
   E.update = function (dt) {
     if (this.mode !== 'play' || !this.room) { return; }
+    if (this.replaying) { if (SO.air) { SO.air.replayStep(dt); } return; }// an action replay is showing
     const sq = this.squid, room = this.room;
     sq.t += dt;
     // Long press on the squid: open what it remembers.
@@ -766,8 +770,12 @@
     if (inAir !== !!sq.inAir) {
       sq.inAir = inAir;
       if (!inAir) {
-        if (sq.vy > 220) { AU.splash(); this.splashFx(sq.x, sY); } else { AU.bubbles(6, 0.6); }
-      } else { this.lastBreachAt = this.t; if (SO.story.onBreach) { SO.story.onBreach(room); } }
+        if (SO.air) { SO.air.land(sq, sY); }
+        else if (sq.vy > 220) { AU.splash(); this.splashFx(sq.x, sY); } else { AU.bubbles(6, 0.6); }
+      } else {
+        this.lastBreachAt = this.t; if (SO.story.onBreach) { SO.story.onBreach(room); }
+        if (SO.air) { SO.air.leave(sq, sY); }
+      }
     }
 
     if (inAir) {
@@ -779,10 +787,10 @@
       // Two layers of smoothing give an S-curve: it eases into motion and eases out of it.
       const cruise = this.gaitSpeed();
       const tvx = dx * cruise * strength * thrust, tvy = dy * cruise * strength * thrust;
-      const a1 = 1 - Math.exp(-(strength > 0.05 ? 1.6 : 1.1) * dt);
+      const a1 = 1 - Math.exp(-(strength > 0.05 ? (this.gait >= 4 ? 3.4 : 1.6) : 1.1) * dt);// frantic gaits kick in hard
       sq.dvx = (sq.dvx || 0) + (tvx - (sq.dvx || 0)) * a1;
       sq.dvy = (sq.dvy || 0) + (tvy - (sq.dvy || 0)) * a1;
-      const a2 = 1 - Math.exp(-2.4 * dt);
+      const a2 = 1 - Math.exp(-(this.gait >= 4 ? 4.5 : 2.4) * dt);
       sq.vx += (sq.dvx - sq.vx) * a2; sq.vy += (sq.dvy - sq.vy) * a2;
       if (room.def.current) { sq.vx += room.def.current[0] * dt; sq.vy += room.def.current[1] * dt; }
       if (sY !== null) {
@@ -806,7 +814,8 @@
         }
       }
     }
-    const sp = Math.hypot(sq.vx, sq.vy), maxSp = inAir ? 1200 : 600;
+    const sp = Math.hypot(sq.vx, sq.vy), maxSp = inAir ? 1400 : (this.gait >= 4 ? 980 : 600);// frantic clicking: faster
+    if (SO.air) { SO.air.track(sq, sY, dt); }
     if (sp > maxSp) { sq.vx *= maxSp / sp; sq.vy *= maxSp / sp; }
     sq.fin += dt * (2.2 + sp / 90);
 
@@ -990,11 +999,14 @@
 
   // ── Gait: each click is a spur. Click again quickly to go faster, like a
   // horse going from a walk to a gallop. Leave it alone and it settles back down.
-  const GAIT_SPEED = [150, 250, 360, 500];
+  const GAIT_SPEED = [150, 250, 360, 500, 700, 920];// the last two only by clicking like crazy
   E.gait = 0;
   E.spur = function () {
     const now = this.t;
-    if (now - (this.lastSpurAt || -99) < 1.5) { this.gait = Math.min(3, this.gait + 1); }
+    const gap = now - (this.lastSpurAt || -99);
+    // Click again soon to go up a gait (to a gallop). Past that, only frantic clicking goes faster.
+    if (this.gait >= 3 && gap < 0.3) { this.gait = Math.min(5, this.gait + 1); }
+    else if (gap < 1.5) { this.gait = Math.max(this.gait, Math.min(3, this.gait + 1)); }
     this.lastSpurAt = now;
     const sq = this.squid;
     sq.jetKick = 0.6 + this.gait * 0.13;
@@ -1014,13 +1026,15 @@
       return;
     }
     this.keyHeld = 0;
-    if (this.pointer.down) { this.lastSpurAt = this.t; return; }
+    // The two frantic gaits fade fast unless you keep it up.
+    if (this.gait > 3 && this.t - (this.lastSpurAt || 0) > 0.75) { this.gait -= 1; this.lastSpurAt = this.t - 0.4; return; }
+    if (this.pointer.down) { if (this.gait <= 3) { this.lastSpurAt = this.t; } return; }
     // Settle down a gait at a time: slowly while still heading somewhere, faster once idle.
     const wait = this.target ? 4.5 : 2;
     if (this.gait > 0 && this.t - (this.lastSpurAt || 0) > wait) { this.gait -= 1; this.lastSpurAt = this.t - wait * 0.5; }
   };
   E.gaitSpeed = function () {
-    this._gs = U.lerp(this._gs || GAIT_SPEED[0], GAIT_SPEED[this.gait], 0.04);
+    this._gs = U.lerp(this._gs || GAIT_SPEED[0], GAIT_SPEED[this.gait], this.gait >= 4 ? 0.1 : 0.04);
     return this._gs;
   };
   E.startTurn = function (sq, to) {
@@ -1099,10 +1113,11 @@
       const res = tryExit(dir);
       if (res === true) { return; }
       // No way through: a soft wall of water.
-      if (dir === 'left' && sq.x < 40) { sq.x = 40; sq.vx = Math.abs(sq.vx) * 0.3; sq.dvx = 0; }
-      if (dir === 'right' && sq.x > room.w - 40) { sq.x = room.w - 40; sq.vx = -Math.abs(sq.vx) * 0.3; sq.dvx = 0; }
-      if (dir === 'down' && sq.y > room.h - 40) { sq.y = room.h - 40; sq.vy = -Math.abs(sq.vy) * 0.3; sq.dvy = 0; }
-      if (dir === 'up' && sq.y < 40) { sq.y = 40; sq.vy = Math.abs(sq.vy) * 0.3; sq.dvy = 0; }
+      // (Eased back, with no bounce, so it never feels like being yanked.)
+      if (dir === 'left' && sq.x < 40) { sq.x = U.lerp(sq.x, 40, 0.35); sq.vx = Math.max(0, sq.vx); sq.dvx = Math.max(0, sq.dvx || 0); }
+      if (dir === 'right' && sq.x > room.w - 40) { sq.x = U.lerp(sq.x, room.w - 40, 0.35); sq.vx = Math.min(0, sq.vx); sq.dvx = Math.min(0, sq.dvx || 0); }
+      if (dir === 'down' && sq.y > room.h - 40) { sq.y = U.lerp(sq.y, room.h - 40, 0.35); sq.vy = Math.min(0, sq.vy); sq.dvy = Math.min(0, sq.dvy || 0); }
+      if (dir === 'up' && sq.y < 40) { sq.y = U.lerp(sq.y, 40, 0.35); sq.vy = Math.max(0, sq.vy); sq.dvy = Math.max(0, sq.dvy || 0); }
       if (typeof res === 'string') {
         if (this.target && this.target.exit) { this.target = null; }
         if (!this._blockSaidAt || this.t - this._blockSaidAt > 8) { this._blockSaidAt = this.t; SO.ui.thought(res); }
@@ -1289,20 +1304,24 @@
     const g = ctx.createLinearGradient(0, 0, 0, this.H);
     g.addColorStop(0, top); g.addColorStop(1, bot);
     ctx.fillStyle = g; ctx.fillRect(0, 0, this.W, this.H);
+    const X = SO.atmos;
+    if (X) { X.farMotes(ctx, this, room, t); X.whale(ctx, this, room, t); }
 
     ctx.save();
     ctx.scale(this.scale, this.scale);
     ctx.translate(-this.cam.x, -this.cam.y);
 
+    if (X) { X.backdrop(ctx, this, room, t); }
     if (def.bg) { def.bg(ctx, t, room, this); }
     if (room.surfaceY !== null) { this.drawSurfaceSky(ctx, room, t); }
-    if ((def.depth || 0) < 0.45 && def.rays !== false) {
-      A.lightRays(ctx, this.cam.x - 200, this.W / this.scale + 400, room.surfaceY !== null ? room.surfaceY : this.cam.y - 100, 1100, t, 0.16 * (1 - (def.depth || 0) * 2), def.rayColor || '#ffffff');
-    }
     this.drawProps(ctx, 'back');
     this.drawAmbient(ctx, 'back');
     // Water between you and the far things: they fade toward the water's color.
-    ctx.save(); ctx.globalAlpha = 0.28; ctx.fillStyle = bot; ctx.fillRect(this.cam.x - 10, this.cam.y - 10, this.W / this.scale + 20, this.H / this.scale + 20); ctx.restore();
+    // (Only the water; the sky above the surface stays clear.)
+    const wy = room.surfaceY !== null ? Math.max(this.cam.y - 10, room.surfaceY) : this.cam.y - 10;
+    ctx.save(); ctx.globalAlpha = 0.28; ctx.fillStyle = bot; ctx.fillRect(this.cam.x - 10, wy, this.W / this.scale + 20, this.cam.y + this.H / this.scale + 10 - wy); ctx.restore();
+    // Light from the surface falls through all of it.
+    if (X) { X.surfaceLight(ctx, this, room, t, false); }
     this.drawTerrain(ctx);
     this.drawProps(ctx, 'mid');
     room.actors.forEach((a) => { if (!a.front && !a.hidden) { const T = SO.actorTypes[a.type]; if (T && T.draw) { T.draw(ctx, a, room, t); } } });
@@ -1312,12 +1331,15 @@
     this.drawProps(ctx, 'front');
     this.drawParticles(ctx);
     this.drawEffects(ctx);
+    if (X) { X.surfaceLight(ctx, this, room, t, true); }
     if (room.surfaceY !== null) { this.drawSurfaceLine(ctx, room, t); }
     ctx.restore();
 
+    if (X) { X.nearMotes(ctx, this, room, t); X.foreground(ctx, this, room, t); }
     this.drawFog(ctx, bot, def);
     this.drawExitHints(ctx);
     this.drawDarkness(ctx);
+    if (X) { X.grade(ctx, this, room); }
     if (this.overlay) { this.overlay(ctx, this.W, this.H, t); }
   };
 
@@ -1408,38 +1430,21 @@
       else { A.circle(ctx, d.x, y + 2, d.s * 0.25, rockHi, 'rgba(10,16,22,0.3)', 1); }
     });
     // Caustics: light through the waves, wobbling on everything in the shallows.
-    if (depth < 0.35 && room.floor) {
-      ctx.save();
-      ctx.globalCompositeOperation = 'lighter';
-      ctx.globalAlpha = (0.35 - depth) * 0.9;
-      ctx.strokeStyle = 'rgba(220,255,250,0.25)'; ctx.lineWidth = 3;
-      const t = this.t;
-      const x0 = Math.max(0, this.cam.x - 50), x1 = Math.min(room.w, this.cam.x + this.W / this.scale + 50);
-      for (let x = x0; x < x1; x += 46) {
-        const y = room.floorY(x);
-        if (!isFinite(y)) { continue; }
-        ctx.beginPath();
-        for (let k = 0; k < 5; k++) {
-          const px = x + Math.sin(t * 1.3 + x * 0.05 + k) * 18 + k * 9, py = y + 4 + k * 7 + Math.cos(t * 1.7 + x * 0.03 + k * 2) * 5;
-          k ? ctx.lineTo(px, py) : ctx.moveTo(px, py);
-        }
-        ctx.stroke();
-      }
-      ctx.restore();
-    }
+    if (depth < 0.36 && room.floor && SO.atmos) { SO.atmos.caustics(ctx, this, room, depth); }
   };
 
   E.drawSurfaceSky = function (ctx, room, t) {
     // Seen from just under (or just over) the water: hazy, bright, far.
     const sy = room.surfaceY;
     const day = SO.story.seaDay ? SO.story.seaDay() : { light: 1, name: 'day', phase: 0.3 };
-    const skyTop = U.mixHex('#0f1a33', '#cfe9ee', day.light);
-    const skyBot = U.mixHex('#26324d', '#f4f8f4', day.light);
+    const skyTop = U.mixHex('#0f1a33', '#7db4d3', day.light);
+    const skyBot = U.mixHex('#26324d', '#d4e7ea', day.light);
     const dusk = day.name === 'dusk' || day.name === 'dawn';
-    const g = ctx.createLinearGradient(0, sy - 500, 0, sy);
+    const g = ctx.createLinearGradient(0, sy - 240, 0, sy);
     g.addColorStop(0, skyTop); g.addColorStop(1, dusk ? U.mixHex('#f2c6a0', '#f7f2e6', 0.4) : skyBot);
     ctx.fillStyle = g;
     ctx.fillRect(this.cam.x - 50, sy - 1200, this.W / this.scale + 100, 1200);
+    if (SO.atmos) { SO.atmos.sky(ctx, this, room, t, day, 'far'); }
     ctx.save();
     ctx.translate(this.cam.x * 0.9, 0);
     ctx.globalAlpha = 0.35 + 0.2 * day.light;
@@ -1448,10 +1453,11 @@
       A.island(ctx, ix, sy - 250 - i * 30, 120 * s * 2, { seed: 40 + i, t, domes: [[0, 0.16], [0.25, 0.1]], trees: 3, lw: 0.8, fall: i === 1 ? { at: 0.2, w: 5, h: 250 + i * 30 } : null });
     });
     ctx.restore();
+    if (SO.atmos) { SO.atmos.sky(ctx, this, room, t, day, 'near'); }
     // haze over the isles
-    const hz = ctx.createLinearGradient(0, sy - 420, 0, sy);
-    hz.addColorStop(0, 'rgba(240,248,246,0)'); hz.addColorStop(1, `rgba(240,248,246,${0.55 * day.light})`);
-    ctx.fillStyle = hz; ctx.fillRect(this.cam.x - 50, sy - 420, this.W / this.scale + 100, 420);
+    const hz = ctx.createLinearGradient(0, sy - 260, 0, sy);
+    hz.addColorStop(0, 'rgba(240,248,246,0)'); hz.addColorStop(1, `rgba(240,248,246,${0.4 * day.light})`);
+    ctx.fillStyle = hz; ctx.fillRect(this.cam.x - 50, sy - 260, this.W / this.scale + 100, 260);
     if (day.light < 0.5) {
       ctx.fillStyle = `rgba(255,255,240,${(0.5 - day.light) * 1.4})`;
       for (let i = 0; i < 60; i++) { const x = this.cam.x + ((i * 397) % 1600), y = sy - 120 - ((i * 211) % 500); ctx.fillRect(x, y, 1.5, 1.5); }
@@ -1634,8 +1640,15 @@
   };
 
   // ── Cutscene helpers ───────────────────────────────────────────────────────
+  // A scripted swim. If rock is in the way and it can't get there, it gives up after a while
+  // (rather than leaving you locked in place, pressed against the rock forever).
   E.swimTo = function (x, y, opts = {}) {
-    return new Promise((resolve) => { this.squid.auto = { x, y, speed: opts.speed || 0.8, near: opts.near || 40, done: resolve }; });
+    return new Promise((resolve) => {
+      const sq = this.squid;
+      const auto = { x, y, speed: opts.speed || 0.8, near: opts.near || 40, done: resolve };
+      sq.auto = auto;
+      setTimeout(() => { if (sq.auto === auto) { sq.auto = null; resolve(); } }, (opts.timeout || 7) * 1000);
+    });
   };
   E.focus = function (x, y, speed) { this.camFocus = x === null ? null : { x, y, speed }; };
   E.lock = function () { this.locked++; this.target = null; };

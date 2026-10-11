@@ -21,6 +21,17 @@ module.exports = {
   \`nextAt\` is when the next pass begins.
 - ventEverErupted / lastEruption: whether the volcano had ever erupted by \`at\`, and the latest such eruption.
 
+How the volcano gets woken: a squid flashes the skin word "wake" at it (gold, red, gold, red; on a
+piano that's B5 D5 B5 D5, see get-skin-words), which Grandmother Seven, the seven-arm octopus of the
+octopus garden, teaches in exchange for five pearls.  While it's awake, warm water rushes up through the
+crack in her roof (the Riser) and carries squids toward the warm shallows (chapter 6, "Warm water").
+Squids can smell the volcano from a distance (sulfur: rotten eggs and hot rock), and swimming near it
+leaves them sooty.  Playing wake backwards won't put it back to sleep.
+
+How to survive the Shoal: when the little fish all swim away at once, the sardines are coming.  A squid
+caught in the open gets swept away, so it squeezes into one of the little dark holes in the coral, or
+hides with the skin word "passing cloud" (red, red, shimmer; D5 D5 A5 on a piano).
+
 Pass \`at\` to ask about another moment.  The sea-day and the Shoal follow a fixed schedule, so past
 and future times are exact.  The vent's status at a past time is derived from the eruption history;
 for a future time it only reflects eruptions that have already happened (no one can predict who'll

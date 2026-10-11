@@ -347,16 +347,17 @@
   A.rgbOf = rgbOf; A.rgbStr = rgbStr; A.mixRgb = mixRgb;
   const CW = 448, CH = 160, CLOUDS = {};
   let cloudN = 0;
-  function cloudSprite(variant, fill) {
-    const key = variant + '|' + fill;
+  function cloudSprite(variant, fill, soft) {
+    const key = variant + '|' + fill + '|' + soft;
     if (CLOUDS[key]) { return CLOUDS[key]; }
     if (++cloudN > 90) { Object.keys(CLOUDS).forEach((k) => { delete CLOUDS[k]; }); cloudN = 1; }
     const c = document.createElement('canvas'); c.width = CW; c.height = CH;
     const g = c.getContext('2d');
     const lit = rgbOf(fill);
     const storm = lit[0] + lit[1] + lit[2] < 400;
-    const shade = mixRgb(lit, storm ? [12, 16, 26] : [118, 142, 168], storm ? 0.45 : 0.42);
-    const deep = mixRgb(lit, storm ? [6, 8, 14] : [78, 98, 124], 0.62);
+    // soft: far away, the haze between eats the shadows.
+    const shade = mixRgb(lit, storm ? [12, 16, 26] : [132, 154, 182], (storm ? 0.45 : 0.34) * (1 - soft));
+    const deep = mixRgb(lit, storm ? [6, 8, 14] : [96, 116, 142], (storm ? 0.62 : 0.5) * (1 - soft));
     const r = U.rng(variant * 977 + 13);
     const puffs = [];
     const n = 15 + Math.floor(r() * 6);
@@ -367,7 +368,7 @@
     }
     for (let i = 0; i < 8; i++) {// billows heaped up near the middle
       const u = 0.22 + r() * 0.56, hump = Math.sin(u * Math.PI);
-      puffs.push([CW * u, CH * (0.44 - 0.18 * hump * r()), CH * (0.08 + 0.13 * r()) * hump]);
+      puffs.push([CW * u, CH * (0.44 - 0.16 * hump * r()), CH * (0.12 + 0.1 * r()) * hump]);
     }
     const blob = (x, y, rad, col, a) => {
       const gr = g.createRadialGradient(x, y, 0, x, y, rad);
@@ -380,7 +381,7 @@
     puffs.forEach(([x, y, pr]) => blob(x + pr * 0.2, y - pr * 0.3, pr * 0.86, lit, 0.95));
     g.globalCompositeOperation = 'source-atop';
     const ug = g.createLinearGradient(0, CH * 0.42, 0, CH * 0.86);
-    ug.addColorStop(0, rgbStr(deep, 0)); ug.addColorStop(1, rgbStr(deep, 0.6));
+    ug.addColorStop(0, rgbStr(deep, 0)); ug.addColorStop(1, rgbStr(deep, 0.5));
     g.fillStyle = ug; g.fillRect(0, 0, CW, CH);
     const sg = g.createRadialGradient(CW * 0.72, -CH * 0.35, 0, CW * 0.72, -CH * 0.35, CW * 0.7);
     sg.addColorStop(0, storm ? 'rgba(255,240,220,0.06)' : 'rgba(255,247,230,0.5)'); sg.addColorStop(1, 'rgba(255,247,230,0)');
@@ -390,7 +391,7 @@
   }
 
   A.cloud = function (ctx, x, y, w, h, seed = 1, opts = {}) {
-    const spr = cloudSprite(Math.abs(Math.floor(seed)) % 12, opts.fill || C.cloud);
+    const spr = cloudSprite(Math.abs(Math.floor(seed)) % 12, opts.fill || C.cloud, opts.soft || 0);
     const a = ctx.globalAlpha;
     ctx.globalAlpha = a * (opts.alpha === undefined ? 1 : opts.alpha);
     const dw = w * 1.15, dh = h * 2;
@@ -406,7 +407,7 @@
     ctx.globalAlpha *= (opts.alpha === undefined ? 1 : opts.alpha);
     const fill = opts.fill || C.cloud, lit = rgbOf(fill);
     const storm = lit[0] + lit[1] + lit[2] < 400;
-    const shade = mixRgb(lit, storm ? [12, 16, 26] : [118, 142, 168], storm ? 0.4 : 0.32);
+    const shade = mixRgb(lit, storm ? [12, 16, 26] : [118, 142, 168], storm ? 0.4 : 0.2);
     const depth = opts.depth || 3000;
     const g = ctx.createLinearGradient(0, y - h * 0.2, 0, y + h * 2.5);
     g.addColorStop(0, rgbStr(lit, 0)); g.addColorStop(0.12, rgbStr(lit, 1)); g.addColorStop(0.5, rgbStr(shade, 1)); g.addColorStop(1, rgbStr(mixRgb(lit, shade, 0.6), 1));
@@ -712,8 +713,8 @@
         ctx.restore();
       }
     };
-    pass(opts.spacing || 150, 2.4, 0.9, 0.8, 1);// haze
-    pass((opts.spacing || 150) * 0.6, 0.55, 1.5, 0.45, 7);// crisp shafts
+    pass(opts.spacing || 150, 2.4, 0.75, 0.8, 1);// haze
+    pass((opts.spacing || 150) * 0.6, 0.5, 2.2, 0.5, 7);// crisp shafts
     ctx.restore();
   };
 
@@ -993,21 +994,69 @@
 
   // The Tongue: a moray-ish eel that lives in the Mouth.
   A.eel = function (ctx, pts, t, opts = {}) {
-    A.taper(ctx, pts, opts.w || 26, 5, opts.color || '#7c8f4a');
+    const col = opts.color || '#3a4026';
+    // A dark fin ridge along the back, then the thick, slimy body.
     ctx.save();
-    for (let i = 2; i < pts.length; i += 2) {
-      A.circle(ctx, pts[i].x, pts[i].y, 3.5, 'rgba(230,220,120,0.7)', null);
-    }
+    ctx.globalAlpha *= 0.8;
+    A.taper(ctx, pts.map((p, i) => ({ x: p.x, y: p.y - (opts.w || 26) * 0.45 * (1 - i / pts.length) })), (opts.w || 26) * 0.5, 2, '#2f3a22');
     ctx.restore();
-    const h = pts[0], n = pts[1];
-    const a = Math.atan2(h.y - n.y, h.x - n.x);
-    ctx.save(); ctx.translate(h.x, h.y); ctx.rotate(a);
-    A.shape(ctx, [[-10, -16], [26, -8], [30, 0], [26, 8], [-10, 16]], opts.color || '#7c8f4a', { lw: 2.6 });
-    if (opts.open) {
-      ctx.fillStyle = '#3a1820'; ctx.beginPath(); ctx.moveTo(8, 0); ctx.lineTo(30, -6 * opts.open); ctx.lineTo(30, 6 * opts.open); ctx.closePath(); ctx.fill();
+    A.taper(ctx, pts, opts.w || 26, 5, col);
+    // Mottled like rotting leaves: blotches, and old scars.
+    ctx.save();
+    for (let i = 1; i < pts.length; i++) {
+      const w = (opts.w || 26) * (1 - i / pts.length);
+      A.circle(ctx, pts[i].x + Math.sin(i * 7.3) * w * 0.3, pts[i].y + Math.cos(i * 5.1) * w * 0.25, 2.5 + (i * 13 % 5), 'rgba(28,32,18,0.55)', null);
+      if (i % 4 === 0) { A.circle(ctx, pts[i].x - Math.cos(i) * w * 0.2, pts[i].y + Math.sin(i * 2) * w * 0.2, 1.2, 'rgba(170,165,120,0.25)', null); }
     }
-    A.circle(ctx, 12, -7, 3.5, opts.asleep ? null : '#f1e6a0', C.ink, 1.6);
-    if (opts.asleep) { ctx.strokeStyle = C.ink; ctx.lineWidth = 1.6; ctx.beginPath(); ctx.moveTo(9, -7); ctx.lineTo(15, -7); ctx.stroke(); }
+    ctx.strokeStyle = 'rgba(220,200,180,0.35)'; ctx.lineWidth = 1.2;
+    for (const i of [4, 9]) { if (pts[i]) { ctx.beginPath(); ctx.moveTo(pts[i].x - 8, pts[i].y - 6); ctx.lineTo(pts[i].x + 6, pts[i].y + 4); ctx.stroke(); } }
+    ctx.restore();
+    const h = pts[0], n = pts[2] || pts[1];
+    const a = Math.atan2(h.y - n.y, h.x - n.x);
+    const open = opts.open || 0;
+    ctx.save(); ctx.translate(h.x, h.y); ctx.rotate(a);
+    const S = opts.headScale || 1.45;
+    ctx.scale(S, S);
+    // Lower jaw swings down; the gape is pink-black and wet.
+    const jaw = open * 0.55;
+    ctx.save(); ctx.rotate(jaw);
+    A.shape(ctx, [[-12, 2], [30, 4], [36, 8], [28, 14], [-12, 15]], '#30361f', { lw: 2.2 });
+    ctx.restore();
+    if (open > 0.02) {
+      ctx.fillStyle = '#26080e';
+      ctx.beginPath(); ctx.moveTo(-6, 2); ctx.lineTo(36, -2); ctx.lineTo(36 * Math.cos(jaw) - 4 * Math.sin(jaw), 36 * Math.sin(jaw) + 6); ctx.closePath(); ctx.fill();
+      // Rows of needle teeth, top and bottom, pointing back down the throat.
+      ctx.fillStyle = '#ece6d6';
+      for (let i = 0; i < 7; i++) {
+        const x = 4 + i * 4.6;
+        ctx.beginPath(); ctx.moveTo(x, -1.5); ctx.lineTo(x + 2.2, -1.5); ctx.lineTo(x - 0.6, 5 + (i % 2) * 2); ctx.closePath(); ctx.fill();
+        const bx = x * Math.cos(jaw) - 3 * Math.sin(jaw), by = x * Math.sin(jaw) + 4 * Math.cos(jaw);
+        ctx.beginPath(); ctx.moveTo(bx, by); ctx.lineTo(bx + 2.2, by); ctx.lineTo(bx - 0.6 - Math.sin(jaw) * 4, by - 5 - (i % 2) * 2); ctx.closePath(); ctx.fill();
+      }
+      // The second set of jaws, in the throat, lunging forward when it bites.
+      const ph = opts.pharynx || 0;
+      if (ph > 0.05) {
+        const px = -4 + ph * 26;
+        A.shape(ctx, [[px - 8, -3], [px + 6, -2], [px + 8, 2], [px + 6, 6], [px - 8, 7]], '#6e2a30', { lw: 1.2 });
+        ctx.fillStyle = '#f2ece0';
+        for (let i = 0; i < 4; i++) { ctx.beginPath(); ctx.moveTo(px - 4 + i * 3.4, -2.5); ctx.lineTo(px - 3 + i * 3.4, 1.8); ctx.lineTo(px - 2.2 + i * 3.4, -2.5); ctx.fill(); }
+      }
+    }
+    // Upper head: blunt, heavy, with nostril tubes.
+    A.shape(ctx, [[-14, -17], [22, -12], [34, -4], [36, 1], [-14, 4]], col, { lw: 2.6 });
+    ctx.strokeStyle = '#2a3220'; ctx.lineWidth = 2;
+    ctx.beginPath(); ctx.moveTo(33, -4); ctx.lineTo(39, -8); ctx.stroke();
+    // A pale, cold eye with a slit pupil that follows you.
+    const asleep = opts.asleep;
+    A.circle(ctx, 14, -8, 3.6, asleep ? '#30361f' : '#e8e2a8', 'rgba(20,20,10,0.8)', 1.4);
+    // a heavy brow over the eye
+    ctx.fillStyle = '#262b18'; ctx.beginPath(); ctx.moveTo(6, -13); ctx.quadraticCurveTo(14, -16, 22, -11.5); ctx.lineTo(20, -10); ctx.quadraticCurveTo(14, -12.5, 7, -11); ctx.closePath(); ctx.fill();
+    if (asleep) { ctx.strokeStyle = '#1a1f12'; ctx.lineWidth = 1.6; ctx.beginPath(); ctx.moveTo(10, -8); ctx.lineTo(18, -8); ctx.stroke(); }
+    else {
+      const la = opts.lookAngle !== undefined ? opts.lookAngle - a : 0;
+      ctx.fillStyle = '#0b0d08';
+      ctx.beginPath(); ctx.ellipse(14 + Math.cos(la) * 1.4, -8 + Math.sin(la) * 1.4, 0.9, 3.4, 0, 0, U.TAU); ctx.fill();
+    }
     ctx.restore();
   };
 

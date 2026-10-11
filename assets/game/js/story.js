@@ -84,6 +84,21 @@
     'Kelvin’s Sailsconf Africa 2025 talk was “TypeSafety in Sails without TypeScript.”',
     'The Sailsconf Africa 2025 schedule asked everyone to post lunch selfies. Try that with ten arms.',
     'Back in 2015, Mike McNeil gave a talk at SXSW called “from rags to... open-source?” It had a running joke about asset pipelines.',
+    'Run `sails lift` and your app wakes up on port 1337. Nobody down here knows what that means. The fish suspect it’s a joke.',
+    'Sails was first released in 2012. Some of the bones on the trench floor are older. Not many.',
+    'Sails talks to databases through Waterline. The waterline is where the water starts. It’s very far up from here.',
+    'In development, Sails can be set to `migrate: ‘drop’`. Every time it lifts, everything you ever stored is gone. The sea does that too, just slower.',
+    'Blueprints make a whole REST API for a model without being asked. The sperm whale also doesn’t ask.',
+    'Every Sails action declares its exits up front: success, notFound, and so on. Down here there is usually only one exit, and it has teeth.',
+    'The Sails code lives under a GitHub organization called balderdashy. It is a real word. Look it up, if you have hands.',
+    'Sails comes with Socket.io, so things happen in real time. So does being eaten.',
+    'A Sails app is made of hooks. So is a squid’s club, if you look closely. Some of them rotate.',
+    'Sails apps often start with sails-disk, which keeps your data in a folder called .tmp. Nothing is temporary. That’s the joke.',
+    'Sails v1 came out in 2018. The bones in the whale fall were already there, being eaten by worms with no mouths.',
+    'The Sails web app template ships with something called parasails. A parasail is a person dragged behind a boat on a rope. Hm.',
+    '`sails console` lets you poke at a live app from the inside. The hagfish have a similar approach.',
+    'Sails puts lodash in a global variable called `_`. It’s the shortest name there is. Like a squid’s life, sometimes.',
+    'The person who made Sails now makes software for fleets of computers. Fleets, sails. Some people just like boats.',
   ];
 
   const S = SO.story = {
@@ -152,6 +167,8 @@
       save.touch(200);
       this.rt.lastProgressAt = E.t;
       if (!opts.silent && CARDS[n]) { E.lock(); await UI.card(CARDS[n][0], CARDS[n][1]); E.unlock(); }
+      // Then, through its own eye. (Chapter 3's comes when the whale does.)
+      if (!opts.silent && SO.fp && SO.fp.SCENES['ch' + n] && !this.has('fp:ch' + n)) { this.flag('fp:ch' + n); await SO.fp.play('ch' + n); }
     },
 
     giveItem(key, line) {
@@ -203,7 +220,7 @@
         return lvl > 0.25 && grime ? grime + ' ' + o.name.split('-')[0] + ' squid' : 'Squid ' + o.name;
       }
       if (id.startsWith('friend-')) { return 'A friend'; }
-      if (t === 'archivist') { return 'A vampire squid'; }
+      if (t === 'archivist') { return o.idle && o.idle.name === 'feed' ? 'A vampire squid, feeding' : 'A vampire squid'; }
       if (t === 'nautilus') { return 'An old nautilus'; }
       if (t === 'sepia') { return o.hiding ? 'Something shimmering' : 'A cuttlefish'; }
       if (t === 'turtle') { return 'An old sea turtle'; }
@@ -252,6 +269,20 @@
       const h = ROOMS[room.key] || (room.key.startsWith('below:') ? ROOMS.below : null);
       if (h && h.update) { h.update.call(this, room, dt); }
       if (this.ch === 3 && !this.has('fellThrough') && CHASE_ROOMS[room.key]) { this.updateChase(room, dt); }
+      else if (this.rt.dreadOn) { this.rt.dreadOn = false; AU.dread(0); E.darkBoost = 0; this.rt.strobe = 0; }
+      // Now and then, in the deep: the whale, far off, passing by.
+      if (SO.fp) {
+        SO.fp.updateGlimpse(dt, room);
+        const deep = ['cliff', 'trench', 'plunge', 'below', 'undershine'].includes(room.def.region) || String(room.key).startsWith('below:');
+        if (deep && !CHASE_ROOMS[room.key] && this.has('whaleIntro') && !E.locked) {
+          this.rt.glimpseIn = (this.rt.glimpseIn === undefined ? 90 + Math.random() * 150 : this.rt.glimpseIn) - dt;
+          if (this.rt.glimpseIn < 0) {
+            this.rt.glimpseIn = 150 + Math.random() * 240;
+            SO.fp.glimpse(room);
+            if (!this.has('glimpseSaid')) { this.flag('glimpseSaid'); setTimeout(() => UI.thought('Was that her? Way out there?'), 6000); }
+          }
+        }
+      }
       if ((this.ch === 6 || this.ch === 7) && ['warm-shallows', 'shoal-reef', 'plunge'].includes(room.key)) { this.updateHeat(room, dt); }
       else { this.rt.heat = Math.max(0, (this.rt.heat || 0) - dt / 4); }
       if (!this._noticeT || E.t - this._noticeT > 1.5) {
@@ -332,7 +363,7 @@
     maybeBubbles(room) {
       if (room.def.noBubbles || Math.random() > 0.2) { return; }
       const n = 4 + Math.floor(Math.random() * 4);
-      const golden = Math.random() < 0.35 ? Math.floor(Math.random() * n) : -1;
+      const golden = Math.random() < 0.55 ? Math.floor(Math.random() * n) : -1;
       for (let i = 0; i < n; i++) {
         const x = 200 + Math.random() * (room.w - 400);
         E.addActor(room, { id: 'bubble-' + i, type: 'bubble', x, y: room.h + 60 + i * 140, golden: i === golden, seed: Math.random() * 10, front: true });
@@ -421,14 +452,28 @@
         c = this.rt.chase = { phase: 'calm', t: 0, dur: 4, exposed: 0 };
         if (!E.actor('whale')) { E.addActor(room, { id: 'whale', type: 'whale', x: -3000, y: room.h * 0.3, front: true, alpha: 0 }); }
       }
+      if (this.rt.cut) { return; }
       c.t += dt;
       const wh = E.actor('whale');
       const caughtHere = (this.rt.caught && this.rt.caught[room.key]) || 0;
+      // The first time it comes: see it, through your own eye, teeth and all.
+      if (c.phase === 'warn' && !this.has('whaleIntro') && SO.fp) {
+        this.flag('whaleIntro'); this.rt.cut = true;
+        SO.fp.play('whale').then(() => { this.rt.cut = false; c.t = Math.max(c.t, 1.5); });
+        return;
+      }
+      // The music of it: a drone that builds as it closes in, and the light going.
+      const dreadK = c.phase === 'calm' ? 0.06 : c.phase === 'warn' ? 0.15 + 0.6 * Math.min(1, c.t / (3 + caughtHere * 0.8)) : 0.85 + 0.15 * Math.sin(c.t * 3);
+      AU.dread(dreadK); this.rt.dreadOn = true;
+      E.darkBoost = U.lerp(E.darkBoost, c.phase === 'calm' ? 0 : c.phase === 'warn' ? 0.35 : 0.6, dt * 1.5);
+      if (c.phase === 'sweep' && Math.random() < dt * 0.9) { this.rt.strobe = 1; AU.noise({ dur: 0.2, freq: 3000, q: 4, gain: 0.04, sweep: 0.4 }); }
+      this.rt.strobe = Math.max(0, (this.rt.strobe || 0) - dt * 3.5);
+      if (wh) { wh.teeth = this.rt.strobe; }
       if (c.phase === 'calm') {
         E.darkBoost = U.lerp(E.darkBoost, 0, dt); E.dread = U.lerp(E.dread, 0.15, dt);
         this.rt.chaseLight = U.lerp(this.chaseLight(), 1, dt);
         sq.fear = U.lerp(sq.fear, 0.1, dt);
-        if (c.t > c.dur || (sq.glowOn && c.t > 1)) { c.phase = 'warn'; c.t = 0; c.from = Math.random() < 0.5 ? -1 : 1; }
+        if (c.t > c.dur || (sq.glowOn && c.t > 4)) { c.phase = 'warn'; c.t = 0; c.from = Math.random() < 0.5 ? -1 : 1; }
       } else if (c.phase === 'warn') {
         // Clicks, getting closer.
         const k = c.t / (3 + caughtHere * 0.8);
@@ -465,20 +510,22 @@
     async caught(room) {
       this.rt.catching = true;
       E.lock();
+      if (SO.fp) { await SO.fp.play('caught'); }
       this.rt.caught = this.rt.caught || {};
       this.rt.caught[room.key] = (this.rt.caught[room.key] || 0) + 1;
       AU.tone(50, { dur: 0.6, gain: 0.3, glide: 0.6, verb: 0.4 });
-      await UI.fade(1, 400, '#000');
-      AU.heartbeat(); await wait(700); AU.heartbeat(); await wait(700);
+      await UI.fade(0.85, 300, '#000');
+      AU.heartbeat(); await wait(700); AU.heartbeat(); await wait(500);
       const n = this.rt.caught[room.key];
-      UI.thought(n === 1 ? 'It bumped me with its huge head. I’m okay. I think.' : (n === 2 ? 'Next time I’m hiding under a ledge. Or going dark: red, red, shimmer.' : 'Still here. Somehow.'));
-      const entry = room.def.entries && room.def.entries.default ? { pos: room.def.entries.default } : { from: 'up' };
-      E.placeSquid(entry);
-      E.squid.vx = E.squid.vy = 0;
-      E.squid.glowOn = false;
-      E.snapCamera();
-      this.rt.chase = null;
-      const wh = E.actor('whale'); if (wh) { wh.alpha = 0; wh.x = -3000; }
+      UI.thought(n === 1 ? 'It hit me with its huge head. I’m okay. I think.' : (n === 2 ? 'Next time I’m hiding under a ledge. Or going dark: red, red, shimmer.' : 'Still here. Somehow.'));
+      // You stay where you were (knocked aside, not sent back), and it goes away for a while.
+      const sq = E.squid, wh = E.actor('whale');
+      const f = E.findFreeBody(sq.x, sq.y);
+      sq.x = f[0]; sq.y = f[1];
+      sq.vx = (wh && wh.dir ? wh.dir : 1) * 120; sq.vy = -40; sq.dvx = sq.dvy = 0;
+      sq._watch = null;
+      this.rt.chase = { phase: 'calm', t: 0, dur: 9 + n * 4, exposed: 0 };
+      if (wh) { wh.alpha = 0; wh.x = -3000; }
       await UI.fade(0, 900);
       E.unlock();
       this.rt.catching = false;
@@ -509,6 +556,9 @@
       if (this.rt.glare > 0.01) {
         ctx.fillStyle = `rgba(255,252,240,${this.rt.glare})`; ctx.fillRect(0, 0, W, H);
         this.rt.glare *= 0.985;
+      }
+      if (this.rt.strobe > 0.02) {// a cold flash from somewhere, and in it, the whale
+        ctx.fillStyle = `rgba(170,200,235,${0.22 * this.rt.strobe})`; ctx.fillRect(0, 0, W, H);
       }
       if (E.dread > 0.3) {
         const g = ctx.createRadialGradient(W / 2, H / 2, Math.min(W, H) * 0.25, W / 2, H / 2, Math.max(W, H) * 0.7);
@@ -665,14 +715,16 @@
         const moray = E.actor('tongue'), sq = E.squid;
         if (!moray || moray.hidden || moray.calmed) { return; }
         const d = U.dist(sq.x, sq.y, moray.x, moray.y);
-        if (d < 420 && !moray.awake) { moray.awake = true; AU.tock(AU.NOTE(40), { gain: 0.2 }); }
-        if (d < 260 && moray.awake && !this.rt.snapCool) {
+        if (d < 520 && !moray.awake) { moray.awake = true; AU.tock(AU.NOTE(36), { gain: 0.3 }); AU.noise({ dur: 0.8, freq: 120, q: 1, gain: 0.12, sweep: 0.6 }); }
+        if (d < 290 && moray.awake && !this.rt.snapCool) {
           moray.snap = 1;
           this.rt.snapCool = true;
           sq.vx = (sq.x - moray.x) / d * 700; sq.vy = (sq.y - moray.y) / d * 500;
-          AU.noise({ dur: 0.3, freq: 900, q: 2, gain: 0.3, sweep: 0.4 });
+          AU.noise({ dur: 0.3, freq: 900, q: 2, gain: 0.3, sweep: 0.4 }); AU.tock(AU.NOTE(30), { gain: 0.35 });
+          sq.fear = 1;
+          if (!E.locked) { const bg = UI.fade$.style.background; UI.fade(0.35, 60, '#3a0008').then(() => UI.fade(0, 500)).then(() => { UI.fade$.style.background = bg; }); }
           this.remember('moray');
-          UI.thought(this.rt.snaps ? 'It snapped at me again. It really doesn’t like me.' : 'A moray eel! Lots of teeth.');
+          UI.thought(this.rt.snaps ? 'It went for me again. Those teeth point backwards, so nothing gets out.' : 'A moray eel! It has a second set of jaws in its throat.');
           this.rt.snaps = (this.rt.snaps || 0) + 1;
           setTimeout(() => { this.rt.snapCool = false; }, 1500);
         }
