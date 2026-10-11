@@ -154,7 +154,7 @@
     const mantle = new Path2D(), rim = new Path2D();
     for (let x = L; x >= 16; x -= 4) {
       const r = halfWidth(x) * squeeze;
-      const rx = Math.max(3.2 * Math.max(c, 0.3), r * sn);
+      const rx = Math.max(11 * Math.max(c, 0.3), r * sn);
       mantle.moveTo(x * c + rx, 2);
       mantle.ellipse(x * c, 2, rx, r * 1.04, 0, 0, U.TAU);
       rim.moveTo(x * c + rx + 1.4, 2);
