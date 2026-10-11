@@ -41,6 +41,7 @@
     // Models:
     "User": true,
     "Save": true,
+    "Presence": true,
     "WorldEvent": true,
     "WorldTile": true,
     "Species": true

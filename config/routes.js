@@ -76,6 +76,7 @@ module.exports.routes = {
   'POST  /api/v1/game/claim-gem':                     { action: 'game/claim-gem' },
   'POST  /api/v1/game/wake-vent':                     { action: 'game/wake-vent' },
   'POST  /api/v1/game/record-ending':                 { action: 'game/record-ending' },
+  'PUT   /api/v1/game/update-presence':               { action: 'game/update-presence' },
 
 
   //  ╦ ╦╔═╗╦═╗╦  ╔╦╗
@@ -88,5 +89,6 @@ module.exports.routes = {
   'GET   /api/v1/world/get-map':                      { action: 'world/get-map' },
   'GET   /api/v1/world/get-species':                  { action: 'world/get-species' },
   'GET   /api/v1/world/get-squids':                   { action: 'world/get-squids' },
+  'GET   /api/v1/world/get-online':                   { action: 'world/get-online' },
 
 };

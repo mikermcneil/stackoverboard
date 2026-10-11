@@ -196,6 +196,8 @@
     // What something seems to be, once you've had a good look. (Under 40 characters.)
     describe(o) {
       const id = o.id || '', t = o.type;
+      if (t === 'oddity') { return SO.oddities.KINDS[o.kind].desc; }
+      if (t === 'otherSquid') { return ('Another squid: ' + o.name).slice(0, 39); }
       if (id.startsWith('friend-')) { return 'A friend, here to see you off.'; }
       if (t === 'archivist') { return 'A vampire squid. Seems friendly.'; }
       if (t === 'nautilus') { return 'An old nautilus. Very slow.'; }
@@ -236,6 +238,7 @@
         save.remember('place:' + key, { kind: 'place', name: room.def.name, line: '' });
       }
       this.maybeBubbles(room);
+      SO.oddities.populate(room);
       const h = ROOMS[key] || (key.startsWith('below:') ? ROOMS.below : null);
       if (h && h.enter) { h.enter.call(this, room, prev, entry); }
     },

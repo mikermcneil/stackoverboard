@@ -47,6 +47,7 @@
         SO.intro.start(() => this.beginPreface());
       }
       setInterval(() => this.rememberPosition(), 8000);
+      SO.others.start();
     },
 
     // After the fall and the long sink, you come to, several screens down.

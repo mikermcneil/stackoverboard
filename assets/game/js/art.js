@@ -121,13 +121,6 @@
     fear: [20, 25, 92],
   };
 
-  // Mantle outline in local space (head at origin, mantle toward +x).
-  function mantlePts(L, squeeze) {
-    const top = [[16, -22], [48, -28], [90, -27], [128, -20], [160, -10], [L, 0]];
-    const pts = top.map(([x, y]) => [x * L / 182, y * squeeze]);
-    const bottom = top.slice(0, -1).reverse().map(([x, y]) => [x * L / 182, -y * squeeze * 1.1]);
-    return pts.concat(bottom);
-  }
   // Fixed scatter of chromatophores (same on every squid; they just breathe).
   const CHROMA = (function () {
     const r = U.rng(4242), out = [];
@@ -135,94 +128,6 @@
     return out;
   })();
   const SKIN_LINE = 'rgba(40,22,26,0.32)';
-
-  // Side view (in local space, mantle along +x).
-  function squidSide(ctx, sq, col, L, squeeze, tt) {
-    // Fins: thin, translucent, veined.
-    const flap = 0.72 + 0.28 * Math.sin(sq.fin || 0);
-    const finPts = [[L * 0.68, 0], [L * 0.86, -40 * flap], [L * 1.02, -3], [L * 1.02, 3], [L * 0.86, 40 * flap]];
-    ctx.save();
-    ctx.globalAlpha *= 0.78;
-    const fg = ctx.createLinearGradient(L * 0.7, 0, L * 1.02, 0);
-    fg.addColorStop(0, hslStr(col, -6)); fg.addColorStop(1, hslStr(col, 10, 0.6));
-    A.shape(ctx, finPts, fg, { lw: 1.2, stroke: SKIN_LINE });
-    ctx.strokeStyle = hslStr(col, -18, 0.35); ctx.lineWidth = 0.8;
-    for (let i = 0; i < 7; i++) { const yy = (i - 3) * 10 * flap; ctx.beginPath(); ctx.moveTo(L * 0.74, yy * 0.3); ctx.lineTo(L * 0.92, yy); ctx.stroke(); }
-    ctx.restore();
-
-    // Mantle: dark along the back, pale and a little see-through underneath.
-    const mp = mantlePts(L, squeeze);
-    const mg = ctx.createLinearGradient(0, -30 * squeeze, 0, 32 * squeeze);
-    mg.addColorStop(0, hslStr([col[0], col[1] + 10, col[2]], -24));
-    mg.addColorStop(0.45, hslStr(col, -4));
-    mg.addColorStop(0.8, hslStr([col[0], col[1] - 18, col[2]], 12, 0.92));
-    mg.addColorStop(1, hslStr([col[0], col[1] - 25, col[2]], 18, 0.85));
-    A.shape(ctx, mp, mg, { lw: 1.3, stroke: SKIN_LINE });
-    ctx.save();
-    ctx.beginPath(); A.smoothPath(ctx, mp, true); ctx.clip();
-    // Chromatophores: thousands in life; dozens here. Each one opens and closes.
-    const spots = 0.6 + (sq.spots || 0);
-    for (const [px, py, sz, ph] of CHROMA) {
-      const open = 0.5 + 0.5 * Math.sin(tt * 1.7 + ph);
-      const r = sz * spots * (0.6 + open * 0.9);
-      ctx.fillStyle = hslStr([col[0] - 4, Math.min(90, col[1] + 18), col[2]], -34, 0.22 + 0.25 * open);
-      ctx.beginPath(); ctx.arc(px, py * squeeze, r, 0, TAU); ctx.fill();
-    }
-    // Iridescent sheen along the back, shifting as it moves.
-    ctx.save(); ctx.globalCompositeOperation = 'lighter';
-    const sh = ctx.createLinearGradient(0, -28, L, -8);
-    const k = (tt * 0.15) % 1;
-    sh.addColorStop(U.clamp(k - 0.2, 0, 1), 'rgba(80,200,220,0)');
-    sh.addColorStop(k, 'rgba(110,220,230,0.16)');
-    sh.addColorStop(U.clamp(k + 0.2, 0, 1), 'rgba(160,120,230,0)');
-    ctx.fillStyle = sh; ctx.fillRect(0, -32, L, 22);
-    ctx.restore();
-    // Body volume: a soft highlight and a soft core shadow.
-    const hl = ctx.createRadialGradient(L * 0.42, -10 * squeeze, 2, L * 0.42, -10 * squeeze, L * 0.45);
-    hl.addColorStop(0, 'rgba(255,240,235,0.22)'); hl.addColorStop(1, 'rgba(255,240,235,0)');
-    ctx.fillStyle = hl; ctx.fillRect(0, -40, L, 80);
-    if (sq.hidden > 0.02) {// passing-cloud bands rolling along the body
-      for (let i = 0; i < 6; i++) {
-        const bx = ((tt * 160 + i * 40) % 240) - 40;
-        const bg = ctx.createLinearGradient(bx - 14, 0, bx + 14, 0);
-        bg.addColorStop(0, 'rgba(15,22,32,0)'); bg.addColorStop(0.5, `rgba(15,22,32,${0.5 * sq.hidden})`); bg.addColorStop(1, 'rgba(15,22,32,0)');
-        ctx.fillStyle = bg; ctx.fillRect(bx - 14, -40, 28, 80);
-      }
-    }
-    ctx.restore();
-
-    // Three hearts, lit by the gems, glowing through the mantle.
-    (sq.hearts || []).forEach((h, i) => {
-      if (!h) { return; }
-      const hx = [70, 86, 102][i], hy = [10, -6, 9][i];
-      ctx.save(); ctx.globalCompositeOperation = 'lighter';
-      A.glow(ctx, hx, hy, 24 + 4 * Math.sin(tt * 3 + i * 2), h, 0.85);
-      ctx.restore();
-    });
-    if (sq.glow > 0.01) {// photophores along the belly
-      ctx.save(); ctx.globalCompositeOperation = 'lighter';
-      for (let i = 0; i < 9; i++) { A.glow(ctx, 26 + i * 15, 21 * squeeze - Math.abs(i - 4) * 1.2, 10 * sq.glow, '#ffe08a', 0.9 * sq.glow); }
-      ctx.restore();
-    }
-
-    // Head.
-    const hg = ctx.createLinearGradient(0, -25, 0, 25);
-    hg.addColorStop(0, hslStr(col, -18)); hg.addColorStop(0.6, hslStr(col, 0)); hg.addColorStop(1, hslStr(col, 12, 0.9));
-    A.ellipse(ctx, 0, 0, 30, 24, 0, hg, SKIN_LINE, 1.3);
-    // The eye: huge, dark, ringed with silver, always watching.
-    const look = sq.look || 0;
-    const ex = -3, ey = -4;
-    const eg = ctx.createRadialGradient(ex, ey, 2, ex, ey, 14);
-    eg.addColorStop(0, '#05080c'); eg.addColorStop(0.55, '#0e151c'); eg.addColorStop(0.72, '#9fb0b6'); eg.addColorStop(0.86, '#d7e0e0'); eg.addColorStop(1, hslStr(col, -20));
-    A.circle(ctx, ex, ey, 14, eg, 'rgba(20,14,16,0.5)', 1);
-    ctx.save();
-    ctx.beginPath(); ctx.arc(ex, ey, 13, 0, TAU); ctx.clip();
-    A.circle(ctx, ex + Math.cos(look) * 2.5, ey + Math.sin(look) * 2.5, 7.5, '#020406', null);
-    A.circle(ctx, ex - 4 + Math.cos(look), ey - 5, 2.6, 'rgba(255,255,255,0.9)', null);
-    A.circle(ctx, ex + 4, ey + 4, 1.2, 'rgba(255,255,255,0.45)', null);
-    if (sq.blink > 0) { ctx.fillStyle = hslStr(col, -6); ctx.fillRect(-20, -20, 34, 32 * sq.blink); }
-    ctx.restore();
-  }
 
   // Any angle between side-on and nose-on, as a simple 3D body: the mantle is a
   // stack of round cross-sections, the head is a ball, and the eyes sit on the
@@ -246,14 +151,18 @@
     A.shape(ctx, [[L * 0.68 * c, 0], [L * 0.86 * c, -40 * flap], [L * 1.02 * c, -3], [L * 1.02 * c, 3], [L * 0.86 * c, 40 * flap]].map(([x, y]) => [x + 0.0001, y]), hslStr(col, -6), { lw: 1.2, stroke: SKIN_LINE });
     ctx.restore();
     // Mantle: round cross-sections, far to near.
-    const mantle = new Path2D();
-    for (let x = L; x >= 16; x -= 5) {
+    const mantle = new Path2D(), rim = new Path2D();
+    for (let x = L; x >= 16; x -= 4) {
       const r = halfWidth(x) * squeeze;
-      mantle.moveTo(x * c + Math.max(0.8, r * sn), 2);
-      mantle.ellipse(x * c, 2, Math.max(0.8, r * sn), r * 1.04, 0, 0, U.TAU);
+      const rx = Math.max(3.2 * Math.max(c, 0.3), r * sn);
+      mantle.moveTo(x * c + rx, 2);
+      mantle.ellipse(x * c, 2, rx, r * 1.04, 0, 0, U.TAU);
+      rim.moveTo(x * c + rx + 1.4, 2);
+      rim.ellipse(x * c, 2, rx + 1.4, r * 1.04 + 1.4, 0, 0, U.TAU);
     }
     ctx.save();
-    ctx.lineWidth = 2.6; ctx.strokeStyle = SKIN_LINE; ctx.stroke(mantle);
+    // One soft outline around the whole body (not around every cross-section).
+    ctx.fillStyle = SKIN_LINE; ctx.fill(rim, 'nonzero');
     const mg = ctx.createLinearGradient(0, -30, 0, 32);
     mg.addColorStop(0, hslStr([col[0], col[1] + 10, col[2]], -24));
     mg.addColorStop(0.45, hslStr(col, -4));
@@ -265,6 +174,18 @@
       const open = 0.5 + 0.5 * Math.sin(tt * 1.7 + ph);
       ctx.fillStyle = hslStr([col[0] - 4, Math.min(90, col[1] + 18), col[2]], -34, 0.2 + 0.25 * open);
       ctx.beginPath(); ctx.ellipse(px * c + (py / 24) * 18 * sn, py * squeeze, sz * (0.6 + open), sz * (0.6 + open), 0, 0, U.TAU); ctx.fill();
+    }
+    ctx.save(); ctx.globalCompositeOperation = 'lighter';// iridescent sheen along the back
+    const shk = (tt * 0.15) % 1;
+    const sh = ctx.createLinearGradient(0, -28, L * c + 1, -8);
+    sh.addColorStop(U.clamp(shk - 0.2, 0, 1), 'rgba(80,200,220,0)'); sh.addColorStop(shk, 'rgba(110,220,230,0.14)'); sh.addColorStop(U.clamp(shk + 0.2, 0, 1), 'rgba(160,120,230,0)');
+    ctx.fillStyle = sh; ctx.fillRect(-40, -32, L + 40, 22);
+    ctx.restore();
+    if (sq.hidden > 0.02) {// passing-cloud bands rolling along the body
+      for (let i = 0; i < 6; i++) {
+        const bx = (((tt * 160 + i * 40) % 240) - 40) * c;
+        ctx.fillStyle = `rgba(15,22,32,${0.45 * sq.hidden})`; ctx.fillRect(bx - 8, -40, 16, 80);
+      }
     }
     const hl = ctx.createRadialGradient(L * 0.4 * c - 6 * sn, -10, 2, L * 0.4 * c, -8, 90);
     hl.addColorStop(0, 'rgba(255,240,235,0.2)'); hl.addColorStop(1, 'rgba(255,240,235,0)');
@@ -330,29 +251,14 @@
       });
     }
 
-    const L = 182;
     const squeeze = 1 - (sq.jet || 0) * 0.16;
     const ay = Math.abs(o.yaw);
     ctx.translate(sq.x, sq.y);
-    // Nearly side-on: the detailed side drawing. Anything more turned: the 3D body.
-    // They overlap briefly so there's no pop between them.
-    const side = U.smoothstep(0.86, 0.96, ay);
-    if (side > 0.01) {
-      ctx.save();
-      ctx.globalAlpha *= side;
-      ctx.scale(s * o.yaw, s);
-      ctx.rotate(o.pitch);
-      squidSide(ctx, sq, col, L, squeeze, tt);
-      ctx.restore();
-    }
-    if (side < 0.99) {
-      ctx.save();
-      ctx.globalAlpha *= 1 - side;
-      ctx.scale(s * (o.yaw >= 0 ? 1 : -1), s);
-      ctx.rotate(o.pitch);
-      squid3D(ctx, sq, col, ay, squeeze, tt);
-      ctx.restore();
-    }
+    // One continuous 3D body for every angle: side-on, nose-on, and everything between.
+    ctx.translate(sq.shakeX || 0, sq.shakeY || 0);
+    ctx.scale(s * (o.yaw >= 0 ? 1 : -1), s);
+    ctx.rotate(o.pitch + (sq.spinRot || 0));
+    squid3D(ctx, sq, col, ay, squeeze, tt);
     ctx.restore();
   };
 

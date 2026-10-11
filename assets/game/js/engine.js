@@ -133,8 +133,12 @@
       toWorld(e);
       this.pointer.down = true;
       this.pointer.downAt = U.now();
-      // Pressing on the squid itself might be the start of a long press (to open its memories).
-      if (this.squidHit(this.pointer.wx, this.pointer.wy)) { this.holding = { x: e.clientX, y: e.clientY, t: U.now() }; return; }
+      // Right-click on the squid: it does a crazy spin. Left: maybe a long press (memories).
+      if (this.squidHit(this.pointer.wx, this.pointer.wy)) {
+        if (e.button === 2) { this.pointer.down = false; this.spinSquid(); return; }
+        this.holding = { x: e.clientX, y: e.clientY, t: U.now() };
+        return;
+      }
       // Clicking something interesting: swim to it.
       const hit = this.pick(this.pointer.wx, this.pointer.wy);
       if (hit && hit === this.inspected) { this.interact(hit); return; }// a second click: do something with it
@@ -150,6 +154,7 @@
       if (this.pointer.down && !this.locked && this.target && !this.target.hit) { this.target.x = this.pointer.wx; this.target.y = this.pointer.wy; }
     });
     window.addEventListener('pointerup', () => { this.pointer.down = false; this.holding = null; this.holdK = 0; });
+    window.addEventListener('contextmenu', (e) => { e.preventDefault(); });
     window.addEventListener('keydown', (e) => {
       AU.start();
       if (e.target && (e.target.tagName === 'INPUT' || e.target.tagName === 'TEXTAREA')) { return; }
@@ -178,6 +183,15 @@
     if (ex.up && y < M && room.surfaceY === null) { return { x: mid(room.ceilGap, x), y: -300, exit: 'up' }; }
     if (ex.down && y > room.h - M) { return { x: mid(room.floorGap, x), y: room.h + 300, exit: 'down' }; }
     return { x, y };
+  };
+
+  // A crazy spin and a shudder, just because you asked.
+  E.spinSquid = function () {
+    const sq = this.squid;
+    if (sq.spin) { return; }
+    sq.spin = { t: 0, dur: 1.5, dir: Math.random() < 0.5 ? -1 : 1 };
+    AU.whoosh(); AU.bubbles(10, 0.8);
+    [88, 86, 83, 79, 76].forEach((n, i) => AU.tone(AU.NOTE(n), { when: i * 0.07, dur: 0.18, gain: 0.04, glide: 0.9 }));
   };
 
   E.squidHit = function (wx, wy) {
@@ -523,6 +537,7 @@
     const sq = this.squid;
     sq.flash = c; sq.flashAmt = 1;
     AU.skin(c);
+    if (SO.oddities) { SO.oddities.onSkin(c); }
     SO.main && SO.main.pulseSkinButton(c);
     if (opts.silent) { return; }
     const now = U.now();
@@ -729,7 +744,35 @@
     sq.hidden = U.lerp(sq.hidden, this.t < sq.hideUntil ? 1 : 0, Math.min(1, dt * 4));
     sq.glow = U.lerp(sq.glow, sq.glowOn ? 1 : 0, Math.min(1, dt * 2.5));
     this.updateSquidSkin(sq, dt);
-    this.updateArms(sq, dt);
+    // The spin: two full turns, easing in and out, with a shudder at the end.
+    if (sq.spin) {
+      const sp2 = sq.spin;
+      sp2.t += dt;
+      const k = Math.min(1, sp2.t / sp2.dur);
+      sq.spinRot = sp2.dir * U.easeInOut(Math.min(1, k * 1.25)) * Math.PI * 4;
+      const shud = U.smoothstep(0.6, 0.8, k) * (1 - U.smoothstep(0.9, 1, k));
+      sq.shakeX = Math.sin(sp2.t * 70) * 7 * shud; sq.shakeY = Math.cos(sp2.t * 53) * 5 * shud;
+      if (k >= 1) { sq.spin = null; sq.spinRot = 0; sq.shakeX = sq.shakeY = 0; }
+    }
+    // Now and then, while swimming, the tentacles go a little crazy.
+    const speedNow = Math.hypot(sq.vx, sq.vy);
+    if (!sq.frenzy && speedNow > 120 && Math.random() < dt / 14) { sq.frenzy = 0.9 + Math.random() * 0.8; }
+    if (sq.frenzy) { sq.frenzy = Math.max(0, sq.frenzy - dt); }
+    // Different ways of swimming, so it never moves quite the same way for long.
+    if (!sq.style || this.t > sq.style.until) {
+      const r = Math.random();
+      sq.style = { name: speedNow < 60 ? 'normal' : (r < 0.4 ? 'normal' : r < 0.6 ? 'glide' : r < 0.8 ? 'bob' : 'roll'), until: this.t + 6 + Math.random() * 7 };
+    }
+    const style = sq.style.name;
+    if (style === 'bob' && !sq.turn) { sq.pitch += Math.sin(sq.t * 2.3) * 0.12 * dt * 6; }
+    if (style === 'roll' && !sq.turn && !sq.talking) {// a lazy roll toward the screen and back
+      sq.yaw = sq.facing * (0.78 + 0.22 * Math.cos(sq.t * 1.4));
+    }
+    const armOpts = sq.spin ? { flutter: 14, wiggle: 4, pull: 6 }
+      : sq.frenzy ? { flutter: 9 + Math.sin(sq.t * 3) * 3, wiggle: 3.4, pull: 4.5 }
+        : style === 'glide' ? { flutter: 1.6, wiggle: 0.5, pull: 4.5 }
+          : style === 'bob' ? { flutter: 2.8, wiggle: 1.5 } : {};
+    this.updateArms(sq, dt, armOpts);
 
     // Edges and exits.
     this.checkEdges();
