@@ -8,7 +8,9 @@ module.exports = {
 
 
   extendedDescription:
-`Squids can say short things (1 to 120 characters) out loud, and other squids in the same place see the
+`Use this for "what are squids saying?", "what did <squid> say?", or "what was said in the kelp?".
+
+Squids can say short things (1 to 120 characters) out loud, and other squids in the same place see the
 words above the speaker's head for a few seconds.  It's all public: anyone in the room sees it, and
 it's kept here for 30 days, then swept away.  Each message has the squid's name at the time it spoke,
 the room it was in (a room key like "kelp-deep", "hollowglass-hall", "west:12", or "below:2,9"; see

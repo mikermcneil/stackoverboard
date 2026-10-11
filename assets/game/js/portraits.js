@@ -116,7 +116,8 @@
     if (has(s, /\b(little one|dear|sweetheart|love|darling|come here|we looked|you stayed|keep you company|proud)\b/)) { return 'tender'; }
     if (has(s, /\b(ha|haha|heh|whee|yay|lovely|wonderful|great|good|nice|natural|made it|there you go|hello|hooray|pretty|shiny|beautiful)\b/)) { return ask ? 'curious' : 'happy'; }
     if (has(s, /^(oh|what|huh|wow|whoa|really|wait)\b/) || (bang && ask)) { return 'surprised'; }
-    if (has(s, /\b(don't|do not|stop|no|not too|never|mind the|careful|slowly|must)\b/) && !has(s, /don't worry/)) { return bang ? 'angry' : 'stern'; }
+    if (has(s, /\b(don't|do not|stop|no|never)\b/) && !has(s, /don't worry/)) { return bang ? 'angry' : 'stern'; }
+    if (has(s, /\b(not too|mind the|mind your|careful|slowly|must)\b/)) { return 'stern'; }
     if (has(s, /\b(mm|tired|sleep|yawn|old|long time|slow down|so long|ages)\b/)) { return 'tired'; }
     if (has(s, /\b(secret|trick|maybe|guess|don't worry|find me|just between)\b/)) { return 'sly'; }
     if (ask) { return 'curious'; }
@@ -235,11 +236,11 @@
       c.beginPath(); c.ellipse(lx, ly, rx, ry, 0, 0, TAU); c.fill();
       c.fillRect(lx - rx * 0.8, ly - ry, rx * 1.6, ry * 2);
     } else if (o.pupil === 'W') {
-      const th = r * clamp(0.16 + (ps - 1) * 0.3, 0.08, 0.5);
-      const d = r * 0.3;
+      const th = r * clamp(0.13 + (ps - 1) * 0.28, 0.07, 0.45);
+      const d = r * 0.27;
       c.lineWidth = th; c.lineJoin = 'round'; c.lineCap = 'round';
-      c.beginPath();
-      c.moveTo(lx - d * 2, ly - d * 0.9); c.lineTo(lx - d, ly + d * 0.9); c.lineTo(lx, ly - d * 0.1); c.lineTo(lx + d, ly + d * 0.9); c.lineTo(lx + d * 2, ly - d * 0.9);
+      c.beginPath();// a soft, rounded W (not a zigzag)
+      A.smoothPath(c, [[lx - d * 2.3, ly - d * 0.9], [lx - d * 1.4, ly + d * 0.2], [lx - d * 0.9, ly + d * 0.8], [lx, ly - d * 0.2], [lx + d * 0.9, ly + d * 0.8], [lx + d * 1.4, ly + d * 0.2], [lx + d * 2.3, ly - d * 0.9]], false);
       c.stroke();
       if (ps > 1.15) { A.circle(c, lx, ly + d * 0.2, r * 0.5 * (ps - 1.15), o.pupilColor || '#020406', null); }
     } else if (o.pupil === 'pin') {
@@ -370,7 +371,7 @@
     const spread = 0.17 + 0.1 * f.angry + 0.08 * f.surprised - 0.09 * f.afraid - 0.04 * f.sad;
     for (let i = 0; i < 8; i++) {
       const side = i < 4 ? -1 : 1;
-      const a0 = Math.PI / 2 + (i - 3.5) * spread - f.angry * side * 0.25;
+      const a0 = Math.PI / 2 - (i - 3.5) * spread - f.angry * side * 0.25;
       const curl = side * (0.04 + 0.1 * f.happy + 0.14 * f.afraid) - side * f.angry * 0.08;
       const len = 82 - 22 * f.afraid + 12 * f.surprised - (i === 0 || i === 7 ? 12 : 0);
       const pts = armPts(-36 + i * 10, 46, a0, len, 8, curl, t, i * 1.3, 0.1 + 0.18 * f.happy - 0.06 * f.sad);
@@ -477,7 +478,7 @@
     c.closePath();
     c.fillStyle = ng; c.fill(); c.strokeStyle = A.C.ink; c.lineWidth = 1.8; c.lineJoin = 'round'; c.stroke();
     // soft feather lines down the neck
-    c.strokeStyle = 'rgba(120,130,165,0.22)'; c.lineWidth = 1.2;
+    c.strokeStyle = 'rgba(120,130,165,0.12)'; c.lineWidth = 1;
     for (let i = 0; i < 6; i++) {
       const u = 0.25 + i * 0.11, p = bx(u);
       c.beginPath(); c.moveTo(p[0] + 14, p[1] + 4); c.quadraticCurveTo(p[0] + 30, p[1] + 2, p[0] + 44, p[1] + 10); c.stroke();
@@ -556,9 +557,9 @@
     c.fillStyle = cg; c.fill(); c.strokeStyle = ink; c.lineWidth = 1.6; c.stroke();
     // arm ribs in the web, ending in lights
     for (let i = 0; i < 6; i++) {
-      const sx = -40 + i * 16, ex = -120 + i * 48 + Math.sin(t + i) * 4;
+      const sx = -40 + i * 16, ex = -100 + i * 40 + Math.sin(t + i) * 4;
       c.strokeStyle = hsl(col, -14, 0.8); c.lineWidth = 5;
-      c.beginPath(); c.moveTo(sx, 20); c.quadraticCurveTo(sx + (ex - sx) * 0.4, 70, ex, 128); c.stroke();
+      c.beginPath(); c.moveTo(sx, 20); c.quadraticCurveTo(sx + (ex - sx) * 0.4, 60, ex, 92 - Math.abs(ex) * 0.12); c.stroke();
     }
     // the cloak turned up over the head (pineapple posture)
     if (f.afraid > 0.03) {
@@ -596,8 +597,8 @@
     c.save(); c.globalCompositeOperation = 'lighter';
     [-1, 1].forEach((sd) => A.glow(c, sd * 44, -62, 18, '#7fd8ff', clamp(lit, 0.05, 1)));
     for (let i = 0; i < 6; i++) {
-      const ex = -120 + i * 48 + Math.sin(t + i) * 4;
-      A.glow(c, ex, 126, 16, '#7fd8ff', clamp(lit * (0.6 + 0.4 * Math.sin(t * 3 + i * 1.7)), 0.05, 1));
+      const ex = -100 + i * 40 + Math.sin(t + i) * 4;
+      A.glow(c, ex, 92 - Math.abs(ex) * 0.12, 14, '#7fd8ff', clamp(lit * (0.6 + 0.4 * Math.sin(t * 3 + i * 1.7)), 0.05, 1));
     }
     if (f.afraid > 0.05) {// a cloud of glowing blue
       for (let i = 0; i < 26; i++) {
@@ -611,7 +612,7 @@
     const iris = [[0, '#020408'], [0.46, '#08182a'], [0.66, '#2a5c8c'], [0.86, '#8cc4e6'], [1, hsl(col, -16)]];
     [-1, 1].forEach((sd) => {
       c.fillStyle = hsl(col, -14, 0.6); c.beginPath(); c.ellipse(sd * 30, -4, 28, 27, 0, 0, TAU); c.fill();
-      eye(c, sd * 30, -4, 23, { iris, ps: f.pupil * 1.1, lx: f.lx, ly: f.ly, up: lids.up, lo: lids.lo, tilt: f.tilt, inner: -sd, lid: hsl(col, -2), rim: ink, rimW: 1.4, tear: f.sad });
+      eye(c, sd * 30, -4, 23, { iris, ps: f.pupil * 1.1, lx: f.lx, ly: f.ly, up: lids.up + f.sly * 0.14 * sd, lo: lids.lo, tilt: f.tilt, inner: -sd, lid: hsl(col, -2), rim: ink, rimW: 1.4, tear: f.sad });
       const by = -32 - f.browUp * 7;
       ridge(c, sd * 52, by + 3 + f.browIn * 2, sd * 12, by - f.browIn * 7 + 3, 5, 5, hsl(col, -12, 0.85), hsl(col, 16, 0.4));
     });
@@ -699,7 +700,7 @@
     // over the eye when it's cross or scared
     const hd = hoodLow * 12 - f.surprised * 6;
     c.save(); c.translate(0, hd); c.rotate(-f.surprised * 0.05 + f.angry * 0.05);
-    const hood = [[-86, -14], [-70, -42], [-30, -58], [12, -60], [30, -44], [6, -24], [-34, -14], [-76, 0]];
+    const hood = [[-86, -14], [-70, -42], [-30, -60], [20, -64], [52, -52], [38, -28], [-34, -14], [-76, 0]];
     const hg = c.createLinearGradient(0, -66, 0, -6);
     hg.addColorStop(0, '#8f5732'); hg.addColorStop(1, '#6a3f24');
     A.shape(c, hood, hg, { stroke: ink, lw: 1.5 });
@@ -726,19 +727,19 @@
     col = mix(col, [20, 45, 66], f.tender * 0.3);
     const ink = 'rgba(40,24,14,0.5)';
     c.save();
-    c.translate(-30, -8 + f.breath * 2 + f.droop * 8 - f.lift * 5);
-    c.scale(1.1, 1.1);
+    c.translate(-56, -4 + f.breath * 2 + f.droop * 8 - f.lift * 5);
+    c.scale(1.42, 1.42);
     c.rotate(0.06 * f.droop - 0.04 * f.lift + Math.sin(t * 0.7) * 0.02);
     // the frilled fin, all the way round the mantle
     const fin = (y0, sgn) => {
       c.beginPath();
       for (let x = -150; x <= 30; x += 5) {
         const env = Math.sin(clamp((x + 150) / 180, 0, 1) * Math.PI);
-        c.lineTo(x, y0 + sgn * (8 + env * 10 + Math.sin(t * (6 + f.afraid * 6) - x * 0.15) * 3.5 * env));
+        c.lineTo(x, y0 + sgn * (3 + env * 7 + Math.sin(t * (6 + f.afraid * 6) - x * 0.15) * 2.5 * env));
       }
-      for (let x = 30; x >= -150; x -= 10) { c.lineTo(x, y0 - sgn * 4); }
+      for (let x = 30; x >= -150; x -= 10) { c.lineTo(x, y0 - sgn * 6); }
       c.closePath();
-      c.fillStyle = 'rgba(240,226,206,0.65)'; c.fill(); c.strokeStyle = 'rgba(80,60,40,0.35)'; c.lineWidth = 1; c.stroke();
+      c.fillStyle = 'rgba(236,222,200,0.4)'; c.fill(); c.strokeStyle = 'rgba(250,240,225,0.45)'; c.lineWidth = 0.8; c.stroke();
     };
     fin(-46, -1); fin(46, 1);
     // arms, in front, pointing forward and down
@@ -796,11 +797,14 @@
     c.globalCompositeOperation = 'source-over';
     if (f.jolt > 0.02) { c.fillStyle = 'rgba(255,250,240,' + (0.5 * f.jolt * (f.surprised + f.afraid)) + ')'; c.fillRect(-160, -60, 260, 120); }
     c.restore();
+    c.strokeStyle = 'rgba(250,240,220,' + (0.35 * (1 - f.angry) * (1 - f.pale)) + ')'; c.lineWidth = 4; c.lineCap = 'round';
+    c.beginPath(); c.moveTo(4, -30); c.quadraticCurveTo(36, -44, 66, -26); c.stroke();
     // a dark ring round the eye (alarm)
     const ring = 0.6 * f.angry + 0.5 * f.surprised;
     if (ring > 0.03) { A.circle(c, 36, -10, 27, 'rgba(15,8,5,' + ring + ')', null); }
     const lids = lidsFor(f, 0.16, 0.12);
-    eye(c, 36, -10, 19, { iris: [[0, '#cfc394'], [0.6, '#b3a26a'], [0.86, '#6c603c'], [1, hsl(col, -24)]], pupil: 'W', ps: f.pupil, lx: f.lx * 0.6, ly: f.ly * 0.4, up: lids.up, lo: lids.lo, tilt: f.tilt, inner: 1, lid: hsl(col, -6), rim: ink, rimW: 1.4, pupilColor: '#14100c' });
+    c.fillStyle = hsl(col, -18, 0.55); c.beginPath(); c.ellipse(36, -9, 25, 23, 0, 0, TAU); c.fill();
+    eye(c, 36, -10, 19, { iris: [[0, '#bdb79a'], [0.55, '#a59a72'], [0.82, '#7a7258'], [0.94, '#4a4434'], [1, hsl(col, -24)]], pupil: 'W', ps: f.pupil, lx: f.lx * 0.6, ly: f.ly * 0.4, up: lids.up, lo: lids.lo, tilt: f.tilt, inner: 1, lid: hsl(col, -6), rim: ink, rimW: 1.4, pupilColor: '#14100c' });
     // papillae over the eye, standing up when angry or sly
     const pap = 2 + 9 * f.angry + 6 * f.sly + 4 * f.surprised;
     const by = -33 - f.browUp * 6;
@@ -894,7 +898,7 @@
     c.strokeStyle = 'rgba(30,36,20,0.4)'; c.lineWidth = 1.1;
     for (let i = 0; i < 3; i++) { c.beginPath(); c.arc(4, -6, 18 + i * 5, 1.9 + f.smile * 0.2, 2.9); c.stroke(); }
     // the eye, under heavy lids
-    const lids = lidsFor(f, 0.4, 0.2);
+    const lids = lidsFor(f, 0.36, 0.06);
     c.fillStyle = 'rgba(20,24,10,0.35)'; c.beginPath(); c.ellipse(4, -8, 17, 15, 0, 0, TAU); c.fill();
     eye(c, 4, -8, 13, { iris: [[0, '#050403'], [0.45, '#1b130a'], [0.72, '#5b3c18'], [0.9, '#b08a3e'], [1, '#3a2e18']], ps: f.pupil, lx: f.lx * 0.6, ly: f.ly * 0.5, up: lids.up, lo: lids.lo, tilt: f.tilt, inner: 1, lid: hsl(skin, 2), lidLo: hsl(skin, -4), lidLine: 'rgba(20,26,12,0.7)', rim: ink, rimW: 1.2, tear: f.sad });
     // brow scale, heavy, lowered when stern
@@ -926,7 +930,7 @@
     // seven arms, curling out at the bottom
     for (let i = 0; i < 7; i++) {
       const side = i < 3 ? -1 : i > 3 ? 1 : 0;
-      const a0 = Math.PI / 2 + (i - 3) * (0.38 + 0.1 * f.angry + 0.08 * f.surprised - 0.1 * f.afraid);
+      const a0 = Math.PI / 2 - (i - 3) * (0.3 + 0.1 * f.angry + 0.08 * f.surprised - 0.1 * f.afraid);
       const curl = (side || 0.3) * (0.05 + 0.12 * f.afraid + 0.04 * f.happy) * -1;
       const len = 120 - Math.abs(i - 3) * 6 - (i === 5 ? 30 : 0);// one arm shorter, an old injury
       const pts = armPts(-54 + i * 18, 40, a0, len, 9, curl, t * 0.7, i * 1.7, 0.07 + 0.08 * f.happy);
@@ -947,7 +951,7 @@
     c.save(); c.clip(body);
     // the glow inside her
     c.globalCompositeOperation = 'lighter';
-    A.glow(c, 14, -70, 80, '#ffcf7a', clamp(0.32 + 0.35 * f.tender + 0.15 * f.happy - 0.2 * f.sad - 0.15 * f.afraid, 0.05, 0.9));
+    A.glow(c, 14, -60, 70, '#ffb860', clamp(0.16 + 0.22 * f.tender + 0.08 * f.happy - 0.1 * f.sad - 0.1 * f.afraid, 0.03, 0.5));
     c.globalCompositeOperation = 'source-over';
     chroma(c, DOTS.keeper, col, f, t * 0.7);
     // papillae: bumps that stand up when she's angry
@@ -979,10 +983,10 @@
       const ex = sd * 44, ey = 4 - f.lift * 2;
       A.ellipse(c, ex, ey + 2, 28, 26, 0, hsl(col, 6, 0.95), ink, 1.2);
       if (f.angry > 0.05) { A.circle(c, ex, ey, 25, 'rgba(40,6,10,' + 0.5 * f.angry + ')', null); }
-      eye(c, ex, ey, 19, { iris, pupil: 'bar', ps: f.pupil, lx: f.lx, ly: f.ly, up: lids.up, lo: lids.lo, tilt: f.tilt, inner: -sd, lid: hsl(col, 2), rim: ink, rimW: 1.3, tear: f.sad });
+      eye(c, ex, ey, 19, { iris, pupil: 'bar', ps: f.pupil, lx: f.lx, ly: f.ly, up: lids.up + f.sly * 0.14 * sd, lo: lids.lo, tilt: f.tilt, inner: -sd, lid: hsl(col, 2), rim: ink, rimW: 1.3, tear: f.sad });
       // little horns above, for brows
       const hy = ey - 26 - f.browUp * 6;
-      const h = 6 + 8 * f.angry + 6 * f.surprised + 5 * f.sly;
+      const h = 3 + 8 * f.angry + 6 * f.surprised + 5 * f.sly;
       const inX = ex - sd * 10, outX = ex + sd * 10;
       const inY = hy - f.browIn * 5 + f.angry * 4, outY = hy + f.browIn * 2;
       A.shape(c, [[inX - 4, inY + 4], [inX - sd * 2, inY - h], [inX + 4, inY + 4]], hsl(col, -6), { stroke: ink, lw: 1, sharp: true });
@@ -1044,7 +1048,7 @@
     // eyes, big and dark (made for the deep)
     const lids = lidsFor(f, 0.12, 0.1);
     [-1, 1].forEach((sd) => {
-      eye(c, sd * 24, 2, 14, { iris: [[0, '#04060a'], [0.7, '#0c1420'], [0.92, '#3a4a5a'], [1, hsl(col, -20)]], ps: f.pupil * 1.3, lx: f.lx, ly: f.ly, up: lids.up, lo: lids.lo, tilt: f.tilt, inner: -sd, lid: hsl(col, -4), rim: ink, rimW: 1.2 });
+      eye(c, sd * 24, 2, 14, { iris: [[0, '#04060a'], [0.7, '#0c1420'], [0.92, '#3a4a5a'], [1, hsl(col, -20)]], ps: f.pupil * 1.3, lx: f.lx, ly: f.ly, up: lids.up + f.sly * 0.14 * sd, lo: lids.lo, tilt: f.tilt, inner: -sd, lid: hsl(col, -4), rim: ink, rimW: 1.2 });
       const by = -18 - f.browUp * 5;
       ridge(c, sd * 36, by + f.browIn * 2, sd * 12, by - f.browIn * 5 + f.angry * 4, 3, 3.5, hsl(col, -14, 0.6), null);
     });
@@ -1292,8 +1296,11 @@
       const E = SO.E;
       if (!E) { return false; }
       const cut = !!E.overlay || !!(SO.fp && SO.fp.playing);
-      if (who === 'squid' || who === 'gold') { return cut; }
-      return cut || (E.locked && !E._going);
+      const held = !!E.locked && !E._going;
+      if (who === 'gold') { return cut; }
+      // the squid's own face only in real scenes, or answering someone mid-conversation
+      if (who === 'squid') { return cut || (held && U.now() - (SO.ui._creatureAt || -1e9) < 15000); }
+      return cut || held;
     },
 
     _ensureBig() {

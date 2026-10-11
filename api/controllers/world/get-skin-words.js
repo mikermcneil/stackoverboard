@@ -8,7 +8,9 @@ module.exports = {
 
 
   extendedDescription:
-`Squids talk with their skin.  A squid has four skin colors, and each one sings a note, like a bell:
+`Use this for "how do I play <skin word> on a piano?", "which skin words can't be undone?", "who teaches <word>?", or "how many squids know <word>?".
+
+Squids talk with their skin.  A squid has four skin colors, and each one sings a note, like a bell:
 
   red            = D5   (MIDI 74, 587.33 Hz)  white key   game key B or 2
   pale           = F#5  (MIDI 78, 739.99 Hz)  black key   game key A or 1

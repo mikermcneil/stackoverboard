@@ -56,6 +56,16 @@
     'sky-gem': (c, t) => A.gem(c, 0, 0, 1.3, '#bfe9ff', t),
   };
 
+  // When there's no proper portrait yet: draw the creature or plant in the sea's own procedural
+  // style, worked out from its key (so it always looks the same), or the actor itself if there is one.
+  function fallbackPortrait(c, e, t) {
+    const r = U.rng('portrait:' + e.key);
+    const kind = e.kind === 'plant' ? 'plant' : e.kind === 'item' ? 'item' : 'creature';
+    const bodies = { creature: ['jelly', 'fish', 'eel', 'star', 'ray', 'snail'], plant: ['frond', 'bulb', 'fan', 'tube', 'puff'], item: ['shell', 'stone', 'bone', 'glass', 'seed'] }[kind];
+    const tr = { hue: Math.floor(r() * 360), hue2: Math.floor(r() * 360), glowHue: Math.floor(r() * 360), glow: r() < 0.4, size: 1, body: bodies[Math.floor(r() * bodies.length)], appendages: Math.floor(r() * 6), eyes: kind === 'creature' ? 1 + Math.floor(r() * 2) : 0, pattern: ['plain', 'spots', 'stripes', 'rings'][Math.floor(r() * 4)], behavior: kind === 'creature' ? 'drift' : 'still' };
+    A.species(c, kind, tr, 0, 10, 2, t, {});
+  }
+
   SO.journal = {
     open: false,
     tab: 'map',
@@ -73,7 +83,7 @@
       this.el.querySelector('.j-close').addEventListener('click', () => this.close());
       // Your name, which you can change right here.
       const row = document.createElement('div'); row.className = 'j-namerow';
-      this.nameInput = document.createElement('input'); this.nameInput.maxLength = 24; this.nameInput.spellcheck = false; this.nameInput.setAttribute('aria-label', 'Your name');
+      this.nameInput = document.createElement('input'); this.nameInput.maxLength = 24; this.nameInput.placeholder = 'Name your squid'; this.nameInput.spellcheck = false; this.nameInput.setAttribute('aria-label', 'Your name');
       this.nameMsg = document.createElement('span'); this.nameMsg.className = 'j-namemsg';
       row.appendChild(this.nameInput); row.appendChild(this.nameMsg);
       this.el.querySelector('.j-head').insertAdjacentElement('afterend', row);
@@ -81,6 +91,7 @@
         const v = this.nameInput.value.trim();
         if (!v || v === save.squidName) { this.nameInput.value = save.squidName; return; }
         this.nameMsg.textContent = '…';
+        if (!save.enabled) { await save.start(false); }// lost the save (say, the server restarted)? get it back first
         const r = await save.rename(v);
         this.nameMsg.textContent = r.ok ? 'That’s me now.' : r.why === 'taken' ? 'Another squid has that name.' : r.why === 'invalid' ? '2 to 24 letters, please.' : 'Can’t reach the sea right now.';
         if (!r.ok) { this.nameInput.value = v; } else { this.nameInput.value = r.squidName; SO.audio.page(); }
@@ -331,6 +342,7 @@
               if (e.generated && e.traits) { A.species(c, e.kind, e.traits, 0, 10, 2, t, {}); }
               else if (PORTRAITS[e.key]) { c.scale(1.7, 1.7); PORTRAITS[e.key](c, t); }
               else if (A.portraits && A.portraits[e.key]) { c.scale(1.7, 1.7); A.portraits[e.key](c, t); }
+              else { fallbackPortrait(c, e, t); }// never blank: something like it, the same for everyone
             } catch (err) { /* a portrait failing shouldn't break the book */ }
           });
         }

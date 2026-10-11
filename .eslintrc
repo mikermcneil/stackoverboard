@@ -51,7 +51,9 @@
     "Species": true,
     "NativeSpecies": true,
     "WorldFact": true,
-    "ChatMessage": true
+    "ChatMessage": true,
+    "ObjectInteraction": true,
+    "InteractionAnswer": true
     
     // …and any others.
     // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -

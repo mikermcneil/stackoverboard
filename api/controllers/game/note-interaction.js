@@ -51,7 +51,7 @@ one interaction every 0.8 seconds.`,
   fn: async function ({ key, room, kind, localHour, isNight, questionKey, answer }) {
 
     var tidy = (text) => String(text || '')
-      .replace(/[\p{Cc}  ‪-‮⁦-⁩]/gu, ' ')
+      .replace(/[\p{Cc}\u2028\u2029\u202A-\u202E\u2066-\u2069]/gu, ' ')
       .replace(/\s+/g, ' ')
       .trim();
     key = tidy(key);

@@ -8,7 +8,9 @@ module.exports = {
 
 
   extendedDescription:
-`- seaDay: the sea has a 2-hour day cycle.  phase goes 0..1; name is "dawn" (0-0.1), "day" (0.1-0.5),
+`Use this for "is the volcano erupting?", "is the Shoal at the reef?", or "what time of sea-day is it?".
+
+- seaDay: the sea has a 2-hour day cycle.  phase goes 0..1; name is "dawn" (0-0.1), "day" (0.1-0.5),
   "dusk" (0.5-0.6) or "night" (0.6-1).  Firefly squid rise to the surface at night.
 - vent: the volcano, an underwater volcano next to the octopus garden.  While it erupts, its warm plume
   (the Riser) carries squids up toward the surface.  phase is "dormant", "erupting" (for 20 minutes

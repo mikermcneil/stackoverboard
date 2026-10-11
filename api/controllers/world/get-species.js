@@ -8,7 +8,9 @@ module.exports = {
 
 
   extendedDescription:
-`"native" species are the world's permanent inhabitants, nearly all real.  A few are made up for
+`Use this for "what is the <creature>?", "what lives in <region>?" (search by region or room), or "how many squids have met <creature>?".
+
+"native" species are the world's permanent inhabitants, nearly all real.  A few are made up for
 this world (the stone hummer, the hushmouth, the bell whelk, and node reeds): those have an empty
 \`commonName\` and \`latin\`, and their first \`realWorld\` line says so.  They're stored in the database
 (NativeSpecies), each with \`key\`, \`kind\`, \`name\` (what it's called in the game), \`commonName\`,

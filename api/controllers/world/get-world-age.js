@@ -8,7 +8,9 @@ module.exports = {
 
 
   extendedDescription:
-`The shared world gets older on a fixed schedule that everyone can predict, counting from the
+`Use this for "what stage is the world in?", "what comes next, and when?", or "what has changed for good?".
+
+The shared world gets older on a fixed schedule that everyone can predict, counting from the
 moment it was made (\`bornAt\`, when the first world event happened).  It goes through eight stages,
 lasting minutes, then hours, then minutes, hours, days, hours, days, and minutes:
 

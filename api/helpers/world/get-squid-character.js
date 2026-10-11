@@ -53,8 +53,8 @@ Anything malformed is dropped, numbers are clamped, and text is capped, so this 
   fn: function ({ save }) {
 
     var data = (save && save.data) || {};
-    var num = (v, max) => (typeof v === 'number' && Number.isFinite(v) ? Math.max(0, Math.min(max === undefined ? 1e12 : max, v)) : undefined);
-    var text = (v, max) => (typeof v === 'string' ? Array.from(v.replace(/[\p{Cc}  ‪-‮⁦-⁩]/gu, ' ').replace(/\s+/g, ' ').trim()).slice(0, max).join('') : '');
+    var num = (v, max) => (typeof v === 'number' && Number.isFinite(v) ? Math.max(0, Math.min(max === undefined ? Number.MAX_SAFE_INTEGER : max, v)) : undefined);
+    var text = (v, max) => (typeof v === 'string' ? Array.from(v.replace(/[\p{Cc}\u2028\u2029\u202A-\u202E\u2066-\u2069]/gu, ' ').replace(/\s+/g, ' ').trim()).slice(0, max).join('') : '');
 
     // Personality.
     var personality = null;

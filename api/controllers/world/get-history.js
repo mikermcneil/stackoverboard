@@ -10,7 +10,9 @@ module.exports = {
 
 
   extendedDescription:
-`Each event has: \`key\` (unique id), \`kind\`, \`squidName\` (the public name of the squid who caused it,
+`Use this for "what happened in the world?", "who woke the volcano?", "who reached an ending first?", or "when did <squid> arrive?".
+
+Each event has: \`key\` (unique id), \`kind\`, \`squidName\` (the public name of the squid who caused it,
 or "" if nobody in particular), \`subject\`, \`startsAt\` and \`endsAt\` (JS timestamps, epoch ms; equal for
 instantaneous events), and small public \`details\`.
 

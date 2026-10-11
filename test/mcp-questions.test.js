@@ -1,0 +1,381 @@
+/**
+ * test/mcp-questions.test.js
+ *
+ * Asks the MCP server the kinds of questions people (and agents) ask about Stack Overboard, and checks
+ * that the answers are there and right.  It doesn't lift the app: it talks to a running server.
+ *
+ *   node test/mcp-questions.test.js                   (against http://localhost:1341)
+ *   MCP_BASE=http://localhost:1337 npm run test:mcp
+ *
+ * Setup goes through the normal HTTP API, like the game does: two test squids are hatched (each with its
+ * own session), renamed to unique "Mcp ..." names, given a save with a personality, stats and a buddy,
+ * put in a room, made to say something, and made to click the same thing and answer its question.
+ * Then every question goes through JSON-RPC `tools/call` on /mcp/safe (the read-only endpoint).
+ *
+ * Prints a pass/fail table and exits non-zero if anything failed.  (The test squids stay in the
+ * database afterwards, like any other squid.)
+ */
+
+const BASE = (process.env.MCP_BASE || 'http://localhost:1341').replace(/\/$/, '');
+const RUN = Math.random().toString(36).slice(2, 7);
+const wait = (ms) => new Promise((resolve) => setTimeout(resolve, ms));
+
+// A tiny HTTP client with its own cookie (session) and CSRF token, like one browser tab.
+class Player {
+  constructor(label) { this.label = label; this.cookie = ''; this.csrf = ''; }
+
+  async request(method, path, body) {
+    if (method !== 'GET' && !this.csrf) {
+      this.csrf = (await this.request('GET', '/csrfToken'))._csrf;
+    }
+    var res = await fetch(BASE + path, {
+      method,
+      headers: Object.assign({ 'content-type': 'application/json', accept: 'application/json' }, this.cookie ? { cookie: this.cookie } : {}, method !== 'GET' ? { 'x-csrf-token': this.csrf } : {}),
+      body: body === undefined ? undefined : JSON.stringify(body),
+    });
+    var cookies = res.headers.getSetCookie ? res.headers.getSetCookie() : [];
+    for (let c of cookies) {
+      if (/^sails\.sid=/.test(c)) { this.cookie = c.split(';')[0]; }
+    }
+    var text = await res.text();
+    var json;
+    try { json = text ? JSON.parse(text) : undefined; } catch (unusedErr) { json = text; }
+    if (res.status >= 400) {
+      var err = new Error(`${this.label}: ${method} ${path} failed with ${res.status} (${res.headers.get('x-exit') || 'no exit'}): ${text.slice(0, 300)}`);
+      err.status = res.status;
+      throw err;
+    }
+    return json;
+  }
+}
+
+var rpcId = 0;
+async function rpc(method, params, path) {
+  var res = await fetch(BASE + (path || '/mcp/safe'), {
+    method: 'POST',
+    headers: { 'content-type': 'application/json', accept: 'application/json' },
+    body: JSON.stringify({ jsonrpc: '2.0', id: ++rpcId, method, params }),
+  });
+  var json = await res.json();
+  if (json.error) { throw new Error(`${method}: ${json.error.message}`); }
+  return json.result;
+}
+
+// Call a read-only tool; returns its structured output (or throws with the tool's error text).
+async function ask(name, args) {
+  var result = await rpc('tools/call', { name, arguments: args || {} });
+  if (result.isError) {
+    var err = new Error(`${name} failed: ${result.content[0].text.slice(0, 300)}`);
+    err.toolError = result.content[0].text;
+    throw err;
+  }
+  return result.structuredContent || JSON.parse(result.content[0].text);
+}
+
+function check(condition, message) {
+  if (!condition) { throw new Error(message); }
+}
+
+// ---------------------------------------------------------------------------------------------------
+
+async function setUp() {
+  var a = new Player('A');
+  var b = new Player('B');
+  var nameA = `Mcp Ink ${RUN}`;
+  var nameB = `Mcp Kelp ${RUN}`;
+  var question = `test-question-${RUN}`;
+  var thing = `mouth-deep:test-${RUN}`;
+
+  var startA = await a.request('POST', '/api/v1/game/start-game', { timeZone: 'America/Chicago', language: 'en-US', touch: true });
+  var startB = await b.request('POST', '/api/v1/game/start-game', { timeZone: 'Europe/Lisbon', language: 'pt-PT' });
+  await a.request('PUT', '/api/v1/game/rename-squid', { name: nameA });
+  await b.request('PUT', '/api/v1/game/rename-squid', { name: nameB });
+
+  var dataA = {
+    chapter: 3, location: 'west:123', gems: 2, memories: [1],
+    patterns: ['glow', 'open', 'calm', 'cloud'],
+    carried: { remembered: { 'moray': true, 'nautilus': true, 'vampire-squid': true, 'skin:calm': true, 'place:mouth-deep': true, 'place:kelp-deep': true } },
+    personality: { seed: 0.4242, traits: { curious: 0.97, brave: 0.35, gentle: 0.81, playful: 0.4, wistful: 0.55, social: 0.62, wanderer: 0.9 }, summary: 'curious, gentle, a little wistful', evolvedAt: Date.now() },
+    stats: {
+      playSeconds: 5400, roomsEntered: 210, westFarthest: 3599, bestAirTime: 2.4, bestAirHeight: 180, splashes: 31, bellyFlops: 4,
+      eaten: { krill: 40, shrimp: 12, minnow: 3 }, whaleCatches: 2, elementalGrabs: 0, stalkerEscapes: 1, stalkerCatches: 0, bloodSpilled: 3,
+      chats: 1, interactions: 2, answers: 1, patterns: { glow: 20, open: 5, calm: 9, cloud: 4, call: 0, wake: 0 }, undone: 1, spins: 14,
+      beadCloseness: 0.8, nightSeconds: 4000, daySeconds: 1400, deepest: 0.84,
+    },
+    buddy: { name: 'Bead', closeness: 0.8, fate: 'test-fate-secret' },
+  };
+  var dataB = {
+    chapter: 2, location: 'kelp-deep',
+    patterns: ['glow', 'calm'],
+    carried: { remembered: { 'sepia': true } },
+    personality: { seed: 0.9, traits: { curious: 0.3, brave: 0.88, gentle: 0.2, playful: 0.7, wistful: 0.1, social: 0.4, wanderer: 0.2 }, summary: 'brave and playful', evolvedAt: Date.now() },
+    stats: { playSeconds: 600, westFarthest: 12, bestAirTime: 1.1 },
+  };
+  await a.request('PUT', '/api/v1/game/save-game', { revision: (await a.request('GET', '/api/v1/game/load-game')).save.revision, data: dataA, timeZone: 'America/Chicago', language: 'en-US', touch: true });
+  await b.request('PUT', '/api/v1/game/save-game', { revision: (await b.request('GET', '/api/v1/game/load-game')).save.revision, data: dataB, timeZone: 'Europe/Lisbon', language: 'pt-PT' });
+
+  await a.request('PUT', '/api/v1/game/update-presence', { room: 'west:123', x: 100, y: 200, glow: true });
+  await b.request('PUT', '/api/v1/game/update-presence', { room: 'kelp-deep', x: 50, y: 60 });
+  var chatText = `hello from the test ${RUN}`;
+  await a.request('POST', '/api/v1/game/say', { text: chatText, room: 'west:123' });
+
+  // Both click the same thing.  A answers, B answers differently, then A comes back at night.
+  var first = await a.request('POST', '/api/v1/game/note-interaction', { key: thing, room: 'mouth-deep', kind: 'oddity:test', localHour: 14.5, isNight: false, questionKey: question, answer: 'they float' });
+  var fromB = await b.request('POST', '/api/v1/game/note-interaction', { key: thing, room: 'mouth-deep', kind: 'oddity:test', localHour: 9, questionKey: question, answer: 'Swans carry it' });
+  var tooFast;
+  try { await b.request('POST', '/api/v1/game/note-interaction', { key: thing, room: 'mouth-deep', kind: 'oddity:test' }); } catch (err) { tooFast = err.status; }
+  await wait(900);
+  var again = await a.request('POST', '/api/v1/game/note-interaction', { key: thing, room: 'mouth-deep', kind: 'oddity:test', localHour: 23.25, isNight: true, questionKey: question, answer: 'Swans carry it' });
+
+  var noSave;
+  try { await new Player('C').request('POST', '/api/v1/game/note-interaction', { key: thing, room: 'mouth-deep', kind: 'oddity:test' }); } catch (err) { noSave = err.status; }
+
+  return { a, b, nameA, nameB, question, thing, chatText, first, fromB, again, tooFast, noSave, startA, startB };
+}
+
+// ---------------------------------------------------------------------------------------------------
+
+function questions(t) {
+  return [
+
+    ['tools/list shows the new read-only tools (and no write tools)', async () => {
+      var tools = (await rpc('tools/list', {})).tools;
+      var names = tools.map((x) => x.name);
+      for (let n of ['getSquid', 'getRecords', 'getInteractions', 'getAnswers', 'getSquids', 'getOnline', 'getWorldFacts']) { check(names.includes(n), `missing ${n}`); }
+      check(!names.includes('noteInteraction') && !names.includes('saveGame'), 'write tools must not be on /mcp/safe');
+      var overview = tools.find((x) => x.name === 'getOverview');
+      check(/How to answer common questions/.test(overview.description), 'getOverview should carry the question guide');
+      check(tools.every((x) => x.annotations.readOnlyHint), 'every safe tool should be read-only');
+    }],
+
+    ['note-interaction answers with the shared tally', async () => {
+      check(t.first.total === 1 && t.first.mine === 1 && t.first.firstBy === t.nameA, 'first visit should be A\'s');
+      check(t.fromB.total === 2 && t.fromB.squids === 2 && t.fromB.lastOtherBy === t.nameA, 'B should see A was there before');
+      check(t.again.total === 3 && t.again.mine === 2 && t.again.lastOtherBy === t.nameB && t.again.nightVisits === 1, 'A coming back should see B, and one night visit');
+      check(t.again.answers[t.question]['Swans carry it'] === 2 && !t.again.answers[t.question]['they float'], 'A\'s new answer should replace its old one');
+      check(t.again.myAnswers[t.question] === 'Swans carry it', 'myAnswers should be A\'s latest');
+      check(Array.isArray(t.again.recent) && t.again.recent[0].squidName === t.nameA && t.again.recent[0].isNight === true, 'recent should start with A\'s night visit');
+      check(t.tooFast === 429, `clicking too fast should be 429 (got ${t.tooFast})`);
+      check(t.noSave === 404, `no save should be 404 (got ${t.noSave})`);
+    }],
+
+    ['Who is online, and where are they?', async () => {
+      var r = await ask('getOnline');
+      var a = r.online.find((o) => o.squidName === t.nameA);
+      var b = r.online.find((o) => o.squidName === t.nameB);
+      check(a && a.room === 'west:123', 'A should be online in west:123');
+      check(b && b.room === 'kelp-deep', 'B should be online in kelp-deep');
+    }],
+
+    ['What is <A> like?', async () => {
+      var r = await ask('getSquid', { name: t.nameA });
+      check(r.personality && r.personality.summary === 'curious, gentle, a little wistful', 'summary should come through');
+      check(r.personality.traits.curious === 0.97 && r.personality.strongest[0] === 'curious', 'traits and strongest');
+      check(r.personality.seed === 0.4242 && r.personality.evolvedAt > 1.5e12, 'seed and evolvedAt come through');
+      check(r.stats.westFarthest === 3599 && r.stats.eaten.krill === 40 && r.stats.patterns.glow === 20, 'stats come through');
+      check(r.bio.includes(t.nameA) && r.bio.includes('curious, gentle, a little wistful'), 'bio should describe the personality');
+    }],
+
+    ['Where is <A> playing from?', async () => {
+      var r = await ask('getSquid', { name: t.nameA });
+      check(r.place && r.place !== 'unknown' && r.placeSource, `place should be known (got ${r.place})`);
+      check(r.device === 'phone' || r.device === 'tablet' || r.device === 'desktop' || r.device === 'unknown', 'device');
+      check(/plays from /.test(r.bio), 'bio should say where it plays from');
+    }],
+
+    ['Is <A> online, and in which room?', async () => {
+      var r = await ask('getSquid', { name: t.nameA });
+      check(r.online === true && r.room === 'west:123', 'A should be online in west:123');
+      check(r.bio.includes('west:123'), 'bio should mention the room');
+    }],
+
+    ['How do I play the wake melody on a piano?', async () => {
+      var r = await ask('getSkinWords', { name: 'wake' });
+      var wake = r.skinWords.find((w) => w.key === 'wake');
+      check(wake && wake.melody === 'B5 D5 B5 D5', 'wake is B5 D5 B5 D5');
+      check(/middle C/i.test(r.howToPlay) && wake.piano, 'piano directions should be there');
+    }],
+
+    ['Which skin words can\'t be undone?', async () => {
+      var r = await ask('getSkinWords');
+      var permanent = r.skinWords.filter((w) => w.canBeUndone === false).map((w) => w.key).sort();
+      check(JSON.stringify(permanent) === JSON.stringify(['calm', 'glow', 'open']), `got ${permanent}`);
+    }],
+
+    ['What\'s at west:123?', async () => {
+      var r = await ask('getWestPath', { n: 123 });
+      check(r.at && r.at.room === 'west:123' && r.at.crossing === 3 && r.at.distanceInCrossing === 3, 'crossing 3, place 3');
+      check(r.at.landmark && r.at.landmark.key === 'glass-buoy', 'the glass buoy, recalled');
+    }],
+
+    ['What\'s at the end of the west?', async () => {
+      var r = await ask('getWestPath');
+      check(r.end === 3600 && r.endLandmark && r.endLandmark.n === 3600 && r.wrapsTo === 'spray-zone', 'west:3600 wraps to the spray zone');
+    }],
+
+    ['What stage is the world in, and what\'s next?', async () => {
+      var r = await ask('getWorldAge');
+      check(r.current && r.current.key && r.current.name, 'current stage');
+      var next = r.stages.find((s) => s.index === r.current.index + 1);
+      check(r.current.key === 'old-sea' || (next && next.status === 'later' && next.startsAt === r.current.endsAt), 'next stage follows the current one');
+    }],
+
+    ['What do squids say about the test question?', async () => {
+      var r = await ask('getAnswers', { questionKey: t.question });
+      check(r.questions.length === 1, 'one question');
+      var q = r.questions[0];
+      check(q.key === t.thing && q.total === 2 && q.tallies[0].answer === 'Swans carry it' && q.tallies[0].count === 2, 'both squids now say "Swans carry it"');
+      check(q.answers.some((x) => x.squidName === t.nameB), 'who answered');
+    }],
+
+    ['What has <A> interacted with?', async () => {
+      var r = await ask('getInteractions', { squidName: t.nameA });
+      check(r.interactions.length === 2 && r.interactions.every((x) => x.key === t.thing), 'two visits to the test thing');
+      check(r.interactions[0].isNight === true && r.interactions[0].localHour === 23.25, 'newest first, with local hour');
+      var tally = r.tallies.find((x) => x.key === t.thing);
+      check(tally && tally.total === 3 && tally.squids === 2, 'tally covers both squids');
+      var p = await ask('getSquid', { name: t.nameA });
+      check(p.interactions.length === 2 && p.answers.length === 1 && p.answers[0].answer === 'Swans carry it', 'profile has interactions and answers');
+    }],
+
+    ['Who has been to the test thing (by kind prefix)?', async () => {
+      var r = await ask('getInteractions', { kind: 'oddity:', room: 'mouth-deep', limit: 200 });
+      var names = r.interactions.filter((x) => x.key === t.thing).map((x) => x.squidName);
+      check(names.includes(t.nameA) && names.includes(t.nameB), 'both squids');
+    }],
+
+    ['What creatures live in the trench?', async () => {
+      var r = await ask('getSpecies', { search: 'trench' });
+      check(r.native.some((n) => n.key === 'whale'), 'the sperm whale');
+    }],
+
+    ['What is the moray eel?', async () => {
+      var r = await ask('getSpecies', { search: 'moray' });
+      var moray = r.native.find((n) => n.key === 'moray');
+      check(moray && moray.latin && /cave/i.test(moray.role) && moray.realWorld.length, 'moray with its role and real-world facts');
+    }],
+
+    ['What happened to Bead? (spoiler)', async () => {
+      var r = await ask('getWorldFacts', { key: 'character-buddy-fate' });
+      check(r.facts[0].spoilerLevel === 2 && /warm/i.test(r.facts[0].body), 'flagged as a story-ending spoiler');
+      var hidden = await ask('getWorldFacts', { search: 'bead', maxSpoilerLevel: 1 });
+      check(!hidden.facts.some((f) => f.key === 'character-buddy-fate'), 'hidden with maxSpoilerLevel 1');
+    }],
+
+    ['How close is <A> to Bead (without spoiling)?', async () => {
+      var r = await ask('getSquid', { name: t.nameA });
+      check(r.buddy && r.buddy.closeness === 0.8 && r.buddySpoiler === true, 'buddy closeness, flagged');
+      check(!r.bio.includes('test-fate-secret'), 'the bio must not reveal the buddy\'s fate');
+    }],
+
+    ['What\'s out at night?', async () => {
+      var r = await ask('getWorldFacts', { key: 'mechanic-night-life' });
+      check(/lanternfish/i.test(r.facts[0].body), 'lanternfish rise at night');
+    }],
+
+    ['What did squids chat recently?', async () => {
+      var r = await ask('getChat', { limit: 50 });
+      check(r.messages.some((m) => m.squidName === t.nameA && m.text === t.chatText && m.room === 'west:123'), 'A\'s message');
+      var p = await ask('getSquid', { name: t.nameA });
+      check(p.chats[0].text === t.chatText, 'in the profile too');
+    }],
+
+    ['How far west has anyone gone?', async () => {
+      var r = await ask('getRecords');
+      var west = r.records.westFarthest;
+      check(west.value >= 3599 && west.top.some((x) => x.squidName === t.nameA && x.value === 3599), 'A has been 3599 rooms west');
+      check(r.totals.playSeconds >= 6000, 'totals add up');
+      check(r.personality.squids >= 2 && r.personality.averages.curious > 0, 'personality averages');
+    }],
+
+    ['How many squids know calm?', async () => {
+      var r = await ask('getSkinWords', { name: 'calm' });
+      var calm = r.skinWords.find((w) => w.key === 'calm');
+      check(calm.knownBy >= 2, 'at least our two');
+      var s = await ask('getSquids', { knows: 'calm', limit: 500 });
+      var names = s.squids.map((x) => x.squidName);
+      check(names.includes(t.nameA) && names.includes(t.nameB), 'both listed by get-squids knows=calm');
+    }],
+
+    ['What species has <A> met?', async () => {
+      var r = await ask('getSquid', { name: t.nameA });
+      check(['moray', 'nautilus', 'vampire-squid'].every((k) => r.nativesMet.includes(k)), 'moray, nautilus, vampire squid');
+      check(r.placesVisited.includes('mouth-deep'), 'places visited');
+    }],
+
+    ['Who are the most curious squids?', async () => {
+      var r = await ask('getSquids', { trait: 'curious', limit: 500 });
+      check(r.squids.some((x) => x.squidName === t.nameA), 'A is curious');
+      check(!r.squids.some((x) => x.squidName === t.nameB), 'B is not');
+      for (let i = 1; i < r.squids.length; i++) { check(r.squids[i - 1].personality.traits.curious >= r.squids[i].personality.traits.curious, 'sorted by curiosity'); }
+    }],
+
+    ['List squids with personality and key stats', async () => {
+      var r = await ask('getSquids', { limit: 10 });
+      var b = r.squids.find((x) => x.squidName === t.nameB);
+      check(b && b.personality.summary === 'brave and playful' && b.stats.westFarthest === 12, 'B\'s summary and stats');
+    }],
+
+    ['What is the glass city question? (must not contain an answer)', async () => {
+      var r = await ask('getWorldFacts', { key: 'mystery-glass-city-flight' });
+      var body = r.facts[0].body;
+      check(/open question|mystery/i.test(body), 'says it\'s open');
+      check(!/(flies|floats|stays up|is held up) (because|by|thanks to)|powered by|the answer is/i.test(body), 'must not state an answer');
+      var tools = (await rpc('tools/list', {})).tools;
+      check(/Never present an answer as the truth/.test(tools.find((x) => x.name === 'getAnswers').description), 'get-answers warns that answers are opinions');
+    }],
+
+    ['How do revisiting, questions, personality and stats work?', async () => {
+      for (let key of ['mechanic-revisiting', 'mechanic-shared-questions', 'mechanic-personality', 'mechanic-stats']) {
+        let r = await ask('getWorldFacts', { key });
+        check(r.facts[0].body.length > 100, `${key} has a body`);
+      }
+      var r = await ask('getWorldFacts', { search: 'time of day other players revisit' });
+      check(r.facts.some((f) => f.key === 'mechanic-revisiting'), 'searchable');
+    }],
+
+    ['Asking about a squid that doesn\'t exist', async () => {
+      var failed;
+      try { await ask('getSquid', { name: `Nobody ${RUN}` }); } catch (err) { failed = err.toolError; }
+      check(failed && /notFound/.test(failed), 'notFound');
+    }],
+
+    ['Names are found regardless of capital letters', async () => {
+      var r = await ask('getSquid', { name: t.nameB.toUpperCase() });
+      check(r.squidName === t.nameB, 'B by its upper-cased name');
+    }],
+
+  ];
+}
+
+// ---------------------------------------------------------------------------------------------------
+
+(async () => {
+  console.log(`MCP questions against ${BASE} (run ${RUN})\n`);
+  var context;
+  try {
+    context = await setUp();
+  } catch (err) {
+    console.error('Setup failed:', err.message);
+    process.exit(2);
+  }
+
+  var results = [];
+  for (let [name, fn] of questions(context)) {
+    let label = name.replace(/<A>/g, context.nameA);
+    try {
+      await fn();
+      results.push({ ok: true, label });
+    } catch (err) {
+      results.push({ ok: false, label, why: err.message });
+    }
+  }
+
+  var width = Math.max(...results.map((r) => r.label.length));
+  for (let r of results) {
+    console.log(`${r.ok ? 'PASS' : 'FAIL'}  ${r.label.padEnd(width)}${r.ok ? '' : '  -> ' + r.why}`);
+  }
+  var failed = results.filter((r) => !r.ok).length;
+  console.log(`\n${results.length - failed} passed, ${failed} failed`);
+  process.exit(failed ? 1 : 0);
+})();

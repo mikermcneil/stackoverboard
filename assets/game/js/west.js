@@ -11,9 +11,15 @@
  *   13-18  the lungfish steps: stone plateaus at the surface, lungfish on top
  *   19+    the wet desert: pale sand, stalagmites, and big dark birds that dive
  *
- * Then, past 60, the whole journey again, recalled, for sixty crossings (3600
- * places). At the very end, the west runs out and you come back around into
- * the world from the east, at the spray zone.
+ * Then, past 60, the whole journey again, recalled, crossing after crossing,
+ * forever. And the land rises. Past the second crossing, more and more of it
+ * is highland: streams, lakes, ridges you have to flop across out of the
+ * water, snowfields, waterfalls you swim up to the pools above them, and
+ * aquifers (icy, higher up) running under the mountains. It gets harder the
+ * farther you go, and it never ends.
+ *
+ * Every edge between two places agrees: the same depth of water and ground
+ * on both sides, rock where there's rock.
  *
  * None of it is on the way anywhere. It's just there, if you keep going.
  */
@@ -60,14 +66,14 @@
   // again; the tide clock, older; the sphinx, half buried...). Sixty crossings in all, 3600
   // places. And at the very end the west runs out, and you come back into the world from the
   // east, at the spray zone: the sea goes all the way around.
-  const CROSSING = 60, CROSSINGS = 60, WEST_END = CROSSING * CROSSINGS;
+  const CROSSING = 60, CROSSINGS = Infinity, WEST_END = null;// it never ends
   const RECALL = ['', 'again', 'older', 'grown over', 'half buried', 'in the dark', 'smaller than I remember', 'upside down', 'still there', 'remembered wrong', 'crowded', 'empty', 'singing', 'bleached', 'broken', 'mended', 'very old', 'new again', 'far away', 'close up'];
   const ORD = ['first', 'second', 'third', 'fourth', 'fifth', 'sixth', 'seventh', 'eighth', 'ninth', 'tenth'];
-  const crossingName = (c) => (c < ORD.length ? ORD[c] : (c + 1) + 'th') + ' crossing';
+  const ordinal = (k) => { const m = k % 100, s1 = m >= 11 && m <= 13 ? 'th' : ({ 1: 'st', 2: 'nd', 3: 'rd' }[k % 10] || 'th'); return k + s1; };
+  const crossingName = (c) => (c < ORD.length ? ORD[c] : ordinal(c + 1)) + ' crossing';
   const split = (n) => ({ c: Math.floor((n - 1) / CROSSING), base: ((n - 1) % CROSSING) + 1 });
   // A landmark (or its recalling) at a distance, or nothing.
   function landmarkAt(n) {
-    if (n === WEST_END) { return { n, key: 'west-end', name: 'The end of the west', line: 'The sand stops, and the sky comes down to the water, and past it there is only east. The sea goes all the way around.', crossing: CROSSINGS - 1 }; }
     const { c, base } = split(n), lm = LANDMARK[base];
     if (!lm) { return null; }
     if (!c) { return lm; }
@@ -78,25 +84,79 @@
   const bandFor = (n) => BANDS.slice().reverse().find((b) => n >= b.from);
   const FAR = ['', ' (farther)', ' (far)', ' (very far)', ' (so far)'];
 
+  // ── Edges that agree ────────────────────────────────────────────────────────
+  // Boundary b is between west:b (its left edge) and west:b+1 (its right edge). Both places
+  // put the ground at the same depth below the water line there.
+  const SURF = 150;// the water line in an ordinary surface place
+  const rand = (key) => (U.hash(key + ':' + ((SO.world && SO.world.seed) || 1847)) % 100000) / 100000;
+  const typicalDepth = (n) => {
+    if (isHigh(n)) { return 230; }
+    const bb = bandFor(split(n).base);
+    return RH - (bb.floor[0] + bb.floor[1]) / 2 * RH - SURF;
+  };
+  function edgeDepth(b) {
+    if (b <= 0) {// meeting the westernmost built place: match its ground
+      const g = SO.rooms.defs[SO.rooms.westGate || 'bright-reef'];
+      const f = g && g.terrain && g.terrain.floor ? g.terrain.floor[0] : 0.2, h = RH * ((g && g.h) || 1);
+      return Math.max(160, h - f * h - (g && g.surfaceY ? g.surfaceY : SURF));
+    }
+    return U.clamp((typicalDepth(b) + typicalDepth(b + 1)) / 2 + (rand('edge:' + b) - 0.5) * 80, 170, 620);
+  }
+
+  // ── The land rising ─────────────────────────────────────────────────────────
+  const HIGH_FROM = 121;
+  function isHigh(n) { return n >= HIGH_FROM && rand('high:' + n) < U.clamp((n - HIGH_FROM) / 7080, 0.1, 1); }
+  // A climb takes two places: a waterfall and the pool above it, or a sinkhole and the spring
+  // the aquifer comes up in. Climbs start on odd places, so they never overlap.
+  function climbAt(n) { return n % 2 === 1 && isHigh(n) && rand('climb:' + n) < 0.4 ? (rand('climbkind:' + n) < 0.6 ? 'falls' : 'sinkhole') : null; }
+  function typeOf(n) {
+    if (n % 2 === 0 && climbAt(n - 1)) { return climbAt(n - 1) === 'falls' ? 'pooltop' : 'spring'; }
+    const cl = climbAt(n);
+    if (cl) { return cl; }
+    if (!isHigh(n)) { return null; }
+    const r = rand('kind:' + n), cold = U.clamp((n - HIGH_FROM) / 3000, 0, 0.6);
+    return r < 0.35 ? 'stream' : r < 0.55 ? 'lake' : r < 0.8 - cold * 0.3 ? 'ridge' : 'snowfield';
+  }
+  const elevCache = {};
+  function elevation(n) {// meters climbed: each climb about 140 m, plus the gentle rise in between
+    if (n < HIGH_FROM) { return 0; }
+    if (elevCache[n] !== undefined) { return elevCache[n]; }
+    let m = 0;
+    for (let k = HIGH_FROM; k <= n; k++) { const cl = climbAt(k); m += cl ? 140 : (isHigh(k) ? 6 : 1); }
+    elevCache[n] = m;
+    return m;
+  }
+
+  // Ground as fractions up from the bottom, with the two ends fixed to the edge depths.
+  function floorFor(H, sY, depthL, depthR, middle) {
+    const f = (depth) => U.clamp((H - (sY + depth)) / H, 0.02, 0.98);
+    return [f(depthL)].concat(middle.map(f)).concat([f(depthR)]);
+  }
+
   function make(n) {
+    const hiType = typeOf(n);
+    if (hiType) { return makeHigh(n, hiType); }
     const { c } = split(n);
     const b = bandFor(split(n).base), r = U.rng('west:' + n + ':' + ((SO.world && SO.world.seed) || 1847));
     const w = 1.6, W = RW * w;
-    const floor = [];
-    for (let i = 0; i < 8; i++) { floor.push(b.floor[0] + r() * (b.floor[1] - b.floor[0])); }
+    const dL = edgeDepth(n), dR = edgeDepth(n - 1);
+    const mid = [];
+    for (let i = 0; i < 6; i++) { const f = b.floor[0] + r() * (b.floor[1] - b.floor[0]); mid.push(RH - f * RH - SURF); }
+    const floor = floorFor(RH, SURF, dL, dR, mid);
     const solids = [], props = [], actors = [];
+    const inside = (x, wd) => U.clamp(x, 170, W - 170 - wd);// nothing solid touches an edge
     // rocks breaking the surface (the tidepool coast)
-    if (b.rocks) { for (let i = 0; i < 3; i++) { const x = 300 + i * 800 + r() * 300; solids.push({ type: 'ellipse', x, y: RH * 0.3, rx: 110 + r() * 60, ry: 160 }); } }
+    if (b.rocks) { for (let i = 0; i < 3; i++) { const x = inside(400 + i * 800 + r() * 300, 0); solids.push({ type: 'ellipse', x, y: RH * 0.3, rx: 110 + r() * 60, ry: 160 }); } }
     // stone plateaus right at the surface (the lungfish steps)
     if (b.plateaus) {
       for (let i = 0; i < 4; i++) {
-        const x = 200 + i * 620 + r() * 120, top = RH * (0.1 + r() * 0.08);
-        solids.push({ type: 'rect', x, y: top, w: 220 + r() * 120, h: RH });
-        actors.push({ id: 'lungfish-' + i, type: 'lungfish', x: x + 110, y: top - 14, seed: r() * 10 });
+        const wd = 220 + r() * 120, x = inside(260 + i * 560 + r() * 100, wd), top = RH * (0.1 + r() * 0.08);
+        solids.push({ type: 'rect', x, y: top, w: wd, h: RH });
+        actors.push({ id: 'lungfish-' + i, type: 'lungfish', x: x + wd / 2, y: top - 14, seed: r() * 10 });
       }
     }
     // stalagmites in the wet desert
-    if (b.spikes) { for (let i = 0; i < 6; i++) { const x = 160 + i * 420 + r() * 140, hgt = 180 + r() * 260; solids.push({ type: 'ellipse', x, y: RH, rx: 40 + r() * 30, ry: hgt }); } }
+    if (b.spikes) { for (let i = 0; i < 6; i++) { const x = inside(260 + i * 380 + r() * 140, 0), hgt = 180 + r() * 260; solids.push({ type: 'ellipse', x, y: RH, rx: 40 + r() * 30, ry: hgt }); } }
     // plants
     for (let i = 0; i < 12 && b.plants; i++) {
       const x = 100 + i * 210 + r() * 80, seed = Math.floor(r() * 1000), s = 0.8 + r() * 0.6;
@@ -105,7 +165,7 @@
       else if (b.plants === 'sargassum') { const y = 60 + r() * 60; props.push({ layer: 'mid', draw(ctx, t, room) { A.sargassum(ctx, x + Math.sin(t * 0.2 + seed) * 20, (room.surfaceY || 0) + y, s, t, seed); } }); }
     }
     for (let i = 0; i < b.spiders; i++) { actors.push({ id: 'seaspider-' + i, type: 'seaSpider', x: 300 + r() * (W - 600), y: 0, seed: r() * 10 }); }
-    for (let i = 0; i < b.birds; i++) { actors.push({ id: 'bird-' + i, type: b.scary && n >= 22 ? 'scaryBird' : 'gull', x: r() * W, y: -200 - r() * 200, seed: r() * 10, home: { x: r() * W } }); }
+    for (let i = 0; i < b.birds; i++) { actors.push({ id: 'bird-' + i, type: b.scary && split(n).base >= 22 ? (n >= 40 && r() < 0.3 ? 'scaryBird' : 'scaryBird') : 'gull', x: r() * W, y: -200 - r() * 200, seed: r() * 10, home: { x: r() * W } }); }
     const d = {
       key: 'west:' + n, name: b.name + FAR[Math.min(FAR.length - 1, Math.floor((split(n).base - b.from) / 2))],
       region: 'west', w, depth: b.depth, surface: true, palette: b.palette, sand: b.sand,
@@ -118,15 +178,132 @@
       snow: 0.1,
       west: n,
     };
-    // One of the places on the way west that's always here.
+    // the place to the east of a climb's top has no way east (it's the cliff); this place's
+    // right exit can't lead into a wall, so it leads where the wall's foot is
+    rewireEast(d, n);
     // Later crossings: everything a little more washed out, a little stranger.
     if (c) { d.name += ' (' + crossingName(c) + ')'; d.crossing = c; d.palette = ['warm', 'glass', 'kelp', 'shine', 'abyss'][c % 5]; d.dark = Math.min(0.5, c * 0.008); }
     // One of the places on the way west that's always here (or its recalling).
     const lm = landmarkAt(n);
     if (lm) { d.name = lm.name; d.landmark = lm; }
-    // The end: past it, the world comes back around from the east.
-    if (n === WEST_END) { d.exits.left = 'spray-zone'; }
     return d;
+  }
+
+  // Going east from a place: if the place to the east is the top of a climb (it has rock on its
+  // west side and comes up from below), you can't walk into it sideways; and if it's a climb's
+  // foot with a cliff on its west, likewise. Those neighbors have no east-west opening to us.
+  function rewireEast(d, n) {
+    const east = typeOf(n - 1);
+    if (east === 'falls' || east === 'sinkhole') { delete d.exits.right; d.terrain.walls = Object.assign({}, d.terrain.walls, { right: true }); d.rightWall = true; }
+  }
+
+  // ── Highland places ─────────────────────────────────────────────────────────
+  const HH = 1.6, HSURF = 620;// taller places, more sky, the water line lower down
+  function makeHigh(n, type) {
+    const r = U.rng('high:' + n + ':' + ((SO.world && SO.world.seed) || 1847));
+    const w = 1.6, W = RW * w, H = RH * HH;
+    const m = elevation(n), cold = m > 1400;
+    const dL = edgeDepth(n), dR = edgeDepth(n - 1);
+    const solids = [], props = [], actors = [];
+    let mid = [], exits = { left: 'west:' + (n + 1), right: 'west:' + (n - 1) };
+    const d = {
+      key: 'west:' + n, w, h: HH, surface: true, surfaceY: HSURF, region: 'highland', west: n, elev: m,
+      depth: 0.04, palette: cold ? 'glass' : 'kelp', sand: cold ? '#e9eef1' : '#8f8676', snow: cold ? 0.6 : 0.15,
+      solids, props, actors, ambient: { fish: type === 'lake' ? 8 : 3 }, isles: [], terrain: {},
+      snowy: type === 'snowfield' || cold,
+      bg(ctx, t, room) { mountains(ctx, room, m, n); },
+    };
+    const names = { stream: 'A mountain stream', lake: 'A high lake', ridge: 'A ridge between waters', snowfield: 'A snowfield', falls: 'The foot of a waterfall', pooltop: 'The pool above the falls', sinkhole: 'A sinkhole lake', spring: 'A spring in the rock' };
+    d.name = names[type] + ' (' + Math.round(m).toLocaleString() + ' m up)';
+    if (type === 'stream') { for (let i = 0; i < 6; i++) { mid.push(170 + r() * 90); } }
+    else if (type === 'lake') { for (let i = 0; i < 6; i++) { mid.push(320 + Math.sin(i / 5 * Math.PI) * 300 + r() * 60); } }
+    else if (type === 'ridge' || type === 'snowfield') {// the ground rises out of the water in the middle: flop across, or don't
+      const hump = type === 'snowfield' ? 260 : 150;
+      mid = [200, 60, -hump * 0.7, -hump, -hump * 0.6, 120].map((v) => v + r() * 30);
+      if (type === 'snowfield') { d.sand = '#f4f7f9'; d.palette = 'glass'; }
+    } else if (type === 'falls') {
+      // A cliff on the west side, and water coming down it into a plunge pool. Swim up the water.
+      mid = [380, 380, 360, 300, 260, 240];
+      solids.push({ type: 'rect', x: -200, y: -300, w: W * 0.3 + 200, h: H + 600 });
+      d.waterRects = [{ x: W * 0.3, y: -60, w: W * 0.12, h: HSURF + 80, current: [0, 330] }];
+      d.upExit = true;
+      exits = { up: 'west:' + (n + 1), right: 'west:' + (n - 1) };
+      d.terrain.walls = { left: true };
+      props.push({ layer: 'mid', draw(ctx, t, room) { A.waterfall(ctx, W * 0.36, -60, W * 0.11, HSURF + 70, t, { alpha: 0.85, lw: 2 }); foam(ctx, W * 0.36, HSURF, t); } });
+      d.terrain.ceilGap = [0.3, 0.42];
+    } else if (type === 'pooltop') {
+      // At the top: a pool, spilling over the lip down a gap in the floor. Rock to the east.
+      mid = [260, 260, 300, 320, 330, 330];
+      solids.push({ type: 'rect', x: W * 0.55, y: -300, w: W * 0.45 + 200, h: H + 600 });
+      d.terrain.floorGap = [0.3, 0.42];
+      d.waterRects = [{ x: W * 0.3, y: HSURF, w: W * 0.12, h: H, current: [0, 140] }];
+      exits = { left: 'west:' + (n + 1), down: 'west:' + (n - 1) };
+      d.terrain.walls = { right: true };
+    } else if (type === 'sinkhole') {
+      // A lake with a hole in its floor, going down into the mountain. Rock to the west.
+      mid = [420, 420, 520, 640, 640, 380];
+      solids.push({ type: 'rect', x: -200, y: -300, w: W * 0.18 + 200, h: H + 600 });
+      d.terrain.floorGap = [0.6, 0.75];
+      exits = { down: 'aq:' + n, right: 'west:' + (n - 1) };
+      d.terrain.walls = { left: true };
+    } else if (type === 'spring') {
+      // Where the water comes back up out of the rock. Rock to the east.
+      mid = [260, 280, 300, 360, 380, 380];
+      solids.push({ type: 'rect', x: W * 0.82, y: -300, w: W * 0.18 + 200, h: H + 600 });
+      d.terrain.floorGap = [0.1, 0.25];
+      exits = { left: 'west:' + (n + 1), down: 'aq2:' + (n - 1) };
+      d.terrain.walls = { right: true };
+    }
+    d.terrain.floor = floorFor(H, HSURF, dL, dR, mid);
+    d.exits = exits;
+    if (exits.right) { rewireEast(d, n); }
+    // a few plants and things that live up here
+    for (let i = 0; i < 6; i++) { const x = 200 + r() * (W - 400), seed = Math.floor(r() * 1000), s = 0.6 + r() * 0.5; props.push({ layer: 'mid', draw(ctx, t, room) { const f = room.floorY(x); if (isFinite(f) && f > room.surfaceY) { A.seagrass(ctx, x, f + 6, s, t, seed); } } }); }
+    if (r() < 0.5) { actors.push({ id: 'bird-0', type: m > 2500 && r() < 0.6 ? 'scaryBird' : 'gull', x: r() * W, y: -200, seed: r() * 10, home: { x: r() * W } }); }
+    const lm = landmarkAt(n);
+    if (lm) { d.name = lm.name + ' (' + Math.round(m).toLocaleString() + ' m up)'; d.landmark = lm; }
+    return d;
+  }
+
+  // The aquifer under a sinkhole: two caves of water in the dark rock, east then west, coming up
+  // at the spring. Higher up, they're ice caves.
+  function makeAquifer(n, second) {
+    const r = U.rng('aq:' + n + (second ? ':2' : '') + ':' + ((SO.world && SO.world.seed) || 1847));
+    const m = elevation(n), ice = m > 1200;
+    const edge = 0.2, mid = [];
+    for (let i = 0; i < 5; i++) { mid.push(0.12 + r() * 0.16); }
+    const d = {
+      key: (second ? 'aq2:' : 'aq:') + n, w: 1.6, region: 'aquifer', depth: 0.6, dark: ice ? 0.55 : 0.8,
+      name: (ice ? 'An ice cave' : 'An aquifer') + (second ? ', going up' : '') + ' (' + Math.round(m).toLocaleString() + ' m up)',
+      palette: ice ? 'glass' : 'abyss', snowy: ice, snow: ice ? 0.8 : 0.3,
+      terrain: second
+        ? { floor: [edge, ...mid, edge], ceiling: [0.18, ...mid.map((v) => 0.1 + v * 0.5), edge], ceilGap: [0.1, 0.25], walls: { left: true } }
+        : { floor: [edge, ...mid, edge], ceiling: [edge, ...mid.map((v) => 0.1 + v * 0.5), 0.18], ceilGap: [0.6, 0.75], walls: { right: true } },
+      exits: second ? { right: 'aq:' + n, up: 'west:' + (n + 1) } : { up: 'west:' + n, left: 'aq2:' + n },
+      solids: [], props: [], actors: [], ambient: { fish: 0, glass: 2 },
+    };
+    if (ice) { for (let i = 0; i < 5; i++) { d.solids.push({ type: 'ellipse', x: 400 + i * 420 + r() * 100, y: RH * (r() < 0.5 ? 0.12 : 0.88), rx: 30 + r() * 20, ry: 120 + r() * 80 }); } d.rockColor = '#9fb8c4'; }
+    return d;
+  }
+
+  // Mountains behind the highlands: higher and whiter the higher you've come.
+  function mountains(ctx, room, m, n) {
+    const E2 = SO.E, sy = room.surfaceY;
+    const r = U.rng('peaks:' + n);
+    ctx.save();
+    for (let layer = 0; layer < 3; layer++) {
+      const par = 0.15 + layer * 0.15, h = Math.min(900, 200 + m * 0.12) * (0.5 + layer * 0.25);
+      ctx.fillStyle = ['#a9b7c2', '#8597a5', '#66788a'][layer];
+      ctx.beginPath(); ctx.moveTo(-400 + E2.cam.x * par, sy);
+      for (let i = 0; i <= 12; i++) { const x = -400 + i * (room.w + 800) / 12 + E2.cam.x * par, y = sy - h * (0.4 + r() * 0.6); ctx.lineTo(x, y); }
+      ctx.lineTo(room.w + 400 + E2.cam.x * par, sy); ctx.closePath(); ctx.fill();
+      if (m > 1000) { ctx.fillStyle = 'rgba(245,248,250,0.7)'; ctx.fillRect(-400 + E2.cam.x * par, sy - h, room.w + 800, h * 0.12); }
+    }
+    ctx.restore();
+  }
+  function foam(ctx, x, y, t) {
+    ctx.fillStyle = 'rgba(255,255,255,0.5)';
+    for (let i = 0; i < 14; i++) { const a = i * 2.4 + t * 2; ctx.beginPath(); ctx.arc(x + Math.cos(a) * 60, y + Math.abs(Math.sin(a)) * 12, 6 + (i % 3) * 3, 0, TAU); ctx.fill(); }
   }
 
   // Rooms: 'west:N' is made the first time you swim into it.
@@ -135,21 +312,20 @@
     attach();
     const m = /^west:(\d+)$/.exec(key);
     if (m) {
-      if (+m[1] < 1 || +m[1] > WEST_END) { return null; }
+      if (+m[1] < 1) { return null; }
       if (!SO.rooms.defs[key]) { SO.rooms.defs[key] = make(+m[1]); }
+      return SO.rooms.defs[key];
+    }
+    const aq = /^(aq2?):(\d+)$/.exec(key);
+    if (aq) {
+      if (!SO.rooms.defs[key]) { SO.rooms.defs[key] = makeAquifer(+aq[2], aq[1] === 'aq2'); }
       return SO.rooms.defs[key];
     }
     return get(key);
   };
   SO.rooms.west = make;
   SO.rooms.WEST_PATH = WEST_PATH;
-  SO.rooms.WEST = { CROSSING, CROSSINGS, WEST_END, RECALL, landmarkAt, crossingName };
-  // ...and the spray zone, at the east end of the world, opens onto the end of the west.
-  if (SO.rooms.defs['spray-zone']) {
-    const sz = SO.rooms.defs['spray-zone'];
-    sz.exits.right = 'west:' + WEST_END;
-    if (sz.terrain && sz.terrain.walls) { sz.terrain.walls.right = false; }
-  }
+  SO.rooms.WEST = { CROSSING, CROSSINGS, WEST_END, RECALL, landmarkAt, crossingName, HIGH_FROM, typeOf, elevation, edgeDepth };
   // The made-up west starts past the westernmost built place on the surface: follow the left
   // exits west from the Bright until there aren't any, and open the way on from there.
   // (Checked every time a place loads, so new built places out west just push it farther out.)

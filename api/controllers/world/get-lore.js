@@ -8,7 +8,9 @@ module.exports = {
 
 
   extendedDescription:
-`The story: a young squid lives in a pool on one of the floating sky islands, under glass domes,
+`Use this for the story in one go (chapters, endings, regions, smells, dirt, oddities).  For one specific thing, get-world-facts is quicker.
+
+The story: a young squid lives in a pool on one of the floating sky islands, under glass domes,
 where swans bend down to look at it.  One day the island shakes and it slips over the edge of the
 waterfall, into the sea.  It wants to go home.  Everyone it meets is a real sea creature, and it talks
 with its skin: four colors that are also four notes, flashed in patterns called skin words (see

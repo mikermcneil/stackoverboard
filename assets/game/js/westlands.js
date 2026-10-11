@@ -1404,6 +1404,34 @@
     }
     return d;
   };
+
+  // ── Portraits for the journal (centered at 0,0, within about 75 units) ──────
+  const fakeRoom = (floor, surface) => ({ floorY: () => floor, surfaceY: surface === undefined ? -60 : surface, h: 300, w: 400, solids: [], actors: [], hotspots: [] });
+  const pk = (kind, s, a, floor, dx = 0, dy = 0, surface) => (c, t) => { c.save(); c.translate(dx, dy); c.scale(s, s); KINDS[kind].draw(c, Object.assign({ x: 0, y: 0, t, seed: 1.3 }, a || {}), fakeRoom(floor || 0, surface), t); c.restore(); };
+  Object.assign(A.portraits = A.portraits || {}, {
+    'mudskipper': pk('mudskipper', 2, {}, 0, -6),
+    'sea-star': pk('sea-star', 2),
+    'flying-fish': pk('flying-fish', 1.2, { k: 0.5 }, 0, 30),
+    'ghost-crab': pk('ghost-crab', 2.6),
+    'golden-jelly': pk('golden-jelly', 0.28),
+    'brine-shrimp': pk('brine-shrimp', 0.6),
+    'sea-skater': (c, t) => { c.strokeStyle = 'rgba(220,230,235,0.9)'; c.lineWidth = 1.5; for (let i = 0; i < 6; i++) { const x = -50 + i * 20 + Math.sin(t + i) * 6, y = (i % 2) * 14 - 7; c.beginPath(); c.ellipse(x, y - 2, 4, 2, 0, 0, TAU); c.stroke(); c.beginPath(); c.moveTo(x - 10, y); c.lineTo(x + 10, y); c.moveTo(x - 5, y - 1); c.lineTo(x - 12, y + 3); c.moveTo(x + 5, y - 1); c.lineTo(x + 12, y + 3); c.stroke(); } c.strokeStyle = 'rgba(200,230,240,0.3)'; c.beginPath(); c.moveTo(-70, 12); c.lineTo(70, 12); c.stroke(); },
+    'snake-eel': pk('hollow-eels', 0.32, {}, 0, 0, 10),
+    'blind-cave-fish': pk('cave-fish', 0.5),
+    'tongue-louse': pk('tongue-louse', 1.6),
+    'bone-worm': pk('bone-worms', 0.34, {}, 0, 0, 6),
+    'hagfish': pk('hag-knot', 1, {}, 0, 0, -14),
+    'ribbonfish': pk('ribbonfish', 0.45, { s: 1 }, 6, -6, 0),
+    'cucumberbananadog': pk('cucumberbananadog', 0.9, { dir: 1, wag: 0 }, 0, 4, 16),
+    'spine-sponge': pk('spine-sponge', 0.28, { s: 1 }, 150, 0, 0),
+    'fulgurite': pk('fulgurite', 0.7, {}, 60, 0, 10),
+    'glass-slag': pk('slag', 1, {}, 14),
+    'squid-beaks': pk('beaks', 0.4, {}, 0, 0, 14),
+    'sphinx-fish': (c, t) => { for (let i = 0; i < 14; i++) { const an = i / 14 * TAU + t * 0.4; A.fish(c, Math.cos(an) * 50, Math.sin(an) * 30, 0.8, an + Math.PI / 2, 40, t + i, { noLine: true, silver: true }); } },
+    'lungfish': (c, t) => { c.save(); c.scale(0.55, 0.55); c.translate(20, 0); SO.actorTypes.lungfish.draw(c, { x: 0, y: 0, seed: 1 }, null, t); c.restore(); },
+    'hookbill': (c, t) => { c.save(); c.scale(0.42, 0.42); c.translate(0, -30); SO.actorTypes.hookbill.draw(c, { x: 0, y: 0, seed: 1, state: 'circle' }, null, t); c.restore(); },
+    'spearneck': (c, t) => { c.save(); c.scale(0.18, 0.18); c.translate(-40, -150); SO.actorTypes.spearneck.draw(c, { x: 0, strike: 0.5 + 0.5 * Math.sin(t), tx: 120, ty: 260 }, fakeRoom(0, 200), t); c.restore(); },
+  });
   SO.westlands = { enrich, LANDS, FEATURES, KINDS, IN, B };
 
 })();

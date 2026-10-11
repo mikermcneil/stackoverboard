@@ -31,6 +31,7 @@ module.exports = {
     var sentences = [];
     var list = (items) => items.length <= 1 ? items.join('') : items.slice(0, -1).join(', ')+' and '+items[items.length - 1];
     var plural = (n, one, many) => n+' '+(n === 1 ? one : many);
+    var times = (n) => n === 1 ? 'once' : n === 2 ? 'twice' : n+' times';
 
     // Where and on what.
     var gadget = {
@@ -72,16 +73,16 @@ module.exports = {
     }
     if (p.nativesMet && p.nativesMet.length) {
       let names = _.indexBy(sails.helpers.world.getNativeSpecies(), 'key');
-      let met = p.nativesMet.map((k) => names[k] ? names[k].name.replace(/^The /, 'the ') : k);
-      sentences.push('It has met '+(met.length > 5 ? list(met.slice(0, 5).concat([(met.length - 5)+' more'])) : list(met))+'.');
+      let met = p.nativesMet.map((k) => names[k] ? names[k].name : k);
+      sentences.push('It has met '+plural(met.length, 'native creature, plant, or thing', 'native creatures, plants, and things')+': '+(met.length > 5 ? list(met.slice(0, 5).concat([(met.length - 5)+' more'])) : list(met))+'.');
     }
 
     // Feats.
     var feats = [];
     if (s.westFarthest > 0) { feats.push('been '+plural(Math.round(s.westFarthest), 'room', 'rooms')+' west of the Bright'); }
     if (s.bestAirTime > 0) { feats.push('leapt out of the water for '+Math.round(s.bestAirTime * 10) / 10+' seconds'); }
-    if (s.whaleCatches > 0) { feats.push('been caught by the whale '+plural(Math.round(s.whaleCatches), 'time', 'times')); }
-    if (s.stalkerEscapes > 0) { feats.push('escaped the slow hunter '+plural(Math.round(s.stalkerEscapes), 'time', 'times')); }
+    if (s.whaleCatches > 0) { feats.push('been caught by the whale '+times(Math.round(s.whaleCatches))); }
+    if (s.stalkerEscapes > 0) { feats.push('escaped the slow hunter '+times(Math.round(s.stalkerEscapes))); }
     if (s.eaten) {
       let ate = (s.eaten.krill || 0) + (s.eaten.shrimp || 0) + (s.eaten.minnow || 0);
       if (ate > 0) { feats.push('eaten '+ate+' small things'); }

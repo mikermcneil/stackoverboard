@@ -8,7 +8,9 @@ module.exports = {
 
 
   extendedDescription:
-`West of the Bright (the sunny reef at the surface), the surface goes on and on.  Past the last
+`Use this for "what's at west:N?", "what's at the end of the west?", or "what landmarks are out west?".  For how far squids have gone, use get-records.
+
+West of the Bright (the sunny reef at the surface), the surface goes on and on.  Past the last
 hand-built place, every step west is a procedurally generated room with the key "west:N", where N is
 how far west it is (west:1 is the first).  Each one is made from the world seed and N, so it's the
 same for everyone.

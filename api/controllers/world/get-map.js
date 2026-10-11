@@ -8,7 +8,9 @@ module.exports = {
 
 
   extendedDescription:
-`The Below is a 7x5 grid of tiles (x from -3 to 3, y -- depth -- from 7 to 11), entered from the trench
+`Use this for "how much of the Below has been explored?" or "who discovered the most tiles?".
+
+The Below is a 7x5 grid of tiles (x from -3 to 3, y -- depth -- from 7 to 11), entered from the trench
 floor at (0,7).  Somewhere on the bottom row is the way down to the octopus garden.  The map is shared:
 the first squid to reach a tile is its discoverer.  Undiscovered tiles are not revealed.
 

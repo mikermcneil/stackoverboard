@@ -848,6 +848,29 @@
     return out;
   };
 
+  // ── Portraits for the journal (centered at 0,0, within about 75 units) ──────
+  const fakeRoom = { floorY: () => 0, surfaceY: 0, h: 300, w: 400, solids: [], actors: [], hotspots: [] };
+  Object.assign(A.portraits = A.portraits || {}, {
+    'swell-shark': (c, t) => { c.save(); c.scale(2.2, 2.2); SO.actorTypes.hatchling.draw(c, { x: 0, y: 0 }, null, t); c.restore(); },
+    'flashlight-fish': (c, t) => { c.save(); c.scale(0.55, 0.55); K['flashlight-fish'].draw(c, { x: 0, y: 0 }, fakeRoom, t); c.restore(); },
+    'old-axolotl': (c, t) => { c.save(); c.scale(0.36, 0.36); c.translate(20, 0); K['old-axolotl'].draw(c, { x: 0, y: 0, lift: 0.5 + 0.5 * Math.sin(t * 0.5), dead: false }, fakeRoom, t); c.restore(); },
+    'cormorant': (c, t) => { c.save(); c.scale(1.2, 1.2); c.translate(-18, 20); SO.actorTypes.stranger.draw(c, { x: 0, y: 0, seed: 1, dive: 0 }, fakeRoom, t); c.restore(); },
+    'holder': (c, t) => {
+      c.save(); c.scale(0.24, 0.24);
+      c.lineCap = 'round';
+      for (let i = 0; i < 9; i++) { const base = -Math.PI * (0.1 + i / 8 * 0.8), pts = []; for (let k = 0; k <= 8; k++) { const f = k / 8, an = base + Math.sin(t * 0.25 + i * 0.7 + f * 3) * 0.5 * f; pts.push({ x: Math.cos(an) * f * 300, y: 60 + Math.sin(an) * f * 260 }); } A.taper(c, pts, 30, 6, i % 2 ? '#e8b890' : '#f0c8a0'); }
+      A.ellipse(c, 0, 80, 200, 110, 0, '#e8c098', 'rgba(90,50,30,0.45)', 4);
+      A.ellipse(c, -50, 40, 28, 20, 0, '#e8d8a0', 'rgba(90,50,30,0.6)', 3);
+      c.fillStyle = '#1a1008'; c.beginPath(); c.ellipse(-50, 40, 15, 4, 0, 0, TAU); c.fill();
+      c.restore();
+    },
+    'waiting-swan': (c, t) => { c.save(); c.scale(0.55, 0.55); c.translate(30, 20); K.weaver.draw(c, { x: 0, y: 0, knew: false }, fakeRoom, t); c.restore(); },
+    'singing-shard': (c, t) => { ['W', 'R', 'B', 'G'].forEach((col, i) => drawShard(c, -54 + i * 36, Math.sin(t + i) * 4, 1.4, NOTE_HEX[col], Math.sin(t * 1.3 + i) * 0.15)); },
+    'reed-stalk': (c, t) => { c.save(); c.scale(1.8, 1.8); drawItem(c, 'stalk', 0, 0, t); c.restore(); },
+    'egg-case': (c, t) => { c.save(); c.scale(2, 2); drawItem(c, 'egg', 0, 0, t); c.restore(); },
+    'rain-float': (c, t) => { c.save(); c.scale(2.6, 2.6); drawItem(c, 'rain-float', 0, 0, t); c.restore(); },
+  });
+
   // The cocoon remembers being looked at, so the rain makes sense later.
   const cocoonTouch = K.cocoon && K.cocoon.touch;
   if (cocoonTouch) { K.cocoon.touch = function (a, room) { flag('saw:cocoon'); return cocoonTouch.call(this, a, room); }; }

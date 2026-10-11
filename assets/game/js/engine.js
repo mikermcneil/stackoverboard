@@ -352,7 +352,7 @@
     const r = U.rng(seed);
     const room = {
       def, key: def.key, w, h, exits, seed,
-      surfaceY: def.surface ? 150 : null,
+      surfaceY: def.surface ? (def.surfaceY || 150) : null,// (some places set their own water line)
       actors: [], hotspots: [], lights: [], props: [], solids: [],
       floor: T.floor || null, ceiling: T.ceiling || null,
       floorGap: T.floorGap || (exits.down && T.floor ? [0.33, 0.67] : null),
@@ -543,6 +543,7 @@
         x = room.floorGap ? (room.floorGap[0] + room.floorGap[1]) / 2 * w : fx * w; y = h - 90;
       } else if (entry.from === 'left') { x = 90; y = fx * h; }
       else if (entry.from === 'right') { x = w - 90; y = fx * h; }
+      if ((entry.from === 'left' || entry.from === 'right') && entry.depthBelow !== undefined && room.surfaceY !== null) { y = room.surfaceY + entry.depthBelow; }
     } else if (room.def.entries && room.def.entries.default) { [x, y] = room.def.entries.default; }
     // Nudge out of rock (the whole body has to fit, not just the head).
     const free = this.findFreeBody(x, y);
@@ -773,9 +774,12 @@
     // The surface, with a little hysteresis so you don't bob in and out of it.
     const sY = room.surfaceY;
     let inAir = !!sq.inAir;
-    if (sY === null) { inAir = false; }
-    else if (!inAir && sq.y < sY - 26 && sq.vy < -60) { inAir = true; }
+    // Water above the water line: a waterfall, a pool up on a ledge (rooms can list these).
+    const col = (room.def.waterRects || []).find((r) => sq.x > r.x && sq.x < r.x + r.w && sq.y > r.y && sq.y < r.y + r.h);
+    if (sY === null || col) { inAir = false; }
+    else if (!inAir && sq.y < sY - 26 && (sq.vy < -60 || room.def.waterRects)) { inAir = true; }// (out the side of a waterfall, you're in the air)
     else if (inAir && sq.y > sY + 8) { inAir = false; }
+    if (col && col.current && !inAir) { sq.vx += col.current[0] * dt; sq.vy += col.current[1] * dt; }// falling water pushes
     if (inAir !== !!sq.inAir) {
       sq.inAir = inAir;
       if (!inAir) {
@@ -789,6 +793,7 @@
 
     if (inAir) {
       sq.vy += 760 * dt;// out of the water you're just a falling squid
+      if (sq._touchingRock) { sq.vx *= Math.exp(-4 * dt); }// lying on rock: you don't slide far
       sq.dvx = sq.vx; sq.dvy = sq.vy;
       sq.vx *= Math.exp(-0.15 * dt);
     } else {
@@ -1017,6 +1022,13 @@
   E.gait = 0;
   E.spur = function () {
     const now = this.t;
+    // Out of the water, on the ground: each click is a flop, a hop toward where you're headed.
+    const sq0 = this.squid;
+    if (sq0.inAir && sq0._touchingRock) {
+      const tx = this.target ? this.target.x : sq0.x + (sq0.facing || 1) * 100;
+      sq0.vy = -240 - Math.random() * 60; sq0.vx += Math.sign(tx - sq0.x || 1) * 160;
+      AU.tock && AU.tock(AU.NOTE(52), { gain: 0.06 });
+    }
     const gap = now - (this.lastSpurAt || -99);
     // Click again soon to go up a gait (to a gallop). Past that, only frantic clicking goes faster.
     if (this.gait >= 3 && gap < 0.3) { this.gait = Math.min(5, this.gait + 1); }
@@ -1125,8 +1137,11 @@
       const blocked = SO.story.exitBlocked ? SO.story.exitBlocked(room, dir, to) : null;
       if (blocked) { return blocked; }
       const frac = dir === 'left' || dir === 'right' ? sq.y / room.h : sq.x / room.w;
+      // Sideways between two places with a water line, keep the same depth below it (so the water
+      // lines meet, whatever the places' sizes), and the same x through gaps going up or down.
+      const depthBelow = (dir === 'left' || dir === 'right') && room.surfaceY !== null ? sq.y - room.surfaceY : undefined;
       const opposite = { up: 'down', down: 'up', left: 'right', right: 'left' }[dir];
-      this.goto(typeof to === 'string' ? to : to.key, typeof to === 'string' ? { from: opposite, frac } : Object.assign({ from: opposite, frac }, to));
+      this.goto(typeof to === 'string' ? to : to.key, typeof to === 'string' ? { from: opposite, frac, depthBelow } : Object.assign({ from: opposite, frac, depthBelow }, to));
       return true;
     };
     const push = (dir) => {
@@ -1151,7 +1166,7 @@
     if ((ex.left && minX < 10 && sq.vx < -15) || sq.x < 0) { push('left'); }
     else if ((ex.right && maxX > room.w - 10 && sq.vx > 15) || sq.x > room.w) { push('right'); }
     if ((ex.down && maxY > room.h - 10 && sq.vy > 15) || sq.y > room.h) { push('down'); }
-    else if (room.surfaceY === null && ((ex.up && minY < 10 && sq.vy < -15) || sq.y < 0)) { push('up'); }
+    else if ((room.surfaceY === null || room.def.upExit) && ((ex.up && minY < 10 && sq.vy < -15) || sq.y < 0)) { push('up'); }// (up a waterfall, too)
     if (room.surfaceY !== null) { sq.y = Math.max(sq.y, -500); }
     // Safety net: never left floating outside the room (say, out through rock) without actually leaving it.
     if (!this._going && (sq.y > room.h + 80 || sq.x < -80 || sq.x > room.w + 80 || (room.surfaceY === null && sq.y < -80))) {
