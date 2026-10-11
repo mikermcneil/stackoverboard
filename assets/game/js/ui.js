@@ -50,6 +50,7 @@
   };
 
   SO.ui = {
+    _noCloseUp: { bloodLayer: true, chatLayer: true, weatherLayer: true, ageGlass: true, ageBleach: true, elemental: true },
     queue: [],
     current: null,
     COLORS,
@@ -84,6 +85,16 @@
 
     // The squid talking to itself (or to you). Doesn't block.
     thought(text) { this.say(text, { who: 'squid' }); },
+    // Something important is going on: a scene, or a creature talking (teaching a skin-word, say).
+    get important() {
+      const E = SO.E;
+      if ((E && E.locked && !E._going) || (SO.fp && SO.fp.playing)) { return true; }
+      const creature = (q) => q && q.who && !['squid', 'world', 'gold', 'other'].includes(q.who);
+      // (and for a little while after a creature has spoken: that's usually 'now you try')
+      return creature(this.current) || this.queue.some(creature) || U.now() - (this._creatureAt || -1e9) < 20000 || !!(SO.story && SO.story.rt && SO.story.rt.lesson);
+    },
+    // A passing remark: only if nothing important is going on and nobody else is talking.
+    aside(text) { if (this.important || this.queue.length > 1) { return; } this.say(text, { who: 'squid', minor: true }); },
     // A quiet line from the world itself. Doesn't block, and is the first to go if things get busy.
     whisper(text) { this.say(text, { who: 'world', minor: true }); },
 
@@ -115,6 +126,7 @@
       document.body.classList.add('ribbon-up');
       this.line$.classList.remove('in'); void this.line$.offsetWidth; this.line$.classList.add('in');
       item.shownAt = U.now();
+      if (!['squid', 'world', 'gold', 'other'].includes(item.who)) { this._creatureAt = item.shownAt; }
       item.chars = 0;
       item.fast = false;
       item.revealedAt = 0;
@@ -200,15 +212,31 @@
         return;
       }
       this.inspect$.classList.add('show');
-      const sx = (o.x - E.cam.x) * E.scale, sy = (o.y - E.cam.y) * E.scale;
-      const R = Math.max(50, ((o.r || 60) + 50) * E.scale);
-      if (sx > -R && sx < E.W + R && sy > -R && sy < E.H + R) {
-        const c = this.inspectCanvas$.getContext('2d'), d = E.dpr;
-        c.fillStyle = '#050b12'; c.fillRect(0, 0, 240, 240);
-        try { c.drawImage(E.canvas, (sx - R) * d, (sy - R) * d, R * 2 * d, R * 2 * d, 0, 0, 240, 240); } catch (err) { /* off the edge */ }
-      }
       // You only know what it is once you've had a proper look (up close).
       const near = U.dist(E.squid.x, E.squid.y, o.x, o.y) < (o.r || 60) + 420;
+      const c = this.inspectCanvas$.getContext('2d');
+      const T = SO.actorTypes[o.type];
+      if (near && T && T.draw && !o.door && !this._noCloseUp[o.type]) {
+        // Close enough: a proper close-up, drawn again, bigger, on its own.
+        c.save();
+        c.setTransform(1, 0, 0, 1, 0, 0);
+        const g = c.createRadialGradient(120, 110, 10, 120, 120, 170);
+        g.addColorStop(0, '#16384a'); g.addColorStop(1, '#040a10');
+        c.fillStyle = g; c.fillRect(0, 0, 240, 240);
+        const zoom = U.clamp(150 / Math.max(40, (o.r || 60) * 1.6), 0.4, 2.6);
+        c.translate(120, 128); c.scale(zoom, zoom); c.translate(-o.x, -o.y);
+        try { T.draw(c, o, E.room, E.t); } catch (err) { this._noCloseUp[o.type] = true; }
+        c.restore();
+      } else {
+        // Farther off: what you can see of it from here, cut from the scene.
+        const sx = (o.x - E.cam.x) * E.scale, sy = (o.y - E.cam.y) * E.scale;
+        const R = Math.max(50, ((o.r || 60) + 50) * E.scale);
+        if (sx > -R && sx < E.W + R && sy > -R && sy < E.H + R) {
+          const d = E.dpr;
+          c.fillStyle = '#050b12'; c.fillRect(0, 0, 240, 240);
+          try { c.drawImage(E.canvas, (sx - R) * d, (sy - R) * d, R * 2 * d, R * 2 * d, 0, 0, 240, 240); } catch (err) { /* off the edge */ }
+        }
+      }
       const text = near && SO.story.describe ? SO.story.describe(o) : '';
       if (this.inspectLabel$.textContent !== text) { this.inspectLabel$.textContent = text; }
     },

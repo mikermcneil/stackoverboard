@@ -1214,6 +1214,110 @@
   link('keeper-hall', 'right', 'hatchery');
 
   // ════════════════════════════════════════════════════════════════════════════
+  // SIDE PLACES before the whale (their goings-on are in quests.js)
+  // ════════════════════════════════════════════════════════════════════════════
+  // Inside the fallen spire: the top of a tower from home, lying on its side. The belfry is at
+  // the far end, with four empty hooks.
+  def('spire-inside', {
+    name: 'Inside the fallen spire', region: 'hollowglass', map: [-2, 3], w: 1.6, depth: 0.5, dark: 0.62, palette: 'glass',
+    exits: {},
+    terrain: { floor: [0.2, 0.15, 0.13, 0.12, 0.12, 0.13, 0.15, 0.2], ceiling: [0.2, 0.15, 0.13, 0.12, 0.12, 0.13, 0.15, 0.2], walls: { left: true, right: true } },
+    floorTop: '#c8d9d4', rock: '#3f5e66', rockHi: '#7fa3a6',
+    entries: { default: [2200, 450], fromOut: [2200, 450] },
+    bg(ctx, t, room) {
+      // Curved panes all around: it's a tube of glass, lying down. The stairs run along the wall.
+      ctx.save();
+      ctx.strokeStyle = 'rgba(200,255,250,0.14)'; ctx.lineWidth = 3;
+      for (let i = 0; i < 14; i++) { const x = 120 + i * 190; ctx.beginPath(); ctx.ellipse(x, room.h / 2, 60, room.h * 0.4, 0, 0, U.TAU); ctx.stroke(); }
+      ctx.strokeStyle = 'rgba(170,220,215,0.25)'; ctx.lineWidth = 10;
+      for (let i = 0; i < 26; i++) { const x = 300 + i * 80; ctx.beginPath(); ctx.moveTo(x, 640 - (i % 2) * 6); ctx.lineTo(x + 50, 640 - (i % 2) * 6); ctx.stroke(); }
+      ctx.restore();
+    },
+    hotspots: [{ id: 'spire-out', x: 2420, y: 450, r: 120, door: 'fallen-spire', at: 'fromSpire', label: 'The way out' }],
+    props: [{ type: 'glass-coral', x: 900, s: 0.8 }, { type: 'glass-coral', x: 1700, s: 0.7 }],
+    lights: [{ x: 300, y: 450, r: 600, color: '#bff8ea', level: 0.35, flicker: true }],
+    ambient: { glass: 1 },
+    snow: 0.15,
+  });
+  defs['fallen-spire'].hotspots = (defs['fallen-spire'].hotspots || []).concat({ id: 'spire-door', x: 980, y: 660, r: 120, door: 'spire-inside', at: 'fromOut', label: 'The snapped end of the tower' });
+  defs['fallen-spire'].entries = Object.assign({}, defs['fallen-spire'].entries, { fromSpire: [1250, 600] });
+
+  // Behind the lamps: a cave at the back of the lantern ledges. It opens when all the ledge
+  // lamps are lit at once.
+  def('lamp-cave', {
+    name: 'Behind the lamps', region: 'cliff', map: [3, 2], w: 1.3, depth: 0.6, dark: 0.9,
+    exits: { left: 'lantern-ledges' },
+    terrain: { floor: [0.16, 0.14, 0.18, 0.2, 0.16], ceiling: [0.2, 0.14, 0.16, 0.12, 0.18], walls: { left: false, right: true } },
+    props: [{ type: 'lantern-weed', x: 300, s: 0.6, lit: 0.5 }, { type: 'bone-fan', x: 1600, s: 0.8 }],
+    snow: 0.2,
+  });
+  link('lantern-ledges', 'right', 'lamp-cave');
+
+  // The warm room: under the holdfasts, a hollow of warm gold water, and something huge and
+  // kind that wants you to stay. You could. Forever.
+  def('kept-garden', {
+    name: 'The warm room', region: 'kelp', map: [-3, 3], w: 1.6, h: 1.1, depth: 0.44, dark: 0.08, palette: 'shine',
+    exits: { up: 'holdfasts' },
+    terrain: { floor: [0.16, 0.12, 0.1, 0.1, 0.1, 0.12, 0.16], ceiling: [0.14, 0.1, 0.06, 0.04, 0.06, 0.1, 0.14], ceilGap: [0.37, 0.53], walls: { left: true, right: true } },
+    rock: '#5a4030', rockHi: '#8a6a4a', floorTop: '#c8a070',
+    whale: false,
+    lights: [{ x: 1700, y: 700, r: 1400, color: '#ffd8a0', level: 0.8 }],
+    ambient: { fish: 10 },
+    snow: 0.15,
+  });
+  defs.holdfasts.exits.down = 'kept-garden';
+  defs.holdfasts.terrain.floorGap = [0.42, 0.56];
+
+  // ════════════════════════════════════════════════════════════════════════════
+  // HOME (chapter 7, going back): the top of the waterfall, the twelve rings, the pool.
+  // ════════════════════════════════════════════════════════════════════════════
+  const banks = (ctx, room, t, opts) => {
+    // Grass and glass banks along the stream, above the water, and the sky islands beyond.
+    const sy = room.surfaceY;
+    ctx.fillStyle = '#93cc6c'; ctx.strokeStyle = A.C.ink; ctx.lineWidth = 2.5;
+    ctx.beginPath(); ctx.moveTo(-200, sy + 2);
+    for (let x = -200; x <= room.w + 200; x += 80) { ctx.lineTo(x, sy - 36 - U.noise1(x / 300, 7) * 40); }
+    ctx.lineTo(room.w + 200, sy + 2); ctx.closePath(); ctx.fill(); ctx.stroke();
+    for (let i = 0; i < 8; i++) { const x = 140 + i * (room.w / 8); A.tree(ctx, x, sy - 40 - U.noise1(x / 300, 7) * 40, 1.1, i + 3); }
+    if (opts && opts.dome) { A.dome(ctx, room.w / 2, sy + 40, room.w * 0.62, { alpha: 0.35, spire: false }); }
+  };
+  def('home-lip', {
+    name: 'The top of the waterfall', region: 'home', map: [5, -2], w: 1.6, depth: 0.02, surface: true, palette: 'glass', roar: 0.8,
+    exits: { left: 'home-rings' },
+    terrain: { floor: [0.4, 0.38, 0.36, 0.36, 0.34, 0.32, 0.3], walls: { right: true } },
+    sand: '#cfe4dc', rayColor: '#fffbe8',
+    isles: [[300, 1.2], [1500, 0.9]],
+    entries: { default: [2100, 420] },
+    props: [{ layer: 'back', draw(ctx, t, room) {
+      banks(ctx, room, t);
+      // Past the right edge: nothing. The water goes over, and there are clouds below.
+      A.cloudBank(ctx, room.w - 60, room.w + 1400, room.surfaceY + 60, 120, 5, { alpha: 0.9 });
+    } }],
+    ambient: { fish: 3 },
+    snow: 0.05,
+  });
+  def('home-rings', {
+    name: 'The twelve rings', region: 'home', map: [4, -2], w: 2.2, depth: 0.02, surface: true, palette: 'glass',
+    exits: { right: 'home-lip', left: 'home-pool' },
+    terrain: { floor: [0.32, 0.3, 0.3, 0.29, 0.3, 0.3, 0.31, 0.3, 0.32] },
+    sand: '#cfe4dc', rayColor: '#fffbe8',
+    isles: [[700, 1.0], [2200, 1.3]],
+    props: [{ layer: 'back', draw(ctx, t, room) { banks(ctx, room, t); } }],
+    ambient: { fish: 4 },
+    snow: 0.05,
+  });
+  def('home-pool', {
+    name: 'The pool', region: 'home', map: [3, -2], w: 1.6, depth: 0.03, surface: true, palette: 'glass',
+    exits: { right: 'home-rings' },
+    terrain: { floor: [0.24, 0.2, 0.16, 0.14, 0.14, 0.16, 0.22], walls: { left: true } },
+    sand: '#d8ece4', rayColor: '#fffbe8',
+    isles: [],
+    props: [{ layer: 'back', draw(ctx, t, room) { banks(ctx, room, t, { dome: true }); } }],
+    ambient: { fish: 2 },
+    snow: 0.05,
+  });
+
+  // ════════════════════════════════════════════════════════════════════════════
   // The Below: built from shared tiles
   // ════════════════════════════════════════════════════════════════════════════
   const GEM_COLORS = ['#c79bff', '#7fe8ff', '#ffcf7a', '#ff9bb8'];

@@ -43,7 +43,7 @@
       // Catching you.
       a.cool = Math.max(0, (a.cool || 0) - dt);
       const held = SO.elementals.holder === a;
-      if (!held && !a.cool && a.still <= 0 && a.form > 0.8 && d < 70 + 20 * tw && !E.locked) { SO.elementals.grab(a); }
+      if (!held && !a.cool && a.still <= 0 && a.form > 0.8 && d < 70 + 20 * tw && !E.locked && !SO.ui.important) { SO.elementals.grab(a); }
       if (held) { SO.elementals.hold(a, dt); }
     },
     draw(ctx, a, room, t) {
@@ -103,7 +103,7 @@
       AU().tone && AU().tone(70, { dur: 1.2, gain: 0.06 + tw * 0.1, attack: 0.1, type: 'triangle', glide: 0.7 });
       const n = (SO.save.data.flags.elementalGrabs || 0) + 1;
       SO.save.flag('elementalGrabs', n);
-      if (tw < 0.5) { SO.ui.thought(n === 1 ? 'Something cold just wrapped around me. The water itself?' : 'That water again. Cold. It can’t really hold me.'); }
+      if (tw < 0.5) { SO.ui.aside(n === 1 ? 'Something cold just wrapped around me. The water itself?' : 'That water again. Cold. It can’t really hold me.'); }
       else { SO.ui.thought(n < 6 ? 'It’s got me. It’s squeezing. Thrash. Thrash!' : 'Not again. Get off me!'); }
     },
 

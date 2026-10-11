@@ -62,7 +62,7 @@
         const me = E.squid, rel = Math.hypot(sq.vx - me.vx, sq.vy - me.vy);
         if (!a.gone && (g.dirt || 0) > 0.12 && rel > 40 && U.dist(me.x, me.y, sq.x, sq.y) < 130 * me.scale) {
           SO.dirt.add(me, g.grime || 'silt', dt * (0.4 + g.dirt) * 2.5, 0);
-          if (!a._rubbedAt || E.t - a._rubbedAt > 6) { a._rubbedAt = E.t; SO.ui && Math.random() < 0.5 && SO.ui.thought(['Hey! That’s all over me now.', 'Thanks for sharing.', 'Ugh. Some of that came off on me.'][Math.floor(Math.random() * 3)]); }
+          if (!a._rubbedAt || E.t - a._rubbedAt > 6) { a._rubbedAt = E.t; SO.ui && Math.random() < 0.5 && SO.ui.aside(['Hey! That’s all over me now.', 'Thanks for sharing.', 'Ugh. Some of that came off on me.'][Math.floor(Math.random() * 3)]); }
         }
         // Racing low over the floor, they stir up silt too (and it settles on whoever swims through it).
         const sp = Math.hypot(sq.vx, sq.vy), room = E.room;

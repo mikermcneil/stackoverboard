@@ -759,19 +759,46 @@
     ctx.restore();
   };
 
-  // Glass sponge: a vase of woven glass. (Called glass-coral in the data.)
+  // Glass sponge: the Venus' flower basket. A slender horn of woven glass, curving as it rises,
+  // a frilled crown at the top, rooted by a tuft of glass threads. Usually a few together.
+  // (Called glass-coral in the data.)
   A.glassCoral = function (ctx, x, y, s, t, seed = 0) {
+    const r = U.rng(seed + 31);
+    const n = 1 + Math.floor(r() * 3);
     ctx.save(); ctx.translate(x, y); ctx.scale(s, s);
-    const h = 80 + (seed % 3) * 14;
-    const w0 = 12, w1 = 26;
-    ctx.beginPath();
-    ctx.moveTo(-w0, 0); ctx.quadraticCurveTo(-w1 * 1.2, -h * 0.5, -w1, -h); ctx.lineTo(w1, -h); ctx.quadraticCurveTo(w1 * 1.2, -h * 0.5, w0, 0); ctx.closePath();
-    ctx.fillStyle = 'rgba(220,245,240,0.35)'; ctx.fill();
-    ctx.strokeStyle = 'rgba(235,255,250,0.75)'; ctx.lineWidth = 1.6; ctx.stroke();
-    ctx.save(); ctx.clip();
-    ctx.strokeStyle = 'rgba(235,255,250,0.45)'; ctx.lineWidth = 1;
-    for (let i = -6; i < 8; i++) { ctx.beginPath(); ctx.moveTo(i * 8 - 40, 0); ctx.lineTo(i * 8 + 40, -h); ctx.stroke(); ctx.beginPath(); ctx.moveTo(i * 8 + 40, 0); ctx.lineTo(i * 8 - 40, -h); ctx.stroke(); }
-    ctx.restore();
+    for (let k = 0; k < n; k++) {
+      const h = 90 + r() * 70, bend = (r() - 0.5) * 34 + Math.sin(t * 0.4 + seed + k) * 2, ox = (k - (n - 1) / 2) * 16;
+      // the horn: narrow at the root, swelling, then narrowing again under the crown
+      const at = (f) => ({ x: ox + bend * f * f, y: -h * f });
+      const wid = (f) => 2 + 9 * Math.sin(Math.min(1, f * 1.15) * Math.PI * 0.85) + f * 3;
+      const L = [], R = [];
+      for (let i = 0; i <= 14; i++) { const f = i / 14, p = at(f), w = wid(f); L.push([p.x - w, p.y]); R.push([p.x + w, p.y]); }
+      ctx.beginPath(); ctx.moveTo(L[0][0], L[0][1]);
+      L.forEach((q) => ctx.lineTo(q[0], q[1])); R.slice().reverse().forEach((q) => ctx.lineTo(q[0], q[1]));
+      ctx.closePath();
+      const g = ctx.createLinearGradient(ox - 14, 0, ox + 14, 0);
+      g.addColorStop(0, 'rgba(210,240,236,0.12)'); g.addColorStop(0.45, 'rgba(235,252,248,0.38)'); g.addColorStop(1, 'rgba(200,232,228,0.1)');
+      ctx.fillStyle = g; ctx.fill();
+      ctx.strokeStyle = 'rgba(235,255,250,0.6)'; ctx.lineWidth = 1; ctx.stroke();
+      // the woven lattice: rings and fine diagonals, following the curve
+      ctx.save(); ctx.clip();
+      ctx.strokeStyle = 'rgba(240,255,252,0.32)'; ctx.lineWidth = 0.7;
+      for (let i = 1; i < 14; i++) { const f = i / 14, p = at(f), w = wid(f); ctx.beginPath(); ctx.ellipse(p.x, p.y, w, 1.6, 0, 0, U.TAU); ctx.stroke(); }
+      for (let d = -3; d <= 3; d++) {
+        ctx.beginPath();
+        for (let i = 0; i <= 14; i++) { const f = i / 14, p = at(f), w = wid(f); const xx = p.x + Math.sin(f * 9 + d) * w * 0.9; if (i) { ctx.lineTo(xx, p.y); } else { ctx.moveTo(xx, p.y); } }
+        ctx.stroke();
+      }
+      ctx.restore();
+      // the frilled crown, and the glass threads at the root
+      const top = at(1), tw = wid(1);
+      ctx.strokeStyle = 'rgba(240,255,252,0.55)'; ctx.lineWidth = 1;
+      ctx.beginPath();
+      for (let i = 0; i <= 10; i++) { const a = i / 10; const xx = top.x - tw - 2 + a * (tw * 2 + 4), yy = top.y - 3 - Math.abs(Math.sin(a * Math.PI * 5)) * 4; if (i) { ctx.lineTo(xx, yy); } else { ctx.moveTo(xx, yy); } }
+      ctx.stroke();
+      ctx.strokeStyle = 'rgba(230,250,246,0.4)';
+      for (let i = 0; i < 6; i++) { ctx.beginPath(); ctx.moveTo(ox, 0); ctx.quadraticCurveTo(ox + (i - 2.5) * 5, 5, ox + (i - 2.5) * 9, 8); ctx.stroke(); }
+    }
     ctx.restore();
   };
 

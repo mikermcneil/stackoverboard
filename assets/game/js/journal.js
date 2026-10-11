@@ -12,16 +12,15 @@
   const A = SO.art;
   const save = SO.save;
 
+  // Four pages: the sea (where I am, what's going on, the map, the world), the living and
+  // growing things I've met, the skin-words I know, and what I remember.
   const TABS = [
     ['map', 'The sea'],
-    ['now', 'Now'],
-    ['creature', 'Living things'],
-    ['plant', 'Growing things'],
-    ['item', 'Things'],
+    ['life', 'Living things'],
     ['skin', 'Skin-words'],
     ['memory', 'Memories'],
-    ['world', 'The world'],
   ];
+  const LIFE_KINDS = [['creature', 'Living things'], ['plant', 'Growing things'], ['item', 'Things']];
 
   // Portraits for the people and things of the sea.
   const PORTRAITS = {
@@ -120,9 +119,27 @@
       this.body.innerHTML = '';
       this.canvases = [];
       const tab = this.tab;
-      if (tab === 'now') { return this.renderNow(); }
-      if (tab === 'map') { return this.renderMap(); }
-      if (tab === 'world') { return this.renderWorld(); }
+      if (tab === 'map') {// the sea: now, then the map, then the world
+        this.renderNow();
+        this.renderMap();
+        this.renderWorld();
+        return;
+      }
+      if (tab === 'life') {// living, growing, and other things, one after another
+        let any = false;
+        LIFE_KINDS.forEach(([kind, label]) => {
+          if (!this.entries(kind).length) { return; }
+          any = true;
+          this.body.appendChild(p('j-kicker j-section', label));
+          this.renderGrid(kind);
+        });
+        if (!any) { this.body.appendChild(p('j-empty', 'Nothing yet.')); }
+        return;
+      }
+      this.renderGrid(tab);
+    },
+
+    renderGrid(tab) {
       const list = this.entries(tab);
       if (!list.length) {
         this.body.appendChild(p('j-empty', tab === 'memory' ? 'Nothing yet. Things come back to me when I’m lost.' : 'Nothing yet.'));
@@ -256,7 +273,7 @@
         }
       };
       const loop = () => {
-        if (!this.open || this.tab !== 'map' || !cv.isConnected) { return; }
+        if (!this.open || !cv.isConnected) { return; }
         draw(U.now() / 1000);
         requestAnimationFrame(loop);
       };

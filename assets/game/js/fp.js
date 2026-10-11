@@ -551,7 +551,7 @@
     tickChapter(dt) {
       const ch = SO.story.ch || 0;
       if (ch !== this.lastCh) { this.lastCh = ch; this.chT = 0; }
-      if (E.mode !== 'play' || E.locked || SO.ui.talking || document.hidden || this.playing) { return; }
+      if (E.mode !== 'play' || E.locked || SO.ui.talking || SO.ui.important || document.hidden || this.playing) { return; }
       this.chT += dt;
       const name = LATER[ch];
       if (!name || !SO.save.data || SO.save.data.flags['fp:' + name]) { return; }

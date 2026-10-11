@@ -66,6 +66,40 @@
     'pearl': { kind: 'item', name: 'Pearl', line: 'Shiny and round. The octopuses use them to decorate their dens.' },
     'feather': { kind: 'item', name: 'Swan feather', line: 'It smells like the pool at home.' },
     'glass': { kind: 'item', name: 'Glass from home', line: 'A piece of the island. When I touch one, I remember things.' },
+    // Side places before the whale, and the way home (quests.js). Real ones first.
+    'swell-shark': { kind: 'creature', name: 'Swell shark', line: 'Hatched from a leathery egg case after months inside. It glows green, but only to other swell sharks.' },
+    'flashlight-fish': { kind: 'creature', name: 'Flashlight fish', line: 'Lights under their eyes, full of glowing bacteria. They blink them by pulling a lid over them.' },
+    'old-axolotl': { kind: 'creature', name: 'The old axolotl', line: 'Lived in our pool when I was small. It waited for me, all that time. It knew me, after everything.' },
+    'cormorant': { kind: 'creature', name: 'The strangers', line: 'Big dark diving birds. They moved into our pool while I was gone and ate everything in it.' },
+    'holder': { kind: 'creature', name: 'The Holder', line: 'Huge, soft, warm, kind. It lives in the warm room and wants nothing except for me to stay. Forever.' },
+    'waiting-swan': { kind: 'creature', name: 'The swan who waited', line: 'She wove all day and pulled it out again at night, and sang the old song backwards, and waited.' },
+    'spire-bell': { kind: 'item', name: 'The spire’s bells', line: 'Four glass bells from the tower at home, one for each of my colors. Rung together, going up, they lift.' },
+    'reed-stalk': { kind: 'item', name: 'A pale reed stalk', line: 'A node reed tuned to pale. It broke off and drifted. Planted back, it hums.' },
+    'egg-case': { kind: 'item', name: 'An egg case', line: 'A leathery bag with a little shark inside, wriggling. Mermaid’s purse, some call it.' },
+    'rain-float': { kind: 'item', name: 'A float full of rain', line: 'A ball of glass from the islands, full of fresh rain. It woke a lungfish that had slept for years.' },
+    // The far west (westlands.js). Real ones first, then the ones that only make sense out there.
+    'lungfish': { kind: 'creature', name: 'Lungfish', line: 'A fish with lungs. It can sleep in dried mud through a whole dry season, breathing through a little hole.' },
+    'mudskipper': { kind: 'creature', name: 'Mudskipper', line: 'A fish that walks out of the water on its fins and breathes through its skin.' },
+    'sea-star': { kind: 'creature', name: 'Sea star', line: 'Five arms and no head. It eats by pushing its stomach out onto its food.' },
+    'flying-fish': { kind: 'creature', name: 'Flying fish', line: 'They swim so fast they burst out of the water and glide on their fins.' },
+    'ghost-crab': { kind: 'creature', name: 'Ghost crab', line: 'Pale as sand, eyes on stalks with little horns. Runs sideways faster than I can see.' },
+    'golden-jelly': { kind: 'creature', name: 'Golden jellies', line: 'They follow the light across their lake every day, so the tiny plants inside them can eat. Almost no sting.' },
+    'brine-shrimp': { kind: 'creature', name: 'Brine shrimp', line: 'Tiny shrimp that live where the water is too salty for anything else. Their eggs wait in dry salt for years.' },
+    'sea-skater': { kind: 'creature', name: 'Sea skaters', line: 'Insects that live on the open sea, walking on top of the water. Out west, they hold on to each other and make walls.' },
+    'snake-eel': { kind: 'creature', name: 'Snake eels', line: 'Thin eels living in the hollow under the weed king. They all face the same way: at you.' },
+    'blind-cave-fish': { kind: 'creature', name: 'Blind cave fish', line: 'Pale fish with skin where their eyes should be. In the dark, eyes weren’t worth keeping.' },
+    'tongue-louse': { kind: 'creature', name: 'Tongue louse', line: 'It eats a fish’s tongue, then holds on in its place and works as the tongue. For the rest of the fish’s life.' },
+    'bone-worm': { kind: 'creature', name: 'Bone worms', line: 'Red worms with no mouths that grow out of whale bones and dissolve them to drink.' },
+    'hagfish': { kind: 'creature', name: 'Hagfish', line: 'They tie themselves in knots to bite, and make slime by the bucket.' },
+    'ribbonfish': { kind: 'creature', name: 'Empty-eyed ribbonfish', line: 'Long silver ribbons, stranded in water too shallow for them. Their eyes are gone. They keep trying to swim.' },
+    'cucumberbananadog': { kind: 'creature', name: 'Cucumberbananadogs', line: 'Long, yellow, bendy, bumpy, with a dog’s face. They bark bubbles and follow you as fast as they can, which is not fast.' },
+    'spine-sponge': { kind: 'creature', name: 'Spine sponges', line: 'Animals that look like cactus. Their spines point in, toward whatever’s caught inside.' },
+    'sphinx-fish': { kind: 'creature', name: 'Sphinx fish', line: 'Schools that swim through the stone face in the sand and make it look like it’s thinking. Maybe it is.' },
+    'hookbill': { kind: 'creature', name: 'Hookbills', line: 'Black birds, very far west, with hooked beaks. They don’t just dive. They grab, carry you up, and drop you.' },
+    'spearneck': { kind: 'creature', name: 'Spearnecks', line: 'They stand on stilts above the water and stab down with necks as long as the sea is deep.' },
+    'fulgurite': { kind: 'item', name: 'Lightning glass', line: 'Sand that lightning melted into glass, in the shape of the lightning. The sky can make glass too.' },
+    'glass-slag': { kind: 'item', name: 'Green glass lumps', line: 'Bubbly glass left behind at the sand cuts. The bad glass. The good glass went up.' },
+    'squid-beaks': { kind: 'item', name: 'Squid beaks', line: 'Hundreds of them, in the stomach of the dead whale out west. The only part of a squid that doesn’t digest.' },
   };
   const SKIN_WORDS = {
     glow: { name: 'Glow', colors: 'G G G', line: 'Gold, gold, gold. Little lights along my belly turn on, for a minute or so.', learn: 'Oh. I glow. That’s great, actually.' },
@@ -74,6 +108,9 @@
     cloud: { name: 'Passing cloud', colors: 'R R B', line: 'Red, red, shimmer. Dark bands roll over me and I turn into a shadow.', learn: 'Red, red, shimmer. I’m a shadow now. A very big shadow.' },
     wake: { name: 'Wake', colors: 'G R G R', line: 'Gold, red, gold, red. Wakes up the volcano. It doesn’t like it.', learn: 'Gold, red, gold, red. Got it.' },
     call: { name: 'Call', colors: 'B G B W', line: 'Blue, gold, blue, pale. The swans’ song from home.', learn: 'Blue, gold, blue, pale. That’s the swans’ song.' },
+    // Optional ones, from side places (quests.js).
+    lift: { name: 'Lift', colors: 'B B G', line: 'Blue, blue, gold. The water under me pushes up. Backwards, it pushes down.', learn: 'Blue, blue, gold. That’s what the bells sounded like, going up.' },
+    still: { name: 'Still', colors: 'W G W', line: 'Pale, gold, pale. The water stops moving for a while. Currents too. It can’t be taken back.', learn: 'Pale, gold, pale. That’s the sound the stillness made.' },
   };
   const MEMORIES = {
     1: { name: 'The pool', line: 'Home. Glass overhead, swans bending down to look at me.' },
@@ -358,12 +395,12 @@
       if (SO.fp) {
         SO.fp.updateGlimpse(dt, room);
         const deep = ['cliff', 'trench', 'plunge', 'below', 'undershine'].includes(room.def.region) || String(room.key).startsWith('below:');
-        if (deep && !CHASE_ROOMS[room.key] && this.has('whaleIntro') && !E.locked) {
+        if (deep && !CHASE_ROOMS[room.key] && this.has('whaleIntro') && !E.locked && !UI.important) {
           this.rt.glimpseIn = (this.rt.glimpseIn === undefined ? 90 + Math.random() * 150 : this.rt.glimpseIn) - dt;
           if (this.rt.glimpseIn < 0) {
             this.rt.glimpseIn = 150 + Math.random() * 240;
             SO.fp.glimpse(room);
-            if (!this.has('glimpseSaid')) { this.flag('glimpseSaid'); setTimeout(() => UI.thought('Was that her? Way out there?'), 6000); }
+            if (!this.has('glimpseSaid')) { this.flag('glimpseSaid'); setTimeout(() => UI.aside('Was that her? Way out there?'), 6000); }
           }
         }
       }

@@ -81,7 +81,7 @@
       if (sq.blood > 0.05 && Math.random() < dt * sq.blood * 6) {// a little trail of it, wherever you go
         E.particles.push({ kind: 'blood', x: sq.x - sq.vx * 0.1, y: sq.y, vx: 0, vy: -4, t: 0, life: 6, r: 6 + Math.random() * 6, grow: 5, col: sq.bloodBlue ? BLUE : RED, amt: 0 });
       }
-      if (sq.blood > 0.6 && !this.saidBloody) { this.saidBloody = true; SO.ui.thought('There’s blood all over me. I can hardly see. I need to swim it off.'); }
+      if (sq.blood > 0.6 && !this.saidBloody) { this.saidBloody = true; SO.ui.aside('There’s blood all over me. I can hardly see. I need to swim it off.'); }
       if (sq.blood < 0.2) { this.saidBloody = false; }
       // Now and then: a striker takes one of the little fish.
       if (!E.locked && (room.surfaceY === null || sq.y > room.surfaceY + 200)) {

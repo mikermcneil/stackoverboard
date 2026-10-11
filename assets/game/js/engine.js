@@ -1151,6 +1151,13 @@
       return;
     }
     const T = SO.actorTypes[o.type];
+    // After interacting with something, a moment before the next interaction (with anything),
+    // and a little longer before the same thing again.
+    if (T && T.talk) {
+      const now = U.now();
+      if (now - (this._lastTalkAt || 0) < 2200 || now - (o._lastTalkAt || 0) < 4000) { return; }
+      this._lastTalkAt = now; o._lastTalkAt = now;
+    }
     if (T && T.onTouch) { T.onTouch(o, room); }
     if (room.def.onTouch) { room.def.onTouch(room, o); }
     SO.story.onTouch(o, room);

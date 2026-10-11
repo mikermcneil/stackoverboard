@@ -28,7 +28,7 @@
         const now = U.now(), dt = Math.min(0.1, (now - last) / 1000);
         last = now;
         if (E.mode === 'play' && !document.hidden) { this.played += dt; }
-        if (!this.active && this.played >= this.next && E.mode === 'play' && !E.locked && !document.hidden) { this.go(); }
+        if (!this.active && this.played >= this.next && E.mode === 'play' && !E.locked && !document.hidden && !(SO.ui && SO.ui.important)) { this.go(); }
         if (this.active) { this.step(dt); }
         requestAnimationFrame(tick);
       };
@@ -52,7 +52,7 @@
       }
       const sq = E.squid;
       if (sq) { sq.fear = Math.max(sq.fear || 0, 0.7); }
-      if (SO.ui && !SO.ui.talking) { setTimeout(() => SO.ui.thought(LINES[Math.min(LINES.length - 1, this.count - 1)]), 1400); }
+      if (SO.ui && !SO.ui.talking && Math.random() < 1 / 3) { this.said = (this.said || 0) + 1; setTimeout(() => SO.ui.aside(LINES[Math.min(LINES.length - 1, this.said - 1)]), 1400); }
       this.schedule();
     },
 

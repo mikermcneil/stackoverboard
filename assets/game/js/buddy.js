@@ -18,6 +18,7 @@
   const E = SO.E;
   const AU = () => SO.audio || {};
   const me = (t) => SO.ui.thought(t);
+  const aside = (t) => SO.ui.aside(t);
 
   const st = () => {
     const d = SO.save.data;
@@ -37,7 +38,7 @@
       if (a.leaving) { a.x += a.dir * 160 * dt; a.y -= 20 * dt; a.alpha = Math.max(0, (a.alpha || 1) - dt * 0.5); if (a.alpha <= 0) { E.removeActor(a.id); } return; }
       // Where it wants to be: just behind you, or off to show you something.
       let gx = sq.x - (sq.facing || 1) * 140, gy = sq.y - 50 + Math.sin(a.t * 1.3) * 20;
-      if (a.goal) { gx = a.goal.x; gy = a.goal.y; if (U.dist(a.x, a.y, gx, gy) < 50 && a.goalSay) { me(a.goalSay); a.goalSay = null; a.flashT = 1; setTimeout(() => { a.goal = null; }, 2500); } }
+      if (a.goal) { gx = a.goal.x; gy = a.goal.y; if (U.dist(a.x, a.y, gx, gy) < 50 && a.goalSay) { aside(a.goalSay); a.goalSay = null; a.flashT = 1; setTimeout(() => { a.goal = null; }, 2500); } }
       // Whale coming? It goes pale red, flickering, and hides behind you.
       const chase = SO.story.rt.chase;
       if (chase && chase.phase !== 'calm') { gx = sq.x - (sq.facing || 1) * 60; gy = sq.y + 30; a.flashT = 0.3; a.flashC = '#c8353f'; if (!a.warned) { a.warned = true; me('Bead’s flashing red. Something’s coming.'); } }
@@ -104,9 +105,9 @@
       const before = b.near || 0;
       b.near = Math.min(10, before + n);
       const said = (b.said = b.said || {});
-      if (b.near >= 3 && !said[3]) { said[3] = true; setTimeout(() => me('Bead keeps finding me. I think it likes me.'), 1500); }
-      if (b.near >= 6 && !said[6]) { said[6] = true; setTimeout(() => me('I don’t know what I’d do down here without Bead.'), 1500); }
-      if (b.near >= 9 && !said[9]) { said[9] = true; setTimeout(() => me('Bead’s family now. Is that weird? It’s not weird.'), 1500); }
+      if (b.near >= 3 && !said[3]) { said[3] = true; setTimeout(() => aside('Bead keeps finding me. I think it likes me.'), 1500); }
+      if (b.near >= 6 && !said[6]) { said[6] = true; setTimeout(() => aside('I don’t know what I’d do down here without Bead.'), 1500); }
+      if (b.near >= 9 && !said[9]) { said[9] = true; setTimeout(() => aside('Bead’s family now. Is that weird? It’s not weird.'), 1500); }
       SO.save.touch();
     },
 
@@ -128,7 +129,7 @@
       if (!a || a.dead || a.cooking || a.tangled) { return; }
       if (U.dist(a.x, a.y, E.squid.x, E.squid.y) < 400) {
         a.flashT = 1; a.flashC = '#ffd36a';
-        if (Math.random() < 0.5) { me('Half for Bead.'); }
+        if (Math.random() < 0.5) { aside('Half for Bead.'); }
         this.closer(0.6);
       }
     },
@@ -136,7 +137,7 @@
     // You flashed a skin-word; Bead flashes it back, a moment later, same notes.
     onPattern(name) {
       const a = E.actor('buddy');
-      if (!a || a.dead || a.cooking || a.tangled || !E.PATTERNS[name]) { return; }
+      if (!a || a.dead || a.cooking || a.tangled || !E.PATTERNS[name] || SO.ui.important) { return; }
       setTimeout(() => {
         if (!E.actor('buddy')) { return; }
         E.showPattern(a.x, a.y, name, { gap: 420, above: 50, onEach: (c) => { a.flashT = 0.4; a.flashC = E.SKIN_HEX[c]; } });
@@ -176,7 +177,7 @@
       const sq = E.squid, dir = Math.random() < 0.5 ? 1 : -1;
       const f = E.findFree(sq.x + dir * 500, sq.y - 100);
       const a = E.addActor(room, { id: 'buddy', type: 'buddy', x: f[0], y: f[1], dir: -dir, home: {}, doomed: !!opts.doomed });
-      if (!opts.doomed && Math.random() < 0.2) { setTimeout(() => me(['Bead! There you are.', 'Hi, Bead.', 'Oh, it’s Bead.'][Math.floor(Math.random() * 3)]), 800); }
+      if (!opts.doomed && Math.random() < 0.2) { setTimeout(() => aside(['Bead! There you are.', 'Hi, Bead.', 'Oh, it’s Bead.'][Math.floor(Math.random() * 3)]), 800); }
       if (opts.doomed) { a.stay = 9999; setTimeout(() => { if (E.actor('buddy') === a && !a.dead) { this.startCooking(a); } }, 22000); }
       return a;
     },

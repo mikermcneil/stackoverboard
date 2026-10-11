@@ -112,7 +112,7 @@
       // it drinks your glow, if you come close while you're lit
       if (sq.glowOn && d < 260) {
         sq.glowUntil = Math.min(sq.glowUntil || 0, E.t + 3);
-        if (!a.drank) { a.drank = true; SO.ui.thought('My light’s going into it. It’s drinking it.'); }
+        if (!a.drank) { a.drank = true; SO.ui.aside('My light’s going into it. It’s drinking it.'); }
       }
     },
     draw(ctx, a, room, t) {

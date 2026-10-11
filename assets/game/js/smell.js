@@ -93,10 +93,10 @@
       const last = this.said[p.sk] || -99;
       const first = SO.save.data && !SO.save.data.flags.smelled;
       const worthSaying = first || ['pearl', 'home', 'food', 'squid', 'whale'].includes(p.sk);
-      if (k && worthSaying && E.t - last > 120 && !SO.ui.talking) {
+      if (k && worthSaying && E.t - last > 120 && !SO.ui.talking && !SO.ui.important) {
         this.said[p.sk] = E.t;
         if (first) { SO.save.flag('smelled'); }
-        SO.ui.thought(first ? 'Wait. I can smell that. ' + k.lines[0] : k.lines[Math.floor(Math.random() * k.lines.length)]);
+        SO.ui.aside(first ? 'Wait. I can smell that. ' + k.lines[0] : k.lines[Math.floor(Math.random() * k.lines.length)]);
       }
     },
 

@@ -209,3 +209,6 @@ body.ribbon-fixed #stage { height: calc(100vh - var(--ribbon-h)); }
 #chat-input:focus { border-color: var(--fleet-green, #009A7D); }
 #say-btn { position: absolute; right: 18px; bottom: calc(14px + env(safe-area-inset-bottom)); border: 1px solid rgba(255, 255, 255, 0.22); background: transparent; color: rgba(244, 237, 228, 0.7); border-radius: 999px; padding: 6px 14px; font: 500 12px var(--mono, monospace); letter-spacing: 0.08em; cursor: pointer; touch-action: none; }
 #say-btn:hover { color: #f4ede4; border-color: rgba(255, 255, 255, 0.5); }
+
+.j-section { margin: 26px 0 10px; text-align: center; }
+.j-body .j-map, .j-body .j-world { margin-top: 26px; }

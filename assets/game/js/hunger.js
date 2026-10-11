@@ -35,9 +35,9 @@
       const cap = h > 0.9 ? 1 : h > 0.7 ? 2 : 5;
       if (E.gait > cap) { E.gait = cap; }
       const said = (this.said = this.said || {});
-      if (h > 0.45 && !said.a) { said.a = true; SO.ui.thought('I’m getting hungry. Something small. Shrimp, maybe.'); }
-      if (h > 0.7 && !said.b) { said.b = true; SO.ui.thought('So hungry. I can’t swim fast like this.'); }
-      if (h > 0.9 && !said.c) { said.c = true; SO.ui.thought('I need to eat. Anything. Now.'); }
+      if (h > 0.45 && !said.a) { said.a = true; SO.ui.aside('I’m getting hungry. Something small. Shrimp, maybe.'); }
+      if (h > 0.7 && !said.b) { said.b = true; SO.ui.aside('So hungry. I can’t swim fast like this.'); }
+      if (h > 0.9 && !said.c) { said.c = true; SO.ui.aside('I need to eat. Anything. Now.'); }
       if (h < 0.3) { this.said = {}; }
       // A stomach, growling.
       this._growl = (this._growl || 20) - dt;
@@ -58,7 +58,7 @@
       this.level = before - F.feed;
       if (SO.buddy) { SO.buddy.onEat(a); }
       const lines = a.kind === 'minnow' ? ['Got it. It’s still moving a little.', 'Crunchy. Then soft.', 'Sorry, fish.'] : a.kind === 'krill' ? ['Krill. A mouthful of tiny legs.', 'Mm. Krill.'] : ['A shrimp. Shell and all.', 'Snap. Gone.'];
-      if (!SO.save.data.flags.ateOnce && before > 0.35) { SO.ui.thought(lines[Math.floor(Math.random() * lines.length)]); }
+      if (!SO.save.data.flags.ateOnce && before > 0.35) { SO.ui.aside(lines[Math.floor(Math.random() * lines.length)]); }
       if (!SO.save.data.flags.ateOnce) { SO.save.flag('ateOnce'); }
       SO.save.touch();
       setTimeout(() => E.removeActor(a.id), 60);
