@@ -66,8 +66,44 @@ chapter and how to get through it, endings, mechanics, creatures, oddities, cuts
 planned systems, each marked with a spoiler level and whether it's built or only planned),
 get-lore (story, places, smells, dirt), get-skin-words (the melodies), get-species (creatures and
 plants), get-squids (players, and what each knows), get-online (who's swimming right now), get-chat (what
-squids have said), get-world-age (the world's stages of life), get-west-path (the long way west), get-history,
-get-state, and get-map for detail.`,
+squids have said), get-world-age (the world's stages of life), get-west-path (the long way west), get-squid (one
+player's full profile, personality, and bio), get-records (the world's records), get-interactions
+(what squids have clicked on), get-answers (how squids answered shared questions), get-history,
+get-state, and get-map for detail.
+
+Things squids click on can be clicked again: every visit is shared, and coming back can show
+something new (at night, at another time of day where the player is, or after another squid has been
+by).  Some things ask a question, and each squid's answer is shared with everyone.  Each squid also has
+a personality (seven traits: curious, brave, gentle, playful, wistful, social, wanderer) that starts
+with a slight random lean and grows with its player's choices, and stats (time played, how far west,
+best leap, and so on).
+
+How to answer common questions (which read-only tool to call):
+- "Who's online, and where?" get-online (room = where in the sea; place = roughly where in the world).
+- "Where is <squid> / where is <squid> playing from / is <squid> online?" get-squid with \`name\`
+  (\`room\` if online now, \`place\` for the real world), or get-online.
+- "What is <squid> like?" get-squid: quote or paraphrase \`bio\`, and use \`personality\` (summary,
+  traits, strongest).  "Who's the bravest / most curious?" get-squids with \`trait\`.
+- "What has <squid> done / met / clicked / said?" get-squid (nativesMet, placesVisited, interactions,
+  answers, chats, events, stats), get-interactions with \`squidName\`, get-chat with \`squidName\`.
+- "What do squids think about <question>?" get-answers (with \`questionKey\`).  Answers are opinions.
+- "Who has been to <thing>?" get-interactions with \`key\`, \`kind\` or \`room\`.
+- "What's at west:N?" get-west-path with \`n\`.  "What's at the end of the west?" get-west-path
+  (\`endLandmark\`, \`wrapsTo\`).  "How far west has anyone gone?" get-records (records.westFarthest).
+- "How do I play <skin word> on a piano?" get-skin-words with \`name\` (notes, keys, fingering, pace).
+  "Which skin words can't be undone?" get-skin-words (palindromes: glow, open, calm).
+  "How many squids know <word>?" get-skin-words (\`knownBy\`), or get-squids with \`knows\`.
+- "What stage is the world in, and what's next?" get-world-age (\`current\`, and the next stage in
+  \`stages\`), or \`age\` here.
+- "What's out at night?" get-world-facts with \`key\` "mechanic-night-life".
+- "What lives in <region>?" get-species with \`search\`, or get-world-facts with \`key\` "region-<key>".
+  "What is <creature>?" get-species with \`search\`, or get-world-facts.
+- "What happened to Bead?" get-world-facts with \`key\` "character-buddy-fate" (a story-ending
+  spoiler: warn first).
+- "What did squids say recently?" get-chat.  "What happened in the world?" get-history, or \`recent\`.
+- Anything about the story, places, chapters, mechanics: get-world-facts with \`search\`.
+- Open mysteries (topic "mystery", e.g. how the glass city flies): say they're open on purpose, and
+  never invent an answer, even if players' answers (get-answers) favor one.`,
 
 
   sideEffects: 'cacheable',

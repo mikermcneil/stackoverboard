@@ -80,6 +80,7 @@ module.exports.routes = {
   'PUT   /api/v1/game/rename-squid':                  { action: 'game/rename-squid' },
   'POST  /api/v1/game/say':                           { action: 'game/say' },
   'GET   /api/v1/game/get-local-conditions':          { action: 'game/get-local-conditions' },
+  'POST  /api/v1/game/note-interaction':              { action: 'game/note-interaction' },
 
 
   //  ╦ ╦╔═╗╦═╗╦  ╔╦╗
@@ -99,5 +100,9 @@ module.exports.routes = {
   'GET   /api/v1/world/get-chat':                     { action: 'world/get-chat' },
   'GET   /api/v1/world/get-world-age':                { action: 'world/get-world-age' },
   'GET   /api/v1/world/get-west-path':                { action: 'world/get-west-path' },
+  'GET   /api/v1/world/get-squid':                    { action: 'world/get-squid' },
+  'GET   /api/v1/world/get-records':                  { action: 'world/get-records' },
+  'GET   /api/v1/world/get-interactions':             { action: 'world/get-interactions' },
+  'GET   /api/v1/world/get-answers':                  { action: 'world/get-answers' },
 
 };

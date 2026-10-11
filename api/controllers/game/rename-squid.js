@@ -65,6 +65,10 @@ to claim it keeps it.  Other players see the new name right away.`,
 
     // Presence is keyed by name: drop the old row (a new one is made on the next update).
     await Presence.destroy({ squidName: oldName });
+    // Shared answers show the squid's current name (its visits keep the name it had at the time).
+    await InteractionAnswer.update({ tokenHash }).set({ squidName: clean }).tolerate((err) => {
+      sails.log.warn('game/rename-squid: could not rename answers (has the `interactionanswer` table been created?):', err.message);
+    });
     this.req.session.squidName = clean;
     this.req.session.presenceToken = token;
 

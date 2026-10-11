@@ -315,7 +315,7 @@
   // Lids for a given resting position.
   const lidsFor = (f, up0, lo0) => ({
     up: up0 + (1 - f.open) * 0.6 + f.blink * (1 - up0),
-    lo: lo0 + Math.max(0, f.smile) * 0.2 + f.blink * 0.3,
+    lo: lo0 + Math.max(0, f.smile) * 0.3 + f.blink * 0.3,
   });
 
   // A shared light iris for cephalopods: silver ring around a dark centre.
@@ -428,7 +428,7 @@
     c.beginPath(); c.moveTo(-30, 160); c.bezierCurveTo(-40, 60, 10, 20, 0, -40); c.bezierCurveTo(10, -60, 40, -60, 54, -44); c.lineTo(84, -30); c.lineTo(52, -26); c.bezierCurveTo(40, -10, 20, 40, 30, 160); c.closePath(); c.fill();
     c.restore();
     // pose
-    const hx = -4 - f.angry * 14 - f.afraid * 4 + f.tender * 6;
+    const hx = -14 - f.angry * 14 - f.afraid * 4 + f.tender * 6;
     const hy = -24 - f.lift * 16 + f.droop * 26 - f.afraid * 14 + f.breath * 2 + Math.sin(t * 30) * f.jolt * 2;
     const ha = -0.04 + f.droop * 0.32 - f.lift * 0.14 + f.angry * 0.2 + f.tender * 0.22 + 0.03 * Math.sin(t * 0.7);
     const P = (x, y) => {// head-local to frame
@@ -662,7 +662,7 @@
     const hide = clamp(f.afraid * 1 + f.sad * 0.25 + f.tired * 0.2, 0, 1);// how far it's pulled in
     const ink = 'rgba(50,25,10,0.6)';
     c.save();
-    c.translate(0, f.breath * 2 + f.droop * 6 - f.lift * 4);
+    c.translate(18, 6 + f.breath * 2 + f.droop * 6 - f.lift * 4);
     c.rotate(Math.sin(t * 0.5) * 0.04 + f.droop * 0.08 - f.lift * 0.05);
     // the shell
     const sh = shellImage();
@@ -683,9 +683,9 @@
     for (let layer = 0; layer < 2; layer++) {
       for (let i = 0; i < 11; i++) {
         const a0 = Math.PI * 0.86 + (i - 5) * (0.075 + 0.05 * f.surprised + 0.04 * f.angry - 0.03 * hide) + layer * 0.05 + f.droop * 0.3;
-        const len = (70 + (i % 3) * 12 - layer * 10) * reach;
+        const len = (56 + (i % 3) * 12 - layer * 8) * reach;
         const pts = armPts(-50 + layer * 8, 22 + (i - 5) * 2.4 + layer * 3, a0, len, 7, (0.03 + f.happy * 0.07 - f.droop * 0.05) * (i % 2 ? 1 : -1), t * (1 + f.happy), i + layer * 3, 0.05 + 0.1 * f.happy + 0.04 * f.surprised);
-        const e = limb(c, pts, 7 - layer * 1.5, 1.8, layer ? '#efd6b4' : '#ddb98f', 'rgba(70,40,20,0.5)', 1);
+        const e = limb(c, pts, 9 - layer * 2, 2, layer ? '#efd6b4' : '#ddb98f', 'rgba(70,40,20,0.5)', 1);
         c.strokeStyle = 'rgba(120,80,45,0.35)'; c.lineWidth = 0.8;// ringed sheaths
         for (let k = 1; k < 4; k++) { c.beginPath(); c.moveTo(e.L[k][0], e.L[k][1]); c.lineTo(e.R[k][0], e.R[k][1]); c.stroke(); }
       }
@@ -699,7 +699,7 @@
     // over the eye when it's cross or scared
     const hd = hoodLow * 12 - f.surprised * 6;
     c.save(); c.translate(0, hd); c.rotate(-f.surprised * 0.05 + f.angry * 0.05);
-    const hood = [[-84, -22], [-66, -50], [-28, -66], [14, -66], [30, -48], [6, -30], [-34, -18], [-74, -6]];
+    const hood = [[-86, -14], [-70, -42], [-30, -58], [12, -60], [30, -44], [6, -24], [-34, -14], [-76, 0]];
     const hg = c.createLinearGradient(0, -66, 0, -6);
     hg.addColorStop(0, '#8f5732'); hg.addColorStop(1, '#6a3f24');
     A.shape(c, hood, hg, { stroke: ink, lw: 1.5 });
@@ -708,7 +708,7 @@
       const x = -80 + (i * 41) % 110, y = -64 + ((i * 29) % 56);
       A.ellipse(c, x, y, 2 + (i % 4), 1.4 + (i % 3) * 0.8, i, 'rgba(236,214,180,0.5)', null);
     }
-    c.fillStyle = 'rgba(0,0,0,0.25)'; c.fillRect(-90, -24, 130, 30);// its shadowed lower edge
+    c.fillStyle = 'rgba(0,0,0,0.25)'; c.fillRect(-90, -18, 130, 30);// its shadowed lower edge
     c.restore();
     c.restore();
     c.restore();
@@ -726,7 +726,8 @@
     col = mix(col, [20, 45, 66], f.tender * 0.3);
     const ink = 'rgba(40,24,14,0.5)';
     c.save();
-    c.translate(0, f.breath * 2 + f.droop * 8 - f.lift * 5);
+    c.translate(-30, -8 + f.breath * 2 + f.droop * 8 - f.lift * 5);
+    c.scale(1.1, 1.1);
     c.rotate(0.06 * f.droop - 0.04 * f.lift + Math.sin(t * 0.7) * 0.02);
     // the frilled fin, all the way round the mantle
     const fin = (y0, sgn) => {
@@ -743,7 +744,7 @@
     // arms, in front, pointing forward and down
     for (let i = 0; i < 8; i++) {
       const top = i < 2;
-      let a0 = 0.55 + (i - 3.5) * (0.1 + 0.06 * f.afraid + 0.04 * f.surprised) + f.droop * 0.35;
+      let a0 = 0.8 + (i - 3.5) * (0.1 + 0.06 * f.afraid + 0.04 * f.surprised) + f.droop * 0.35;
       if (top) { a0 -= f.angry * 1.3 + f.surprised * 0.4; }// raised in warning
       const len = 66 + (i % 3) * 8 - f.afraid * 10;
       const pts = armPts(62 + i * 2, 4 + i * 4, a0, len, 7, (top ? -1 : 1) * (0.04 + 0.08 * f.happy), t * 1.4, i * 1.1, 0.08 + 0.14 * f.happy);
@@ -753,6 +754,7 @@
     const body = new Path2D();
     body.ellipse(-50, 0, 100, 48, 0, 0, TAU);
     body.moveTo(84, 4); body.ellipse(42, 4, 42, 38, 0, 0, TAU);
+    c.strokeStyle = ink; c.lineWidth = 3; c.stroke(body);
     c.fillStyle = hsl(col, 0); c.fill(body, 'nonzero');
     c.save(); c.clip(body);
     const lg = c.createLinearGradient(0, -48, 0, 48);
@@ -794,24 +796,36 @@
     c.globalCompositeOperation = 'source-over';
     if (f.jolt > 0.02) { c.fillStyle = 'rgba(255,250,240,' + (0.5 * f.jolt * (f.surprised + f.afraid)) + ')'; c.fillRect(-160, -60, 260, 120); }
     c.restore();
-    c.strokeStyle = ink; c.lineWidth = 1.5; c.stroke(body);
     // a dark ring round the eye (alarm)
     const ring = 0.6 * f.angry + 0.5 * f.surprised;
-    if (ring > 0.03) { A.circle(c, 36, -10, 30, 'rgba(15,8,5,' + ring + ')', null); }
+    if (ring > 0.03) { A.circle(c, 36, -10, 27, 'rgba(15,8,5,' + ring + ')', null); }
     const lids = lidsFor(f, 0.16, 0.12);
-    eye(c, 36, -10, 22, { sx: 0.95, iris: [[0, '#d8cfae'], [0.7, '#c5b890'], [0.9, '#8f7f5a'], [1, hsl(col, -20)]], pupil: 'W', ps: f.pupil, lx: f.lx * 0.6, ly: f.ly * 0.4, up: lids.up, lo: lids.lo, tilt: f.tilt, inner: 1, lid: hsl(col, -6), rim: ink, rimW: 1.4, pupilColor: '#14100c' });
+    eye(c, 36, -10, 19, { iris: [[0, '#cfc394'], [0.6, '#b3a26a'], [0.86, '#6c603c'], [1, hsl(col, -24)]], pupil: 'W', ps: f.pupil, lx: f.lx * 0.6, ly: f.ly * 0.4, up: lids.up, lo: lids.lo, tilt: f.tilt, inner: 1, lid: hsl(col, -6), rim: ink, rimW: 1.4, pupilColor: '#14100c' });
     // papillae over the eye, standing up when angry or sly
-    const pap = 4 + 10 * f.angry + 7 * f.sly + 5 * f.surprised;
-    const by = -38 - f.browUp * 6;
+    const pap = 2 + 9 * f.angry + 6 * f.sly + 4 * f.surprised;
+    const by = -33 - f.browUp * 6;
     for (let i = 0; i < 3; i++) {
       const x = 22 + i * 12, y = by + (i === 0 ? f.browIn * -2 : i === 2 ? f.browIn * 4 : 0) + (i === 2 ? f.angry * 6 : 0);
-      A.shape(c, [[x - 5, y + 6], [x + Math.sin(t * 2 + i) * 1.5, y - pap], [x + 5, y + 6]], hsl(col, -12), { stroke: ink, lw: 1, sharp: true });
+      A.shape(c, [[x - 5, y + 6], [x + Math.sin(t * 2 + i) * 1.5, y - pap], [x + 5, y + 6]], hsl(col, -8), { stroke: 'rgba(40,24,14,0.3)', lw: 0.8 });
     }
     c.restore();
   };
 
   // The turtle: a big, scaled head, heavy lids over an old eye, a hooked beak.
   // Pulls its head back toward its shell when frightened. Weeps salt.
+  // The plates on top of a turtle's head: bigger in the middle, small at the edges.
+  const TURTLE_SCALES = (function () {
+    const out = [];
+    for (let row = 0; row < 4; row++) {
+      for (let k = 0; k < 7; k++) {
+        const x = -52 + k * 17 + (row % 2) * 8, y = -42 + row * 13;
+        const mid = 1 - Math.abs(k - 3) / 4;
+        out.push([x, y, 6 + mid * 4 - row * 0.6]);
+      }
+    }
+    return out;
+  })();
+
   FACES.turtle = function (c, t, f) {
     const ink = 'rgba(30,36,20,0.55)';
     let skin = [78, 26, 44];
@@ -855,23 +869,23 @@
     c.fillStyle = hg; c.fill(head); c.strokeStyle = ink; c.lineWidth = 1.5; c.stroke(head);
     // the big scales on top of the head
     c.save(); c.clip(head);
-    const scales = [[-40, -30, 14], [-14, -40, 14], [14, -38, 13], [36, -26, 11], [-26, -10, 10], [52, -12, 8], [-50, 0, 11], [-34, 16, 9]];
-    scales.forEach(([x, y, r], i) => {
+    TURTLE_SCALES.forEach(([x, y, r], i) => {
       c.beginPath();
-      for (let k = 0; k < 6; k++) { const a = k / 6 * TAU + i; c.lineTo(x + Math.cos(a) * r, y + Math.sin(a) * r * 0.8); }
+      for (let k = 0; k < 6; k++) { const a = k / 6 * TAU + i * 0.7; c.lineTo(x + Math.cos(a) * r, y + Math.sin(a) * r * 0.78); }
       c.closePath();
-      c.fillStyle = hsl([skin[0] - 30, skin[1] + 15, skin[2]], -6 + (i % 3) * 4, 0.6); c.fill();
-      c.strokeStyle = 'rgba(240,230,190,0.45)'; c.lineWidth = 1.4; c.stroke();
+      c.fillStyle = hsl([skin[0] - 34, skin[1] + 18, skin[2]], -10 + (i % 3) * 3, 0.55); c.fill();
+      c.strokeStyle = 'rgba(232,222,170,0.32)'; c.lineWidth = 1.6; c.stroke();
+      c.strokeStyle = 'rgba(20,24,10,0.35)'; c.lineWidth = 0.6; c.stroke();
     });
     for (let i = 0; i < DOTS.turtle.length; i++) { const d = DOTS.turtle[i]; A.circle(c, d[0], d[1] + 40, 1 + d[2] * 1.5, 'rgba(230,220,180,0.25)', null); }
     c.restore();
     // beak: a horny edge along the jaw, opening when it talks
     const open = f.talk * 0.12 + f.angry * 0.12 + f.surprised * 0.08;
     c.save(); c.translate(-6, 30); c.rotate(open);
-    c.beginPath(); c.moveTo(0, 0); c.bezierCurveTo(20, -2, 44, -8, 58, -12); c.lineTo(52, -4); c.bezierCurveTo(36, 4, 16, 10, 0, 10); c.closePath();
+    c.beginPath(); c.moveTo(0, 0); c.bezierCurveTo(20, -2, 44, -8, 58, -12); c.lineTo(54, -7); c.bezierCurveTo(38, -1, 18, 5, 0, 5); c.closePath();
     c.fillStyle = '#b9a879'; c.fill(); c.strokeStyle = ink; c.lineWidth = 1.2; c.stroke();
     c.restore();
-    c.beginPath(); c.moveTo(20, 24); c.bezierCurveTo(36, 20, 50, 16, 60, 4); c.lineTo(62, 14); c.bezierCurveTo(54, 20, 40, 26, 22, 30); c.closePath();
+    c.beginPath(); c.moveTo(24, 26); c.bezierCurveTo(38, 22, 50, 16, 58, 6); c.bezierCurveTo(62, 10, 61, 15, 57, 19); c.bezierCurveTo(48, 24, 38, 28, 24, 30); c.closePath();
     c.fillStyle = '#c7b688'; c.fill(); c.strokeStyle = ink; c.lineWidth = 1.2; c.stroke();
     // mouth corner: up a little when pleased
     c.strokeStyle = ink; c.lineWidth = 1.4;
@@ -975,7 +989,10 @@
       A.shape(c, [[outX - 4, outY + 4], [outX + sd * 3, outY - h * 1.2], [outX + 4, outY + 4]], hsl(col, -6), { stroke: ink, lw: 1, sharp: true });
     });
     // her siphon, opening a little when she speaks
-    A.ellipse(c, 0, 36, 8, 4 + f.talk * 3, 0, hsl(col, -20), ink, 1);
+    c.save(); c.translate(-70, 30); c.rotate(-0.6);
+    A.ellipse(c, 0, 0, 11, 5 + f.talk * 3, 0, hsl(col, -6), ink, 1);
+    A.ellipse(c, -6, 0, 3, 2 + f.talk * 2, 0, hsl(col, -30), null);
+    c.restore();
     c.restore();
   };
 

@@ -26,7 +26,19 @@ Also what each squid knows:
 - \`memories\`: which of the three pieces of glass from home it has found this playthrough (1 "The pool",
   2 "The edge", 3 "The shaking"; all three are needed for the "song" ending).
 
-Use \`knows\` to list only squids who know a particular skin word (e.g. "Who knows the swans' call?").`,
+Also each squid's character:
+- \`personality\`: \`{ summary, traits: { curious, brave, gentle, playful, wistful, social, wanderer }, strongest }\`
+  (traits 0 to 1; a slight random lean at the start, then shaped by the player's choices), or null if
+  the game hasn't worked it out yet.  \`summary\` is the game's own few words, e.g. "curious, gentle,
+  a little wistful".
+- \`stats\`: a few key numbers: \`playSeconds\`, \`roomsEntered\`, \`westFarthest\` (rooms west of the
+  Bright), \`bestAirTime\` (seconds), \`deepest\` (0..1), \`interactions\` (things clicked), \`answers\`,
+  \`chats\`.  get-squid has the full profile, stats, and a plain-language bio of one squid; get-records
+  has the world's records (e.g. who has gone farthest west).
+
+Use \`knows\` to list only squids who know a particular skin word (e.g. "Who knows the swans' call?"),
+and \`trait\` to list only squids strong in a trait (0.6 or more), strongest first (e.g. "Who are the
+bravest squids?").`,
 
 
   sideEffects: 'cacheable',
@@ -56,6 +68,13 @@ Use \`knows\` to list only squids who know a particular skin word (e.g. "Who kno
       description: 'Only list squids who know this skin word in their current playthrough.'
     },
 
+    trait: {
+      type: 'string',
+      isIn: ['curious', 'brave', 'gentle', 'playful', 'wistful', 'social', 'wanderer'],
+      example: 'brave',
+      description: 'Only list squids with this personality trait at 0.6 or more, strongest first.'
+    },
+
   },
 
 
@@ -63,32 +82,43 @@ Use \`knows\` to list only squids who know a particular skin word (e.g. "Who kno
 
     success: {
       outputFriendlyName: 'Squids',
-      outputDescription: '`{ squids: [{ squidName, playthrough, chapter, endings, arrivedAt, lastSeenAt, skinWords, skinWordsEverLearned, nativesMet, placesVisited, location, pearls, memories, device, os, browser, place, placeSource, timeZone, language, userAgent }] }` sorted by lastSeenAt, most recent first.  `device` is phone, tablet, desktop or unknown.  `place` is roughly (city level) where the player is playing from, e.g. "Austin, Texas, US".  `placeSource` says how: "ip" (an offline lookup of their IP address in a city database, done once per session; the address is never stored), "cloudflare" (Cloudflare\'s location headers), or "timezone" (guessed from the browser\'s time zone, e.g. "Chicago, America", which only names the zone\'s main city).  Older squids may only have a time zone guess.  Exact locations are never stored.'
+      outputDescription: '`{ squids: [{ squidName, playthrough, chapter, endings, arrivedAt, lastSeenAt, skinWords, skinWordsEverLearned, nativesMet, placesVisited, location, pearls, memories, device, os, browser, place, placeSource, timeZone, language, userAgent, personality: { summary, traits, strongest } | null, stats: { playSeconds, roomsEntered, westFarthest, bestAirTime, deepest, interactions, answers, chats } }] }` sorted by lastSeenAt, most recent first (or by the trait, with `trait`).  `device` is phone, tablet, desktop or unknown.  `place` is roughly (city level) where the player is playing from, e.g. "Austin, Texas, US".  `placeSource` says how: "ip" (an offline lookup of their IP address in a city database, done once per session; the address is never stored), "cloudflare" (Cloudflare\'s location headers), or "timezone" (guessed from the browser\'s time zone, e.g. "Chicago, America", which only names the zone\'s main city).  Older squids may only have a time zone guess.  Exact locations are never stored.'
     },
 
   },
 
 
-  fn: async function ({ limit, device, knows }) {
+  fn: async function ({ limit, device, knows, trait }) {
 
     var where = device ? { device } : {};
     var saves;
-    if (knows) {
+    var traitOf = (save) => {
+      var personality = sails.helpers.world.getSquidCharacter(save).personality;
+      return personality && typeof personality.traits[trait] === 'number' ? personality.traits[trait] : 0;
+    };
+    if (knows || trait) {
       // Which skin words a squid knows lives inside its save's game state, so look through them
       // a page at a time, most recently seen first, until there are enough.
       saves = [];
-      for (let skip = 0; saves.length < limit; skip += 500) {
+      for (let skip = 0; ; skip += 500) {
         let page = await Save.find(where).sort([{ lastSeenAt: 'DESC' }, { id: 'DESC' }]).skip(skip).limit(500);
-        saves = saves.concat(page.filter((save) => sails.helpers.world.getSquidKnowledge(save).skinWords.includes(knows)));
-        if (page.length < 500) {
+        saves = saves.concat(page.filter((save) =>
+          (!knows || sails.helpers.world.getSquidKnowledge(save).skinWords.includes(knows)) &&
+          (!trait || traitOf(save) >= 0.6)
+        ));
+        if (page.length < 500 || (!trait && saves.length >= limit)) {
           break;
         }
       }//∞
+      if (trait) {
+        saves = _.sortBy(saves, (save) => -traitOf(save));
+      }
       saves = saves.slice(0, Math.floor(limit));
     } else {
       saves = await Save.find(where).sort([{ lastSeenAt: 'DESC' }, { id: 'DESC' }]).limit(Math.floor(limit));
     }
 
+    var KEY_STATS = ['playSeconds', 'roomsEntered', 'westFarthest', 'bestAirTime', 'deepest', 'interactions', 'answers', 'chats'];
     return {
       squids: saves.map((save) => Object.assign({
         squidName: save.squidName,
@@ -106,7 +136,13 @@ Use \`knows\` to list only squids who know a particular skin word (e.g. "Who kno
         timeZone: save.timeZone || '',
         language: save.language || '',
         userAgent: save.userAgent || '',
-      }))
+      }, (() => {
+        var character = sails.helpers.world.getSquidCharacter(save);
+        return {
+          personality: character.personality ? _.pick(character.personality, ['summary', 'traits', 'strongest']) : null,
+          stats: _.pick(character.stats, KEY_STATS),
+        };
+      })()))
     };
 
   }

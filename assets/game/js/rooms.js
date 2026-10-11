@@ -1247,7 +1247,7 @@
   def('ledge-cave', {
     name: 'Behind the ledges', region: 'cliff', map: [3, 2], w: 1.3, depth: 0.6, dark: 0.9,
     exits: { left: 'lantern-ledges' },
-    terrain: { floor: [0.16, 0.14, 0.18, 0.2, 0.16], ceiling: [0.2, 0.14, 0.16, 0.12, 0.18], walls: { left: false, right: true } },
+    terrain: { floor: [0.18, 0.14, 0.18, 0.2, 0.16], ceiling: [0, 0.06, 0.16, 0.12, 0.18], walls: { left: false, right: true } },
     props: [{ type: 'lantern-weed', x: 300, s: 0.6, lit: 0.5 }, { type: 'bone-fan', x: 1600, s: 0.8 }],
     snow: 0.2,
   });
@@ -1290,7 +1290,7 @@
   def('home-lip', {
     name: 'The top of the waterfall', region: 'home', map: [5, -2], w: 1.6, depth: 0.02, surface: true, palette: 'glass', roar: 0.8,
     exits: { left: 'home-rings' },
-    terrain: { floor: [0.4, 0.38, 0.36, 0.36, 0.34, 0.32, 0.3], walls: { right: true } },
+    terrain: { floor: [0.32, 0.34, 0.36, 0.36, 0.34, 0.32, 0.3], walls: { right: true } },
     sand: '#cfe4dc', rayColor: '#fffbe8',
     isles: [[300, 1.2], [1500, 0.9]],
     entries: { default: [2100, 420] },
@@ -1315,7 +1315,7 @@
   def('home-pool', {
     name: 'The pool', region: 'home', map: [3, -2], w: 1.6, depth: 0.03, surface: true, palette: 'glass',
     exits: { right: 'home-rings' },
-    terrain: { floor: [0.24, 0.2, 0.16, 0.14, 0.14, 0.16, 0.22], walls: { left: true } },
+    terrain: { floor: [0.24, 0.2, 0.16, 0.14, 0.14, 0.2, 0.32], walls: { left: true } },
     sand: '#d8ece4', rayColor: '#fffbe8',
     isles: [],
     props: [{ layer: 'back', draw(ctx, t, room) { banks(ctx, room, t, { dome: true }); } }],

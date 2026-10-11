@@ -173,6 +173,31 @@
     },
   };
 
+  // Portraits for the memories (each drawn around 0,0 in about a 150-unit square).
+  A.portraits = A.portraits || {};
+  const fake = (o) => Object.assign({ x: 0, y: 0, t: 0, seed: 2, home: { x: 0, y: 0 }, dir: 1 }, o);
+  Object.assign(A.portraits, {
+    lanternfish: (c, t) => {
+      for (let i = 0; i < 5; i++) {
+        const x = -40 + (i % 3) * 36, y = -18 + Math.floor(i / 3) * 30 + Math.sin(t + i) * 3;
+        A.fish(c, x, y, 1.6, 0, 220, t + i, { noLine: true, silver: true });
+        c.save(); c.globalCompositeOperation = 'lighter'; for (let k = 0; k < 4; k++) { A.glow(c, x - 8 + k * 6, y + 5, 5, '#5cc8ff', 0.9); } c.restore();
+      }
+    },
+    'comb-jelly': (c, t) => { c.save(); c.scale(1.5, 1.5); SO.actorTypes.combJelly.draw(c, fake({}), null, t); c.restore(); },
+    'sea-sparkle': (c, t) => {
+      c.save(); c.globalCompositeOperation = 'lighter';
+      for (let i = 0; i < 60; i++) {
+        const a = i * 2.399 + t * 0.3, r = 6 + (i * 13 % 60);
+        A.glow(c, Math.cos(a) * r, Math.sin(a) * r * 0.7, 4 + (i % 3), '#3ab8ff', 0.4 + 0.5 * Math.abs(Math.sin(t * 2 + i)));
+      }
+      c.restore();
+    },
+    'coral-polyps': (c, t) => { c.save(); c.scale(1.6, 1.6); A.rock(c, 0, 26, 40, 3, '#5a4a48'); SO.actorTypes.polyps.draw(c, fake({ y: 6 }), null, t); c.restore(); },
+    'moon-reeds': (c, t) => { c.save(); c.scale(0.8, 0.8); SO.actorTypes.moonReeds.draw(c, fake({ y: 80 }), null, t); c.restore(); },
+    'light-drinker': (c, t) => { c.save(); c.scale(0.55, 0.55); SO.actorTypes.lightDrinker.draw(c, fake({}), null, t); c.restore(); },
+  });
+
   const populate = SO.oddities.populate.bind(SO.oddities);
   SO.oddities.populate = function (room) { populate(room); SO.nightlife.populate(room); };
   const describe = SO.story.describe;
