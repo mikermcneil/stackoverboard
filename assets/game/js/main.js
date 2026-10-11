@@ -37,7 +37,10 @@
       window.addEventListener('keydown', unlock, { once: true });
 
       const saved = await save.load();
-      if (saved && save.data && save.data.flags.splashSeen) {
+      const rewatch = /[?&]intro\b/.test(location.search);// watch the fall again without losing your place
+      if (saved && save.data && save.data.flags.splashSeen && rewatch) {
+        SO.intro.start(() => this.resume());
+      } else if (saved && save.data && save.data.flags.splashSeen) {
         this.resume();
       } else {
         SO.intro.start(() => this.beginPreface());
@@ -45,6 +48,7 @@
       setInterval(() => this.rememberPosition(), 8000);
     },
 
+    // After the fall and the long sink, you come to, several screens down.
     async beginPreface() {
       if (!save.enabled) { await save.start(false); }
       if (!save.data) { save.data = save.defaults(); }
@@ -55,24 +59,29 @@
       $('hud').classList.add('show');
       E.squid.glowOn = false;
       E.lock();
-      await E.goto('splash', { pos: [1200, 220], instant: true });
-      E.squid.vx = 40; E.squid.vy = 520; E.squid.angle = Math.PI / 2;
-      E.splashFx(1200, E.room.surfaceY);
-      AU.bubbles(14, 1);
-      await U.wait(3800);
-      E.unlock();
+      UI.fade(1, 0, '#000');
+      await E.goto('sinking', { pos: [760, 300], instant: true });
+      E.squid.vx = 20; E.squid.vy = 60; E.squid.angle = 0.6; E.squid.yaw = undefined;
+      UI.fade(0, 2500);
       save.flag('splashSeen');
       save.touch(100);
-      setTimeout(() => this.tutorial(), 2500);
+      await U.wait(1800);
+      await UI.say('Ow.', { who: 'squid' });
+      await UI.say('Okay. Wet. Everything is wet now.', { who: 'squid' });
+      E.unlock();
+      await UI.say('Where am I? I was up there a minute ago.', { who: 'squid' });
+      this.tutorial();
     },
 
     async resume() {
+      E.overlay = null;
+      document.body.classList.remove('intro-mode');
       AU.setMuted(save.data.settings.muted);
       E.mode = 'play';
       document.body.classList.add('game-mode');
       $('hud').classList.add('show');
       SO.story.syncHearts();
-      if (save.data.patterns.length || save.data.flags.glowLearned) { this.showSkin(true); }
+      if (save.data.flags.skinRevealed) { this.showSkin(true); }
       if (save.data.flags.goalKey) { SO.rooms.defs['undershine-gate'].exits.up = save.data.flags.goalKey; }
       const loc = save.data.location || 'splash';
       const pos = save.data.pos;
@@ -93,12 +102,12 @@
       if (!old || Math.abs(old[0] - p[0]) + Math.abs(old[1] - p[1]) > 60) { save.data.pos = p; save.touch(2000); }
     },
 
+    // Told in the squid's own voice, straight to you.
     tutorial() {
-      const el = $('hint');
-      el.classList.add('show');
-      const off = () => { el.classList.remove('show'); window.removeEventListener('pointerdown', off); window.removeEventListener('keydown', off); };
-      setTimeout(() => { window.addEventListener('pointerdown', off); window.addEventListener('keydown', off); }, 600);
-      setTimeout(off, 12000);
+      if (save.data.flags.toldControls) { return; }
+      save.flag('toldControls');
+      UI.thought('Oh, hello. If you click somewhere, I\u2019ll swim there. Arrow keys work too.');
+      UI.thought('Click on me and I\u2019ll show you what I remember. M is for mute. I don\u2019t know how I know that.');
     },
 
     bindHud() {
@@ -110,15 +119,13 @@
           E.skinPress(b.dataset.c);
         });
       });
-      $('btn-journal').addEventListener('pointerdown', (e) => { e.stopPropagation(); SO.journal.toggle(); });
-      $('btn-sound').addEventListener('pointerdown', (e) => { e.stopPropagation(); AU.start(); this.toggleMute(); });
     },
 
     toggleMute() {
       const m = !AU.muted;
       AU.setMuted(m);
       if (save.data) { save.data.settings.muted = m; save.touch(); }
-      $('btn-sound').classList.toggle('muted', m);
+      UI.whisper(m ? 'Sound off. (M turns it back on.)' : 'Sound on.');
     },
 
     showSkin(v) { $('skin').classList.toggle('show', !!v); },

@@ -104,7 +104,7 @@
       if (tab === 'world') { return this.renderWorld(); }
       const list = this.entries(tab);
       if (!list.length) {
-        this.body.appendChild(p('j-empty', tab === 'memory' ? 'Nothing yet. Some things come back to you when you’re lost.' : 'Nothing yet.'));
+        this.body.appendChild(p('j-empty', tab === 'memory' ? 'Nothing yet. Things come back to me when I’m lost.' : 'Nothing yet.'));
         return;
       }
       const grid = div('j-grid');
@@ -135,7 +135,7 @@
     renderNow() {
       const d = save.data;
       const wrap = div('j-now');
-      wrap.appendChild(p('j-kicker', d.chapter >= 8 ? 'After' : (d.chapter ? SO.story.CARDS[d.chapter][0] : 'Before')));
+      wrap.appendChild(p('j-kicker', d.chapter >= 8 ? 'After' : (d.chapter ? SO.story.CARDS[d.chapter].join(': ') : 'Before')));
       wrap.appendChild(p('j-big', SO.story.hint()));
       const facts = [];
       if (d.gems) { facts.push(`Shine carried: ${d.gems}`); }
@@ -143,10 +143,10 @@
       if (save.squidName) { facts.push(`Your colors: ${save.squidName.split('-').join(', ')}`); }
       if (save.playthrough > 1) { facts.push(`Fall number ${save.playthrough}`); }
       facts.forEach((f) => wrap.appendChild(p('j-fact', f)));
-      wrap.appendChild(p('j-small', 'Swim: click, tap, or arrow keys. Skin: the four colored circles (or keys 1\u20134). This book: J.'));
+      wrap.appendChild(p('j-small', 'Click where you want me to go, or use the arrow keys. Click on me to open this. M mutes the sound.'));
       if (d.chapter >= 8) {
-        const b = document.createElement('button'); b.className = 'j-btn'; b.textContent = 'Fall again (a new story; you keep what you remember)';
-        b.onclick = () => { if (window.confirm('Start a new fall? Your remembered creatures stay with you.')) { this.close(); SO.main.fallAgain(); } };
+        const b = document.createElement('button'); b.className = 'j-btn'; b.textContent = 'Fall again';
+        b.onclick = () => { if (window.confirm('Start a new fall? You keep everything you remember.')) { this.close(); SO.main.fallAgain(); } };
         wrap.appendChild(b);
       }
       this.body.appendChild(wrap);
@@ -156,7 +156,7 @@
       const wrap = div('j-map');
       const cv = document.createElement('canvas'); cv.width = 760; cv.height = 620; cv.className = 'j-mapcanvas';
       wrap.appendChild(cv);
-      const legend = p('j-small', 'Bright: places you’ve been. Faint: the dark places other squids have found. The sea remembers who found them first.');
+      const legend = p('j-small', 'Bright: places I’ve been. Faint: dark places other squids found first.');
       wrap.appendChild(legend);
       this.body.appendChild(wrap);
       const r = await SO.api.get('/api/v1/world/get-map');
@@ -203,7 +203,7 @@
       wrap.appendChild(p('j-kicker', 'The world, right now'));
       this.body.appendChild(wrap);
       const r = await SO.api.get('/api/v1/world/get-overview');
-      if (!r.ok || !r.body) { wrap.appendChild(p('j-line', 'The sea is quiet. (The world could not be reached.)')); return; }
+      if (!r.ok || !r.body) { wrap.appendChild(p('j-line', 'The sea isn\u2019t answering right now. Try again in a bit.')); return; }
       const o = r.body, st = o.state || {};
       const lines = [];
       lines.push(`${o.squids} squid${o.squids === 1 ? ' has' : 's have'} fallen into this sea. ${o.finishedSquids} found an ending.`);
@@ -221,9 +221,9 @@
         o.recent.slice(0, 8).forEach((ev) => wrap.appendChild(p('j-event', describe(ev))));
       }
       const mcp = div('j-mcp');
-      mcp.appendChild(p('j-small', 'The world remembers everything that has happened in it, and it will answer questions. Point any MCP client at:'));
+      mcp.appendChild(p('j-small', 'The sea remembers everything that\u2019s happened in it, and it answers questions. Connect an MCP client to:'));
       const code = document.createElement('code'); code.textContent = location.origin + '/mcp/safe'; mcp.appendChild(code);
-      mcp.appendChild(p('j-small', 'Try asking it: has the Forge ever erupted? who found the most of the dark? what creatures exist? what did other squids choose?'));
+      mcp.appendChild(p('j-small', 'Ask it things like: Has the mountain ever erupted? Who found the most of the dark? What did other squids choose?'));
       wrap.appendChild(mcp);
     },
 

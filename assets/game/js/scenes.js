@@ -57,7 +57,7 @@
   // Lines spoken during a scene, at given times (seconds).
   function script(lines) {
     lines.forEach(([at, text, who, ms]) => setTimeout(() => {
-      UI.say(text, { who: who || 'swan', ms: ms || 3600, voice: who === 'archivist' ? 'archivist' : (who === 'swan' || !who ? 'swans' : undefined), syllables: 1 });
+      UI.say(text, { who: who || 'swan', ms: ms || 0, voice: who === 'archivist' ? 'archivist' : (who === 'swan' || !who ? 'swans' : undefined), syllables: 1 });
     }, at * 1000));
   }
 
@@ -196,9 +196,9 @@
     let sq = null;
     const dur = { 1: 15, 2: 16, 3: 17 }[n];
     const lines = {
-      1: [[1.5, '«Grow, little Carrier.»'], [6, '«You’ll be big enough soon.»'], [10.5, '«Big enough to carry it.»']],
-      2: [[1.5, '«Not yet.»'], [5.5, '«When you go, you’ll bring the light back up. Like the others did.»', 'swan', 4600], [11.5, '«Like the last one didn’t.»']],
-      3: [[1.5, '«It’s sinking. There’s no time.»'], [5.5, '«It isn’t ready—»'], [9, '«It has to be. Forgive us.»'], [12.5, '«Now.»', 'swan', 2400]],
+      1: [[1.5, 'Grow, little Carrier.'], [6, 'You’ll be big enough soon.'], [10.5, 'Big enough to carry it.']],
+      2: [[1.5, 'Not yet.'], [5.5, 'When you go, you’ll bring the light back up. Like the others did.'], [11.5, 'Like the last one didn’t.']],
+      3: [[1.5, 'It’s sinking. There’s no time.'], [5, 'It isn’t ready.'], [8.5, 'It has to be. We’re sorry.'], [12, 'Now.']],
     }[n];
     script(lines);
     const p = play((ctx, k, el, t) => {
@@ -255,15 +255,15 @@
     await UI.fade(1, 200, '#fffaf0');
     await UI.fade(0, 900);
     UI.fade$.style.background = '#02060b';
-    if (n === 3) { UI.thought('They let you fall. On purpose. Because there was no time.', 6000); }
-    else if (n === 1) { UI.thought('The pool. You remember the pool.'); }
-    else { UI.thought('Bring the light back up. That’s what you were for.'); }
+    if (n === 3) { UI.thought('They dropped me. On purpose.'); }
+    else if (n === 1) { UI.thought('The pool. I remember the pool.'); }
+    else { UI.thought('Bring the light back up. Bring what light?'); }
   };
 
   // ── Endings ────────────────────────────────────────────────────────────────
   // Each one is a little film, then music.
   S.ending = async function (kind) {
-    UI.say$.className = '';
+    UI.clear();
     document.getElementById('hud').classList.remove('show');
     E.squid.auto = null;
     await UI.fade(1, 1200, '#02060b');
@@ -278,7 +278,7 @@
   async function endingReturn() {
     // 1. Up the thread.
     let sq = smallSquid(0, VW / 2, 700, 0.75, -Math.PI / 2);
-    script([[2, 'Up.', 'squid', 2200], [9, 'It reaches for you from below. It can’t follow. Not into the light.', 'squid', 4200]]);
+    script([[2, 'Up. Up, up, up.', 'squid'], [8, 'It’s reaching for me. It can’t follow me into the light.', 'squid']]);
     await play((ctx, k, el, t) => {
       const climb = el * 220;
       const g = ctx.createLinearGradient(0, 0, 0, VH);
@@ -302,7 +302,7 @@
       if (Math.random() < 0.15) { AU.bubble((Math.random() - 0.5), 1); }
     }, 16, { fade: true });
     // 2. Home. The isles lift.
-    script([[2.5, '«Welcome home, Carrier.»', 'swan', 4000], [8, '«You brought it back. All of it.»', 'swan', 4000]]);
+    script([[2.5, 'Welcome home, Carrier.', 'swan'], [8, 'You brought it back. All of it.', 'swan']]);
     const musicMs = AU.music('return');
     sq = smallSquid(0, 1060, 470, 0.8, Math.PI);
     await play((ctx, k, el, t) => {
@@ -323,12 +323,12 @@
       A.squid(ctx, sq);
       if (k > 0.75) { ctx.fillStyle = `rgba(250,252,246,${(k - 0.75) * 4 * 0.6})`; ctx.fillRect(-900, -900, VW + 1800, VH + 1800); }
     }, Math.max(22, musicMs / 1000 - 6), { vignette: 0.25, holdEnd: true });
-    UI.say('You look over the edge, down at the clouds. Somewhere under them, the sea is still dark. Not yet. But someday.', { who: 'squid', ms: 6000 });
+    UI.say('The sea’s still down there. I’ll visit.', { who: 'squid' });
     await wait(5000);
   }
 
   async function endingLantern() {
-    script([[1.5, 'Down, then. Come on. Follow the light.', 'squid', 3500], [8, 'It follows you. Slowly. Like something very tired.', 'squid', 4000]]);
+    script([[1.5, 'Come on, then. Follow the light. This way.', 'squid'], [8, 'It’s following me. Slowly, like it’s very tired.', 'squid']]);
     let sq = smallSquid(0, 700, 300, 0.7, Math.PI / 2);
     await play((ctx, k, el, t) => {
       const g = ctx.createLinearGradient(0, 0, 0, VH);
@@ -348,7 +348,7 @@
       A.squid(ctx, sq);
     }, 14);
     const musicMs = AU.music('lantern');
-    script([[3, 'Someone has to stay where it’s dark.', 'squid', 4500], [12, '«The isles are steady,» the sea says, in its way. «They’ll stay up. As long as there is light below.»', 'squid', 6000]]);
+    script([[3, 'Somebody has to stay where it’s dark. Might as well be me.', 'squid'], [12, 'Up there, the islands have stopped sinking.', 'squid']]);
     sq = smallSquid(0, VW / 2, 560, 0.9, 0);
     await play((ctx, k, el, t) => {
       const g = ctx.createLinearGradient(0, 0, 0, VH);
@@ -382,7 +382,7 @@
   }
 
   async function endingGift() {
-    script([[1.5, 'You let it see you. All of you. Every light you have.', 'squid', 4200], [8, 'It drinks. Your hearts go quiet, one, two, three.', 'squid', 4200]]);
+    script([[1.5, 'Here. Have all of it. Every light I’ve got.', 'squid'], [8, 'My hearts are going quiet. One, two, three.', 'squid']]);
     let sq = smallSquid(0, 800, 640, 0.75, -Math.PI / 2);
     await play((ctx, k, el, t) => {
       ctx.fillStyle = '#03070c'; ctx.fillRect(-900, -900, VW + 1800, VH + 1800);
@@ -400,7 +400,7 @@
       E.updateArms(sq, 1 / 60);
       A.squid(ctx, sq);
     }, 15);
-    script([[2, 'It isn’t dark anymore. It never really was. It was a Carrier, and it was starving.', 'squid', 5200], [10, 'It climbs the thread. The isles rise to meet it.', 'squid', 4000]]);
+    script([[2, 'Oh. You were one of us.', 'squid'], [10, 'It’s climbing the waterfall. The islands are rising to meet it.', 'squid']]);
     await play((ctx, k, el, t) => {
       const g = ctx.createLinearGradient(0, 0, 0, VH);
       g.addColorStop(0, U.mixHex('#0e2538', '#e3f3f2', k)); g.addColorStop(1, U.mixHex('#020509', '#5cbcc0', k));
@@ -414,7 +414,7 @@
       ctx.save(); ctx.globalCompositeOperation = 'lighter'; A.glow(ctx, giant.x, giant.y, 600, '#fff2d0', 0.5); ctx.restore();
     }, 14);
     const musicMs = AU.music('gift');
-    script([[3, '«There you are.»', 'archivist', 3000], [7, '«Rest now. You were bright.»', 'archivist', 4000], [13, '«Nobody gets long. You spent yours on something.»', 'archivist', 5000]]);
+    script([[3, 'There you are.', 'archivist'], [7, 'Rest now. You were bright.', 'archivist'], [13, 'Nobody gets long. You spent yours on something.', 'archivist']]);
     sq = smallSquid(0, 600, 200, 0.8, Math.PI / 2 + 0.4);
     await play((ctx, k, el, t) => {
       const g = ctx.createLinearGradient(0, 0, 0, VH);
@@ -433,7 +433,7 @@
   }
 
   async function endingSong() {
-    script([[1, 'Blue. Gold. Blue. Pale.', 'squid', 2400], [4.5, '«We are here.»', 'swan', 2800], [8, '«We hear you. We’re coming down.»', 'swan', 3500]]);
+    script([[1, 'Blue, gold, blue, pale. Please work.', 'squid'], [4.5, 'We’re here.', 'swan'], [8, 'We hear you. We’re coming down.', 'swan']]);
     [0, 1, 2, 3].forEach((i) => setTimeout(() => AU.skin(['B', 'G', 'B', 'W'][i]), 400 + i * 550));
     setTimeout(() => AU.voice('swans', 3), 4200);
     const musicMs = AU.music('song');
@@ -475,7 +475,7 @@
       A.squid(ctx, sq);
       if (k > 0.85) { ctx.fillStyle = `rgba(252,250,240,${(k - 0.85) / 0.15 * 0.7})`; ctx.fillRect(-900, -900, VW + 1800, VH + 1800); }
     }, Math.max(34, musicMs / 1000 - 4), { vignette: 0.25, holdEnd: true });
-    UI.say('The isles sit on the sea now. Nothing has to hold them up. Nothing has to fall.', { who: 'squid', ms: 6000 });
+    UI.say('The islands are sitting on the sea now. Huh. That works too.', { who: 'squid' });
     await wait(5000);
   }
 

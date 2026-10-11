@@ -265,7 +265,7 @@
     ],
     hotspots: [{ id: 'mouth-out', x: 120, y: 450, r: 70, door: 'cliff-face', at: 'fromMouth' }],
     snow: 0.1,
-    onEnter() { SO.ui.thought('Drip. Drip. Something breathes in here, slow as stone.'); },
+    onEnter() { SO.ui.thought('It’s dripping in here. And something is breathing. Slowly.'); },
   });
   defs['cliff-face'].entries = { fromMouth: [1780, 520] };
 
@@ -635,7 +635,7 @@
       },
       terrain: {
         floor: T.floor, ceiling: T.ceiling,
-        floorGap: o.down ? [0.38, 0.62] : null, ceilGap: o.up ? [0.38, 0.62] : null,
+        floorGap: o.down ? [0.32, 0.68] : null, ceilGap: o.up ? [0.32, 0.68] : null,
         walls: { left: !o.left, right: !o.right },
       },
       solids: (T.pillars || []).map((p) => p.from === 'floor'

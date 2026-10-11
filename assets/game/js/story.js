@@ -17,20 +17,21 @@
   const HEART = { night: '#9a8cff', ember: '#ff8a4a', sky: '#bfe9ff' };
   const HEART_ORDER = ['night', 'ember', 'sky'];
 
+  // Chapter cards: a number and a word. The game shows the rest.
   const CARDS = {
-    1: ['Chapter One', 'The glowing object turns out to be something you never could have imagined.'],
-    2: ['Chapter Two', 'Where did you go?'],
-    3: ['Chapter Three', 'Something is coming.'],
-    4: ['Chapter Four', 'You had to go so deep, and now it is very dark. And you’re lost.'],
-    5: ['Chapter Five', 'Who would have thought that going deeper could take you to somewhere like this?'],
-    6: ['Chapter Six', 'The waters near the surface are dangerous.'],
-    7: ['Chapter Seven', 'The final gem pressed into your third heart…… the way is clear.'],
+    1: ['Chapter 1', 'Light'],
+    2: ['Chapter 2', 'Sparks'],
+    3: ['Chapter 3', 'Arms'],
+    4: ['Chapter 4', 'Down'],
+    5: ['Chapter 5', 'Shine'],
+    6: ['Chapter 6', 'Warm water'],
+    7: ['Chapter 7', 'Three hearts'],
   };
 
   // What the squid remembers about the people and things of the sea.
   const NATIVE = {
     'archivist': { kind: 'creature', name: 'The Archivist', line: 'A vampire squid: not quite squid, not quite octopus. Eats what drifts down. Keeps what falls.' },
-    'nautilus': { kind: 'creature', name: 'Elder Shell', line: 'A chambered nautilus. Its shell is on the outside. Yours is inside you now: a pen, thin as a feather.' },
+    'nautilus': { kind: 'creature', name: 'Elder Shell', line: 'A chambered nautilus. Its shell is on the outside. Mine is on the inside: a little pen, thin as a feather.' },
     'sepia': { kind: 'creature', name: 'Sepia', line: 'A cuttlefish. She talks with her whole skin and never, ever stops.' },
     'turtle': { kind: 'creature', name: 'Old Drift', line: 'A sea turtle. Has heard the swans sing. Eats moon jellies like they’re nothing.' },
     'tongue': { kind: 'creature', name: 'The Tongue', line: 'An eel that lives in the Mouth. Bad mornings, every morning.' },
@@ -41,33 +42,33 @@
     'strawberry-squid': { kind: 'creature', name: 'Strawberry squid', line: 'One big eye looks up for shadows. One small eye looks down for lights.' },
     'firefly-squid': { kind: 'creature', name: 'Firefly squid', line: 'Tiny, blue, and they only rise at night.' },
     'moon-jelly': { kind: 'creature', name: 'Moon jelly', line: 'A drifting bell with four rings in it. It doesn’t think; it just goes.' },
-    'little-fish': { kind: 'creature', name: 'Little fish', line: 'They flicker away from you. Everything does. You are very large.' },
+    'little-fish': { kind: 'creature', name: 'Little fish', line: 'They flicker away from me. Everything does. I’m very large.' },
     'shoal': { kind: 'creature', name: 'The Shoal', line: 'Silver fish in their thousands. Together, they pick things to the bone.' },
     'dimmer': { kind: 'creature', name: 'The Dimmer', line: 'Something very large that moves where the light goes out.' },
     'kelp': { kind: 'plant', name: 'Giant kelp', line: 'Forests that sway. Little gas bladders hold them up toward the light.' },
     'lantern-weed': { kind: 'plant', name: 'Lantern-weed', line: 'Glows in the deep. Dims when something big goes by.' },
     'glass-coral': { kind: 'plant', name: 'Glass-coral', line: 'Branches like frozen water. It rings, if you brush it.' },
     'bone-fan': { kind: 'plant', name: 'Bone-fan', line: 'A pale fan that sifts the falling snow.' },
-    'lumen': { kind: 'item', name: 'Lumen', line: 'Light, gone solid. It grows only in the deep, and the isles are made of wanting it.' },
+    'lumen': { kind: 'item', name: 'Lumen', line: 'Light, gone solid. It only grows in the deep, and the islands need it to stay up.' },
     'spark': { kind: 'item', name: 'Spark', line: 'A crumb of a lumen. Warm, a little.' },
-    'feather': { kind: 'item', name: 'Swan feather', line: 'It smells like the pool you grew up in.' },
+    'feather': { kind: 'item', name: 'Swan feather', line: 'It smells like the pool I grew up in.' },
     'shine': { kind: 'item', name: 'Shine', line: 'Gems the deep makes. Everyone down here wants them.' },
-    'night-gem': { kind: 'item', name: 'Night gem', line: 'A night that never ended, pressed into your first heart.' },
-    'ember-gem': { kind: 'item', name: 'Ember gem', line: 'A coal from the Forge that won’t go out. Your second heart.' },
-    'sky-gem': { kind: 'item', name: 'Sky gem', line: 'Fallen from the isles. It hums like the swans. Your third heart.' },
+    'night-gem': { kind: 'item', name: 'Night gem', line: 'A night that never ended. My first heart.' },
+    'ember-gem': { kind: 'item', name: 'Ember gem', line: 'A coal from the mountain that won’t go out. My second heart.' },
+    'sky-gem': { kind: 'item', name: 'Sky gem', line: 'It fell from the islands. It hums like the swans. My third heart.' },
   };
   const SKIN_WORDS = {
-    glow: { name: 'Glow', colors: 'G G G', line: 'Light, made of you. Photophores along your belly.' },
-    open: { name: 'Open', colors: 'R W R', line: 'Doors in Hollowglass listen to skin. So do clams.' },
-    calm: { name: 'Calm', colors: 'W B W', line: 'Pale, then shimmer, then pale. Even angry things go quiet.' },
-    cloud: { name: 'Passing cloud', colors: 'R R B', line: 'Dark bands roll over you, and you become a shadow.' },
-    wake: { name: 'Wake', colors: 'G R G R', line: 'How you wake a mountain. It isn’t polite.' },
-    call: { name: 'Call', colors: 'B G B W', line: 'The swans’ song. It means “We are here. Come home.”' },
+    glow: { name: 'Glow', colors: 'G G G', line: 'Gold, gold, gold. Little lights along my belly switch on.', learn: 'Oh. I glow. That’s great, actually.' },
+    open: { name: 'Open', colors: 'R W R', line: 'Red, pale, red. Doors in the glass city open for it. So do clams.', learn: 'Red, pale, red. Things open when I do that.' },
+    calm: { name: 'Calm', colors: 'W B W', line: 'Pale, shimmer, pale. Angry things settle down.', learn: 'Pale, shimmer, pale. That calms things down. Me included.' },
+    cloud: { name: 'Passing cloud', colors: 'R R B', line: 'Red, red, shimmer. Dark bands roll over me and I turn into a shadow.', learn: 'Red, red, shimmer. I’m a shadow now. A very big shadow.' },
+    wake: { name: 'Wake', colors: 'G R G R', line: 'Gold, red, gold, red. Wakes a mountain. Not politely.', learn: 'Gold, red, gold, red. That wakes up mountains, apparently.' },
+    call: { name: 'Call', colors: 'B G B W', line: 'Blue, gold, blue, pale. The swans’ song. It means “We’re here. Come home.”', learn: 'Blue, gold, blue, pale. I know that song.' },
   };
   const MEMORIES = {
-    1: { name: 'The pool', line: 'Glass overhead. Long necks bending down. «Grow, little Carrier.»' },
-    2: { name: 'The edge', line: 'The waterfall’s lip, and the clouds below. «Not yet.»' },
-    3: { name: 'The shaking', line: 'The isle trembling. Glass cracking. «Forgive us. Now.»' },
+    1: { name: 'The pool', line: 'Glass overhead and long necks bending down. “Grow, little Carrier.”' },
+    2: { name: 'The edge', line: 'The top of the waterfall, with the clouds below. “Not yet.”' },
+    3: { name: 'The shaking', line: 'The island shaking and the glass cracking. “We’re sorry. Now.”' },
   };
 
   const S = SO.story = {
@@ -117,13 +118,17 @@
       const base = NATIVE[key] || extra;
       if (!base) { return false; }
       const fresh = save.remember(key, Object.assign({}, base, extra || {}));
-      if (fresh) { UI.whisper('Remembered: ' + base.name); AU.page(); }
+      if (fresh) {
+        AU.page();
+        if (!save.data.flags.toldMemory) { save.flag('toldMemory'); UI.thought('I’ll remember that. Click on me any time and I’ll show you everything I remember.'); }
+      }
       return fresh;
     },
     learnSkin(name, quiet) {
       const fresh = save.learn(name);
       save.remember('skin:' + name, { kind: 'skin', name: SKIN_WORDS[name].name, line: SKIN_WORDS[name].line, colors: SKIN_WORDS[name].colors });
-      if (fresh && !quiet) { AU.learned(); UI.whisper('A skin-word: ' + SKIN_WORDS[name].name); }
+      if (fresh && !quiet) { AU.learned(); UI.thought(SKIN_WORDS[name].learn); }
+      if (!this.has('skinRevealed')) { this.flag('skinRevealed'); }
       SO.main.showSkin(true);
       this.rt.lastProgressAt = E.t;
       return fresh;
@@ -131,7 +136,7 @@
     onLearnedByAccident(name) {
       save.remember('skin:' + name, { kind: 'skin', name: SKIN_WORDS[name].name, line: SKIN_WORDS[name].line, colors: SKIN_WORDS[name].colors });
       AU.learned();
-      UI.whisper('A skin-word you didn’t know you knew: ' + SKIN_WORDS[name].name);
+      UI.thought('Huh. I didn’t know I could do that. ' + SKIN_WORDS[name].learn);
     },
 
     async chapter(n, opts = {}) {
@@ -145,7 +150,7 @@
     giveItem(key, label) {
       save.give(key, true);
       AU.pickup();
-      if (label) { UI.whisper(label); }
+      if (label) { UI.thought(label); }
       this.rt.lastProgressAt = E.t;
     },
 
@@ -171,7 +176,7 @@
       this.remember(name + '-gem');
       await wait(900);
       if (save.data.hearts.length === 1) {
-        await UI.say('Three hearts. Two push blood through your gills; one pushes it everywhere else. Your blood is blue.', { who: 'squid' });
+        await UI.say('I have three hearts? Two for my gills and one for everything else. And my blood is blue. Today is a lot.', { who: 'squid' });
       }
       E.focus(null);
       E.unlock();
@@ -184,31 +189,31 @@
     // ── Hints: the squid's own memory, when it has been a while ────────────────
     hint() {
       const d = save.data, f = d.flags, it = d.items, ch = d.chapter;
-      if (ch === 0) { return save.knows('glow') ? 'Something is glowing, far below.' : (E.roomKey === 'sinking' ? 'The light below pulses three times. Your skin wants to answer.' : 'Down. There was a light down there.'); }
+      if (ch === 0) { return save.knows('glow') ? 'Something’s glowing, way down there. I should go look.' : (E.roomKey === 'sinking' ? 'The light down there blinks three times. Maybe I could blink back. Gold, gold, gold?' : 'There was a light down there. Below the place I sank.'); }
       if (ch === 1) {
-        if (!f.metArchivist) { return 'There’s a way into the dome, low down at its base.'; }
+        if (!f.metArchivist) { return 'There’s a crack at the bottom of that dome. I bet I fit.'; }
         if (!f.petalOpen) { return 'The petal door listens to skin. Red, pale, red.'; }
-        if ((f.panels || 0) < 3) { return 'The pictures in the glass. Look closer.'; }
-        return 'The Archivist will want to know what you saw.';
+        if ((f.panels || 0) < 3) { return 'There are pictures in the glass. I should look closer.'; }
+        return 'The Archivist will want to know what I saw.';
       }
       if (ch === 2) {
         const left = [];
         if (!it.spark_cave && !f.sparkCaveGiven) { left.push('the Mouth in the cliff'); }
         if (!it.spark_kelp && !f.sparkKelpGiven) { left.push('the swaying forest'); }
         if (!it.spark_bright && !f.sparkBrightGiven) { left.push('the bright, up top'); }
-        if (left.length) { return 'Sparks: ' + left.join(', ') + '.'; }
-        return 'Bring the sparks to the Archivist.';
+        if (left.length) { return 'Sparks still to find: ' + left.join(', ') + '.'; }
+        return 'I should take the sparks to the Archivist.';
       }
-      if (ch === 3) { return 'Down. Away from the light. When it comes, hide, or become a shadow.'; }
-      if (ch === 4) { return 'Two tiny stones in your head tell you which way is down. And the snow drifts somewhere.'; }
+      if (ch === 3) { return 'Down, away from the light. When it comes, I hide under something. Or go dark.'; }
+      if (ch === 4) { return 'The snow drifts toward something. I could follow it.'; }
       if (ch === 5) {
-        if (d.hearts.indexOf('night') === -1) { return d.gems >= 5 ? 'Five shines. The Keeper is waiting.' : `The Keeper wants five shines. You have ${d.gems}. The dark rooms above glitter here and there.`; }
-        if (d.hearts.indexOf('ember') === -1) { return 'The mountain makes ember when it wakes. Gold, red, gold, red.'; }
-        return 'The Riser, above the Keeper.';
+        if (d.hearts.indexOf('night') === -1) { return d.gems >= 5 ? 'Five shiny things. The Keeper’s waiting.' : `The Keeper wants five shiny things. I have ${d.gems}. The dark bits upstairs had some.`; }
+        if (d.hearts.indexOf('ember') === -1) { return 'The mountain makes ember when it wakes up. Gold, red, gold, red.'; }
+        return 'Back to the Keeper. Then up.';
       }
-      if (ch === 6) { return 'Where the sky pours into the sea. And keep out of the warm water.'; }
-      if (ch === 7) { return 'Up the glowing thread. Or down, into the dark.'; }
-      return 'The world is yours now. Look around.';
+      if (ch === 6) { return 'Where the sky pours into the sea. And stay out of the warm water.'; }
+      if (ch === 7) { return 'Up the glowing waterfall. Or down into the dark.'; }
+      return 'Nothing urgent. I could just look around.';
     },
     onActivity() { this.rt.lastActiveAt = E.t; },
 
@@ -251,14 +256,14 @@
       if (this.rt.lastProgressAt === undefined) { this.rt.lastProgressAt = E.t; }
       if (!E.locked && E.t - this.rt.lastProgressAt > 120 && (!this.rt.hintAt || E.t - this.rt.hintAt > 90)) {
         this.rt.hintAt = E.t;
-        UI.thought(this.hint(), 6000);
+        UI.thought(this.hint());
       }
     },
 
     onBreach(room) {
       const n = (this.rt.breaches = (this.rt.breaches || 0) + 1);
-      if (n === 1 && this.ch < 3) { UI.thought('For a moment: the sky. The isles, so far up. Too far.'); }
-      else if (n === 3) { UI.thought('Some squid can glide on the wind for a little while. Small ones.'); }
+      if (n === 1 && this.ch < 3) { UI.thought('Up there! That’s where I fell from. It’s a long way up.'); }
+      else if (n === 3) { UI.thought('Some squid can glide through the air. Apparently not me.'); }
       const h = ROOMS[room.key];
       if (h && h.breach) { h.breach.call(this, room); }
     },
@@ -266,17 +271,17 @@
     exitBlocked(room, dir, to) {
       const ch = this.ch;
       if (ch >= 8) { return null; }
-      if (room.key === 'open-blue' && dir === 'right' && ch < 6) { return 'The current pushes back. Far ahead, water roars.'; }
-      if (room.key === 'trench-lip' && dir === 'down' && ch < 3) { return 'Your skin goes pale. Not down there. Not yet.'; }
-      if (room.key === 'keeper-hall' && dir === 'up' && !this.riserOpen()) { return 'Warm water rushes up through the roof. The Keeper watches you. Not yet.'; }
-      if (room.key === 'plunge' && dir === 'down' && ch < 7) { return 'The falling water pins you back. Too strong.'; }
+      if (room.key === 'open-blue' && dir === 'right' && ch < 6) { return 'The current keeps pushing me back. Something’s roaring out there.'; }
+      if (room.key === 'trench-lip' && dir === 'down' && ch < 3) { return 'Nope. Not going down there. Not yet.'; }
+      if (room.key === 'keeper-hall' && dir === 'up' && !this.riserOpen()) { return 'Warm water’s rushing up through the roof. The Keeper is watching me. Not yet.'; }
+      if (room.key === 'plunge' && dir === 'down' && ch < 7) { return 'The falling water pushes me right back up.'; }
       if (room.key === 'trench-floor' && dir === 'down' && !this.has('fellThrough')) { return 'Solid rock.'; }
-      if (room.key === 'warm-shallows' && dir === 'down' && ch < 7) { return 'The Riser pushes up. There is no going back that way.'; }
+      if (room.key === 'warm-shallows' && dir === 'down' && ch < 7) { return 'The Riser pushes up. I can’t go back that way.'; }
       return null;
     },
 
     doorBlocked(o) {
-      if (o.id === 'mouth-door' && !E.squid.glowOn) { return save.knows('glow') ? 'Too dark in there to see a thing. Make some light.' : 'Too dark in there to see a thing.'; }
+      if (o.id === 'mouth-door' && !E.squid.glowOn) { return save.knows('glow') ? 'It’s pitch black in there. I could make some light.' : 'It’s pitch black in there. I’d need a light.'; }
       return null;
     },
 
@@ -286,7 +291,7 @@
       if (o.type === 'species') { this.touchSpecies(o); }
       if (o.type === 'gem') { this.touchGem(o, room); }
       if (o.type === 'memory') { this.touchMemory(o); }
-      if (o.type === 'trace') { UI.whisper(`Someone was here first. Their colors still hang in the water: ${o.by.split('-').join(', ')}.`, 6500); }
+      if (o.type === 'trace') { UI.thought(`Someone was here before me. Their colors are still in the water: ${o.by.split('-').join(', ')}.`); }
       if (o.type === 'dumbo') { this.touchDumbo(o); }
     },
 
@@ -296,7 +301,7 @@
       if (name === 'call' && (this.ch === 7) && ['plunge', 'plunge-deep'].includes(room.key)) { this.tryCall(); return true; }
       if (name === 'glow' && this.ch === 3 && CHASE_ROOMS[room.key] && E.squid.glowOn && this.rt.chase) {
         this.rt.chase.phase = 'warn'; this.rt.chase.t = 1;// it noticed
-        UI.thought('No— it sees light!');
+        UI.thought('Oh no. It saw my light!');
       }
       return false;
     },
@@ -326,10 +331,10 @@
       if (!fresh) { return; }
       if (a.isNew) {
         AU.discover();
-        UI.whisper(`No one has ever seen this before. You will call it ${sp.name}.`, 7000);
+        UI.thought(`I’ve never seen one of these. Nobody has. I’m calling it ${sp.name}.`);
       } else {
         AU.page();
-        UI.whisper(`${sp.name}. First seen by ${sp.discoveredBy || 'someone'}.`, 5500);
+        UI.thought(`A ${sp.name}. ${sp.discoveredBy || 'Somebody'} found the first one.`);
       }
       this.rt.lastProgressAt = E.t;
     },
@@ -341,7 +346,7 @@
         a.hidden = true;
         save.data.items[a.id] = true;
         save.data.gems++;
-        this.giveItem('shine-any', `Shine: ${save.data.gems}`);
+        this.giveItem('shine-any', save.data.gems === 1 ? 'Ooh, shiny. I’ll keep that.' : `Shiny. That’s ${save.data.gems} now.`);
         this.remember('shine');
         return;
       }
@@ -351,22 +356,22 @@
       if (r.ok) {
         a.hidden = true;
         save.data.gems++;
-        this.giveItem('shine-any', `Shine: ${save.data.gems}`);
+        this.giveItem('shine-any', save.data.gems === 1 ? 'Ooh, shiny. I’ll keep that.' : `Shiny. That’s ${save.data.gems} now.`);
         this.remember('shine');
       } else if (r.status === 409) {
         a.dust = 0.01;
         AU.deny();
-        UI.whisper('It crumbles as you touch it. Someone else took this light already. It will grow back.', 5500);
+        UI.thought('It crumbled. Somebody beat me to it. It’ll grow back, I think.');
       }
     },
     touchDumbo(a) {
       this.remember('hoard');
       const vent = SO.world.vent();
-      const lines = ['Shiny?', 'Mine.', 'Ours!', 'Big. So big.', 'Do you have shine? Give.'];
+      const lines = ['Shiny?', 'Mine.', 'Ours!', 'Big. So big.', 'Got shine? Give.'];
       if (vent && vent.wokenBy && vent.phase !== 'dormant') { lines.push(`${vent.wokenBy} woke the mountain. So noisy.`); }
       const ot = (save.endings || []).length;
       if (ot) { lines.push('You again! You came back down.'); }
-      UI.say(lines[Math.floor(Math.random() * lines.length)], { who: 'hoard', voice: 'hoard', ms: 2400 });
+      UI.say(lines[Math.floor(Math.random() * lines.length)], { who: 'hoard', voice: 'hoard' });
     },
     async touchMemory(a) {
       if (a.hidden) { return; }
@@ -426,7 +431,7 @@
         if (k >= 1) {
           c.phase = 'calm'; c.t = 0; c.dur = 5 + Math.random() * 3 + caughtHere * 3;
           if (dim) { dim.state.alpha = 0; dim.x = -2000; }
-          if (!this.rt.sweptOnce) { this.rt.sweptOnce = true; UI.thought('It passed. It’s still out there.'); }
+          if (!this.rt.sweptOnce) { this.rt.sweptOnce = true; UI.thought('It went past. It’s still out there, though.'); }
         }
       }
     },
@@ -441,7 +446,7 @@
       await UI.fade(1, 500, '#000');
       AU.heartbeat(); await wait(700); AU.heartbeat(); await wait(700);
       const n = this.rt.caught[room.key];
-      UI.thought(n === 1 ? 'Cold. It went through you like cold. You don’t remember getting away.' : (n === 2 ? 'Under a ledge. Or a passing cloud: red, red, shimmer.' : 'Again. You are still here. Somehow.'), 5000);
+      UI.thought(n === 1 ? 'That was cold. I don’t remember getting away.' : (n === 2 ? 'Next time I hide under a ledge. Or go dark: red, red, shimmer.' : 'Still here. Somehow.'));
       const entry = room.def.entries && room.def.entries.default ? { pos: room.def.entries.default } : { from: 'up' };
       E.placeSquid(entry);
       E.squid.vx = E.squid.vy = 0;
@@ -459,9 +464,9 @@
       const shallow = sq.y < 560;
       this.rt.heat = U.clamp((this.rt.heat || 0) + (shallow ? dt / 9 : -dt / 5), 0, 1.2);
       sq.fear = Math.max(sq.fear, this.rt.heat * 0.6);
-      if (this.rt.heat > 0.55 && !this.rt.heatWarned) { this.rt.heatWarned = true; UI.thought('Warm water holds less of what you breathe. Your blue blood hates it. Stay low.'); }
+      if (this.rt.heat > 0.55 && !this.rt.heatWarned) { this.rt.heatWarned = true; UI.thought('It’s too warm up here. Warm water doesn’t hold much air. I should stay low.'); }
       if (this.rt.heat > 1 && !sq.auto && !E.locked) {
-        UI.thought('Too warm. You can’t breathe up here—');
+        UI.thought('Too warm. Going down.');
         const ty = Math.min(room.h - 160, room.floor ? room.floorY(sq.x) - 120 : room.h - 160);
         sq.auto = { x: sq.x, y: ty, speed: 0.6, done: () => {} };
         setTimeout(() => { if (sq.auto) { sq.auto = null; } }, 2500);
@@ -491,7 +496,7 @@
       if (this.rt.ending) { return; }
       if (save.data.memories.length < 3) {
         AU.deny();
-        UI.thought('The song comes out wrong. You don’t remember enough of it. Of them.', 5000);
+        UI.thought('That came out wrong. I don’t remember enough of the song yet.');
         return;
       }
       this.ending('song');
@@ -524,8 +529,8 @@
       E.unlock();
       await E.goto(where, { instant: true });
       await wait(800);
-      UI.thought({ return: 'You came back down. Of course you did. There’s so much you haven’t seen.', lantern: 'The deep is brighter now. You did that.', gift: 'Dim, and quiet, and still here. Rest a while.', song: 'The isles sit on the sea now, and the light goes all the way down.' }[kind], 7000);
-      setTimeout(() => UI.whisper('The world remembers what everyone did. Ask it: connect an MCP client to ' + location.origin + '/mcp/safe', 12000), 9000);
+      UI.thought({ return: 'I came back down. Of course I did. There’s so much I haven’t seen.', lantern: 'It’s brighter down here now. I did that.', gift: 'Dim, quiet, and still here. I’ll rest a bit.', song: 'The islands are sitting on the sea now. The light goes all the way down.' }[kind]);
+      UI.whisper('The sea remembers what everyone did, and it answers questions. Connect an MCP client to ' + location.origin + '/mcp/safe');
     },
   };
 
@@ -536,7 +541,7 @@
 
   async function afterEmber() {
     if (!S.has('emberGot')) { S.flag('emberGot'); }
-    UI.thought('Two hearts lit. The Keeper will want to know.');
+    UI.thought('Two hearts lit. The Keeper will want to hear about this.');
   }
 
   const ROOMS = {
@@ -545,7 +550,7 @@
       enter(room, prev) {
         if (!S.has('splashSeen')) {
           S.flag('splashSeen');
-          setTimeout(() => UI.thought('Cold. Quiet. Heavy.'), 1800);
+
         }
         if (S.seaDay().name === 'night') { E.ambient.push(...Array.from({ length: 10 }, (_, i) => ({ type: 'firefly', x: Math.random() * room.w, y: 220 + Math.random() * 300, vx: 0, vy: 0, a: Math.random() * 6, t: 0, seed: i * 9, s: 0.5 }))); }
       },
@@ -554,10 +559,14 @@
     sinking: {
       update(room, dt) {
         if (save.knows('glow')) { return; }
-        if (this.rt.roomT > 3 && !this.rt.glowTaught) {
+        if (this.rt.roomT > 3 && !this.rt.glowTaught && !E.locked && !UI.talking) {
           this.rt.glowTaught = true;
-          SO.main.showSkin(true);
-          UI.thought('The light below pulses. Three times. Your skin itches to answer.', 6500);
+          UI.say('That light down there is blinking at me. Three times, then nothing. Then three times again.', { who: 'squid' }).then(() => {
+            this.flag('skinRevealed');
+            SO.main.showSkin(true);
+          });
+          UI.thought('My skin is doing something. Four colors? I didn’t know I had four colors.');
+          UI.thought('Maybe if I blink gold three times, it’ll blink back.');
         }
         // the gold button breathes in time with the light below
         if (this.rt.glowTaught) {
@@ -570,7 +579,7 @@
           this.flag('glowLearned');
           this.learnSkin('glow');
           SO.main.breatheSkin('G', 0);
-          setTimeout(() => UI.thought('Light. Made of you.'), 900);
+
           return true;
         }
         return false;
@@ -578,7 +587,7 @@
     },
 
     'glow-below': {
-      enter() { if (!save.knows('glow')) { SO.main.showSkin(true); } },
+      enter() { if (this.has('skinRevealed')) { SO.main.showSkin(true); } },
     },
 
     'hollowglass-rim': {
@@ -588,12 +597,12 @@
           E.focus(1560, 400, 0.6);
           await wait(1800);
           await this.chapter(1);
-          await UI.say('…home?', { who: 'squid' });
+          await UI.say('Wait. I know these domes.', { who: 'squid' });
           E.focus(null);
           E.unlock();
-          setTimeout(() => UI.thought('It’s just like the domes up there. But down here. Broken.'), 2500);
+          setTimeout(() => UI.thought('It’s one of the domes from up there. On the bottom of the sea. That seems bad.'), 2500);
         }
-        if (this.ch === 3 && !this.has('ch3RimSaid')) { this.flag('ch3RimSaid'); UI.thought('Down. Away from here. Find somewhere to hide when it comes.'); }
+        if (this.ch === 3 && !this.has('ch3RimSaid')) { this.flag('ch3RimSaid'); UI.thought('Down. Away from here. If it comes back, I need somewhere to hide.'); }
       },
     },
 
@@ -607,7 +616,7 @@
           lumen.sparks = ['#ffd9a0', '#b6ffa0', '#fff6c8'].slice(0, n);
           lumen.level = this.hollowLight();
         }
-        if (this.ch === 3 && !this.has('ch3HallSaid')) { this.flag('ch3HallSaid'); UI.thought('Dark. Empty. Get out— go down.'); }
+        if (this.ch === 3 && !this.has('ch3HallSaid')) { this.flag('ch3HallSaid'); UI.thought('Empty and dark. I should go. Down.'); }
       },
       update(room, dt) {
         const lumen = E.actor('lumen');
@@ -618,13 +627,13 @@
         if (o.id === 'archivist') { await archivistTalk.call(this, room); }
         if (o.id === 'petal-door') {
           if (this.petalOpen() >= 1) { E.goto('mural-room', { at: 'fromHall' }); }
-          else if (!this.has('metArchivist')) { UI.thought('Petals of glass, shut tight.'); }
-          else { UI.thought('Red. Pale. Red.'); }
+          else if (!this.has('metArchivist')) { UI.thought('Glass petals. Closed. I’m not going to force them. I’d break them. Or me.'); }
+          else { UI.thought('Red, pale, red. That’s what she did.'); }
         }
         if (o.id === 'lumen') {
           this.remember('lumen');
           if (this.ch === 2) { await archivistTalk.call(this, room); }
-          else if (this.ch < 2) { UI.thought('A crystal, the size of you. Its light comes and goes, like breathing. Like dying.'); }
+          else if (this.ch < 2) { UI.thought('A crystal as big as me. Its light keeps flickering, like it’s tired.'); }
         }
       },
       pattern(name, room) {
@@ -634,7 +643,7 @@
           AU.door();
           if (!save.knows('open')) { this.learnSkin('open'); }
           const arch = E.actor('archivist');
-          if (arch && !arch.hidden) { setTimeout(() => UI.say('There. You’re not hopeless.', { who: 'archivist', voice: 'archivist', name: 'The Archivist' }), 1200); }
+          if (arch && !arch.hidden) { UI.say('There you go. Not hopeless after all.', { who: 'archivist', voice: 'archivist' }); }
           return true;
         }
         return false;
@@ -653,20 +662,20 @@
           this.flag('panelSeen', seen);
           this.flag('panels', Object.keys(seen).length);
           const lines = {
-            1: 'Squids, carrying light. Swimming up the falling water.',
-            2: 'The isles. Held up by… light?',
-            3: 'A pool under glass. Long necks bowed over it. You know this place.',
-            4: 'Something with too many arms, eating the lights one by one.',
-            5: 'Broken. Someone is falling.',
+            1: 'Squids carrying lights up a waterfall. Up a waterfall! Show-offs.',
+            2: 'The islands, sitting on beams of light. From down here? That can’t be right.',
+            3: 'A pool under glass, with long necks bending over it. I think I lived there.',
+            4: 'Something with a lot of arms, eating the lights. I’m going to try not to think about that one.',
+            5: 'This one’s broken. Someone’s falling. I don’t like how familiar that is.',
           };
-          UI.thought(lines[o.panel], 5000);
+          UI.thought(lines[o.panel]);
         }
       },
     },
 
     'cliff-face': {
       enter() {
-        if (!this.has('cliffSeen')) { this.flag('cliffSeen'); setTimeout(() => UI.thought('A wall of rock. It goes up past the light and down past the dark. And a mouth in it.'), 1200); }
+        if (!this.has('cliffSeen')) { this.flag('cliffSeen'); setTimeout(() => UI.thought('That’s a big rock. It goes up past the light and down past the dark. There’s a hole in it, too.'), 1200); }
       },
     },
 
@@ -687,7 +696,7 @@
           sq.vx = (sq.x - tongue.x) / d * 700; sq.vy = (sq.y - tongue.y) / d * 500;
           AU.noise({ dur: 0.3, freq: 900, q: 2, gain: 0.3, sweep: 0.4 });
           this.remember('tongue');
-          UI.thought(this.rt.snaps ? 'It bit at you again.' : 'Teeth! It does not want visitors.');
+          UI.thought(this.rt.snaps ? 'It bit at me again. I’m sensing a theme.' : 'Teeth! Lots of teeth.');
           this.rt.snaps = (this.rt.snaps || 0) + 1;
           setTimeout(() => { this.rt.snapCool = false; }, 1500);
         }
@@ -708,7 +717,7 @@
           if (!save.knows('calm')) { this.learnSkin('calm'); }
           AU.voice('nautilus', 2);
           const spark = E.actor('spark-cave'); if (spark) { spark.touch = true; }
-          setTimeout(() => UI.say('Good. Slowly does it.', { who: 'other', voice: 'nautilus', name: 'Elder Shell' }), 1500);
+          UI.say('Good. Slowly does it.', { who: 'nautilus', voice: 'nautilus' });
           setTimeout(() => { tongue.hidden = true; }, 5000);
           return true;
         }
@@ -748,9 +757,9 @@
       touch(o) {
         if (o.id === 'feather') {
           E.removeActor('feather');
-          this.giveItem('feather', 'A swan feather.');
+          this.giveItem('feather', 'A swan feather!');
           this.remember('feather');
-          setTimeout(() => UI.thought('It smells like the pool. Like home. How did it get all the way down here?'), 1500);
+          UI.thought('It smells like home. How did it get all the way down here?');
         }
         if (o.id === 'spark-kelp') { E.removeActor('spark-kelp'); this.giveItem('spark_kelp', 'A spark, from the heart of the Swaying.'); this.remember('spark'); }
       },
@@ -759,7 +768,7 @@
     'bright-reef': {
       enter(room) {
         this.rt.glare = this.d.visited['bright-reef'] === 1 ? 0.85 : 0.5;
-        if (this.d.visited['bright-reef'] === 1) { setTimeout(() => UI.thought('So bright. So, so bright. Your eyes are made for the dark.'), 1600); }
+        if (this.d.visited['bright-reef'] === 1) { UI.thought('Too bright! My eyes are made for the dark.'); }
         const raft = E.actor('raft');
         if (raft) { raft.holding = (save.data.items.spark_bright || this.has('spark_brightGiven') || this.has('raftKnocked')) ? null : '#fff6c8'; }
         if (this.has('raftKnocked') && !save.data.items.spark_bright && !this.has('spark_brightGiven')) {
@@ -776,7 +785,7 @@
           AU.bell(AU.NOTE(88), { gain: 0.06 });
           const sp = E.addActor(room, { id: 'spark-bright', type: 'spark', x: raft.x + 10, y: room.surfaceY + 10, color: '#fff6c8' });
           sp.falling = true;
-          UI.thought('The glass rocked— and something bright tumbled into the water.');
+          UI.thought('Got it! Something bright fell out.');
         }
       },
       update(room, dt) {
@@ -793,7 +802,7 @@
       },
     },
 
-    'cliff-foot': { enter() { if (this.ch === 3) { UI.thought('Lower. Keep going down.'); } } },
+    'cliff-foot': { enter() { if (this.ch === 3) { UI.thought('Lower. Keep going.'); } } },
 
     'trench-floor': {
       async enter(room) {
@@ -812,16 +821,17 @@
         this.rt.belowSteps = (this.rt.belowSteps || 0) + 1;
         if (tile._first) {
           AU.discover();
-          UI.whisper('No one has ever been here before.', 4500);
+          UI.thought('Nobody’s ever been here before. Not even me.');
         }
         room.actors.filter((a) => a.type === 'species').forEach((a) => this.spawnSpecies(a));
         if (this.rt.belowSteps === 7 && !this.has('statocyst')) {
           this.flag('statocyst');
-          setTimeout(() => UI.thought('Two tiny stones in your head tell you which way is down. You trust them. And the snow drifts, always toward something.', 7000), 1500);
+          UI.thought('There are two tiny stones in my head that tell me which way is down. I’m choosing to trust them.');
+          UI.thought('Also, the snow is drifting one way. That has to mean something.');
         }
         // Lost for a while: the current gets stronger. (It was always there.)
         if (this.rt.belowSteps > 9) { room.def.drift = room.def.drift.map((v) => v * 2.2); room.def.snow = 1; }
-        if (this.rt.belowSteps === 3) { setTimeout(() => UI.thought('Which way is up? You think you know. You’re not sure.'), 1200); }
+        if (this.rt.belowSteps === 3) { UI.thought('Which way is up? I think I know. I’m not sure I know.'); }
         // Flashbacks come when you're lost. They come from somewhere.
       },
     },
@@ -831,7 +841,7 @@
         if (this.ch < 5) {
           await wait(1200);
           await this.chapter(5);
-          UI.thought('Light. So much light. Below the dark, of all places.');
+          UI.thought('Light! Below the dark. That’s backwards. I love it.');
         }
       },
     },
@@ -856,9 +866,9 @@
         const vent = E.actor('vent');
         await this.refreshVent(vent);
         const v = SO.world.vent();
-        if (v.phase === 'dormant') { UI.thought(save.knows('wake') ? 'The mountain sleeps. You know how to wake a mountain.' : 'A black mountain, asleep. Warm, even asleep.'); }
-        else if (v.phase === 'erupting') { UI.whisper(`The Forge is erupting. ${v.wokenBy ? v.wokenBy + ' woke it.' : ''}`, 6000); }
-        else { UI.whisper(`The Forge is cooling. ${v.wokenBy ? v.wokenBy + ' woke it, not long ago.' : ''}`, 6000); }
+        if (v.phase === 'dormant') { UI.thought(save.knows('wake') ? 'The mountain’s asleep. I know how to wake a mountain. Gold, red, gold, red.' : 'A black mountain. It’s warm, even asleep.'); }
+        else if (v.phase === 'erupting') { UI.thought(`The mountain’s erupting! ${v.wokenBy ? v.wokenBy + ' woke it up.' : ''}`); }
+        else { UI.thought(`The mountain is cooling down. ${v.wokenBy ? v.wokenBy + ' woke it, not long ago.' : ''}`); }
         this.placeEmber(room, v);
       },
       update(room, dt) {
@@ -867,7 +877,7 @@
         const vent = E.actor('vent'), sq = E.squid;
         if (vent && vent.phase === 'erupting' && U.dist(sq.x, sq.y, vent.x, vent.y - 200) < 230) {
           sq.vx += (sq.x - vent.x) * 4 * dt; sq.vy += 300 * dt;
-          if (!this.rt.hotSaid) { this.rt.hotSaid = true; UI.thought('Too hot!'); setTimeout(() => { this.rt.hotSaid = false; }, 4000); }
+          if (!this.rt.hotSaid) { this.rt.hotSaid = true; UI.thought('Hot! Hot.'); setTimeout(() => { this.rt.hotSaid = false; }, 4000); }
         }
       },
       async pattern(name, room) {
@@ -883,9 +893,9 @@
             AU.voice('dimmer', 1); AU.noise({ dur: 4, freq: 90, q: 0.7, gain: 0.5, sweep: 2 });
             E.ring(vent.x, vent.y - 200, '#ff8a3a', 1400, 3);
             vent.eruptions = (vent.eruptions || 0) + 1;
-            UI.whisper('You woke the Forge. Everyone in the sea will feel it.', 6500);
+            UI.thought('I woke the mountain. Everyone in the sea is going to feel that.');
           } else {
-            UI.whisper(r.body.vent.phase === 'dormant' ? 'Nothing.' : `It’s already awake. ${r.body.vent.wokenBy || 'Someone'} saw to that.`, 5000);
+            UI.thought(r.body.vent.phase === 'dormant' ? 'Nothing happened.' : `It’s already awake. ${r.body.vent.wokenBy || 'Somebody'} got here first.`);
           }
           setTimeout(() => this.placeEmber(room, r.body.vent), 3500);
         }
@@ -894,7 +904,7 @@
     },
 
     riser: {
-      enter() { if (!this.has('riserSaid')) { this.flag('riserSaid'); UI.thought('Up, up, up. The water gets warmer.'); } },
+      enter() { if (!this.has('riserSaid')) { this.flag('riserSaid'); UI.thought('Up, up, up. It’s getting warmer.'); } },
     },
 
     'warm-shallows': {
@@ -902,7 +912,7 @@
         if (this.ch < 6) {
           await wait(800);
           await this.chapter(6);
-          UI.thought('Warm. Bright. Everything up here is hungry. But there must be a reason you came.');
+          UI.thought('Warm, bright, and everything looks hungry. I came up here for a reason. I think.');
         }
       },
     },
@@ -914,7 +924,7 @@
         const hum = E.actor('humboldts');
         if (hum && this.has('humboldtsGone')) { hum.hidden = true; }
         E.addActor(room, { id: 'shoal', type: 'shoalSwarm', x: -800, y: 400, front: true });
-        if (!this.has('reefSaid')) { this.flag('reefSaid'); setTimeout(() => UI.thought('Little dark holes in the coral. Just big enough to hide in, if you had to.'), 1500); }
+        if (!this.has('reefSaid')) { this.flag('reefSaid'); UI.thought('Little dark holes in the coral. Squid-sized, if I squeeze.'); }
       },
       update(room, dt) {
         this.rt.statePoll = (this.rt.statePoll || 0) + dt;
@@ -925,7 +935,7 @@
         if (!sh.passing && sh.in < 9000 && !this.rt.shoalWarned) {
           this.rt.shoalWarned = true;
           AU.noise({ dur: 6, freq: 2200, q: 0.4, gain: 0.08, sweep: 1.4, attack: 4 });
-          UI.thought('The water trembles. The little fish are fleeing.');
+          UI.thought('The water’s trembling, and the little fish are leaving. I should probably leave too.');
         }
         if (swarm) {
           swarm.passing = sh.passing;
@@ -946,7 +956,7 @@
           const sq = E.squid;
           sq.vx = (sq.x - o.x) * 3; sq.vy = -200;
           AU.tock(AU.NOTE(64), { gain: 0.08 }); AU.tock(AU.NOTE(66), { gain: 0.08, when: 0.08 });
-          UI.thought(this.rt.devils ? 'They shove you back, flashing red-white-red-white.' : 'Red devils. Cousins, and not the friendly kind. They’re all nerves.');
+          UI.thought(this.rt.devils ? 'They shoved me. Red, white, red, white. Rude.' : 'Red devils. They’re cousins, but not the nice kind.');
           this.rt.devils = true;
         }
       },
@@ -955,7 +965,7 @@
         if (name === 'calm' && hum && !hum.leaving && U.dist(E.squid.x, E.squid.y, hum.x, hum.y) < 800) {
           hum.leaving = true; hum.dir = hum.x > E.squid.x ? 1 : -1;
           this.flag('humboldtsGone');
-          UI.say('…Fine. FINE.', { who: 'other', name: 'Red devils', ms: 2200 });
+          UI.say('Fine. FINE.', { who: 'devils' });
           return true;
         }
         return false;
@@ -969,7 +979,7 @@
         const th = room.hotspots.find((h) => h.id === 'thread');
         if (th) { th.hidden = this.ch !== 7; }
         if (this.ch === 7 && !this.rt.ending) { this.addRisingDimmer(room); }
-        if (!this.has('plungeSaid') && this.ch === 6) { this.flag('plungeSaid'); setTimeout(() => UI.thought('Water falling out of the sky. All the way from up there. The sound fills your whole body.'), 1500); }
+        if (!this.has('plungeSaid') && this.ch === 6) { this.flag('plungeSaid'); UI.thought('Water falling out of the sky, all the way from up there. It’s so loud.'); }
       },
       update(room, dt) {
         const sq = E.squid;
@@ -984,14 +994,14 @@
           E.showPattern(1190, room.surfaceY - 300, 'call', { voice: 12, gap: 750, above: 0 }).then(() => {
             if (!save.knows('call')) {
               this.learnSkin('call');
-              UI.thought(save.data.memories.length ? 'It’s the song from the pool. You know what it means: “We are here. Come home.”' : 'High and far away, like wind in glass. Blue, gold, blue, pale.', 7000);
+              UI.thought(save.data.memories.length ? 'That’s the song from the pool. I know what it means. “We’re here. Come home.”' : 'Something’s singing way up there. Blue, gold, blue, pale.');
             }
           });
         }
         if (this.ch === 7) { this.updateClimaxPlunge(room, dt); }
       },
       touch(o) {
-        if (o.id === 'clam' && !o.isOpen) { UI.thought(save.knows('open') ? 'A clam the size of a boulder, shut tight. Red, pale, red?' : 'A clam the size of a boulder, shut tight.'); }
+        if (o.id === 'clam' && !o.isOpen) { UI.thought(save.knows('open') ? 'A clam the size of a boulder, shut tight. Red, pale, red, maybe?' : 'A clam the size of a boulder, shut tight.'); }
         if (o.id === 'clam' && o.isOpen && o.holding) {
           o.holding = null;
           this.heart('sky').then(() => climaxBegin.call(this, SO.E.room));
@@ -1015,7 +1025,7 @@
         dim.state = { alpha: 1, size: 1.6, spread: 2.4, reach: 75, dirY: 1, angle: 0, eye: 0 };
         E.dread = 0.8;
         this.rt.faceT = 0;
-        UI.thought('Down, toward it. Toward the hungry dark.');
+        UI.thought('Down, toward it. This is either very brave or very silly.');
       },
       update(room, dt) {
         if (this.ch !== 7 || this.rt.ending) { return; }
@@ -1035,9 +1045,9 @@
               E.focus(dim.x, dim.y - 200, 0.8);
               AU.voice('dimmer', 1);
               await wait(1600);
-              await UI.say('Up close it’s… a squid. Like you. So big. Blind from the dark.', { who: 'squid' });
-              await UI.say('Hooks along its arms. You look at your own arms. Hooks.', { who: 'squid' });
-              await UI.say('It is so hungry. It wants your light. Or maybe it only wants to stop.', { who: 'squid' });
+              await UI.say('Up close it’s a squid. Like me, only huge. And blind.', { who: 'squid' });
+              await UI.say('It has hooks on its arms. I have hooks on my arms. Oh.', { who: 'squid' });
+              await UI.say('It wants my light. Or maybe it just wants to stop.', { who: 'squid' });
               this.remember('dimmer', { line: 'A Carrier who came down for the light and never went back up. A colossal squid, like you.' });
               E.focus(null);
               E.unlock();
@@ -1047,7 +1057,7 @@
           if (this.rt.faceT > 30) {
             this.rt.faceT = 0;
             sq.vy = -900;
-            UI.thought('An arm sweeps you up and away. Light, or peace. It wants one of them.', 6000);
+            UI.thought('An arm swept me away. Light or calm. I think it wants one or the other.');
           }
         }
       },
@@ -1064,7 +1074,7 @@
   // Conversations
   // ════════════════════════════════════════════════════════════════════════════
   const SEPIA_SPOTS = [[1500, 380], [2300, 620], [3050, 420], [900, 640]];
-  const ARCH = { who: 'archivist', voice: 'archivist', name: 'The Archivist' };
+  const ARCH = { who: 'archivist', voice: 'archivist' };
 
   async function speak(actor, lines, opts) {
     E.lock();
@@ -1084,34 +1094,35 @@
       const r = await SO.api.get('/api/v1/world/get-overview');
       const t = (r.body && r.body.endingsTally) || {};
       const lines = [];
-      lines.push(`${t.return || 0} have gone back up the thread. ${t.lantern || 0} stayed below to keep the light. ${t.gift || 0} gave their light away. And ${t.song || 0}… sang.`);
-      lines.push(save.data.ending === 'gift' ? 'You were bright. Rest now. Nobody gets long.' : 'The sea remembers all of it. You could ask it, you know. It answers anyone.');
+      lines.push(`${t.return || 0} went back up the waterfall. ${t.lantern || 0} stayed down here to keep the light. ${t.gift || 0} gave their light away. And ${t.song || 0} sang.`);
+      lines.push(save.data.ending === 'gift' ? 'You were bright. Rest now. Nobody gets long.' : 'The sea remembers all of it. You can ask it, you know. It answers anybody.');
       await speak(arch, lines, ARCH);
       return;
     }
     if (!f.metArchivist) {
       await speak(arch, [
-        '…Another one fell.',
-        'Big, for a Carrier. They’re always big.',
-        'You don’t know what you are. Of course you don’t. They never tell you.',
-        'This was a garden in the sky, once. It fell. Now it’s mine.',
-        'Doors here listen to skin. Watch.',
+        'Oh. Another one fell.',
+        'You’re big, even for a Carrier.',
+        'Don’t look at me like that. I’m a vampire squid. I mostly eat snow.',
+        'You don’t know what a Carrier is, do you? They never tell you anything up there.',
+        'This was a garden in the sky. Then it fell. Now it’s mine.',
+        'The doors in here listen to skin. Watch.',
       ], ARCH);
       this.flag('metArchivist');
       E.lock();
       await E.showPattern(arch.x, arch.y, 'open', { voice: -5, onEach: (c) => { arch.flash = E.SKIN_HEX[c]; arch.flashT = 0.5; } });
       E.unlock();
-      await UI.say('Now you. At the petals.', ARCH);
+      await UI.say('Now you try. Over by the petals.', ARCH);
       return;
     }
-    if (!f.petalOpen) { await speak(arch, ['Red. Pale. Red. At the petals. Your skin knows how, even if you don’t.'], ARCH); return; }
-    if ((f.panels || 0) < 3 && this.ch < 2) { await speak(arch, ['Go and look at the pictures. Then we’ll talk.'], ARCH); return; }
+    if (!f.petalOpen) { await speak(arch, ['Red, pale, red. At the petals. Your skin knows how, even if you don’t.'], ARCH); return; }
+    if ((f.panels || 0) < 3 && this.ch < 2) { await speak(arch, ['Go look at the pictures. Then we’ll talk.'], ARCH); return; }
     if (this.ch < 2) {
       await speak(arch, [
-        'So now you know as much as I do. More, maybe. You remembered something in there. I saw your skin go pale.',
-        'The light here is going out. When it goes out, it comes. The dark with arms.',
-        'Three sparks could wake the crystal again.',
-        'One sleeps in the Mouth, in the cliff. One sways in the forest. One fell into the bright, up top.',
+        'So now you know what I know. You remembered something in there, didn’t you? Your skin went pale.',
+        'The light in here is going out. When it goes out, something comes. Something with a lot of arms.',
+        'Three sparks could wake that crystal back up.',
+        'One is in the Mouth, the hole in the cliff. One is in the kelp. And one fell up top, where it’s bright.',
       ], ARCH);
       await this.chapter(2);
       return;
@@ -1127,8 +1138,8 @@
       if (lumen) { lumen.sparks = ['#ffd9a0', '#b6ffa0', '#fff6c8'].slice(0, total); }
       if (gave) { AU.pickup(); }
       if (total >= 3) { await relight.call(this, room); return; }
-      const lines = gave ? [total === 2 ? 'One more.' : 'Two more.'] : ['Sparks. The Mouth, the forest, the bright.'];
-      if (total === 2) { lines.push('Most of us get a year. Maybe two. Carriers get longer. Not forever. Spend it on something.'); }
+      const lines = gave ? [total === 2 ? 'One more.' : 'Two more.'] : ['Sparks. The Mouth, the kelp, and the bright bit up top.'];
+      if (total === 2) { lines.push('Most of us get a year. Maybe two. Carriers get longer, but not forever. Spend it on something.'); }
       await speak(arch, lines, ARCH);
     }
   }
@@ -1148,12 +1159,12 @@
     this.flag('relit');
     E.ring(lumen.x, lumen.y, '#bff8ea', 1600, 3);
     lumen.sparks = [];
-    await speak(arch, ['Oh. Oh, look at it.', 'Like it used to be. Like a sky.'], ARCH);
+    await speak(arch, ['Oh. Look at that.', 'That’s what it looked like up there.'], ARCH);
     await wait(1600);
     AU.voice('dimmer', 1);
     for (let i = 0; i <= 50; i++) { E.darkBoost = i / 50 * 0.5; E.dread = i / 50; this.rt.hollowLight = U.lerp(1, 0.4, i / 50); lumen.level = this.rt.hollowLight; await wait(50); }
     arch.flash = '#c8353f'; arch.flashT = 3;
-    await speak(arch, ['No. Too bright. Too soon.', 'It saw.', 'Go dark. Go down. Don’t shine— whatever you do, don’t shine.'], Object.assign({}, ARCH, { ms: 2200 }));
+    await speak(arch, ['No. That’s too bright.', 'It saw us.', 'Go dark and go down. Whatever you do, don’t glow.'], ARCH);
     // The Archivist inks and is gone.
     E.effects.push({ kind: 'custom', t: 0, life: 3, draw(ctx, k) { ctx.fillStyle = `rgba(10,8,14,${0.9 * (1 - k)})`; ctx.beginPath(); ctx.arc(arch.x, arch.y, 80 + k * 260, 0, U.TAU); ctx.fill(); } });
     AU.noise({ dur: 1.2, freq: 300, q: 1, gain: 0.2, sweep: 0.4 });
@@ -1166,19 +1177,19 @@
     E.unlock();
     await this.chapter(3);
     this.rt.hollowLight = undefined;
-    UI.thought('Down. Away from here.');
+    UI.thought('Down. Okay. Down is good.');
   }
 
   async function nautilusTalk() {
     const n = E.actor('nautilus');
     this.remember('nautilus');
-    const O = { who: 'other', voice: 'nautilus', name: 'Elder Shell' };
+    const O = { who: 'nautilus', voice: 'nautilus' };
     if (!this.has('metNautilus')) {
       await speak(null, [
-        'Slow down. Everything in here is old.',
-        'A Carrier. Hm. Your shell is inside you now. A pen, thin as a feather. We were all shelled, once.',
-        'The Tongue sleeps around a spark. Wake it and it bites.',
-        'Calm it, and it may let go. Like this.',
+        'Slow down. Everything in here is old, including me.',
+        'A Carrier. Hm. Your shell’s on the inside now, you know. A little pen, thin as a feather. We all had shells once.',
+        'The Tongue is asleep around a spark. Wake it up and it bites.',
+        'Calm it down and it might let go. Like this.',
       ], O);
       this.flag('metNautilus');
       E.lock();
@@ -1186,17 +1197,17 @@
       E.unlock();
       return;
     }
-    if (!this.has('tongueCalmed')) { await speak(null, ['Pale. Shimmer. Pale. Slowly.'], O); return; }
-    await speak(null, ['The sea was all shells, once. Now look at you. Soft, and enormous, and in a hurry.'], O);
+    if (!this.has('tongueCalmed')) { await speak(null, ['Pale, shimmer, pale. Slowly.'], O); return; }
+    await speak(null, ['The sea was all shells once. Now look at you. Soft, enormous, and in a hurry.'], O);
   }
 
   async function sepiaTalk(o) {
     this.remember('sepia');
-    const O = { who: 'other', voice: 'sepia', name: 'Sepia' };
+    const O = { who: 'sepia', voice: 'sepia' };
     const finds = this.d.flags.sepiaFinds || 0;
-    if (this.has('sepiaDone')) { await speak(o, ['Down in the heart. The Mother Kelp keeps it. Tell her I said it’s fine.'], O); return; }
+    if (this.has('sepiaDone')) { await speak(o, ['Down in the middle. The Mother Kelp keeps it. Tell her I said it’s okay.'], O); return; }
     if (!this.has('sepiaGame')) {
-      await speak(o, ['Oh! A big one. You say so little with your skin.', 'Watch. This is the passing cloud.'], O);
+      await speak(o, ['Oh! A big one. You hardly say anything with your skin.', 'Watch. This is the passing cloud.'], O);
       E.lock();
       o.cloud = true;
       await E.showPattern(o.x, o.y, 'cloud', { voice: 8, gap: 560 });
@@ -1208,7 +1219,7 @@
       while (this.rt.sepiaWaiting && E.t - start < 14) { await wait(200); }
       this.rt.sepiaWaiting = false;
       if (!save.knows('cloud')) { this.learnSkin('cloud', true); }
-      await speak(o, [this.rt.sepiaDid ? 'Yes! Now you’re a shadow.' : 'Red, red, shimmer. You’ll get it.', 'Let’s play. Find me.'], O);
+      await speak(o, [this.rt.sepiaDid ? 'There. Now you’re a shadow.' : 'Red, red, shimmer. You’ll get it.', 'Let’s play. Find me.'], O);
       this.flag('sepiaGame');
       const s = SEPIA_SPOTS[0];
       o.goal = { x: s[0], y: s[1] }; o.hiding = true;
@@ -1220,7 +1231,7 @@
       const n = finds + 1;
       this.flag('sepiaFinds', n);
       if (n >= 3) {
-        await speak(o, ['You see well, for something so big.', 'Fine. You win. Down in the heart of the Swaying, the Mother Kelp keeps a spark. Go on.'], O);
+        await speak(o, ['You’ve got good eyes for something so big.', 'Fine, you win. The Mother Kelp keeps a spark, down in the middle of the forest. Go on.'], O);
         this.flag('sepiaDone');
         return;
       }
@@ -1232,62 +1243,62 @@
 
   async function turtleTalk() {
     this.remember('turtle');
-    const O = { who: 'other', voice: 'turtle', name: 'Old Drift' };
+    const O = { who: 'turtle', voice: 'turtle' };
     const night = this.seaDay().name;
     if (!this.has('metTurtle')) {
-      await speak(null, ['Mmm. A big one. Fell, did you?', 'They sing up there, you know. At dusk. “Carrier, Carrier.” I never knew what it meant. I do now.'], O);
+      await speak(null, ['Mm. A big one. Fell, did you?', 'The swans sing up there at dusk. “Carrier, Carrier.” I never knew what it meant. Now I do.'], O);
       this.flag('metTurtle');
     }
     if (!save.data.items.spark_bright && !this.has('spark_brightGiven') && !this.has('raftKnocked')) {
-      await speak(null, ['Little light, up in that glass. Can’t reach it. Turtles don’t jump.', 'Squids do, sometimes. Small ones. Fast ones.'], O);
+      await speak(null, ['There’s a little light stuck in that glass. I can’t reach it. Turtles don’t jump.', 'Squids do, though. Small fast ones, anyway.'], O);
       return;
     }
-    const L = night === 'night' ? 'See the little blue ones? Firefly squid. They only come up at night.' : 'Your eyes. Big as my whole shell. Made for the dark, those.';
+    const L = night === 'night' ? 'See the little blue ones? Firefly squid. They only come up at night.' : 'Your eyes are as big as my whole shell. Made for the dark, those.';
     await speak(null, [L], O);
   }
 
   async function keeperTalk() {
     const k = E.actor('keeper');
     this.remember('keeper');
-    const O = { who: 'other', voice: 'keeper', name: 'The Keeper of Shine' };
+    const O = { who: 'keeper', voice: 'keeper' };
     const d = this.d;
-    if (this.ch >= 8) { await speak(k, ['Little light. You came back. Everyone comes back for shine.'], O); return; }
+    if (this.ch >= 8) { await speak(k, ['Little light. You came back. Everybody comes back for shine.'], O); return; }
     if (!this.has('metKeeper')) {
       await speak(k, [
         'Little light. Big squid.',
-        'A Carrier! Haven’t seen one of you since… well. Since.',
-        'Everyone wants shine. Bring me shine and I’ll give you something better than shine.',
+        'A Carrier! I haven’t seen one of you since... well. Since.',
+        'Everybody wants shine. Bring me shine and I’ll give you something better.',
         'Five.',
       ], O);
       this.flag('metKeeper');
-      if (d.gems < 5) { UI.thought(`Five gems. You have ${d.gems}. The dark rooms above glittered, here and there.`, 6000); }
+      if (d.gems < 5) { UI.thought(`Five shiny things. I have ${d.gems}. The dark bits upstairs had some.`); }
       return;
     }
     if (d.hearts.indexOf('night') === -1) {
-      if (d.gems < 5) { await speak(k, [`Five shines. You have ${d.gems}. The dark above you is full of them, if nobody else got there first.`], O); return; }
+      if (d.gems < 5) { await speak(k, [`Five. You have ${d.gems}. The dark up there is full of them, if nobody beat you to it.`], O); return; }
       d.gems -= 5; save.touch();
       AU.pickup();
-      await speak(k, ['Five. Good. Mine.', 'Here. A night that never ended. Press it in. You have three hearts, don’t you? Use one.'], O);
+      await speak(k, ['Five. Good. Mine.', 'Here. It’s a night that never ended. Press it into a heart. You have three, don’t you? Use one.'], O);
       await this.heart('night');
       await speak(k, [
-        'We keep the shine down here so it can’t find it. The big dark. It eats light.',
-        'It used to be like you, you know. A Carrier. Came down to fetch the light for the isles… and found out light tastes good.',
-        '…Don’t look at me like that.',
-        'The mountain next door makes ember when it wakes. It sleeps, mostly. This is how you wake a mountain.',
+        'We keep the shine down here so the big dark can’t find it. It eats light.',
+        'It used to be like you, you know. Then it found out light tastes good.',
+        'Don’t look at me like that.',
+        'The mountain next door makes ember when it wakes up. It mostly sleeps. Here’s how you wake a mountain.',
       ], O);
       E.lock();
       await E.showPattern(k.x, k.y - 80, 'wake', { voice: -12, gap: 600, onEach: (c) => { k.flash = E.SKIN_HEX[c]; k.flashT = 0.4; } });
       E.unlock();
       return;
     }
-    if (d.hearts.indexOf('ember') === -1) { await speak(k, ['Gold, red, gold, red. Wake the mountain. Catch the ember.'], O); return; }
+    if (d.hearts.indexOf('ember') === -1) { await speak(k, ['Gold, red, gold, red. Wake the mountain up. Catch the ember.'], O); return; }
     if (!this.riserOpen()) {
-      await speak(k, ['Two hearts. Look at you, glowing like a hoard.', 'The last shine fell from the sky, where the water pours in. The Riser will take you up.', 'Mind the shallows. Everything up there is hungry.'], O);
+      await speak(k, ['Two hearts. Look at you, glowing like a hoard.', 'The last shine fell from the sky, where the water pours in. Take the Riser up.', 'Mind the shallows. Everything up there is hungry.'], O);
       this.flag('riserOpen');
-      UI.whisper('The Riser is open.');
+
       return;
     }
-    await speak(k, ['Up the Riser. Go on.'], O);
+    await speak(k, ['Up the Riser. Go on. Shoo.'], O);
   }
 
   // ── Chapter 3 finale: the bottom of the trench ──────────────────────────────
@@ -1320,7 +1331,7 @@
     for (let i = 0; i <= 60; i++) { dim.x = U.lerp(room.w / 2, room.w + 1600, U.easeIn(i / 60)); await wait(40); }
     E.dread = 0.2; E.darkBoost = 0.2;
     await wait(2200);
-    UI.thought('Gone. You are still here.');
+    UI.thought('It’s gone. I’m still here.');
     await wait(2500);
     // the floor gives way
     AU.noise({ dur: 3, freq: 120, q: 0.8, gain: 0.5, sweep: 0.4 });
@@ -1328,7 +1339,7 @@
     const plug = room.solids.find((s) => s.id === 'crack-plug');
     if (plug) { plug.off = true; }
     this.flag('fellThrough');
-    UI.thought('The rock cracks—');
+    UI.thought('The floor’s cracking. That’s not good.');
     await E.swimTo(room.w / 2, room.h + 100, { speed: 1, near: 60 });
     E.unlock();
     E.goto('below:0,7', { from: 'up', frac: 0.5 });
@@ -1338,7 +1349,7 @@
   async function climaxBegin(room) {
     E.lock();
     await wait(600);
-    UI.thought('Three hearts, all of them beating light.');
+    UI.thought('Three hearts. All three are lit.');
     for (let i = 0; i <= 40; i++) { this.rt.thread = i / 40; await wait(50); }
     this.rt.thread = undefined;
     await this.chapter(7);
@@ -1349,7 +1360,7 @@
     await UI.say('It followed the light. It always follows the light.', { who: 'squid' });
     const th = room.hotspots.find((h) => h.id === 'thread'); if (th) { th.hidden = false; }
     E.unlock();
-    setTimeout(() => UI.thought('The falling water glows. You could climb it now. Or…', 6000), 1500);
+    UI.thought('The waterfall’s glowing. I think I could climb it now. Or...');
   }
 
   S.addRisingDimmer = function (room) {
@@ -1370,7 +1381,7 @@
       this.rt.swat = true;
       sq.vy = -700; sq.vx += (Math.random() - 0.5) * 400;
       AU.heartbeat();
-      UI.thought('An arm, out of the dark—');
+      UI.thought('An arm! Out of the dark!');
       setTimeout(() => { this.rt.swat = false; }, 3000);
     }
   };

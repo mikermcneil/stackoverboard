@@ -27,12 +27,12 @@
 
   // Depth -> water colors (top, bottom).
   const DEPTH_STOPS = [
-    [0.0, '#c3f0e8', '#5cbcc0'],
-    [0.2, '#6cc0c6', '#2f8597'],
-    [0.42, '#2f7890', '#17435f'],
-    [0.62, '#1a4560', '#0b2034'],
-    [0.82, '#0e2538', '#050e19'],
-    [1.0, '#070f19', '#020509'],
+    [0.0, '#7fc6c4', '#2e7f8c'],
+    [0.2, '#3a8d9b', '#185768'],
+    [0.42, '#1c5268', '#0b283c'],
+    [0.62, '#102d41', '#061522'],
+    [0.82, '#09182a', '#02080f'],
+    [1.0, '#040a12', '#010306'],
   ];
   const PALETTE_TINT = {
     kelp: ['#2f7a5e', 0.35],
@@ -126,14 +126,16 @@
     c.addEventListener('pointerdown', (e) => {
       AU.start();
       if (this.mode !== 'play') { return; }
-      if (SO.ui.talking) { SO.ui.advance(); return; }
       if (this.locked) { return; }
       toWorld(e);
+      // Clicking on the squid itself opens what it remembers.
+      if (this.squidHit(this.pointer.wx, this.pointer.wy)) { SO.journal && SO.journal.show(); return; }
       this.pointer.down = true;
       this.pointer.downAt = U.now();
       // Clicking something interesting: swim to it.
       const hit = this.pick(this.pointer.wx, this.pointer.wy);
-      this.target = hit ? { x: hit.x, y: hit.y, hit } : { x: this.pointer.wx, y: this.pointer.wy };
+      this.target = hit ? { x: hit.x, y: hit.y, hit } : this.exitAware(this.pointer.wx, this.pointer.wy);
+      this.spur();
       SO.story && SO.story.onActivity && SO.story.onActivity();
     });
     window.addEventListener('pointermove', (e) => {
@@ -159,6 +161,26 @@
     });
     window.addEventListener('keyup', (e) => { this.keys[e.key.toLowerCase()] = false; });
     window.addEventListener('blur', () => { this.keys = {}; this.pointer.down = false; });
+  };
+
+  // Clicking near an edge that leads somewhere means "go there": aim past the edge.
+  E.exitAware = function (x, y) {
+    const room = this.room, ex = room.exits, M = 170;
+    if (ex.left && x < M) { return { x: -300, y, exit: 'left' }; }
+    if (ex.right && x > room.w - M) { return { x: room.w + 300, y, exit: 'right' }; }
+    const mid = (gap, fallback) => gap ? (gap[0] + gap[1]) / 2 * room.w : fallback;
+    if (ex.up && y < M && room.surfaceY === null) { return { x: mid(room.ceilGap, x), y: -300, exit: 'up' }; }
+    if (ex.down && y > room.h - M) { return { x: mid(room.floorGap, x), y: room.h + 300, exit: 'down' }; }
+    return { x, y };
+  };
+
+  E.squidHit = function (wx, wy) {
+    const sq = this.squid;
+    for (const lx of [0, 60, 120]) {
+      const [cx, cy] = this.toWorld(sq, lx, 0);
+      if (U.dist(wx, wy, cx, cy) < 46 * sq.scale) { return true; }
+    }
+    return false;
   };
 
   // What's under the pointer? Actors and hotspots that can be touched.
@@ -220,6 +242,13 @@
     let bx = -fx, by = -fy;
     if (opts.trail) { bx = opts.trail[0]; by = opts.trail[1]; }
     else if (speed > 40) { const k = U.clamp((speed - 40) / 220, 0, 1); bx = U.lerp(-fx, -sq.vx / speed, k); by = U.lerp(-fy, -sq.vy / speed, k); const m = Math.hypot(bx, by) || 1; bx /= m; by /= m; }
+    // Facing you (mid-turn, or talking), the arms hang down below the head.
+    const ay = Math.abs(o.yaw);
+    if (!opts.trail && ay < 0.6) {
+      const k = U.smooth(1 - ay / 0.6) * (1 - U.clamp(speed / 300, 0, 1));
+      bx = U.lerp(bx, 0, k); by = U.lerp(by, 1, k);
+      const m = Math.hypot(bx, by) || 1; bx /= m; by /= m;
+    }
     const px = -by, py = bx;
     const pull = 1 - Math.exp(-dt * (opts.pull || 3.2));
     sq.arms.forEach((arm, i) => {
@@ -272,8 +301,8 @@
       surfaceY: def.surface ? 150 : null,
       actors: [], hotspots: [], lights: [], props: [], solids: [],
       floor: T.floor || null, ceiling: T.ceiling || null,
-      floorGap: T.floorGap || (exits.down && T.floor ? [0.4, 0.6] : null),
-      ceilGap: T.ceilGap || (exits.up && T.ceiling ? [0.4, 0.6] : null),
+      floorGap: T.floorGap || (exits.down && T.floor ? [0.33, 0.67] : null),
+      ceilGap: T.ceilGap || (exits.up && T.ceiling ? [0.33, 0.67] : null),
       wallL: T.walls ? !!T.walls.left : (!exits.left && !def.surface && !!(T.floor || T.ceiling)),
       wallR: T.walls ? !!T.walls.right : (!exits.right && !def.surface && !!(T.floor || T.ceiling)),
       wallSeed: r() * 100,
@@ -422,7 +451,7 @@
     this._going = true;
     this.locked++;
     const fast = entry.instant;
-    if (!fast) { await SO.ui.fade(1, 320); }
+    if (!fast) { await SO.ui.fade(1, 170); }
     let def = null;
     try { def = await SO.rooms.get(key); } catch (err) { console.error(err); }
     if (!def) { this.locked--; this._going = false; await SO.ui.fade(0, 300); return; }
@@ -436,7 +465,7 @@
     if (def.onEnter) { def.onEnter(this.room, prev, entry); }
     this.locked--;
     this._going = false;
-    await SO.ui.fade(0, fast ? 500 : 420);
+    await SO.ui.fade(0, fast ? 500 : 300);
   };
 
   E.placeSquid = function (entry, prevKey) {
@@ -459,12 +488,14 @@
     sq.x = free[0]; sq.y = free[1];
     if (entry.from) {
       const dirs = { up: [0, 1], down: [0, -1], left: [1, 0], right: [-1, 0] }[entry.from];
-      sq.vx = dirs[0] * 160; sq.vy = dirs[1] * 160;
+      const keep = Math.max(160, Math.hypot(sq.vx, sq.vy));
+      sq.vx = dirs[0] * keep; sq.vy = dirs[1] * keep;
       sq.angle = Math.atan2(dirs[1], dirs[0]);
       if (Math.abs(dirs[0]) < 0.5) { sq.angle = Math.cos(sq.angle) >= 0 ? 0.3 * Math.sign(dirs[1] || 1) : Math.PI - 0.3 * Math.sign(dirs[1] || 1); }
     }
     sq.flip = Math.cos(sq.angle) < 0;
     sq.yaw = undefined;
+    sq.dvx = sq.vx; sq.dvy = sq.vy;
     this.resetArms(sq);
   };
 
@@ -556,28 +587,41 @@
     sq.t += dt;
 
     // Desire to move.
-    let dx = 0, dy = 0, strength = 0;
+    let dx = 0, dy = 0, strength = 0, deliberate = false;
     const K = this.keys;
+    this.updateGait(dt);
     if (!this.locked && !sq.auto) {
       if (K.a || K.arrowleft) { dx -= 1; }
       if (K.d || K.arrowright) { dx += 1; }
       if (K.w || K.arrowup) { dy -= 1; }
       if (K.s || K.arrowdown) { dy += 1; }
-      if (dx || dy) { const m = Math.hypot(dx, dy); dx /= m; dy /= m; strength = 1; this.target = null; }
+      if (dx || dy) { const m = Math.hypot(dx, dy); dx /= m; dy /= m; strength = 1; deliberate = true; this.target = null; }
       else if (this.target) {
         let ty = this.target.y;
         // Right after a leap, aim for just under the surface instead of leaping again.
         if (room.surfaceY !== null && this.t - (this.lastBreachAt || -99) < 3.5) { ty = Math.max(ty, room.surfaceY + 90); }
         const ox = this.target.x - sq.x, oy = ty - sq.y, d = Math.hypot(ox, oy);
-        const arrive = this.target.hit ? (this.target.hit.r || 60) + 30 : 50;
+        const arrive = this.target.hit ? (this.target.hit.r || 60) + 30 : 60;
         if (d < arrive && !this.pointer.down) { this.target = null; }
-        else if (d > 20) { dx = ox / d; dy = oy / d; strength = U.clamp(d / 260, 0.25, 1); }
+        else if (d > 20) { dx = ox / d; dy = oy / d; strength = U.clamp(U.smoothstep(10, 380, d), 0.15, 1); deliberate = Math.abs(ox) > 90; }
       }
     } else if (sq.auto) {
       const ox = sq.auto.x - sq.x, oy = sq.auto.y - sq.y, d = Math.hypot(ox, oy);
       if (d < (sq.auto.near || 30)) { const done = sq.auto.done; sq.auto = null; if (done) { setTimeout(done, 0); } }
-      else { dx = ox / d; dy = oy / d; strength = U.clamp(d / 220, 0.3, 1) * (sq.auto.speed || 1); }
+      else { dx = ox / d; dy = oy / d; strength = U.clamp(d / 220, 0.3, 1) * (sq.auto.speed || 1); deliberate = Math.abs(ox) > 90; }
     }
+
+    // Point the tip of the mantle at where you're going before really pushing.
+    if (sq.yaw === undefined) { const o = this.orient(sq); sq.yaw = o.yaw; sq.pitch = o.pitch; sq.facing = o.yaw >= 0 ? 1 : -1; }
+    let align = 1;
+    if (strength > 0.05) {
+      const fx = sq.facing * Math.cos(sq.pitch), fy = Math.sin(sq.pitch);
+      align = fx * dx + fy * dy;
+      // The target is behind us: turn around (only when you mean it, so it doesn't dither).
+      if (!sq.turn && deliberate && dx * sq.facing < -0.2 && align < 0.1) { this.startTurn(sq, -sq.facing); }
+    }
+    const turning = !!sq.turn;
+    const thrust = turning ? 0.35 : U.clamp((align + 0.35) / 1.35, 0.12, 1);
 
     // The surface, with a little hysteresis so you don't bob in and out of it.
     const sY = room.surfaceY;
@@ -594,13 +638,18 @@
 
     if (inAir) {
       sq.vy += 760 * dt;// out of the water you're just a falling squid
+      sq.dvx = sq.vx; sq.dvy = sq.vy;
       sq.vx *= Math.exp(-0.15 * dt);
     } else {
       // Swimming: ease toward the velocity you want. No lurches.
-      const cruise = 360;
-      const tvx = dx * cruise * strength, tvy = dy * cruise * strength;
-      const a = 1 - Math.exp(-(strength > 0.05 ? 1.9 : 1.0) * dt);
-      sq.vx += (tvx - sq.vx) * a; sq.vy += (tvy - sq.vy) * a;
+      // Two layers of smoothing give an S-curve: it eases into motion and eases out of it.
+      const cruise = this.gaitSpeed();
+      const tvx = dx * cruise * strength * thrust, tvy = dy * cruise * strength * thrust;
+      const a1 = 1 - Math.exp(-(strength > 0.05 ? 1.6 : 1.1) * dt);
+      sq.dvx = (sq.dvx || 0) + (tvx - (sq.dvx || 0)) * a1;
+      sq.dvy = (sq.dvy || 0) + (tvy - (sq.dvy || 0)) * a1;
+      const a2 = 1 - Math.exp(-2.4 * dt);
+      sq.vx += (sq.dvx - sq.vx) * a2; sq.vy += (sq.dvy - sq.vy) * a2;
       if (room.def.current) { sq.vx += room.def.current[0] * dt; sq.vy += room.def.current[1] * dt; }
       if (sY !== null) {
         const near = U.clamp(1 - (sq.y - sY) / 110, 0, 1);
@@ -609,41 +658,52 @@
         if (near > 0.6 && driving && sq.vy < -220) { sq.vy -= 420 * dt; }// unless you really mean it
       }
       // The mantle pulses with effort (purely to look at; motion stays smooth).
-      sq.jetPhase = (sq.jetPhase || 0) + dt * (0.6 + 1.6 * strength);
+      sq.jetPhase = (sq.jetPhase || 0) + dt * (0.5 + 0.55 * this.gait) * (strength > 0.05 ? 1 : 0.4);
       const pulse = 0.5 - 0.5 * Math.cos(sq.jetPhase * U.TAU);
-      sq.jet = strength > 0.05 ? pulse * (0.4 + 0.6 * strength) : sq.jet * Math.exp(-3 * dt);
+      sq.jet = Math.max(sq.jetKick || 0, strength > 0.05 ? pulse * (0.3 + 0.2 * this.gait) : sq.jet * Math.exp(-3 * dt));
+      sq.jetKick = Math.max(0, (sq.jetKick || 0) - dt * 2.5);
       const cycle = Math.floor(sq.jetPhase);
       if (cycle !== sq._jetCycle) {
         sq._jetCycle = cycle;
-        if (strength > 0.6) {
-          AU.jet(strength * 0.6);
+        if (strength > 0.6 && this.gait >= 2) {
+          AU.jet(0.4 + this.gait * 0.1);
           const [hx, hy] = this.toWorld(sq, -10, 18);
           for (let i = 0; i < 2; i++) { this.particles.push({ kind: 'bubble', x: hx, y: hy, vx: -sq.vx * 0.2 + (Math.random() - 0.5) * 30, vy: -30, life: 2 + Math.random(), t: 0, r: 1.5 + Math.random() * 3 }); }
         }
       }
     }
-    const sp = Math.hypot(sq.vx, sq.vy), maxSp = inAir ? 1200 : 520;
+    const sp = Math.hypot(sq.vx, sq.vy), maxSp = inAir ? 1200 : 600;
     if (sp > maxSp) { sq.vx *= maxSp / sp; sq.vy *= maxSp / sp; }
     sq.fin += dt * (2.2 + sp / 90);
 
     // Move, sliding along rock instead of sticking to it.
     this.moveSquid(sq, sq.vx * dt, sq.vy * dt);
 
-    // Facing. Turning around is a turn of the whole body through depth:
-    // `yaw` passes through 0 (nose toward you) rather than flipping over.
-    if (sq.yaw === undefined) { const o = this.orient(sq); sq.yaw = o.yaw; sq.pitch = o.pitch; sq.facing = o.yaw; }
-    const wantX = Math.abs(sq.vx) > 35 ? sq.vx : (strength > 0.05 && Math.abs(dx) > 0.25 ? dx * 100 : 0);
-    if (wantX) { sq.facing = wantX > 0 ? 1 : -1; }
-    const yawRate = 2.6;
-    if (sq.yaw !== sq.facing) {
-      const step = yawRate * dt;
-      sq.yaw = Math.abs(sq.facing - sq.yaw) <= step ? sq.facing : sq.yaw + Math.sign(sq.facing - sq.yaw) * step;
+    // Facing. Turning around is a turn of the whole body through depth: `yaw`
+    // eases through 0 (nose toward you) while the nose dips, like a bank.
+    let dip = 0;
+    if (sq.turn) {
+      const tr = sq.turn;
+      tr.t += dt / tr.dur;
+      const e = U.easeInOut(Math.min(1, tr.t));
+      sq.yaw = tr.from * Math.cos(Math.PI * e);
+      dip = Math.sin(Math.PI * e) * 0.32;
+      if (tr.t >= 1) { sq.yaw = tr.to; sq.turn = null; }
+    } else {
+      // Like Bobbin, the squid turns to face you when it's talking to itself (if it isn't busy swimming).
+      const yawGoal = sq.talking && sp < 140 && !inAir ? 0.02 * sq.facing : sq.facing;
+      if (sq.yaw !== yawGoal) {
+        const k = 1 - Math.exp(-(sq.talking ? 3 : 6) * dt);
+        sq.yaw += (yawGoal - sq.yaw) * k;
+        if (Math.abs(yawGoal - sq.yaw) < 0.005) { sq.yaw = yawGoal; }
+      }
     }
     let tp;
-    if (sp > 40) { tp = U.clamp(Math.atan2(sq.vy, Math.abs(sq.vx) + 1), -1.3, 1.3); }
-    else { tp = sq.pitch * 0.9; }
     if (inAir) { tp = U.clamp(Math.atan2(sq.vy, Math.abs(sq.vx) + 1), -1.4, 1.4); }
-    sq.pitch += (tp - sq.pitch) * (1 - Math.exp(-(sp > 40 ? 2.6 : 0.7) * dt));
+    else if (strength > 0.05 && !turning) { tp = U.clamp(Math.atan2(dy, Math.abs(dx) + 0.001), -1.25, 1.25); }// tip toward the target
+    else if (sp > 60) { tp = U.clamp(Math.atan2(sq.vy, Math.abs(sq.vx) + 1), -1.0, 1.0); }
+    else { tp = sq.pitch * 0.85; }
+    sq.pitch += (tp + dip - sq.pitch) * (1 - Math.exp(-(strength > 0.05 ? 3.0 : 1.2) * dt));
     sq.angle = sq.yaw >= 0 ? sq.pitch : Math.PI - sq.pitch;
     sq.flip = sq.yaw < 0;
     // Eyes follow whatever's interesting.
@@ -682,6 +742,46 @@
       this._ambT = this.t;
       AU.ambience({ depth: room.def.depth || 0.3, air: inAir ? 1 : 0, dread: this.dread, roar: room.def.roar || 0 });
     }
+  };
+
+  // ── Gait: each click is a spur. Click again quickly to go faster, like a
+  // horse going from a walk to a gallop. Leave it alone and it settles back down.
+  const GAIT_SPEED = [150, 250, 360, 500];
+  E.gait = 0;
+  E.spur = function () {
+    const now = this.t;
+    if (now - (this.lastSpurAt || -99) < 1.5) { this.gait = Math.min(3, this.gait + 1); }
+    this.lastSpurAt = now;
+    const sq = this.squid;
+    sq.jetKick = 0.6 + this.gait * 0.13;
+    if (this.gait > 0) {
+      AU.jet(0.5 + this.gait * 0.15);
+      const [hx, hy] = this.toWorld(sq, -10, 18);
+      for (let i = 0; i < 2 + this.gait; i++) { this.particles.push({ kind: 'bubble', x: hx, y: hy, vx: -sq.vx * 0.3 + (Math.random() - 0.5) * 40, vy: -30, life: 2 + Math.random(), t: 0, r: 1.5 + Math.random() * 3 }); }
+    }
+  };
+  E.updateGait = function (dt) {
+    const K = this.keys;
+    const keys = K.a || K.d || K.w || K.s || K.arrowleft || K.arrowright || K.arrowup || K.arrowdown;
+    if (keys) {// holding a direction key works its way up through the gaits
+      this.keyHeld = (this.keyHeld || 0) + dt;
+      this.gait = Math.min(3, Math.floor(this.keyHeld / 1.3));
+      this.lastSpurAt = this.t;
+      return;
+    }
+    this.keyHeld = 0;
+    if (this.pointer.down) { this.lastSpurAt = this.t; return; }
+    // Settle down a gait at a time: slowly while still heading somewhere, faster once idle.
+    const wait = this.target ? 4.5 : 2;
+    if (this.gait > 0 && this.t - (this.lastSpurAt || 0) > wait) { this.gait -= 1; this.lastSpurAt = this.t - wait * 0.5; }
+  };
+  E.gaitSpeed = function () {
+    this._gs = U.lerp(this._gs || GAIT_SPEED[0], GAIT_SPEED[this.gait], 0.04);
+    return this._gs;
+  };
+  E.startTurn = function (sq, to) {
+    sq.facing = to;
+    sq.turn = { from: sq.yaw >= 0 ? 1 : -1, to, t: 0, dur: 0.85 };
   };
 
   // Three soft circles along the body. Anything that overlaps rock gets
@@ -751,16 +851,24 @@
       const res = tryExit(dir);
       if (res === true) { return; }
       // No way through: a soft wall of water.
-      if (dir === 'left') { sq.x = Math.max(sq.x, 40); sq.vx = Math.abs(sq.vx) * 0.3; }
-      if (dir === 'right') { sq.x = Math.min(sq.x, room.w - 40); sq.vx = -Math.abs(sq.vx) * 0.3; }
-      if (dir === 'down') { sq.y = Math.min(sq.y, room.h - 40); sq.vy = -Math.abs(sq.vy) * 0.3; }
-      if (dir === 'up') { sq.y = Math.max(sq.y, 40); sq.vy = Math.abs(sq.vy) * 0.3; }
-      if (typeof res === 'string' && (!this._blockSaidAt || this.t - this._blockSaidAt > 6)) { this._blockSaidAt = this.t; SO.ui.thought(res); }
+      if (dir === 'left' && sq.x < 40) { sq.x = 40; sq.vx = Math.abs(sq.vx) * 0.3; sq.dvx = 0; }
+      if (dir === 'right' && sq.x > room.w - 40) { sq.x = room.w - 40; sq.vx = -Math.abs(sq.vx) * 0.3; sq.dvx = 0; }
+      if (dir === 'down' && sq.y > room.h - 40) { sq.y = room.h - 40; sq.vy = -Math.abs(sq.vy) * 0.3; sq.dvy = 0; }
+      if (dir === 'up' && sq.y < 40) { sq.y = 40; sq.vy = Math.abs(sq.vy) * 0.3; sq.dvy = 0; }
+      if (typeof res === 'string') {
+        if (this.target && this.target.exit) { this.target = null; }
+        if (!this._blockSaidAt || this.t - this._blockSaidAt > 8) { this._blockSaidAt = this.t; SO.ui.thought(res); }
+      }
     };
-    if (sq.x < 0) { push('left'); }
-    else if (sq.x > room.w) { push('right'); }
-    if (sq.y > room.h) { push('down'); }
-    else if (sq.y < 0 && room.surfaceY === null) { push('up'); }
+    // Leave as soon as any part of you is through an opening and you're heading that way.
+    const pts = [this.toWorld(sq, 0, 0), this.toWorld(sq, 150, 0)];
+    const minX = Math.min(pts[0][0], pts[1][0]), maxX = Math.max(pts[0][0], pts[1][0]);
+    const minY = Math.min(pts[0][1], pts[1][1]), maxY = Math.max(pts[0][1], pts[1][1]);
+    const ex = room.exits;
+    if ((ex.left && minX < 10 && sq.vx < -15) || sq.x < 0) { push('left'); }
+    else if ((ex.right && maxX > room.w - 10 && sq.vx > 15) || sq.x > room.w) { push('right'); }
+    if ((ex.down && maxY > room.h - 10 && sq.vy > 15) || sq.y > room.h) { push('down'); }
+    else if (room.surfaceY === null && ((ex.up && minY < 10 && sq.vy < -15) || sq.y < 0)) { push('up'); }
     if (room.surfaceY !== null) { sq.y = Math.max(sq.y, -500); }
   };
 
@@ -926,6 +1034,8 @@
     if (room.surfaceY !== null) { this.drawSurfaceLine(ctx, room, t); }
     ctx.restore();
 
+    this.drawFog(ctx, bot, def);
+    this.drawExitHints(ctx);
     this.drawDarkness(ctx);
     if (this.overlay) { this.overlay(ctx, this.W, this.H, t); }
   };
@@ -1148,6 +1258,39 @@
         ctx.restore();
       } else if (f.draw) { f.draw(ctx, k, f); }
     });
+  };
+
+  // Water swallows distance: clear near the squid, murky further away.
+  E.drawFog = function (ctx, color, def) {
+    const sq = this.squid;
+    const sx = (sq.x - this.cam.x) * this.scale, sy = (sq.y - this.cam.y) * this.scale;
+    const depth = def.depth || 0;
+    const r0 = (def.surface ? 520 : 380) * this.scale, r1 = (def.surface ? 1500 : 1050) * this.scale;
+    const a = U.clamp((def.surface ? 0.35 : 0.55) + depth * 0.35, 0, 0.9);
+    const g = ctx.createRadialGradient(sx, sy, r0, sx, sy, r1);
+    const c = color.startsWith('#') ? U.hexToRgb(color) : color.match(/\d+/g).slice(0, 3).map(Number);
+    g.addColorStop(0, `rgba(${c[0]},${c[1]},${c[2]},0)`);
+    g.addColorStop(1, `rgba(${c[0]},${c[1]},${c[2]},${a})`);
+    ctx.fillStyle = g; ctx.fillRect(0, 0, this.W, this.H);
+  };
+
+  // Openings to other places glow faintly, like water moving through.
+  E.drawExitHints = function (ctx) {
+    const room = this.room, ex = room.exits, t = this.t;
+    const pulse = 0.06 + 0.03 * Math.sin(t * 1.4);
+    const band = (x0, y0, x1, y1) => {
+      const g = ctx.createLinearGradient(x0, y0, x1, y1);
+      g.addColorStop(0, `rgba(200,240,235,${pulse})`); g.addColorStop(1, 'rgba(200,240,235,0)');
+      ctx.fillStyle = g;
+      ctx.fillRect(Math.min(x0, x1), Math.min(y0, y1), Math.abs(x1 - x0) || room.w, Math.abs(y1 - y0) || room.h);
+    };
+    ctx.save();
+    ctx.scale(this.scale, this.scale); ctx.translate(-this.cam.x, -this.cam.y);
+    if (ex.left) { band(0, 0, 220, 0); }
+    if (ex.right) { band(room.w, 0, room.w - 220, 0); }
+    if (ex.down) { const g0 = room.floorGap ? room.floorGap[0] * room.w : 0, g1 = room.floorGap ? room.floorGap[1] * room.w : room.w; ctx.save(); ctx.beginPath(); ctx.rect(g0, 0, g1 - g0, room.h + 10); ctx.clip(); band(0, room.h, 0, room.h - 220); ctx.restore(); }
+    if (ex.up && room.surfaceY === null) { const g0 = room.ceilGap ? room.ceilGap[0] * room.w : 0, g1 = room.ceilGap ? room.ceilGap[1] * room.w : room.w; ctx.save(); ctx.beginPath(); ctx.rect(g0, -10, g1 - g0, room.h); ctx.clip(); band(0, 0, 0, 220); ctx.restore(); }
+    ctx.restore();
   };
 
   // Darkness with holes cut out by every light.

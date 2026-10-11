@@ -278,17 +278,17 @@
     const ay = Math.abs(o.yaw);
     ctx.translate(sq.x, sq.y);
     // Side view, foreshortened as the body turns through depth.
-    if (ay > 0.08) {
+    if (ay > 0.1) {
       ctx.save();
-      ctx.globalAlpha *= U.smoothstep(0.08, 0.4, ay);
+      ctx.globalAlpha *= U.smoothstep(0.1, 0.3, ay);
       ctx.scale(s * o.yaw, s);
       ctx.rotate(o.pitch);
       squidSide(ctx, sq, col, L, squeeze, tt);
       ctx.restore();
     }
-    if (ay < 0.4) {
+    if (ay < 0.3) {
       ctx.save();
-      ctx.globalAlpha *= 1 - U.smoothstep(0.08, 0.4, ay);
+      ctx.globalAlpha *= 1 - U.smoothstep(0.1, 0.3, ay);
       ctx.scale(s, s);
       squidFront(ctx, sq, col, squeeze, tt);
       ctx.restore();
