@@ -9,7 +9,7 @@ _a [Sails v1](https://sailsjs.com) application built for [Sailsconf 2026](http:/
 >
 > For the app in this repo, that means asking questions about the shared world or history.  But for your Sails app, that's anything you can imagine.  You can enable or disable routes for use by the MCP server in `routes.js`.  Here's the kind of thing you can do with MCP (from Claude, Slack, or anywhere) in any Sails app; not just games, but finance software, consumer apps, admin tools, real estate transaction tech, and more:
 >
-> <img width="686" height="757" alt="image" src="https://github.com/user-attachments/assets/d0e79cae-7cd4-4151-9ea1-43b69b2a625a" />
+> <img width="1372" height="753" alt="image" src="https://github.com/user-attachments/assets/7d3373ec-2bfd-43d3-b5ea-655fb618a038" />
 
 
 
