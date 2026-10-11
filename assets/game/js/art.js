@@ -655,7 +655,9 @@
       ctx.save();
       ctx.translate(-6, -10);
       ctx.rotate(angle);
-      ctx.scale(1, squash);
+      // Flip so the smooth leading edge faces forward (the way it's flying)
+      // and the feathered trailing edge faces the tail.
+      ctx.scale(1, -squash);
       ctx.beginPath();
       ctx.moveTo(0, 0);
       ctx.bezierCurveTo(30, -16, 80, -16, 132, 0);
