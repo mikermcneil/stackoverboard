@@ -2,7 +2,7 @@
 
 _a [Sails v1](https://sailsjs.com) application built for [Sailsconf 2026](http://sailsconf.com/)_
 
-
+<img width="919" height="707" alt="image" src="https://github.com/user-attachments/assets/2fdc1e59-5bc1-44a6-83ea-e274184270eb" />
 <img width="939" height="848" alt="image" src="https://github.com/user-attachments/assets/e5877e55-9719-467c-beff-c393c1e06730" />
 
 
