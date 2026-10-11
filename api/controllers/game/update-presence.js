@@ -44,12 +44,16 @@ can see your squid swimming around in the same room as theirs.`,
   fn: async function ({ room, x, y, yaw, pitch, glow, hidden, flash }) {
 
     // Remember the squid's name on the session, so this doesn't hit the database every time.
-    var squidName = this.req.session.squidName;
+    // (It's remembered alongside the save token it came from, so falling again as a new squid
+    // never keeps reporting under the old squid's name.)
+    var token = this.req.session.saveToken;
+    if (!token) { throw 'noSave'; }
+    var squidName = this.req.session.presenceToken === token ? this.req.session.squidName : undefined;
     if (!squidName) {
-      var token = this.req.session.saveToken;
-      var save = token ? await Save.findOne({ token }) : undefined;
+      var save = await Save.findOne({ token });
       if (!save) { throw 'noSave'; }
       squidName = this.req.session.squidName = save.squidName;
+      this.req.session.presenceToken = token;
     }
 
     var now = Date.now();

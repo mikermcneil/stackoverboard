@@ -77,7 +77,11 @@
     },
 
     async tick() {
-      if (this.busy || document.hidden || E.mode !== 'play' || !E.room || !SO.save.enabled) { return; }
+      if (this.busy || E.mode !== 'play' || !E.room || !SO.save.enabled) { return; }
+      // In a background tab, keep checking in now and then, so you don't vanish for everyone else.
+      const now = U.now();
+      if (document.hidden && now - (this.lastAt || 0) < 4000) { return; }
+      this.lastAt = now;
       this.busy = true;
       const sq = E.squid, room = E.roomKey;
       const r = await SO.api.put('/api/v1/game/update-presence', {
@@ -90,6 +94,8 @@
         flash: sq.flash && sq.flashAmt > 0.3 ? sq.flash : '',
       });
       this.busy = false;
+      // The session lost track of our squid: saving again picks it back up.
+      if (r.status === 404) { SO.save.flush(); return; }
       if (!r.ok || !r.body || E.roomKey !== room || !E.room) { return; }
       const seen = {};
       (r.body.others || []).forEach((p) => {

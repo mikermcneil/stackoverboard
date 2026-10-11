@@ -803,13 +803,10 @@
     // Different ways of swimming, so it never moves quite the same way for long.
     if (!sq.style || this.t > sq.style.until) {
       const r = Math.random();
-      sq.style = { name: speedNow < 60 ? 'normal' : (r < 0.4 ? 'normal' : r < 0.6 ? 'glide' : r < 0.8 ? 'bob' : 'roll'), until: this.t + 6 + Math.random() * 7 };
+      sq.style = { name: speedNow < 60 ? 'normal' : (r < 0.5 ? 'normal' : r < 0.75 ? 'glide' : 'bob'), until: this.t + 6 + Math.random() * 7 };
     }
     const style = sq.style.name;
     if (style === 'bob' && !sq.turn) { sq.pitch += Math.sin(sq.t * 2.3) * 0.12 * dt * 6; }
-    if (style === 'roll' && !sq.turn && !sq.talking) {// a lazy roll toward the screen and back
-      sq.yaw = sq.facing * (0.78 + 0.22 * Math.cos(sq.t * 1.4));
-    }
     const armOpts = sq.spin ? { flutter: 14, wiggle: 4, pull: 6 }
       : sq.frenzy ? { flutter: 9 + Math.sin(sq.t * 3) * 3, wiggle: 3.4, pull: 4.5 }
         : style === 'glide' ? { flutter: 1.6, wiggle: 0.5, pull: 4.5 }

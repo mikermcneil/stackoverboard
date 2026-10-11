@@ -12,26 +12,26 @@
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Roboto+Mono:wght@400;500&display=swap">
-    <link rel="stylesheet" href="/game/game.css">
+    <link rel="stylesheet" href="/game/game.css?v=<%= typeof v !== 'undefined' ? v : '' %>">
   </head>
   <body>
     <%- body %>
     <% /* The game is plain scripts, in order. (Kept out of the asset pipeline's
           auto-injection on purpose: the rest of the app doesn't need them.) */ %>
-    <script src="/game/js/core.js"></script>
-    <script src="/game/js/audio.js"></script>
-    <script src="/game/js/art.js"></script>
-    <script src="/game/js/save.js"></script>
-    <script src="/game/js/ui.js"></script>
-    <script src="/game/js/engine.js"></script>
-    <script src="/game/js/actors.js"></script>
-    <script src="/game/js/rooms.js"></script>
-    <script src="/game/js/story.js"></script>
-    <script src="/game/js/others.js"></script>
-    <script src="/game/js/oddities.js"></script>
-    <script src="/game/js/scenes.js"></script>
-    <script src="/game/js/intro.js"></script>
-    <script src="/game/js/journal.js"></script>
-    <script src="/game/js/main.js"></script>
+    <script src="/game/js/core.js?v=<%= typeof v !== 'undefined' ? v : '' %>"></script>
+    <script src="/game/js/audio.js?v=<%= typeof v !== 'undefined' ? v : '' %>"></script>
+    <script src="/game/js/art.js?v=<%= typeof v !== 'undefined' ? v : '' %>"></script>
+    <script src="/game/js/save.js?v=<%= typeof v !== 'undefined' ? v : '' %>"></script>
+    <script src="/game/js/ui.js?v=<%= typeof v !== 'undefined' ? v : '' %>"></script>
+    <script src="/game/js/engine.js?v=<%= typeof v !== 'undefined' ? v : '' %>"></script>
+    <script src="/game/js/actors.js?v=<%= typeof v !== 'undefined' ? v : '' %>"></script>
+    <script src="/game/js/rooms.js?v=<%= typeof v !== 'undefined' ? v : '' %>"></script>
+    <script src="/game/js/story.js?v=<%= typeof v !== 'undefined' ? v : '' %>"></script>
+    <script src="/game/js/others.js?v=<%= typeof v !== 'undefined' ? v : '' %>"></script>
+    <script src="/game/js/oddities.js?v=<%= typeof v !== 'undefined' ? v : '' %>"></script>
+    <script src="/game/js/scenes.js?v=<%= typeof v !== 'undefined' ? v : '' %>"></script>
+    <script src="/game/js/intro.js?v=<%= typeof v !== 'undefined' ? v : '' %>"></script>
+    <script src="/game/js/journal.js?v=<%= typeof v !== 'undefined' ? v : '' %>"></script>
+    <script src="/game/js/main.js?v=<%= typeof v !== 'undefined' ? v : '' %>"></script>
   </body>
 </html>

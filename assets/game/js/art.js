@@ -201,29 +201,21 @@
     const hg = ctx.createLinearGradient(0, -25, 0, 25);
     hg.addColorStop(0, hslStr(col, -18)); hg.addColorStop(0.6, hslStr(col, 0)); hg.addColorStop(1, hslStr(col, 12, 0.9));
     A.ellipse(ctx, -2 * sn, 0, hrx, 24, 0, hg, SKIN_LINE, 1.3);
-    // Eyes on either side of the head. The near one turns away from you as it
-    // turns toward you; the far one slides into view on the other side.
+    // One eye. It slides around the head and narrows a little as the squid turns.
     const look = sq.look || 0;
-    const eye = (z, near) => {
-      const ex = -3 * c + z * sn, ey = -4;
-      const face = near ? Math.max(0.18, c) : Math.max(0.18, Math.min(1, sn * 1.4 - 0.5));
-      const vis = near ? 1 : U.smoothstep(0.45, 0.85, sn);
-      if (vis <= 0.01) { return; }
-      ctx.save();
-      ctx.globalAlpha *= vis;
-      ctx.translate(ex, ey);
-      ctx.scale(face, 1);
-      const eg = ctx.createRadialGradient(0, 0, 1.5, 0, 0, 13);
-      eg.addColorStop(0, '#05080c'); eg.addColorStop(0.55, '#0e151c'); eg.addColorStop(0.72, '#9fb0b6'); eg.addColorStop(0.86, '#d7e0e0'); eg.addColorStop(1, hslStr(col, -20));
-      A.circle(ctx, 0, 0, 13, eg, 'rgba(20,14,16,0.5)', 1);
-      ctx.beginPath(); ctx.arc(0, 0, 12.5, 0, U.TAU); ctx.clip();
-      A.circle(ctx, Math.cos(look) * 2.5, Math.sin(look) * 2.5, 7.5, '#020406', null);
-      A.circle(ctx, -4, -5, 2.6, 'rgba(255,255,255,0.9)', null);
-      if (sq.blink > 0) { ctx.fillStyle = hslStr(col, -6); ctx.fillRect(-14, -16, 28, 30 * sq.blink); }
-      ctx.restore();
-    };
-    eye(-16, false);
-    eye(16, true);
+    const ex = -3 * c + 14 * sn, ey = -4;
+    const face = 0.55 + 0.45 * c;
+    ctx.save();
+    ctx.translate(ex, ey);
+    ctx.scale(face, 1);
+    const eg = ctx.createRadialGradient(0, 0, 1.5, 0, 0, 13);
+    eg.addColorStop(0, '#05080c'); eg.addColorStop(0.55, '#0e151c'); eg.addColorStop(0.72, '#9fb0b6'); eg.addColorStop(0.86, '#d7e0e0'); eg.addColorStop(1, hslStr(col, -20));
+    A.circle(ctx, 0, 0, 13, eg, 'rgba(20,14,16,0.5)', 1);
+    ctx.beginPath(); ctx.arc(0, 0, 12.5, 0, U.TAU); ctx.clip();
+    A.circle(ctx, Math.cos(look) * 2.5, Math.sin(look) * 2.5, 7.5, '#020406', null);
+    A.circle(ctx, -4, -5, 2.6, 'rgba(255,255,255,0.9)', null);
+    if (sq.blink > 0) { ctx.fillStyle = hslStr(col, -6); ctx.fillRect(-14, -16, 28, 30 * sq.blink); }
+    ctx.restore();
   }
 
   // `sq`: { x, y, angle | yaw+pitch, scale, t, fin, jet, color:[h,s,l], glow, hidden, hearts:[], arms:[[{x,y}]], look }
