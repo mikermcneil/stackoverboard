@@ -96,7 +96,7 @@ moray eel?" -> \`nativesMet\` includes "moray".  "What did it do last?" -> \`eve
     var character = sails.helpers.world.getSquidCharacter(save);
     var warn = (what) => (err) => { sails.log.warn('world/get-squid: could not read '+what+':', err.message); return []; };
 
-    var presence = await Presence.findOne({ squidName: save.squidName });
+    var presence = await Presence.findOne({ where: { squidName: save.squidName }, select: ['squidName', 'room', 'x', 'y', 'yaw', 'pitch', 'glow', 'hidden', 'flash', 'dirt', 'grime', 'seenAt'] });// (only the columns every database has)
     var online = !!(presence && presence.seenAt >= now - 30000);
 
     var chats = await ChatMessage.find({ squidName: save.squidName }).sort([{ at: 'DESC' }, { id: 'DESC' }]).limit(20).tolerate(warn('chat'));

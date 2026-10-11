@@ -203,6 +203,21 @@
     '`sails console` lets you poke at a live app from the inside. The hagfish have a similar approach.',
     'Sails puts lodash in a global variable called `_`. It’s the shortest name there is. Like a squid’s life, sometimes.',
     'The person who made Sails now makes software for fleets of computers. Fleets, sails. Some people just like boats.',
+    'The Sails repository was made on March 18, 2012. More than 7,000 commits since. Coral grows slower.',
+    'Waterline got its own repository in May 2013. Around 3,000 commits since. Each one a little layer, like a shell.',
+    'The very first Sails issue, from April 2012, was about a built-in Account model. The squid has no account. Only an ink sac.',
+    'The most-discussed Sails issue ever is #124, “Associations,” from February 2013. Over 250 comments. Everyone wanted to be connected to something.',
+    'Mike McNeil has made more than 4,000 commits to Sails. If each one were an arm, it would be a very busy squid.',
+    'Someone asked for Sails to move from Grunt to Gulp in 2014. Nearly a hundred comments. Down here, a grunt is a kind of fish.',
+    'Issue #6191 asked Sails to populate things recursively. Associations inside associations inside associations. Like the spirals in the dark.',
+    'Sails.js hit the Hacker News front page in March 2013: “Realtime MVC framework for Node.js.” 186 points. The fish noticed.',
+    'In December 2015, a Hacker News thread asked “Is Sails.js dying?” It wasn’t. It still isn’t. It comes up a lot.',
+    'On Hacker News, someone called Sails “basically Node on Rails.” Rails are for trains. Sails are for boats. Squids are for neither.',
+    'A Hacker News commenter once said they thought Sails had been discontinued, then found it was still there. Like the whale.',
+    'The company behind Sails was in Y Combinator, Winter 2015. That winter, the sea was cold too.',
+    'In 2026, Sails is still here, still powering production workflows at NVIDIA and Anthropic. The bones in the whale fall are still here too.',
+    'This sea runs on Sails. Every squid you meet, every word you leave behind, goes through it. Think about that next time you surface.',
+    'Sails has more than 22,000 stars on GitHub. There are fewer stars than that in the sky above the islands, on a cloudy night.',
   ];
 
   const S = SO.story = {
@@ -1023,7 +1038,9 @@
         this.rt.ventPoll = (this.rt.ventPoll || 0) + dt;
         if (this.rt.ventPoll > 8) { this.rt.ventPoll = 0; this.refreshVent(E.actor('vent')); }
         const vent = E.actor('vent'), sq = E.squid;
-        if (vent && vent.phase === 'erupting' && U.dist(sq.x, sq.y, vent.x, vent.y - 200) < 230) {
+        if (vent && vent.phase === 'erupting' && U.dist(sq.x, sq.y, vent.x, vent.y - 200) < 230 && SO.items && SO.items.heatProof()) {
+          sq.vy -= 900 * dt; sq.vx += (vent.x - sq.x) * 1.5 * dt;// holding the cold pearl, the eruption just carries you up
+        } else if (vent && vent.phase === 'erupting' && U.dist(sq.x, sq.y, vent.x, vent.y - 200) < 230) {
           sq.vx += (sq.x - vent.x) * 4 * dt; sq.vy += 300 * dt;
           if (!this.rt.hotSaid) { this.rt.hotSaid = true; UI.thought('Hot! Hot.'); setTimeout(() => { this.rt.hotSaid = false; }, 4000); }
         }

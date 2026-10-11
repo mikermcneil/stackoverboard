@@ -55,6 +55,8 @@
       while (this.frames.length && E.t - this.frames[0].t > 5) { this.frames.shift(); }
       const j = this.jump;
       if (!j || !sq.inAir) { return; }
+      // On land (walking, flopping, lying on a slope) isn't air time: that jump is over.
+      if (sq._touchingRock || sq.walking) { this.jump = null; if (hud && !E.replaying) { hud.style.opacity = '0'; } return; }
       j.peak = Math.max(j.peak, sY - sq.y);
       if (j.peak > SHOW_AT) {
         if (!j.shown) { j.shown = true; $k().textContent = 'AIR TIME'; $s().textContent = ''; hud.style.opacity = '1'; AU().whoosh && AU().whoosh(); }
@@ -64,6 +66,7 @@
     },
 
     land(sq, sY) {
+      if (!this.jump && sq._touchingRock) { return; }// (sliding back in off the land: no splash verdict)
       const j = this.jump;
       this.jump = null;
       const impact = Math.max(0, sq.vy);

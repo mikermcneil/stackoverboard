@@ -49,7 +49,7 @@
         return;
       }
       this.out = (this.out || 0) + dt;
-      this.air = Math.max(0, this.air - dt);
+      this.air = Math.max(0, this.air - dt * (SO.items ? SO.items.airDrain() : 1));
       if (this.out < 1.2) { return; }// (a quick leap out of the water doesn't count)
       setupHud();
       hud.style.opacity = '1';

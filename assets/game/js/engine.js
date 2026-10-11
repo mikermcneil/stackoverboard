@@ -141,8 +141,8 @@
         this.holding = { x: e.clientX, y: e.clientY, t: U.now() };
         return;
       }
-      // Clicking something interesting: swim to it.
-      const hit = this.pick(this.pointer.wx, this.pointer.wy);
+      // Clicking something interesting: swim to it. (While something's being said, clicks only move you.)
+      const hit = SO.ui.talking ? null : this.pick(this.pointer.wx, this.pointer.wy);
       if (hit && hit === this.inspected) { this.interact(hit); return; }// a second click: do something with it
       if (hit) { this.inspected = hit; }// a first click: it shows up in the corner
       this.target = hit ? { x: hit.x, y: hit.y, hit } : this.exitAware(this.pointer.wx, this.pointer.wy);
@@ -240,7 +240,7 @@
     const consider = (o) => {
       if (!o || o.hidden || !o.touch) { return; }
       const d = U.dist(wx, wy, o.x, o.y);
-      if (d < (o.r || 60) + 30 && d < bd) { bd = d; best = o; }
+      if (d < Math.max(36, (o.r || 60) * 0.85) && d < bd) { bd = d; best = o; }// (right on it: fewer accidental clicks)
     };
     this.room.actors.forEach(consider);
     this.room.hotspots.forEach(consider);
@@ -512,8 +512,10 @@
     try { def = await SO.rooms.get(key); } catch (err) { console.error(err); }
     if (!def) { this.locked--; this._going = false; await SO.ui.fade(0, 300); return; }
     const prev = this.roomKey;
+    if (SO.traces && prev) { SO.traces.leave(prev, this.particles); }
     this.room = this.buildRoom(def);
     this.roomKey = key;
+    if (SO.traces) { this.particles = SO.traces.enter(key); }
     this.inspected = null;
     this.placeSquid(entry, prev);
     // Anything we arrive on top of (like the door we just came through) waits
@@ -800,7 +802,7 @@
     }
 
     if (inAir) {
-      sq.vy += 760 * dt;// out of the water you're just a falling squid
+      sq.vy += 760 * (SO.items ? SO.items.fall(sq) : 1) * dt;// out of the water you're just a falling squid
       if (sq._touchingRock) { sq.vx *= Math.exp(-4 * dt); }// lying on rock: you don't slide far
       // On land, heading somewhere: it walks, slowly, on its arms (a little hitch with each step).
       if (sq._touchingRock && strength > 0.05 && !this.locked && !(SO.breath && SO.breath.thrashing)) {
@@ -862,6 +864,11 @@
         wd.x = sq.x; wd.y = sq.y; wd.t = 0;
       }
     } else { wd.x = sq.x; wd.y = sq.y; wd.t = 0; }
+    // Safety net: never left stuck inside rock (whatever pushed it there), out it comes.
+    if (room.solidAt(sq.x, sq.y)) {
+      sq._embedded = (sq._embedded || 0) + dt;
+      if (sq._embedded > 0.25) { const f = this.findFreeBody(sq.x, sq.y); sq.x = f[0]; sq.y = f[1]; sq.vx = sq.vy = sq.dvx = sq.dvy = 0; sq._embedded = 0; }
+    } else { sq._embedded = 0; }
     if (SO.dirt) { SO.dirt.update(sq, dt, room); }
     if (SO.smell) { SO.smell.update(dt, room); }
     if (SO.blood) { SO.blood.update(dt, room); }

@@ -97,6 +97,8 @@
     if (/^bell:/.test(item)) { drawShard(ctx, x, y, 1, NOTE_HEX[item.slice(5)], Math.sin(t * 2) * 0.2); }
     else if (item === 'stalk') { ctx.strokeStyle = '#eef6fa'; ctx.lineWidth = 5; ctx.lineCap = 'round'; ctx.beginPath(); ctx.moveTo(x - 30, y + 10); ctx.quadraticCurveTo(x, y - 10 + Math.sin(t * 3) * 3, x + 34, y - 6); ctx.stroke(); A.circle(ctx, x + 34, y - 6, 5, '#ffffff', null); }
     else if (item === 'egg') { ctx.save(); ctx.translate(x, y); ctx.rotate(0.5); ctx.fillStyle = 'rgba(150,120,60,0.85)'; ctx.fillRect(-10, -24, 20, 48); ctx.strokeStyle = 'rgba(40,30,20,0.6)'; ctx.lineWidth = 3; ctx.beginPath(); ctx.moveTo(0, -12); ctx.quadraticCurveTo(Math.sin(t * 4) * 5, 0, 0, 14); ctx.stroke(); ctx.restore(); }
+    else if (item === 'swan-feather') { ctx.save(); ctx.translate(x, y); ctx.rotate(-0.6 + Math.sin(t * 1.4) * 0.15); ctx.strokeStyle = 'rgba(210,214,220,0.9)'; ctx.lineWidth = 1.5; ctx.beginPath(); ctx.moveTo(0, 26); ctx.lineTo(0, -26); ctx.stroke(); ctx.fillStyle = 'rgba(250,250,246,0.95)'; ctx.beginPath(); ctx.moveTo(0, 18); ctx.quadraticCurveTo(-13, 0, -2, -28); ctx.quadraticCurveTo(12, -6, 0, 18); ctx.fill(); ctx.strokeStyle = 'rgba(180,186,196,0.5)'; ctx.lineWidth = 0.8; for (let i = -18; i < 14; i += 5) { ctx.beginPath(); ctx.moveTo(0, i); ctx.lineTo(-7, i - 5); ctx.moveTo(0, i); ctx.lineTo(6, i - 5); ctx.stroke(); } ctx.restore(); }
+    else if (item === 'cold-pearl') { A.glow(ctx, x, y, 34, '#bfe8ff', 0.25 + Math.sin(t * 2) * 0.08); const g = ctx.createRadialGradient(x - 5, y - 6, 2, x, y, 15); g.addColorStop(0, '#ffffff'); g.addColorStop(0.5, '#cfe2ec'); g.addColorStop(1, '#7f9aaa'); ctx.fillStyle = g; ctx.beginPath(); ctx.arc(x, y, 14, 0, TAU); ctx.fill(); }
     else if (item === 'rain-float') { A.circle(ctx, x, y, 20, 'rgba(200,240,250,0.35)', 'rgba(230,255,255,0.8)', 2); ctx.fillStyle = 'rgba(170,220,255,0.6)'; ctx.beginPath(); ctx.arc(x, y, 17, 0.2 + Math.sin(t) * 0.1, Math.PI - 0.2 + Math.sin(t) * 0.1); ctx.fill(); }
   }
   SO.actorTypes.carried = {
@@ -126,6 +128,8 @@
     drop() { flag('carry', false); E.removeActor('carried'); },
     stilled,
     drawShard,
+    drawItem,
+    ITEM_NAMES,
   };
 
   // ════════════════════════════════════════════════════════════════════════════

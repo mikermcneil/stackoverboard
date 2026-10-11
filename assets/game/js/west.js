@@ -159,7 +159,7 @@
     if (b.plateaus) {
       for (let i = 0; i < 4; i++) {
         const wd = 220 + r() * 120, x = inside(260 + i * 560 + r() * 100, wd), top = RH * (0.1 + r() * 0.08);
-        solids.push({ type: 'rect', x, y: top, w: wd, h: RH });
+        solids.push({ type: 'rect', x, y: top, w: wd, h: 110 + r() * 70 });// (shelves at the surface, with water under them: stepping stones, not walls)
         actors.push({ id: 'lungfish-' + i, type: 'lungfish', x: x + wd / 2, y: top - 14, seed: r() * 10 });
       }
     }
@@ -168,8 +168,8 @@
     // plants
     for (let i = 0; i < 12 && b.plants; i++) {
       const x = 100 + i * 210 + r() * 80, seed = Math.floor(r() * 1000), s = 0.8 + r() * 0.6;
-      if (b.plants === 'kelp') { props.push({ type: 'kelp', x, h: 260 + r() * 200, seed }); }
-      else if (b.plants === 'seagrass') { props.push({ layer: i % 3 ? 'mid' : 'front', draw(ctx, t, room) { A.seagrass(ctx, x, room.floorY(x) + 6, s, t, seed); } }); }
+      if (b.plants === 'kelp') { const h = 260 + r() * 200; props.push({ type: 'kelp', x, h, seed, plant: 'kelp', w: 40 }); }
+      else if (b.plants === 'seagrass') { props.push({ plant: 'seagrass', x: x - 20, w: 40, h: 70 * s, layer: i % 3 ? 'mid' : 'front', draw(ctx, t, room) { A.seagrass(ctx, x, room.floorY(x) + 6, s, t, seed); } }); }
       else if (b.plants === 'sargassum') { const y = 60 + r() * 60; props.push({ layer: 'mid', draw(ctx, t, room) { A.sargassum(ctx, x + Math.sin(t * 0.2 + seed) * 20, (room.surfaceY || 0) + y, s, t, seed); } }); }
     }
     for (let i = 0; i < b.spiders; i++) { actors.push({ id: 'seaspider-' + i, type: 'seaSpider', x: 300 + r() * (W - 600), y: 0, seed: r() * 10 }); }
@@ -225,8 +225,9 @@
     if (type === 'stream') { for (let i = 0; i < 6; i++) { mid.push(170 + r() * 90); } }
     else if (type === 'lake') { for (let i = 0; i < 6; i++) { mid.push(320 + Math.sin(i / 5 * Math.PI) * 300 + r() * 60); } }
     else if (type === 'ridge' || type === 'snowfield') {// the ground rises out of the water in the middle: flop across, or don't
-      const hump = type === 'snowfield' ? 260 : 150;
-      mid = [200, 60, -hump * 0.7, -hump, -hump * 0.6, 120].map((v) => v + r() * 30);
+      // (low enough to get over: walk up the gentle slope, or flop, before the air runs out)
+      const hump = type === 'snowfield' ? 90 : 60;
+      mid = [220, 120, -hump * 0.5, -hump, -hump * 0.5, 140].map((v) => v + r() * 20);
       if (type === 'snowfield') { d.sand = '#f4f7f9'; d.palette = 'glass'; }
     } else if (type === 'falls') {
       // A cliff on the west side, and water coming down it into a plunge pool. Swim up the water.

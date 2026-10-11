@@ -26,12 +26,12 @@
     'sad:turtle-shell': { more: ['A small octopus has moved in.'], night: 'Something inside it is breathing. Slowly.' },
     'sad:dying-cuttle': { more: ['She’s paler. The eggs are darker.', 'She isn’t there anymore. The eggs are.'], ask: { key: 'dying-cuttle', q: 'Should I stay with her a while?', a: ['Stay', 'Go'] } },
     'sad:squid-beaks': { more: ['I counted. I stopped counting.'], ask: { key: 'squid-beaks', q: 'Are any of them squid I would have known?', a: ['Probably', 'I hope not'] } },
-    'oddity:hermit': { more: ['It’s moved into a bigger piece of glass.'], night: 'At night it comes all the way out and dances on the glass.' },
-    'oddity:glass-swan': { more: ['There are tool marks. Someone made this slowly.'], night: 'In the dark it holds the last of the light, for a while.', ask: { key: 'glass-swan', q: 'Who made it?', a: ['A swan', 'A squid', 'Nobody, it just happened'] } },
-    'oddity:whale-fall': { more: ['Worms with no mouths, all over the bones, like red fur.'], night: 'It glows faintly at night. The bones themselves.' },
-    'oddity:drummer': { more: ['It’s drumming a different rhythm today.'], night: 'At night it drums slower. Like it’s tired.' },
+    'oddity:hermit': { more: ['It’s moved into a bigger piece of glass.', 'It went into the glass on this side, and came out of a piece of glass by the far rock. I didn’t see it cross.'], night: 'At night it comes all the way out and dances on the glass.' },
+    'oddity:glass-swan': { more: ['There are tool marks. Someone made this slowly.', 'It’s not quite where it was last time. Glass doesn’t walk. Does it?'], night: 'In the dark it holds the last of the light, for a while.', ask: { key: 'glass-swan', q: 'Who made it?', a: ['A swan', 'A squid', 'Nobody, it just happened'] } },
+    'oddity:whale-fall': { more: ['Worms with no mouths, all over the bones, like red fur.', 'Something glows in the jaw, then goes out. Far off, in the dark, something glows back, the same color, at the same moment.'], night: 'It glows faintly at night. The bones themselves. One blinks out here and on again somewhere else.' },
+    'oddity:drummer': { more: ['It’s drumming a different rhythm today.', 'The drumming answers itself, from somewhere much too far away to hear.'], night: 'At night it drums slower. Like it’s tired.' },
     'oddity:juggler': { more: ['It dropped one. It didn’t pick it back up.'] },
-    'oddity:spiral': { ask: { key: 'spiral-marks', q: 'Who drew the spirals?', a: ['Squid', 'Something older', 'The water'] } },
+    'oddity:spiral': { more: ['The same spirals as in the other dark places. Exactly the same. As if they’re all one place, folded.'], ask: { key: 'spiral-marks', q: 'Who drew the spirals?', a: ['Squid', 'Something older', 'The water'] } },
     'lightDrinker': { ask: { key: 'light-drinker', q: 'Is it alive?', a: ['Yes', 'No', 'Worse'] } },
     'buddy': { ask: { key: 'bead', q: 'Is Bead my friend, or am I just its?', a: ['Both', 'Just mine', 'Just its'] } },
   };
@@ -93,10 +93,16 @@
       const NATIVE_OF = { combJelly: 'comb-jelly', lanternfish: 'lanternfish', moonReeds: 'moon-reeds', polyps: 'coral-polyps', lightDrinker: 'light-drinker', seaSpider: null, lungfish: 'lungfish' };
       const key = o.lifeKind || NATIVE_OF[o.type] || o.type;
       const native = SO.story.NATIVE && SO.story.NATIVE[key];
-      const label = (SO.story.describe(o) || 'it').replace(/^(a|an|the) /i, '');
+      // Mind the grammar: "a comb jelly" / "moon reeds" / "the old turtle", as the label has it.
+      const raw = (SO.story.describe(o) || 'it').split(/[,.]/)[0].trim();
+      const lower = raw.charAt(0).toLowerCase() + raw.slice(1);
+      const hasArticle = /^(a|an|the) /i.test(raw);
+      const plural = !hasArticle && /s$/i.test(raw) && !/ss$/i.test(raw);
+      const phrase = hasArticle ? lower : (plural ? lower : 'a ' + lower);
+      const it = plural ? 'they' : 'it', It = plural ? 'They' : 'It', isAre = plural ? 'are' : 'is';
       const lines = [];
       if (native && native.line) { lines.push(native.line); }
-      lines.push(`Still a ${label.toLowerCase()}. Still here.`, 'It doesn’t seem to mind me looking.', 'I could watch it all day. I won’t.', `Hello again, ${label.toLowerCase()}.`, 'I wonder what it thinks I am.', 'Nothing new. I like that, sometimes.');
+      lines.push(`Still ${phrase}. Still here.`, `${It} ${plural ? 'don’t' : 'doesn’t'} seem to mind me looking.`, 'I could watch all day. I won’t.', `I wonder what ${it} think${plural ? '' : 's'} I am.`, `Nothing new. ${It} ${isAre} just ${plural ? 'themselves' : 'itself'}.`);
       o._remarkN = ((o._remarkN === undefined ? -1 : o._remarkN) + 1) % lines.length;
       SO.ui.thought(lines[o._remarkN]);
     },

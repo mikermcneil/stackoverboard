@@ -45,8 +45,10 @@
       old: r() < 0.25,// older plants are darker and more ragged
       layer: r() < 0.2 ? 'front' : 'mid',
     };
+    const tall = { kelp: 220 + v.hue * 380, seagrass: 70, sargassum: 70, 'lantern-weed': 90, 'glass-coral': 80, 'bone-fan': 100 }[kind] || 0;
     return {
       layer: v.layer,
+      plant: kind, x, w: (30 + v.clump * 26) * v.s, h: tall * v.s, top: kind === 'sargassum' ? v.hue : null,
       draw(ctx, t, room) {
         const f = room.floorY ? room.floorY(x) : Infinity;
         const base = isFinite(f) ? Math.min(f, room.h - 30) + 6 : room.h - 30;
@@ -67,6 +69,33 @@
       },
     };
   }
+
+  // Swimming through plants: they part around you, and now and then something that was
+  // hiding in them darts out (a little fish, a shrimp), in a puff of silt and bubbles.
+  const E = SO.E;
+  function rustle() {
+    const room = E.room, sq = E.squid;
+    if (!room || E.mode !== 'play' || E.locked || document.hidden || !sq || sq.inAir) { return; }
+    const sp = Math.hypot(sq.vx || 0, sq.vy || 0);
+    if (sp < 160) { return; }
+    for (const p of room.props) {
+      if (!p.plant || !p.h || Math.abs(sq.x - (p.x + p.w / 2)) > p.w / 2 + 30) { continue; }
+      let top, bot;
+      if (p.plant === 'sargassum') { top = (room.surfaceY || 0) + 30 + p.top * 90; bot = top + 90; }
+      else { const f = room.floorY ? room.floorY(p.x) : Infinity; bot = isFinite(f) ? Math.min(f, room.h - 30) : room.h - 30; top = bot - p.h; }
+      if (sq.y < top || sq.y > bot) { continue; }
+      if ((p._rustled || 0) > E.t - 8) { continue; }
+      p._rustled = E.t;
+      for (let i = 0; i < 5; i++) { E.particles.push({ kind: 'bubble', x: sq.x + (Math.random() - 0.5) * 50, y: sq.y + (Math.random() - 0.5) * 40, vx: (Math.random() - 0.5) * 50, vy: -25, life: 1.5 + Math.random(), t: 0, r: 1 + Math.random() * 2.5 }); }
+      if (SO.audio && SO.audio.bubbles) { SO.audio.bubbles(2, 0.25); }
+      if (Math.random() < 0.4 && E.ambient && E.ambient.length < 60) {// something was hiding in there
+        const away = sq.vx > 0 ? 1 : -1, n = 1 + Math.floor(Math.random() * 3);
+        for (let i = 0; i < n; i++) { E.ambient.push({ type: 'fish', x: sq.x + away * 20, y: sq.y + (Math.random() - 0.5) * 40, vx: away * (220 + Math.random() * 160), vy: (Math.random() - 0.5) * 120, a: away > 0 ? -0.2 + Math.random() * 0.4 : Math.PI - 0.2 + Math.random() * 0.4, t: 0, seed: Math.random() * 100, hue: 30 + Math.random() * 40, s: 0.45 + Math.random() * 0.3 }); }
+      }
+      return;
+    }
+  }
+  setInterval(rustle, 150);
 
   SO.flora = {
     GROWS,

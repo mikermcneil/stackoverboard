@@ -62,7 +62,7 @@
       this.inspect$ = $('inspect');
       this.inspectCanvas$ = $('inspect-canvas');
       this.inspectLabel$ = $('inspect-label');
-      this.inspectCanvas$.addEventListener('pointerdown', (e) => { e.stopPropagation(); if (SO.E.inspected) { SO.E.interact(SO.E.inspected); } });
+      this.inspectCanvas$.addEventListener('pointerdown', (e) => { e.stopPropagation(); if (SO.E.inspected && !this.talking) { SO.E.interact(SO.E.inspected); } });
       this.card$ = $('card');
       this.fade$ = $('fade');
       $('speech').addEventListener('pointerdown', (e) => { e.stopPropagation(); this.advance(); });
@@ -100,7 +100,11 @@
       return creature(this.current) || this.queue.some(creature) || U.now() - (this._creatureAt || -1e9) < 20000 || !!(SO.story && SO.story.rt && SO.story.rt.lesson);
     },
     // A passing remark: only if nothing important is going on and nobody else is talking.
-    aside(text) { if (this.important || this.queue.length > 1) { return; } this.say(text, { who: 'squid', minor: true }); },
+    aside(text) {
+      if (this.important || this.queue.length > 1 || this.talking || U.now() - (this._asideAt || -1e9) < 15000) { return; }// (not too often: there's enough talk)
+      this._asideAt = U.now();
+      this.say(text, { who: 'squid', minor: true });
+    },
     // A quiet line from the world itself. Doesn't block, and is the first to go if things get busy.
     whisper(text) { this.say(text, { who: 'world', minor: true }); },
 
@@ -221,16 +225,18 @@
       }
       const E = SO.E, o = E.inspected;
       if (!o || o.hidden || !E.room || (E.room.actors.indexOf(o) === -1 && E.room.hotspots.indexOf(o) === -1)) {
-        if (o) { E.inspected = null; }
-        this.inspect$.classList.remove('show');
+        // Gone (picked up, swum off)? Keep the last close-up a moment, rather than empty water.
+        if (o) { E.inspected = null; this._goneAt = U.now(); }
+        if (!this._goneAt || U.now() - this._goneAt > 2500) { this.inspect$.classList.remove('show'); }
         return;
       }
+      this._goneAt = 0;
       this.inspect$.classList.add('show');
       // You only know what it is once you've had a proper look (up close).
       const near = U.dist(E.squid.x, E.squid.y, o.x, o.y) < (o.r || 60) + 420;
       const c = this.inspectCanvas$.getContext('2d');
       const T = SO.actorTypes[o.type];
-      if (near && T && T.draw && !o.door && !this._noCloseUp[o.type]) {
+      if (T && T.draw && !o.door && !this._noCloseUp[o.type]) {// always a close-up of the thing itself
         // Close enough: a proper close-up, drawn again, bigger, on its own.
         c.save();
         c.setTransform(1, 0, 0, 1, 0, 0);

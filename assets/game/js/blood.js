@@ -31,7 +31,14 @@
     nextKill: 40,
 
     // Blood goes into the water. `amount` ~0.2 (a nick) .. 2 (something big torn open).
-    spill(x, y, amount = 0.6, blue = false) {
+    spill(x, y, amount = 0.6, blue = false, shared = false) {
+      // Blood you cause, others in the same place see too (see others.js). Blood that comes from
+      // the world itself happens on the same schedule for everyone already, so it isn't sent.
+      if (!shared && amount >= 0.15) {
+        const o = this.outgoing;
+        this.spillN = (this.spillN || 0) + 1;
+        this.outgoing = { n: this.spillN, x: o ? (o.x + x) / 2 : x, y: o ? (o.y + y) / 2 : y, amt: Math.min(2, (o ? o.amt : 0) + amount), blue: blue || (o && o.blue) };
+      }
       amount *= 0.55;// (less blood than there was)
       const n = Math.round(2 + amount * 6);
       for (let i = 0; i < n && E.particles.length < 700; i++) {
@@ -56,13 +63,13 @@
 
     // Something takes a bite out of something.
     wound(x, y, amount, opts = {}) {
-      this.spill(x, y, amount, opts.blue);
+      this.spill(x, y, amount, opts.blue, opts.shared);
       if (opts.scales) { this.scales(x, y, opts.scales, opts.hue); }
       const a = AU();
       a.noise && a.noise({ dur: 0.18, freq: 1600, q: 2, gain: 0.08 + amount * 0.05, sweep: 0.5 });
     },
 
-    onEnter() { this.level = 0; this.strikers = []; this.frenzyT = 0; },
+    onEnter() { this.level = this.carryLevel || 0; this.carryLevel = 0; this.strikers = []; this.frenzyT = 0; },
 
     update(dt, room) {
       const sq = E.squid;
@@ -97,12 +104,19 @@
       if (!E.locked && (room.surfaceY === null || sq.y > room.surfaceY + 200)) {
         if (hush) { this.nextKill = Math.max(this.nextKill, 20); }
         this.nextKill -= dt * (0.2 + this.level * 1.5);
-        if (this.nextKill < 0) { this.nextKill = 120 + Math.random() * 180; this.huntFish(room); }
+        // (on the same schedule for everyone in this place: one every couple of minutes, at the same moment)
+        const slot = Math.floor(SO.api.serverNow() / 150000), at = slot * 150000 + U.hash('kill:' + E.roomKey + ':' + slot) % 150000;
+        if (this.killSlot !== slot && SO.api.serverNow() >= at && SO.api.serverNow() - at < 8000 && !hush) { this.killSlot = slot; this.huntFish(room, U.rng('prey:' + E.roomKey + ':' + slot)); }
       }
       // The dead seep: now and then a little cloud of blood from a body on the bottom (rub against it
       // and it's on you).
       room.actors.forEach((a) => {
-        if (a.type === 'oddity' && ['fish-corpse', 'half-squid', 'drowned-swan', 'sinking-fish'].includes(a.kind) && Math.random() < dt / 5) { this.spill(a.x + (Math.random() - 0.5) * 30, a.y - 6, 0.2); }
+        if (a.type !== 'oddity' || !['fish-corpse', 'half-squid', 'drowned-swan', 'sinking-fish'].includes(a.kind)) { return; }
+        const slot = Math.floor(SO.api.serverNow() / 2500);// (the same seeps, at the same moments, for everyone)
+        if (a._seepSlot === slot) { return; }
+        a._seepSlot = slot;
+        const h = U.hash('seep:' + E.roomKey + ':' + a.id + ':' + slot);
+        if (h % 2 === 0) { this.spill(a.x + ((h >> 3) % 30) - 15, a.y - 6, 0.2, false, true); }
       });
       // Bump into little fish at speed and scales come off them (no blood, they just dart).
       const spd = Math.hypot(sq.vx, sq.vy);
@@ -166,7 +180,7 @@
         if (s.prey) {// it takes the little fish
           const i = E.ambient.indexOf(s.prey);
           if (i >= 0) { E.ambient.splice(i, 1); }
-          this.wound(s.x, s.y, 0.8, { scales: 16, hue: s.prey.hue || 200 });
+          this.wound(s.x, s.y, 0.8, { scales: 16, hue: s.prey.hue || 200, shared: true });
         } else if (U.dist(s.x, s.y, sq.x, sq.y) < 70 && !E.locked) {// it hits you
           this.hitSquid(s.vx, s.vy);
         } else {// it tears through the cloud
@@ -174,10 +188,13 @@
         }
       }
     },
-    huntFish(room) {
-      const fish = E.ambient.filter((f) => f.type === 'fish');
-      if (!fish.length) { return; }
-      const prey = fish[Math.floor(Math.random() * fish.length)];
+    huntFish(room, r = Math.random) {
+      // The prey is a little fish at the same spot for everyone (one swims in there if needed).
+      const x = 200 + r() * (room.w - 400), top = (room.surfaceY || 0) + 220, f = room.floorY ? room.floorY(x) : room.h;
+      const y = top + r() * Math.max(60, Math.min(isFinite(f) ? f : room.h, room.h) - top - 120);
+      if (room.solidAt(x, y)) { return; }
+      const prey = { type: 'fish', x, y, vx: 0, vy: 0, a: r() * 6, t: 0, seed: r() * 100, s: 0.8, hue: 20 + r() * 60 };
+      E.ambient.push(prey);
       this.strikers = this.strikers || [];
       this.spawnStriker(room, prey);
     },
@@ -273,6 +290,33 @@
 
   // Strikers are drawn by an invisible actor in every room (so they're part of the scene).
   SO.actorTypes.bloodLayer = { r: 0, touch: false, draw(ctx) { SO.blood.drawStrikers(ctx); } };
+  // What's left in the water when you leave a place (blood, silt, scales, bubbles) is still there,
+  // a little more faded, when you come back. (The last dozen places.)
+  const KEEP = { blood: 1, silt: 1, scale: 1, bubble: 1, flake: 1 };
+  SO.traces = {
+    rooms: {},
+    leave(key, particles) {
+      const parts = particles.filter((p) => KEEP[p.kind] && p.t < p.life);
+      this.rooms[key] = { at: U.now(), parts, level: SO.blood.level };
+      const keys = Object.keys(this.rooms);
+      if (keys.length > 12) { keys.sort((a, b) => this.rooms[a].at - this.rooms[b].at).slice(0, keys.length - 12).forEach((k) => delete this.rooms[k]); }
+    },
+    enter(key) {
+      const m = this.rooms[key];
+      if (!m) { return []; }
+      const gone = Math.min(120, (U.now() - m.at) / 1000);
+      const out = [];
+      m.parts.forEach((p) => {
+        const dt = Math.min(gone, p.life - p.t);
+        if (dt >= p.life - p.t) { return; }// (it's faded away)
+        p.owner = null; p.t += dt; p.r += (p.grow || 0) * dt * 0.3; p.x += (p.vx || 0) * Math.min(dt, 3) * 0.5; p.y += (p.vy || 0) * Math.min(dt, 3) * 0.5;
+        out.push(p);
+      });
+      SO.blood.carryLevel = Math.max(0, m.level - gone * 0.03);
+      return out;
+    },
+  };
+
   const populate = SO.oddities.populate.bind(SO.oddities);
   SO.oddities.populate = function (room) {
     populate(room);

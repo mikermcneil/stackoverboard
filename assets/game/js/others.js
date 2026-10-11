@@ -88,6 +88,16 @@
           SO.dirt.puff(sq.x - sq.vx * 0.15, sq.y + 70 * sq.scale, SO.dirt.kindFor(room), 'other', sp);
         }
       }
+      // Blood on them shows, and trails off them, the way it does off you; and they leave bubbles.
+      const spd = Math.hypot(sq.vx, sq.vy);
+      if (!a.gone && (g.bloody || 0) > 0.05 && Math.random() < dt * g.bloody * 6) {
+        E.particles.push({ kind: 'blood', trail: true, x: sq.x - sq.vx * 0.1, y: sq.y, vx: 0, vy: -4, t: 0, life: 6, r: 6 + Math.random() * 6, grow: 5, col: [212, 60, 42], amt: 0 });
+      }
+      if ((g.bloody || 0) > 0.1) { sq.color = A.mixHsl(sq.color, [230, 45, 30], Math.min(0.5, g.bloody * 0.5)); }
+      if (!a.gone && spd > 120 && Math.random() < dt * (1 + spd / 200)) {
+        const hx = sq.x - Math.cos(sq.angle || 0) * 60 * (sq.scale || 1), hy = sq.y - Math.sin(sq.angle || 0) * 60 * (sq.scale || 1);
+        E.particles.push({ kind: 'bubble', x: hx, y: hy, vx: -sq.vx * 0.2 + (Math.random() - 0.5) * 30, vy: -30, life: 2 + Math.random(), t: 0, r: 1.5 + Math.random() * 3 });
+      }
       // Fade in when they arrive; fade out if they stop reporting.
       a.alpha = U.lerp(a.alpha || 0, a.gone ? 0 : 1, Math.min(1, dt * 2));
       if (a.gone && a.alpha < 0.02) { a.hidden = true; }
@@ -114,6 +124,14 @@
       }, 20000);
     },
 
+    // The blood we spilled since the last report, as "id:x:y:amount:blue" (the id only ever goes up,
+    // so others draw each cloud once).
+    spillOut() {
+      const o = SO.blood && SO.blood.outgoing;
+      if (o) { SO.blood.outgoing = null; this._spill = `${o.n}:${Math.round(o.x)}:${Math.round(o.y)}:${o.amt.toFixed(2)}:${o.blue ? 1 : 0}`; }
+      return this._spill || '';
+    },
+
     async tick() {
       if (this.busy || E.mode !== 'play' || !E.room || !SO.save.enabled) { return; }
       // In a background tab, keep checking in now and then, so you don't vanish for everyone else.
@@ -132,6 +150,8 @@
         flash: sq.flash && sq.flashAmt > 0.3 ? sq.flash : '',
         dirt: SO.dirt ? Math.round(SO.dirt.level(sq) * 100) / 100 : 0,
         grime: SO.dirt ? SO.dirt.mainKind(sq) : '',
+        bloody: Math.round((sq.blood || 0) * 100) / 100,
+        spill: this.spillOut(),
       });
       this.busy = false;
       // The session lost track of our squid: saving again picks it back up.
@@ -142,10 +162,17 @@
       (r.body.others || []).forEach((p) => {
         const id = 'other:' + p.squidName;
         seen[id] = true;
-        const goal = { x: p.x, y: p.y, yaw: p.yaw, pitch: p.pitch, glow: p.glow, hidden: p.hidden, flash: p.flash, dirt: p.dirt || 0, grime: p.grime || '' };
+        const goal = { x: p.x, y: p.y, yaw: p.yaw, pitch: p.pitch, glow: p.glow, hidden: p.hidden, flash: p.flash, dirt: p.dirt || 0, grime: p.grime || '', bloody: p.bloody || 0, spill: p.spill || '' };
         const a = E.actor(id);
         if (a) { a.goal = goal; a.gone = false; a.hidden = false; }
-        else { E.addActor(E.room, { id, type: 'otherSquid', name: p.squidName, x: p.x, y: p.y, goal, alpha: 0 }); }
+        else { E.addActor(E.room, { id, type: 'otherSquid', name: p.squidName, x: p.x, y: p.y, goal, alpha: 0, lastSpill: goal.spill }); }// (blood spilled before we got here is old news)
+        // Blood they spilled: the same cloud, in the same spot, here too.
+        const b = E.actor(id);
+        if (b && goal.spill && goal.spill !== b.lastSpill) {
+          b.lastSpill = goal.spill;
+          const [, sx, sy, amt, blue] = goal.spill.split(':');
+          if (SO.blood) { SO.blood.spill(+sx, +sy, +amt, blue === '1', true); }
+        }
       });
       E.room.actors.forEach((a) => { if (a.type === 'otherSquid' && !seen[a.id]) { a.gone = true; } });
     },

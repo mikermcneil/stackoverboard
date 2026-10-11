@@ -62,6 +62,12 @@ body.game-mode #sound-hint { display: none; }
   display: flex; gap: 12px; opacity: 0; transition: opacity 1.2s; pointer-events: none;
 }
 #skin.show { opacity: 1; pointer-events: auto; }
+#held { position: absolute; right: 260px; top: 50%; transform: translateY(-50%); display: flex; align-items: center; gap: 8px; flex-direction: row-reverse; opacity: 0; transition: opacity 0.6s; pointer-events: none; }
+#held.show { opacity: 1; pointer-events: auto; }
+#held canvas { width: 44px; height: 44px; border-radius: 50%; border: 1px solid rgba(255, 255, 255, 0.22); background: rgba(5, 11, 18, 0.55); cursor: default; }
+#held.keep canvas { cursor: pointer; border-color: rgba(255, 236, 190, 0.45); }
+#held span { font: 500 11px var(--mono, monospace); letter-spacing: 0.04em; color: rgba(244, 237, 228, 0.75); max-width: 140px; text-align: right; }
+@media (max-width: 900px) { #held { top: 34px; transform: none; } #held span { display: none; } #held canvas { width: 36px; height: 36px; } }
 @media (max-width: 900px) { #skin { right: 16px; top: 34px; transform: none; } }
 #skin button {
   width: 32px; height: 32px; border-radius: 50%; border: 1.5px solid rgba(255, 255, 255, 0.35); cursor: pointer; position: relative;

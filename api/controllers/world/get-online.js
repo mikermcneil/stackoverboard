@@ -44,7 +44,7 @@ has done over time).`,
 
   fn: async function () {
     var now = Date.now();
-    var rows = await Presence.find({ seenAt: { '>=': now - 30000 } }).sort('seenAt DESC');
+    var rows = await Presence.find({ where: { seenAt: { '>=': now - 30000 } }, select: ['squidName', 'room', 'x', 'y', 'yaw', 'pitch', 'glow', 'hidden', 'flash', 'dirt', 'grime', 'seenAt'] }).sort('seenAt DESC');// (only the columns every database has)
     var saves = rows.length ? await Save.find({ squidName: _.pluck(rows, 'squidName') }) : [];
     var bySquid = _.indexBy(saves, 'squidName');
     var online = rows.map((p) => {
