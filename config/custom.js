@@ -10,6 +10,11 @@
 
 module.exports.custom = {
 
+  // The seed for Stack Overboard's shared world: the deep maze, its tiles, procedurally
+  // generated species, and the Shoal's schedule are all derived deterministically from this.
+  // (Changing it reshapes the world, so don't, once players have started exploring.)
+  worldSeed: 1847,
+
   /**************************************************************************
   *                                                                         *
   * The base URL to use during development.                                 *

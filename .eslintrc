@@ -39,7 +39,11 @@
     "_": true,
 
     // Models:
-    "User": true
+    "User": true,
+    "Save": true,
+    "WorldEvent": true,
+    "WorldTile": true,
+    "Species": true
     
     // …and any others.
     // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -

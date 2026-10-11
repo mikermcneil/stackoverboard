@@ -63,4 +63,30 @@ module.exports.routes = {
   'POST  /api/v1/deliver-contact-form-message':          { action: 'deliver-contact-form-message' },
   'POST  /api/v1/observe-my-session':                 { action: 'observe-my-session', hasSocketFeatures: true },
 
+
+  //  ╔═╗╔═╗╔╦╗╔═╗
+  //  ║ ╦╠═╣║║║║╣
+  //  ╚═╝╩ ╩╩ ╩╚═╝
+  // The player's own game (identified by a secret token in the session; no login needed).
+  'GET   /api/v1/game/load-game':                     { action: 'game/load-game' },
+  'POST  /api/v1/game/start-game':                    { action: 'game/start-game' },
+  'PUT   /api/v1/game/save-game':                     { action: 'game/save-game' },
+  'POST  /api/v1/game/discover-tile':                 { action: 'game/discover-tile' },
+  'POST  /api/v1/game/encounter-species':             { action: 'game/encounter-species' },
+  'POST  /api/v1/game/claim-gem':                     { action: 'game/claim-gem' },
+  'POST  /api/v1/game/wake-vent':                     { action: 'game/wake-vent' },
+  'POST  /api/v1/game/record-ending':                 { action: 'game/record-ending' },
+
+
+  //  ╦ ╦╔═╗╦═╗╦  ╔╦╗
+  //  ║║║║ ║╠╦╝║   ║║
+  //  ╚╩╝╚═╝╩╚═╩═╝═╩╝
+  // The shared world (read-only, public).
+  'GET   /api/v1/world/get-overview':                 { action: 'world/get-overview' },
+  'GET   /api/v1/world/get-history':                  { action: 'world/get-history' },
+  'GET   /api/v1/world/get-state':                    { action: 'world/get-state' },
+  'GET   /api/v1/world/get-map':                      { action: 'world/get-map' },
+  'GET   /api/v1/world/get-species':                  { action: 'world/get-species' },
+  'GET   /api/v1/world/get-squids':                   { action: 'world/get-squids' },
+
 };

@@ -1,0 +1,10 @@
+{
+  // The game client: plain browser scripts sharing a `window.SO` namespace.
+  // Room/actor hooks take a fixed set of arguments whether they use them or not,
+  // and a few tables are defined after the functions that read them (at runtime).
+  "rules": {
+    "one-var": "off",
+    "no-unused-vars": ["warn", { "vars": "local", "args": "none" }],
+    "no-use-before-define": ["error", { "functions": false, "variables": false }]
+  }
+}

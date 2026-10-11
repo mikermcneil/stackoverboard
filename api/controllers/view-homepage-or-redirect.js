@@ -4,20 +4,15 @@ module.exports = {
   friendlyName: 'View homepage or redirect',
 
 
-  description: 'Display or redirect to the appropriate homepage, depending on login status.',
+  description: 'Display the homepage (the game), for guests and logged-in users alike.',
 
 
   exits: {
 
     success: {
       statusCode: 200,
-      description: 'Requesting user is a guest, so show the public landing page.',
+      description: 'Show the game.',
       viewTemplatePath: 'pages/homepage'
-    },
-
-    redirect: {
-      responseType: 'redirect',
-      description: 'Requesting user is logged in, so redirect to the internal welcome page.'
     },
 
   },
@@ -25,11 +20,7 @@ module.exports = {
 
   fn: async function () {
 
-    if (this.req.me) {
-      throw {redirect:'/welcome'};
-    }
-
-    return {};
+    return { layout: 'layouts/layout-game' };
 
   }
 
