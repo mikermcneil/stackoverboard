@@ -137,6 +137,8 @@
       if (this.squidHit(this.pointer.wx, this.pointer.wy)) { this.holding = { x: e.clientX, y: e.clientY, t: U.now() }; return; }
       // Clicking something interesting: swim to it.
       const hit = this.pick(this.pointer.wx, this.pointer.wy);
+      if (hit && hit === this.inspected) { this.interact(hit); return; }// a second click: do something with it
+      if (hit) { this.inspected = hit; }// a first click: it shows up in the corner
       this.target = hit ? { x: hit.x, y: hit.y, hit } : this.exitAware(this.pointer.wx, this.pointer.wy);
       this.spur();
       SO.story && SO.story.onActivity && SO.story.onActivity();
@@ -462,6 +464,7 @@
     const prev = this.roomKey;
     this.room = this.buildRoom(def);
     this.roomKey = key;
+    this.inspected = null;
     this.placeSquid(entry, prev);
     this.target = null;
     this.snapCamera();
@@ -700,7 +703,7 @@
       if (tr.t >= 1) { sq.yaw = tr.to; sq.turn = null; }
     } else {
       // Like Bobbin, the squid turns to face you when it's talking to itself (if it isn't busy swimming).
-      const yawGoal = sq.talking && sp < 140 && !inAir ? 0.02 * sq.facing : sq.facing;
+      const yawGoal = sq.talking && sp < 140 && !inAir ? 0.58 * sq.facing : sq.facing;// three-quarters toward you, not straight on
       if (sq.yaw !== yawGoal) {
         const k = 1 - Math.exp(-(sq.talking ? 3 : 6) * dt);
         sq.yaw += (yawGoal - sq.yaw) * k;
@@ -881,6 +884,36 @@
     if (room.surfaceY !== null) { sq.y = Math.max(sq.y, -500); }
   };
 
+  // Doing something with a thing: go through a door, talk, pick it up...
+  E.doTouch = function (o) {
+    const room = this.room;
+    if (o.door) {
+      const blocked = SO.story.doorBlocked ? SO.story.doorBlocked(o, room) : null;
+      if (blocked) { SO.ui.thought(blocked); }
+      else { this.goto(o.door, { at: o.at }); }
+      return;
+    }
+    const T = SO.actorTypes[o.type];
+    if (T && T.onTouch) { T.onTouch(o, room); }
+    if (room.def.onTouch) { room.def.onTouch(room, o); }
+    SO.story.onTouch(o, room);
+    if (this.target && this.target.hit === o) { this.target = null; }
+  };
+
+  // Asked to interact (a second click, or a click on it in the corner): do it
+  // now if we're close enough, or swim over and do it on arrival.
+  E.interact = function (o) {
+    if (!o || o.hidden || this.locked) { return; }
+    const sq = this.squid;
+    const d = U.dist(sq.x, sq.y, o.x, o.y);
+    if (d < (o.r || 60) + 200) { this.doTouch(o); return; }
+    o._pending = true;
+    this.target = { x: o.x, y: o.y, hit: o };
+    this.spur();
+  };
+
+  // Things that should happen just by bumping into them (doors, pearls, bubbles)
+  // happen on contact. Creatures you'd talk to wait until you click on them again.
   E.checkTouches = function () {
     if (this.locked) { return; }
     const sq = this.squid, room = this.room;
@@ -888,21 +921,17 @@
     const mx = sq.x + ca * 80, my = sq.y + sa * 80;
     const check = (o) => {
       if (!o.touch || o.hidden) { return; }
+      const T = SO.actorTypes[o.type];
+      const talker = T && T.talk;
       const d = Math.min(U.dist(sq.x, sq.y, o.x, o.y), U.dist(mx, my, o.x, o.y));
+      if (talker) {
+        if (o._pending && d < (o.r || 60) + 160) { o._pending = false; this.doTouch(o); }
+        return;
+      }
       const near = d < (o.r || 60) + 40;
-      if (near && !o._touching) {
-        o._touching = true;
-        if (o.door) {
-          const blocked = SO.story.doorBlocked ? SO.story.doorBlocked(o, room) : null;
-          if (blocked) { SO.ui.thought(blocked); }
-          else { this.goto(o.door, { at: o.at }); }
-          return;
-        }
-        const T = SO.actorTypes[o.type];
-        if (T && T.onTouch) { T.onTouch(o, room); }
-        if (room.def.onTouch) { room.def.onTouch(room, o); }
-        SO.story.onTouch(o, room);
-        if (this.target && this.target.hit === o) { this.target = null; }
+      if ((near && !o._touching) || (o._pending && d < (o.r || 60) + 120)) {
+        o._touching = true; o._pending = false;
+        this.doTouch(o);
       } else if (!near && d > (o.r || 60) + 120) { o._touching = false; }
     };
     room.actors.forEach(check);

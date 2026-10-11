@@ -193,6 +193,34 @@
     },
     onActivity() { this.rt.lastActiveAt = E.t; },
 
+    // What something seems to be, once you've had a good look. (Under 40 characters.)
+    describe(o) {
+      const id = o.id || '', t = o.type;
+      if (id.startsWith('friend-')) { return 'A friend, here to see you off.'; }
+      if (t === 'archivist') { return 'A vampire squid. Seems friendly.'; }
+      if (t === 'nautilus') { return 'An old nautilus. Very slow.'; }
+      if (t === 'sepia') { return o.hiding ? 'Something shimmering in the kelp.' : 'A cuttlefish. Hard to keep track of.'; }
+      if (t === 'turtle') { return 'A sea turtle, old as rocks.'; }
+      if (t === 'tongue') { return o.calmed ? 'A moray eel, calm for now.' : 'A moray eel. Mostly teeth.'; }
+      if (t === 'keeper') { return 'A huge seven-arm octopus.'; }
+      if (t === 'dumbo') { return 'A dumbo octopus, flapping.'; }
+      if (t === 'humboldt') { return 'Humboldt squid. Grumpy cousins.'; }
+      if (t === 'whale') { return 'A sperm whale. Very big.'; }
+      if (t === 'jellies') { return 'Crown jellies, blinking blue.'; }
+      if (t === 'gem') { return 'A pearl. Shiny!'; }
+      if (t === 'memory') { return 'A piece of glass from home.'; }
+      if (t === 'feather') { return 'A swan feather.'; }
+      if (t === 'bubble') { return o.golden ? 'A golden bubble?!' : 'A bubble.'; }
+      if (t === 'trace') { return 'Another squid\u2019s colors, fading.'; }
+      if (t === 'vent') { return 'An underwater volcano.'; }
+      if (t === 'species') { return o.sp ? (o.sp.name + (o.remembered ? '.' : '. Never seen one.')).slice(0, 39) : 'Something I don\u2019t recognize.'; }
+      if (id === 'petal-door') { return this.petalOpen() >= 1 ? 'Glass petals, wide open.' : 'Glass petals, closed tight.'; }
+      if (id === 'hall-door') { return 'A crack in the dome. I fit.'; }
+      if (id === 'mouth-door') { return 'A cave. Very, very dark.'; }
+      if (id === 'thread') { return 'The waterfall. Home is up there.'; }
+      return '';
+    },
+
     // ── Room entry ────────────────────────────────────────────────────────────
     onEnterRoom(room, prev, entry) {
       const key = room.key, d = save.data;

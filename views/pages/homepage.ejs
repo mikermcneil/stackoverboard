@@ -23,7 +23,14 @@
 <div id="hud"></div>
 
 <div id="ribbon" aria-live="polite">
-  <p id="ribbon-line"></p>
+  <div id="inspect">
+    <canvas id="inspect-canvas" width="240" height="240" title="Click to interact"></canvas>
+    <p id="inspect-label"></p>
+  </div>
+  <div id="speech">
+    <canvas id="portrait" width="200" height="200" aria-hidden="true"></canvas>
+    <p id="ribbon-line"></p>
+  </div>
   <div id="skin" aria-label="Your skin">
     <button data-c="W" title="Pale"></button>
     <button data-c="R" title="Red"></button>

@@ -54,13 +54,13 @@ body.game-mode #sound-hint { display: none; }
 #hud { position: fixed; inset: 0; pointer-events: none; z-index: 5; opacity: 0; transition: opacity 1.5s; }
 #hud.show { opacity: 1; }
 #skin {
-  position: absolute; right: 28px; top: 50%; transform: translateY(-50%);
+  position: absolute; right: 32px; top: 50%; transform: translateY(-50%);
   display: flex; gap: 12px; opacity: 0; transition: opacity 1.2s; pointer-events: none;
 }
 #skin.show { opacity: 1; pointer-events: auto; }
-@media (max-width: 700px) { #skin { right: 50%; top: 10px; transform: translateX(50%); } }
+@media (max-width: 900px) { #skin { right: 16px; top: 34px; transform: none; } }
 #skin button {
-  width: 28px; height: 28px; border-radius: 50%; border: 1.5px solid rgba(255, 255, 255, 0.35); cursor: pointer; position: relative;
+  width: 32px; height: 32px; border-radius: 50%; border: 1.5px solid rgba(255, 255, 255, 0.35); cursor: pointer; position: relative;
   box-shadow: 0 0 0 0 transparent; transition: transform 0.15s, box-shadow 0.4s; opacity: 0.78;
 }
 #skin button[data-c="W"] { background: #eef6fa; }
@@ -74,28 +74,45 @@ body.game-mode #sound-hint { display: none; }
 @keyframes echo { 0% { box-shadow: 0 0 0 0 rgba(255, 255, 255, 0.8); opacity: 1; } 100% { box-shadow: 0 0 0 16px rgba(255, 255, 255, 0); } }
 
 
-/* ── Words: one black band along the bottom, like Loom ─────────────── */
-:root { --ribbon-h: 100px; }
+/* ── Words: one big black band along the bottom, like Loom ────────── */
+:root { --ribbon-h: 176px; }
 #ribbon {
   position: fixed; left: 0; right: 0; bottom: 0; z-index: 6; background: #000;
-  height: var(--ribbon-h); padding: 0 200px max(0px, env(safe-area-inset-bottom));
+  height: var(--ribbon-h); padding: 0 250px max(0px, env(safe-area-inset-bottom));
   display: flex; align-items: center; justify-content: center;
-  transform: translateY(100%); transition: transform 0.45s cubic-bezier(.2, .7, .2, 1); cursor: pointer;
+  transform: translateY(100%); transition: transform 0.45s cubic-bezier(.2, .7, .2, 1);
 }
 #ribbon.show, body.ribbon-fixed #ribbon { transform: none; }
+#speech { display: flex; align-items: center; gap: 22px; max-width: 980px; cursor: pointer; }
+#portrait {
+  width: 104px; height: 104px; flex: 0 0 auto; border-radius: 50%; border: 2px solid transparent;
+  opacity: 0; transform: scale(0.92); transition: opacity 0.35s, transform 0.35s; display: none;
+}
+#portrait.show { opacity: 1; transform: none; display: block; }
 #ribbon-line {
-  margin: 0; max-width: 64ch; text-align: center; font-family: var(--sans); font-weight: 500;
-  font-size: clamp(16px, 1.5vw, 20px); line-height: 1.5; letter-spacing: 0.005em;
+  margin: 0; max-width: 46ch; text-align: left; font-family: var(--sans); font-weight: 500;
+  font-size: clamp(19px, 1.9vw, 26px); line-height: 1.45; letter-spacing: 0.002em;
   opacity: 0; transition: opacity 0.35s ease;
 }
 #ribbon-line.in { opacity: 1; }
+#inspect { position: absolute; left: 24px; top: 50%; transform: translateY(-50%); width: 200px; display: flex; flex-direction: column; align-items: flex-start; gap: 8px; opacity: 0; pointer-events: none; transition: opacity 0.4s; }
+#inspect.show { opacity: 1; pointer-events: auto; }
+#inspect-canvas { width: 104px; height: 104px; border-radius: 12px; border: 1px solid rgba(255, 255, 255, 0.22); background: #050b12; cursor: pointer; transition: border-color 0.2s; }
+#inspect-canvas:hover { border-color: rgba(255, 255, 255, 0.6); }
+#inspect-label { margin: 0; min-height: 1.4em; font: 500 14px/1.35 var(--sans); color: #fff; max-width: 200px; }
 .ribbon-choices { display: flex; gap: 14px; flex-wrap: wrap; justify-content: center; }
-.ribbon-choices button { border: 1px solid rgba(246, 169, 147, 0.6); background: transparent; color: #f6a993; border-radius: 999px; padding: 9px 18px; font: 500 16px var(--sans); cursor: pointer; }
-.ribbon-choices button:hover { background: rgba(246, 169, 147, 0.12); }
+.ribbon-choices button { border: 1px solid rgba(255, 154, 118, 0.6); background: transparent; color: #ff9a76; border-radius: 999px; padding: 10px 20px; font: 500 18px var(--sans); cursor: pointer; }
+.ribbon-choices button:hover { background: rgba(255, 154, 118, 0.12); }
 body.ribbon-fixed #stage { height: calc(100vh - var(--ribbon-h)); }
-@media (max-width: 700px) {
-  :root { --ribbon-h: 130px; }
-  #ribbon { padding: 34px 18px 0; }
+@media (max-width: 900px) {
+  :root { --ribbon-h: 230px; }
+  #ribbon { padding: 96px 16px 12px; align-items: flex-start; }
+  #inspect { top: 12px; transform: none; flex-direction: row; align-items: center; width: auto; }
+  #inspect-canvas { width: 72px; height: 72px; }
+  #inspect-label { font-size: 13px; max-width: 150px; }
+  #portrait { width: 64px; height: 64px; }
+  #speech { gap: 12px; }
+  #ribbon-line { font-size: 18px; }
 }
 #card { position: fixed; inset: 0; z-index: 8; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 18px; background: radial-gradient(ellipse at center, rgba(2, 6, 11, 0.55), rgba(2, 6, 11, 0.85)); opacity: 0; transition: opacity 1.4s; pointer-events: none; padding: 0 24px; text-align: center; }
 #card.show { opacity: 1; }

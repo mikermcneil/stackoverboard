@@ -26,6 +26,7 @@
       const render = E.render.bind(E);
       E.render = function () {
         render();
+        SO.ui.renderPanels(this.t);
         if (this.mode === 'play' && this.room && SO.story.screenFx) {
           this.ctx.setTransform(this.dpr, 0, 0, this.dpr, 0, 0);
           SO.story.screenFx(this.ctx, this.W, this.H, this.t);

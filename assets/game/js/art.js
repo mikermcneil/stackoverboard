@@ -224,28 +224,85 @@
     ctx.restore();
   }
 
-  // Nose-on view, for the middle of a turn: you see the round mantle, both
-  // eyes, and the arms fanning toward you.
-  function squidFront(ctx, sq, col, squeeze, tt) {
+  // Any angle between side-on and nose-on, as a simple 3D body: the mantle is a
+  // stack of round cross-sections, the head is a ball, and the eyes sit on the
+  // sides of the head (like a real squid's), so they foreshorten as it turns.
+  // `c` is cos(turn): 1 = side-on, 0 = facing you. Drawn in local space (head at origin).
+  const PROFILE = [[16, 22], [48, 28], [90, 27], [128, 20], [160, 10], [182, 2]];
+  const halfWidth = (x) => {
+    for (let i = 0; i < PROFILE.length - 1; i++) {
+      const a = PROFILE[i], b = PROFILE[i + 1];
+      if (x <= b[0]) { return U.lerp(a[1], b[1], U.smooth((x - a[0]) / (b[0] - a[0]))); }
+    }
+    return 2;
+  };
+  function squid3D(ctx, sq, col, c, squeeze, tt) {
+    const sn = Math.sqrt(Math.max(0, 1 - c * c));
+    const L = 182;
+    // Fins at the far end of the mantle (furthest from you, so drawn first).
     const flap = 0.72 + 0.28 * Math.sin(sq.fin || 0);
     ctx.save();
     ctx.globalAlpha *= 0.75;
-    A.shape(ctx, [[0, -18], [-46 * flap, -6], [0, 4]], hslStr(col, -6), { lw: 1.2, stroke: SKIN_LINE, sharp: true });
-    A.shape(ctx, [[0, -18], [46 * flap, -6], [0, 4]], hslStr(col, -6), { lw: 1.2, stroke: SKIN_LINE, sharp: true });
+    A.shape(ctx, [[L * 0.68 * c, 0], [L * 0.86 * c, -40 * flap], [L * 1.02 * c, -3], [L * 1.02 * c, 3], [L * 0.86 * c, 40 * flap]].map(([x, y]) => [x + 0.0001, y]), hslStr(col, -6), { lw: 1.2, stroke: SKIN_LINE });
     ctx.restore();
-    const mg = ctx.createRadialGradient(-6, -10, 4, 0, 0, 34);
-    mg.addColorStop(0, hslStr(col, 10)); mg.addColorStop(1, hslStr(col, -20));
-    A.ellipse(ctx, 0, -2, 30 * squeeze, 28, 0, mg, SKIN_LINE, 1.3);
-    const hg = ctx.createRadialGradient(0, 14, 2, 0, 14, 28);
-    hg.addColorStop(0, hslStr(col, 6)); hg.addColorStop(1, hslStr(col, -14));
-    A.ellipse(ctx, 0, 14, 26, 18, 0, hg, SKIN_LINE, 1.3);
-    [-1, 1].forEach((side) => {
-      const ex = side * 19, ey = 10;
-      const eg = ctx.createRadialGradient(ex, ey, 1, ex, ey, 9);
-      eg.addColorStop(0, '#05080c'); eg.addColorStop(0.6, '#0e151c'); eg.addColorStop(0.8, '#c9d4d4'); eg.addColorStop(1, hslStr(col, -20));
-      A.circle(ctx, ex, ey, 9, eg, null);
-      A.circle(ctx, ex - 2, ey - 3, 1.8, 'rgba(255,255,255,0.85)', null);
-    });
+    // Mantle: round cross-sections, far to near.
+    const mantle = new Path2D();
+    for (let x = L; x >= 16; x -= 5) {
+      const r = halfWidth(x) * squeeze;
+      mantle.moveTo(x * c + Math.max(0.8, r * sn), 2);
+      mantle.ellipse(x * c, 2, Math.max(0.8, r * sn), r * 1.04, 0, 0, U.TAU);
+    }
+    ctx.save();
+    ctx.lineWidth = 2.6; ctx.strokeStyle = SKIN_LINE; ctx.stroke(mantle);
+    const mg = ctx.createLinearGradient(0, -30, 0, 32);
+    mg.addColorStop(0, hslStr([col[0], col[1] + 10, col[2]], -24));
+    mg.addColorStop(0.45, hslStr(col, -4));
+    mg.addColorStop(1, hslStr([col[0], col[1] - 22, col[2]], 14, 0.9));
+    ctx.fillStyle = mg; ctx.fill(mantle, 'nonzero');
+    // chromatophores and a soft highlight, squeezed into the turned mantle
+    ctx.clip(mantle);
+    for (const [px, py, sz, ph] of CHROMA) {
+      const open = 0.5 + 0.5 * Math.sin(tt * 1.7 + ph);
+      ctx.fillStyle = hslStr([col[0] - 4, Math.min(90, col[1] + 18), col[2]], -34, 0.2 + 0.25 * open);
+      ctx.beginPath(); ctx.ellipse(px * c + (py / 24) * 18 * sn, py * squeeze, sz * (0.6 + open), sz * (0.6 + open), 0, 0, U.TAU); ctx.fill();
+    }
+    const hl = ctx.createRadialGradient(L * 0.4 * c - 6 * sn, -10, 2, L * 0.4 * c, -8, 90);
+    hl.addColorStop(0, 'rgba(255,240,235,0.2)'); hl.addColorStop(1, 'rgba(255,240,235,0)');
+    ctx.fillStyle = hl; ctx.fillRect(-60, -40, L + 60, 80);
+    ctx.restore();
+    if (sq.glow > 0.01) {// photophores along the belly
+      ctx.save(); ctx.globalCompositeOperation = 'lighter';
+      for (let i = 0; i < 9; i++) { A.glow(ctx, (26 + i * 15) * c, 21 * squeeze, 10 * sq.glow, '#ffe08a', 0.9 * sq.glow); }
+      ctx.restore();
+    }
+    // Head: roughly a ball, a little longer than it is wide.
+    const hrx = Math.sqrt((30 * c) * (30 * c) + (25 * sn) * (25 * sn));
+    const hg = ctx.createLinearGradient(0, -25, 0, 25);
+    hg.addColorStop(0, hslStr(col, -18)); hg.addColorStop(0.6, hslStr(col, 0)); hg.addColorStop(1, hslStr(col, 12, 0.9));
+    A.ellipse(ctx, -2 * sn, 0, hrx, 24, 0, hg, SKIN_LINE, 1.3);
+    // Eyes on either side of the head. The near one turns away from you as it
+    // turns toward you; the far one slides into view on the other side.
+    const look = sq.look || 0;
+    const eye = (z, near) => {
+      const ex = -3 * c + z * sn, ey = -4;
+      const face = near ? Math.max(0.18, c) : Math.max(0.18, Math.min(1, sn * 1.4 - 0.5));
+      const vis = near ? 1 : U.smoothstep(0.45, 0.85, sn);
+      if (vis <= 0.01) { return; }
+      ctx.save();
+      ctx.globalAlpha *= vis;
+      ctx.translate(ex, ey);
+      ctx.scale(face, 1);
+      const eg = ctx.createRadialGradient(0, 0, 1.5, 0, 0, 13);
+      eg.addColorStop(0, '#05080c'); eg.addColorStop(0.55, '#0e151c'); eg.addColorStop(0.72, '#9fb0b6'); eg.addColorStop(0.86, '#d7e0e0'); eg.addColorStop(1, hslStr(col, -20));
+      A.circle(ctx, 0, 0, 13, eg, 'rgba(20,14,16,0.5)', 1);
+      ctx.beginPath(); ctx.arc(0, 0, 12.5, 0, U.TAU); ctx.clip();
+      A.circle(ctx, Math.cos(look) * 2.5, Math.sin(look) * 2.5, 7.5, '#020406', null);
+      A.circle(ctx, -4, -5, 2.6, 'rgba(255,255,255,0.9)', null);
+      if (sq.blink > 0) { ctx.fillStyle = hslStr(col, -6); ctx.fillRect(-14, -16, 28, 30 * sq.blink); }
+      ctx.restore();
+    };
+    eye(-16, false);
+    eye(16, true);
   }
 
   // `sq`: { x, y, angle | yaw+pitch, scale, t, fin, jet, color:[h,s,l], glow, hidden, hearts:[], arms:[[{x,y}]], look }
@@ -277,20 +334,23 @@
     const squeeze = 1 - (sq.jet || 0) * 0.16;
     const ay = Math.abs(o.yaw);
     ctx.translate(sq.x, sq.y);
-    // Side view, foreshortened as the body turns through depth.
-    if (ay > 0.1) {
+    // Nearly side-on: the detailed side drawing. Anything more turned: the 3D body.
+    // They overlap briefly so there's no pop between them.
+    const side = U.smoothstep(0.86, 0.96, ay);
+    if (side > 0.01) {
       ctx.save();
-      ctx.globalAlpha *= U.smoothstep(0.1, 0.3, ay);
+      ctx.globalAlpha *= side;
       ctx.scale(s * o.yaw, s);
       ctx.rotate(o.pitch);
       squidSide(ctx, sq, col, L, squeeze, tt);
       ctx.restore();
     }
-    if (ay < 0.3) {
+    if (side < 0.99) {
       ctx.save();
-      ctx.globalAlpha *= 1 - U.smoothstep(0.1, 0.3, ay);
-      ctx.scale(s, s);
-      squidFront(ctx, sq, col, squeeze, tt);
+      ctx.globalAlpha *= 1 - side;
+      ctx.scale(s * (o.yaw >= 0 ? 1 : -1), s);
+      ctx.rotate(o.pitch);
+      squid3D(ctx, sq, col, ay, squeeze, tt);
       ctx.restore();
     }
     ctx.restore();

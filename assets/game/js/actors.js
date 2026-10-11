@@ -12,6 +12,7 @@
   const bob = (a, amt = 8, sp = 1) => Math.sin(a.t * sp) * amt;
 
   T.archivist = {
+    talk: true,
     r: 70, touch: true,
     draw(ctx, a, room, t) {
       A.archivist(ctx, a.x, a.y + bob(a, 10, 0.9), a.s || 1.1, t, { dir: a.dir || 1, flash: a.flash });
@@ -21,12 +22,14 @@
   };
 
   T.nautilus = {
+    talk: true,
     r: 70, touch: true,
     draw(ctx, a, room, t) { A.nautilus(ctx, a.x, a.y + bob(a, 6, 0.6), a.s || 1, t, { dir: a.dir || -1 }); },
   };
 
   // Sepia hides in plain sight. When she's camouflaged you can only spot her shimmer.
   T.sepia = {
+    talk: true,
     r: 60, touch: true,
     update(a, dt) {
       a.camo = U.lerp(a.camo || 0, a.hiding ? 1 : 0, dt * 2);
@@ -47,6 +50,7 @@
   };
 
   T.turtle = {
+    talk: true,
     r: 80, touch: true,
     update(a, dt) {
       a.x = a.home.x + Math.sin(a.t * 0.12) * 240;
@@ -57,6 +61,7 @@
   };
 
   T.dumbo = {
+    talk: true,
     r: 40, touch: true,
     update(a, dt) {
       a.x = a.home.x + Math.sin(a.t * 0.4 + (a.seed || 0)) * (a.roam || 80);
@@ -67,6 +72,7 @@
   };
 
   T.keeper = {
+    talk: true,
     r: 130, touch: true,
     draw(ctx, a, room, t) {
       // bed of gems
