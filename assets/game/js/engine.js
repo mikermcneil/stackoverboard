@@ -480,6 +480,12 @@
     this.roomKey = key;
     this.inspected = null;
     this.placeSquid(entry, prev);
+    // Anything we arrive on top of (like the door we just came through) waits
+    // until we've swum away from it once, so it can't bounce us straight back.
+    const sq0 = this.squid;
+    this.room.actors.concat(this.room.hotspots).forEach((o) => {
+      if (U.dist(sq0.x, sq0.y, o.x, o.y) < (o.r || 60) + 220) { o._touching = true; }
+    });
     this.target = null;
     this.snapCamera();
     SO.story.onEnterRoom(this.room, prev, entry);
@@ -504,8 +510,8 @@
       } else if (entry.from === 'left') { x = 90; y = fx * h; }
       else if (entry.from === 'right') { x = w - 90; y = fx * h; }
     } else if (room.def.entries && room.def.entries.default) { [x, y] = room.def.entries.default; }
-    // Nudge out of rock.
-    const free = this.findFree(x, y);
+    // Nudge out of rock (the whole body has to fit, not just the head).
+    const free = this.findFreeBody(x, y);
     sq.x = free[0]; sq.y = free[1];
     if (entry.from) {
       const dirs = { up: [0, 1], down: [0, -1], left: [1, 0], right: [-1, 0] }[entry.from];
@@ -518,6 +524,29 @@
     sq.yaw = undefined;
     sq.dvx = sq.vx; sq.dvy = sq.vy;
     this.resetArms(sq);
+  };
+
+  // A spot where the whole body (not just its center) fits, near (x, y).
+  E.findFreeBody = function (x, y) {
+    const room = this.room, sq = this.squid, o = this.orient(sq);
+    const fits = (px, py) => {
+      if (px < 30 || px > room.w - 30 || py < 30 || py > room.h - 30) { return false; }
+      const ox = sq.x, oy = sq.y; sq.x = px; sq.y = py;
+      let ok = true;
+      for (const [lx, r] of [[0, 34], [72, 34], [140, 24]]) {
+        const [cx, cy] = this.toWorld(sq, lx, 0, o);
+        if (room.solidAt(cx, cy)) { ok = false; break; }
+        for (let k = 0; k < 8 && ok; k++) { if (room.solidAt(cx + Math.cos(k * 0.785) * r, cy + Math.sin(k * 0.785) * r)) { ok = false; } }
+        if (!ok) { break; }
+      }
+      sq.x = ox; sq.y = oy;
+      return ok;
+    };
+    if (fits(x, y)) { return [x, y]; }
+    for (let r = 20; r < 1200; r += 20) {
+      for (let a = 0; a < TAU; a += TAU / 24) { const px = x + Math.cos(a) * r, py = y + Math.sin(a) * r; if (fits(px, py)) { return [px, py]; } }
+    }
+    return this.findFree(x, y);
   };
 
   E.findFree = function (x, y) {
@@ -705,6 +734,19 @@
 
     // Move, sliding along rock instead of sticking to it.
     this.moveSquid(sq, sq.vx * dt, sq.vy * dt);
+    // Safety net: trying to swim, touching rock, and going nowhere for a while?
+    // Ease out to the nearest spot where the whole body fits.
+    const wd = sq._watch || (sq._watch = { x: sq.x, y: sq.y, t: 0 });
+    if (strength > 0.3 && !inAir && sq._touchingRock) {
+      wd.t += dt;
+      if (U.dist(sq.x, sq.y, wd.x, wd.y) > 40) { wd.x = sq.x; wd.y = sq.y; wd.t = 0; }
+      if (wd.t > 1.2) {
+        const f = this.findFreeBody(sq.x, sq.y);
+        sq.x = U.lerp(sq.x, f[0], 0.5); sq.y = U.lerp(sq.y, f[1], 0.5);
+        sq.vx = sq.vy = sq.dvx = sq.dvy = 0;
+        wd.x = sq.x; wd.y = sq.y; wd.t = 0;
+      }
+    } else { wd.x = sq.x; wd.y = sq.y; wd.t = 0; }
 
     // Facing. Turning around is a turn of the whole body through depth: `yaw`
     // eases through 0 (nose toward you) while the nose dips, like a bank.
@@ -846,6 +888,7 @@
   const DIRS = Array.from({ length: 12 }, (_, i) => [Math.cos(i / 12 * U.TAU), Math.sin(i / 12 * U.TAU)]);
   E.moveSquid = function (sq, mx, my) {
     const room = this.room;
+    sq._touchingRock = false;
     const steps = Math.max(1, Math.ceil(Math.hypot(mx, my) / 10));
     const o = this.orient(sq);
     for (let st = 0; st < steps; st++) {
@@ -861,6 +904,7 @@
           }
           const inside = room.solidAt(cx, cy);
           if (!hits && !inside) { continue; }
+          sq._touchingRock = true;
           let m = Math.hypot(nx, ny);
           if (m < 0.01) {// surrounded or symmetric: head for the nearest open water
             const f = this.findFree(cx, cy);

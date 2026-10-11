@@ -251,7 +251,7 @@
     snow: 0.1,
     onEnter() { SO.ui.thought('It’s dripping in here. And something is breathing. Slowly.'); },
   });
-  defs['cliff-face'].entries = { fromMouth: [1780, 520] };
+  defs['cliff-face'].entries = { fromMouth: [1600, 520] };
 
   def('mouth-deep', {
     name: 'The throat of the Mouth', region: 'cliff', map: [3, 1], w: 1.3, depth: 0.48, dark: 0.9,
@@ -393,7 +393,7 @@
     name: 'The bottom of the trench', region: 'trench', map: [1, 5], w: 1.3, depth: 0.84, dark: 0.82,
     exits: { up: 'trench-wall', down: 'below:0,7' },
     terrain: { floor: [0.2, 0.16, 0.14, 0.12, 0.14, 0.18], walls: { left: true, right: true }, ceilGap: [0.3, 0.7], ceiling: [0.3, 0.1, 0.04, 0.04, 0.1, 0.3], floorGap: [0.42, 0.58] },
-    solids: [{ type: 'rect', x: 860, y: 640, w: 400, h: 300, id: 'crack-plug', color: '#2a3a46' }],
+    solids: [{ type: 'rect', x: 790, y: 640, w: 500, h: 320, id: 'crack-plug', color: '#2a3a46' }],// covers the crack and its curved lips, so there are no pits to wedge into
     props: [{ type: 'bone-fan', x: 300, s: 1.2 }, { type: 'bone-fan', x: 1800, s: 0.9 }],
   });
 

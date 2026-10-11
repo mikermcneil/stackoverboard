@@ -62,13 +62,12 @@ save is returned unchanged.`,
       this.req.session.saveToken = token;
     } else if (newPlaythrough) {
       let carried = save.data && save.data.carried !== undefined ? save.data.carried : undefined;
-      let updated = await Save.updateOne({ token, revision: save.revision }).set({
+      let updated = await sails.helpers.world.swapSave.with({ token, revision: save.revision, values: {
         playthrough: save.playthrough + 1,
         chapter: 0,
         data: carried !== undefined ? { carried } : {},
-        revision: save.revision + 1,
         lastSeenAt: now,
-      });
+      } });
       // If the compare-and-swap lost, a concurrent request changed the save first (most likely
       // a duplicate "new playthrough" request); don't increment twice -- return what's there.
       save = updated || await Save.findOne({ token });

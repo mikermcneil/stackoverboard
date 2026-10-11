@@ -57,6 +57,14 @@ the winner's record.  Content for a key must therefore be deterministic.`,
       throw new Error('Cannot create once without a value for `'+uniqueBy+'`.');
     }
 
+    // Usually it already exists (e.g. re-entering a known tile), so look first. The unique
+    // key still settles real races below; this just keeps duplicate-key errors (and the
+    // warnings some adapters log for them) to the rare case where two requests collide.
+    var already = await Model.findOne({ [uniqueBy]: values[uniqueBy] });
+    if (already) {
+      return { record: already, created: false };
+    }
+
     var record = await Model.create(Object.assign({}, values)).fetch()
     .tolerate('E_UNIQUE');
 

@@ -53,6 +53,12 @@ module.exports = {
       description: 'Ending keys achieved across all playthroughs, in order (e.g. ["return", "lantern"]).'
     },
 
+    lockToken: {
+      type: 'string',
+      defaultsTo: '',
+      description: 'A random stamp written with each save, used to tell which of two racing writes landed (see the swap-save helper).  Never sent to clients.'
+    },
+
     lastSeenAt: {
       type: 'number',
       description: 'JS timestamp (epoch ms) of the last time this squid started or saved its game.'
@@ -61,7 +67,7 @@ module.exports = {
   },
 
   customToJSON: function() {
-    return _.omit(this, ['token']);
+    return _.omit(this, ['token', 'lockToken']);
   },
 
 };

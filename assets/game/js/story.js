@@ -740,8 +740,10 @@
     },
 
     'trench-floor': {
-      async enter(room) {
+      async enter(room, prev, entry) {
         const plug = room.solids.find((s) => s.id === 'crack-plug');
+        // Coming back up from the maze means the crack is open, whatever the save says.
+        if (entry && entry.from === 'down' && !this.has('fellThrough')) { this.flag('fellThrough'); }
         if (this.has('fellThrough')) { if (plug) { plug.off = true; } return; }
         if (this.ch !== 3) { return; }
         await trenchFinale.call(this, room);

@@ -89,12 +89,7 @@ and logs a "chapter-reached" world event for each newly reached chapter.`,
     reported = Number.isFinite(reported) ? Math.max(0, Math.min(8, Math.floor(reported))) : 0;
     var chapter = Math.max(save.chapter, reported);
 
-    var updated = await Save.updateOne({ token, revision }).set({
-      data,
-      chapter,
-      lastSeenAt: now,
-      revision: revision + 1,
-    });
+    var updated = await sails.helpers.world.swapSave.with({ token, revision, values: { data, chapter, lastSeenAt: now } });
     if (!updated) {
       let current = await Save.findOne({ token });
       if (!current) {

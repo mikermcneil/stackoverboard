@@ -79,10 +79,9 @@ increases, so clients should adopt the returned save.`,
     if (result.created) {
       // Append to the save with a compare-and-swap retry loop.
       for (let attempt = 0; attempt < 5; attempt++) {
-        let updated = await Save.updateOne({ token, revision: save.revision }).set({
+        let updated = await sails.helpers.world.swapSave.with({ token, revision: save.revision, values: {
           endings: (save.endings || []).concat([ending]),
-          revision: save.revision + 1,
-        });
+        } });
         if (updated) {
           save = updated;
           break;

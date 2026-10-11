@@ -47,7 +47,11 @@ module.exports = {
     *                                                                          *
     ***************************************************************************/
     default: {
-      // adapter: 'sails-mysql',
+      adapter: 'sails-mysql',
+      // The connection URL comes from the environment, so it never lands in git:
+      //   sails_datastores__default__url=mysql://user:password@host:3306/database
+      // (sails-mysql talks to MySQL through mysql2, via "overrides" in package.json,
+      // because MySQL 8.4 no longer allows the old driver's login method.)
       // url: 'mysql://user:password@host:port/database',
       //--------------------------------------------------------------------------
       //  /\   To avoid checking it in to version control, you might opt to set
