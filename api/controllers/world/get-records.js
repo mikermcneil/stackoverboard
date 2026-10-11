@@ -21,7 +21,11 @@ water in one leap, \`bestAirHeight\` = how high (game units), \`deepest\` = 0 (s
 squid's strongest.  Traits start with a slight random lean and grow with each player's choices (see
 get-squid).
 
-Stats come from each squid's own game, so a squid that hasn't played since stats were added has none.`,
+Stats come from each squid's own game, so a squid that hasn't played since stats were added has none.
+
+Related: get-leaderboards (full rankings on more boards, and where any squid ranks), get-history
+(kind "record-broken": when each record changed hands, and from whom), get-firsts (who did each thing
+first), get-squid (one squid's stats).`,
 
 
   sideEffects: 'cacheable',

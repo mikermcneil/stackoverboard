@@ -79,7 +79,10 @@ Which squids know a word: \`knownBy\` counts squids who know it in their current
 are forgotten when a squid falls again as a new playthrough); \`everLearnedBy\` counts squids who have
 learned it in any playthrough.  Pass \`name\` to also get the names of squids who know it (also see
 get-squids, which lists each squid's skin words).  Each word includes ABC notation (\`abc\`) that music
-software can render as sheet music.`,
+software can render as sheet music.
+
+Related: get-firsts (category "skinWords": who learned each first), get-history (kind
+"skin-word-learned"), get-squids (\`knows\`).`,
 
 
   sideEffects: 'cacheable',

@@ -28,13 +28,16 @@
     'nautilus': (c, t) => A.nautilus(c, 10, 0, 0.6, t),
     'sepia': (c, t) => A.cuttlefish(c, 0, 0, 0.75, t, { dir: -1 }),
     'turtle': (c, t) => A.turtle(c, -10, 0, 0.6, t),
-    'moray': (c, t) => { const pts = []; for (let k = 0; k < 14; k++) { pts.push({ x: 50 - k * 9, y: Math.sin(t * 2 + k * 0.6) * 10 }); } A.eel(c, pts, t, { w: 18 }); },
+    // (the moray as it is in the cave: coiled, head up, mouth working)
+    'moray': (c, t) => { c.save(); c.scale(0.42, 0.42); SO.actorTypes.tongue.draw(c, { x: 0, y: 0, awake: true, rear: 0, snap: 0, clack: 0 }, null, t); c.restore(); },
     'hoard': (c, t) => A.dumbo(c, 0, 0, 1.3, t, { holding: '#ffcf7a' }),
     'grandmother': (c, t) => A.keeper(c, 0, -10, 0.38, t),
-    'pearl-octopus': (c, t) => { c.fillStyle = 'hsla(340,45%,74%,0.95)'; c.beginPath(); c.ellipse(0, 0, 26, 20, 0, 0, U.TAU); c.fill(); c.strokeStyle = 'hsla(340,40%,62%,0.9)'; c.lineWidth = 4; for (let a = 0; a < 4; a++) { c.beginPath(); c.arc(0, 10, 22 + a * 2, Math.PI * (0.15 + a * 0.18), Math.PI * (0.45 + a * 0.18)); c.stroke(); } A.circle(c, -8, -4, 2.6, '#2a1a24', null); },
+    'pearl-octopus': (c, t) => { A.rock(c, 0, 34, 64, 40, '#4a3a4e'); c.fillStyle = 'hsla(340,45%,74%,0.95)'; c.beginPath(); c.ellipse(0, 0, 26, 20, 0, 0, U.TAU); c.fill(); c.strokeStyle = 'hsla(340,40%,62%,0.9)'; c.lineWidth = 4; for (let a = 0; a < 4; a++) { c.beginPath(); c.arc(0, 10, 22 + a * 2, Math.PI * (0.15 + a * 0.18), Math.PI * (0.45 + a * 0.18)); c.stroke(); } A.circle(c, -8, -4, 2.6, '#2a1a24', null); },
     'crown-jelly': (c, t) => SO.actorTypes.jellies.draw(c, { x: 0, y: 0, n: 3 }, null, t),
     'humboldt': (c, t) => A.smallSquid(c, -10, 0, 1.4, 0, t, 'humboldt', { flicker: true }),
     'glass-squid': (c, t) => A.smallSquid(c, -10, 0, 1.4, 0, t, 'glass'),
+    // Bead, as it swims beside me: a glass squid with its own little light, and its heart showing
+    'bead': (c, t) => { A.smallSquid(c, -14, 0, 1.6, 0, t, 'glass', { seed: 3, heart: true }); c.save(); c.globalCompositeOperation = 'lighter'; A.glow(c, -14, 0, 22, '#bff8ea', 0.5 + 0.2 * Math.sin(t * 3)); c.restore(); },
     'strawberry-squid': (c, t) => A.smallSquid(c, -10, 0, 1.4, 0, t, 'strawberry'),
     'firefly-squid': (c, t) => A.smallSquid(c, -10, 0, 1.4, 0, t, 'firefly'),
     'moon-jelly': (c, t) => A.jelly(c, 0, -10, 1.6, t),
@@ -68,6 +71,15 @@
 
   SO.journal = {
     open: false,
+    // A remembered thing's portrait, drawn around 0,0 (for the journal, and the little notes when something new goes in it).
+    portrait(c, key, t) {
+      const R = (save.data && save.data.carried.remembered) || {};
+      const e = Object.assign({ key }, SO.story.NATIVE[key] || {}, R[key] || {});
+      if (e.generated && e.traits) { A.species(c, e.kind, e.traits, 0, 10, 2, t, {}); }
+      else if (PORTRAITS[key]) { c.scale(1.7, 1.7); PORTRAITS[key](c, t); }
+      else if (A.portraits && A.portraits[key]) { c.scale(1.7, 1.7); A.portraits[key](c, t); }
+      else { fallbackPortrait(c, e, t); }
+    },
     tab: 'map',
 
     init() {

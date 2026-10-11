@@ -54,7 +54,11 @@ Pass \`n\` to ask what's at any distance: which crossing, which band and land, w
 its name in the game.  The game itself is asked (its own code is run), out to west:100000.
 
 Use each landmark's \`line\` as it is.  Some things out west are deliberately left unexplained, and
-the question of how the glass city flies is never answered: don't guess or add to it.`,
+the question of how the glass city flies is never answered: don't guess or add to it.
+
+Related: get-records and get-leaderboards (boards "westFarthest" and "climb"), get-firsts (category
+"westLandmarks": who passed each landmark first), get-history (group "west": milestones every 10
+places, landmarks, crossings, climbs; or \`room\` "west:N").`,
 
 
   sideEffects: 'cacheable',

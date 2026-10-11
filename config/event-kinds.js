@@ -8,7 +8,8 @@
  * `about` says what the event means and what its `subject` and `details` hold.  `first: true` marks
  * kinds where "who did this first, for each subject?" is interesting: when one of those is logged for a
  * subject nobody has done before, a "world-first" event is logged too (see the log-events helper and
- * world/get-firsts).
+ * world/get-firsts).  Chapters and endings were kept before world-first events existed, so their firsts
+ * come from the oldest event instead (record-ending only claims a world-first for a truly first ending).
  *
  * Spoilers: events about the end of Bead's story, the warm room and the homecoming are story-ending
  * spoilers.  They're logged like any other event, but the history tools leave them out unless asked
@@ -21,12 +22,12 @@ module.exports.eventKinds = {
 
     // Logged by the actions that cause them.
     'arrival': { group: 'story', about: 'A squid fell into the sea (started a playthrough).  subject "surface"; details.playthrough.' },
-    'chapter-reached': { group: 'story', first: true, about: 'A squid reached a chapter (1 to 8) of the story.  subject is the chapter number as a string; details.chapter, details.playthrough, details.location (the room), details.skipped (true if it skipped ahead from the title screen).' },
+    'chapter-reached': { group: 'story', about: 'A squid reached a chapter (1 to 8) of the story.  subject is the chapter number as a string; details.chapter, details.playthrough, details.location (the room), details.skipped (true if it skipped ahead from the title screen).' },
     'tile-discovered': { group: 'world', about: 'A squid was first to reach a tile of the Below (the deep maze).  subject is the tile key, e.g. "below:2,9"; details.x, details.y, details.isGoal, details.memory.' },
     'species-introduced': { group: 'world', about: 'A squid met a procedurally generated species no one had seen before.  subject is the species key, e.g. "creature:3"; details.name, details.kind, details.region.' },
     'eruption': { group: 'world', about: 'A squid woke the volcano.  subject "forge"; startsAt = woken, endsAt = eruption over (20 minutes later); details.coolsAt (40 more minutes), details.seq (1 = the first eruption ever).' },
     'gem-gathered': { group: 'world', about: 'A squid gathered a pearl (called a gem in the API) from a tile of the Below.  subject is the tile key; details.index, details.regrowsAt.' },
-    'ending': { group: 'story', first: true, about: 'A squid finished a playthrough.  subject is the ending: "return" (home), "lantern" (stay), "gift" (the whale), or "song" (the swans); details.playthrough.' },
+    'ending': { group: 'story', about: 'A squid finished a playthrough.  subject is the ending: "return" (home), "lantern" (stay), "gift" (the whale), or "song" (the swans); details.playthrough.' },
     'renamed': { group: 'social', about: 'A squid chose a new name.  squidName is the new name, subject is the old one; details.from, details.to.  (Older events keep the name the squid had at the time: get-timeline follows renames.)' },
     'first-words': { group: 'social', about: 'The first thing a squid ever said out loud.  subject is the room; details.text, details.room.' },
 

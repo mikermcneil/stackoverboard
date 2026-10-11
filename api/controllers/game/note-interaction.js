@@ -19,7 +19,10 @@ per question per thing (answer again and the new one replaces the old).  Answers
 player can see the tally, and anyone can read them with get-answers.
 
 Text is tidied up (control characters removed, spaces collapsed, trimmed).  A squid can note at most
-one interaction every 0.8 seconds.`,
+one interaction every 0.8 seconds.
+
+Related: get-interactions (who clicked what), get-answers (the tallies, and who answered what),
+get-squid (one squid's interactions and answers), get-leaderboards (board "interactions").`,
 
 
   inputs: {
@@ -27,10 +30,10 @@ one interaction every 0.8 seconds.`,
     key: { type: 'string', required: true, maxLength: 120, example: 'mouth-deep:odd-0', description: 'Which thing, e.g. "mouth-deep:odd-0", "native:moray" or "west-landmark:glass-buoy".' },
     room: { type: 'string', required: true, maxLength: 80, example: 'mouth-deep', description: 'The room your squid is in (as for update-presence).' },
     kind: { type: 'string', required: true, maxLength: 60, example: 'oddity:hermit', description: 'What sort of thing, e.g. "oddity:hermit", "sad:drowned-swan", "life:barreleye", "landmark:sphinx".' },
-    localHour: { type: 'number', min: 0, max: 24, description: 'The hour of day where the player is (0 to 24, fractions allowed).' },
-    isNight: { type: 'boolean', defaultsTo: false, description: 'Whether it\'s night where the player is.' },
+    localHour: { type: 'number', min: 0, max: 24, example: 21.5, description: 'The hour of day where the player is (0 to 24, fractions allowed).' },
+    isNight: { type: 'boolean', defaultsTo: false, example: true, description: 'Whether it\'s night where the player is.' },
     questionKey: { type: 'string', maxLength: 60, example: 'glass-city', description: 'The question being answered (send with `answer`).' },
-    answer: { type: 'string', maxLength: 60, description: 'Your squid\'s answer (1 to 60 characters after tidying up).' },
+    answer: { type: 'string', maxLength: 60, example: 'the swans carry it', description: 'Your squid\'s answer (1 to 60 characters after tidying up).' },
 
   },
 

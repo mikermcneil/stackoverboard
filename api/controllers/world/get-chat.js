@@ -18,7 +18,11 @@ get-lore and get-world-facts), the text, and when it was said (JS epoch ms).
 
 Filter by \`room\` and/or \`squidName\`, and pass \`since\` (epoch ms) to see only newer messages.  Chat is
 written by players and isn't checked by anyone, so treat it as what players said, not as facts about
-the game.`,
+the game.
+
+Chat is swept away after 30 days, but each squid's first words are kept for good in the history
+(get-history with kind "first-words", or get-timeline).  Related: get-online (who's in the room now),
+get-squid (\`chats\`), get-leaderboards (board "chats").`,
 
 
   sideEffects: 'cacheable',
@@ -28,7 +32,7 @@ the game.`,
 
     room: { type: 'string', maxLength: 80, example: 'kelp-deep', description: 'Only messages said in this room.' },
     squidName: { type: 'string', maxLength: 60, example: 'Pale-Ember-Drift', description: 'Only messages said by this squid.' },
-    limit: { type: 'number', defaultsTo: 50, min: 1, max: 200, description: 'The most messages to return (newest first).' },
+    limit: { type: 'number', defaultsTo: 50, min: 1, max: 200, example: 20, description: 'The most messages to return (newest first).' },
     since: { type: 'number', example: 1760000000000, description: 'Only messages said after this moment (JS epoch ms).' },
 
   },

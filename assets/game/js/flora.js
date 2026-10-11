@@ -83,6 +83,8 @@
           const f = room.floorY ? room.floorY(x) : Infinity;
           if (!isFinite(f) || room.solidAt(x, f - 30)) { r(); continue; }
         }
+        const bare = room.def.barren;// (an urchin barren: nothing left growing)
+        if (bare && x > bare[0] && x < bare[1]) { r(); continue; }
         room.props.push(variant(kind, x, r));
       }
     },

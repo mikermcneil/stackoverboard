@@ -12,7 +12,11 @@ module.exports = {
 squidName, its secret token is stored in the session, and an "arrival" event is logged.
 If a save exists and \`newPlaythrough\` is true, the playthrough number is incremented, the chapter
 is reset to 0, and the game data is reset (keeping only \`data.carried\`).  Otherwise the existing
-save is returned unchanged.`,
+save is returned unchanged.
+
+History: each playthrough's arrival is logged once (an "arrival" event; the very first one in the
+world is \`firstArrival\` in get-firsts).  Everything the squid then does is logged as it saves (see
+save-game), and get-timeline tells it back.`,
 
 
   inputs: {
@@ -20,12 +24,13 @@ save is returned unchanged.`,
     newPlaythrough: {
       type: 'boolean',
       defaultsTo: false,
-      description: 'Whether to begin a new playthrough (only matters if a save already exists).'
+      example: true,
+      description: 'Whether to begin a new playthrough (only matters if a save already exists).  The squid keeps its name and journal (`data.carried`); everything else starts over.'
     },
 
-    timeZone: { type: 'string', defaultsTo: '', maxLength: 64, description: 'The browser\'s IANA time zone (e.g. "America/Chicago"), used for the local time of day, and as a fallback for where the player is (the place normally comes from an offline, city-level IP lookup; see get-squids).' },
-    language: { type: 'string', defaultsTo: '', maxLength: 35, description: 'The browser\'s language, e.g. "en-US".' },
-    touch: { type: 'boolean', defaultsTo: false, description: 'Whether the device has a touch screen.' },
+    timeZone: { type: 'string', defaultsTo: '', maxLength: 64, example: 'America/Chicago', description: 'The browser\'s IANA time zone (e.g. "America/Chicago"), used for the local time of day, and as a fallback for where the player is (the place normally comes from an offline, city-level IP lookup; see get-squids).' },
+    language: { type: 'string', defaultsTo: '', maxLength: 35, example: 'en-US', description: 'The browser\'s language, e.g. "en-US".' },
+    touch: { type: 'boolean', defaultsTo: false, example: true, description: 'Whether the device has a touch screen.' },
 
   },
 
@@ -34,7 +39,7 @@ save is returned unchanged.`,
 
     success: {
       outputFriendlyName: 'Saved game',
-      outputDescription: '`{ save, serverNow }`'
+      outputDescription: '`{ save, serverNow }`: the caller\'s Save (`squidName`, `revision` to send with save-game, `playthrough`, `chapter`, `data`, `endings`, device and place fields; never the secret token) and the server\'s current time (epoch ms).'
     },
 
   },

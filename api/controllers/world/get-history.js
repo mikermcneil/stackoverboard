@@ -1,4 +1,7 @@
-const KINDS = ['arrival', 'chapter-reached', 'tile-discovered', 'species-introduced', 'eruption', 'gem-gathered', 'ending'];
+const lodash = require('@sailshq/lodash');
+const EVENT_KINDS = require('../../../config/event-kinds').eventKinds;
+const KINDS = Object.keys(EVENT_KINDS.kinds);
+const GROUPS = lodash.uniq(lodash.pluck(lodash.values(EVENT_KINDS.kinds), 'group'));
 
 module.exports = {
 
@@ -6,30 +9,58 @@ module.exports = {
   friendlyName: 'Get world history',
 
 
-  description: 'Search the append-only history of everything that has happened in the shared world of Stack Overboard.',
+  description: 'Search the append-only history of everything that has happened in the shared world of Stack Overboard (filter by kind, squid, time, room, level; page with a cursor), or get a summary with counts by kind and by day.',
 
 
   extendedDescription:
-`Use this for "what happened in the world?", "who woke the volcano?", "who reached an ending first?", or "when did <squid> arrive?".
+`Use this for "what happened in the world?", "what happened in the last hour?", "who woke the volcano?",
+"what has happened in the abyss?", "what happened at west:123?", "how many squids learned wake this
+week?", or "what kinds of things happen most?".  Every event comes with \`line\`, a plain-language
+sentence you can quote.
 
-Each event has: \`key\` (unique id), \`kind\`, \`squidName\` (the public name of the squid who caused it,
-or "" if nobody in particular), \`subject\`, \`startsAt\` and \`endsAt\` (JS timestamps, epoch ms; equal for
-instantaneous events), and small public \`details\`.
+Related: for one squid's whole life story in order (following renames), use get-timeline.  For who did
+each thing first in the world, use get-firsts.  For rankings, use get-leaderboards (and get-records).
+For a narrative of the world so far, use get-world-story.  For a squid's profile, use get-squid.
 
-Kinds of events:
-- "arrival": a squid fell into the sea (started a playthrough).  subject "surface"; details.playthrough.
-- "chapter-reached": a squid reached a chapter (1-8) of the story.  subject is the chapter number as a string; details.location.
-  Chapters: 1 "Light" (the fallen glass dome), 2 "Hiding" (learning to hide and to calm things), 3 "Clicks" (the sperm whale in the trench),
-  4 "Down" (the Below), 5 "The octopus garden", 6 "Warm water" (riding the volcano's warm water up), 7 "Home" (the Plunge), 8 = reached an ending.
-- "tile-discovered": a squid was first to reach a tile of the Below (the deep maze).  subject is the tile key, e.g. "below:2,9".
-- "species-introduced": a squid met a procedurally generated species no one had seen before.  subject is the species key, e.g. "creature:3"; details.name.
-- "eruption": a squid woke the volcano (the underwater volcano next to the octopus garden).  subject "forge"; startsAt = when it was woken, endsAt = when the eruption
-  ended (20 minutes later); details.coolsAt = when it finished cooling (40 more minutes) and could be woken again; details.seq = 1 for the first eruption ever, etc.
-- "gem-gathered": a squid gathered a pearl (called a gem in the API) from a tile.  subject is the tile key; details.index, details.regrowsAt.
-- "ending": a squid finished a playthrough.  subject is the ending: "return" (home), "lantern" (stay), "gift" (the whale), or "song" (the swans).
+Each event has: \`key\` (unique id), \`kind\`, \`squidName\` (the public name of the squid who caused it, as it
+was at the time, or "" if nobody in particular), \`subject\`, \`startsAt\` and \`endsAt\` (JS timestamps, epoch
+ms; equal for instantaneous events), small public \`details\`, \`line\` (plain language), and \`spoiler\`.
 
-Examples: "Has the volcano ever erupted, and who woke it?" -> kind=eruption.  "Who first reached
-chapter 8?" -> kind=chapter-reached, subject=8, order=oldest, limit=1.  "What has Pale-Ember-Drift done?" -> squidName.`,
+The history is kept aggressively: besides what actions log directly (arrivals, tiles, species,
+eruptions, pearls gathered, endings, renames, first words), save-game compares each squid's new save
+with its last one and logs what changed (levels reached, skin words learned, natives met, places,
+quests, story moments, Bead, west milestones and landmarks, climbs, leaps, records, chat milestones,
+personality shifts, close calls with the whale and the slow hunter).  Things that happened before a
+kind of event existed aren't in the history.
+
+Kinds of events (\`kind\`), by \`group\`:
+${lodash.map(EVENT_KINDS.kinds, (k, key) => '- "'+key+'" ('+k.group+'): '+k.about).join('\n')}
+
+Chapters: 1 "Light", 2 "Hiding", 3 "Clicks", 4 "Down", 5 "The octopus garden", 6 "Warm water", 7 "Home",
+8 = reached an ending.
+
+Spoilers: events about the end of Bead's story, the warm room, the twelve rings and the homecoming are
+story-ending spoilers.  They're left out unless \`includeSpoilers\` is true; warn before sharing them.
+
+\`room\` and \`level\` match events that happened in (or are about) that room or level: e.g. a tile
+discovered at "below:2,9", a chapter reached while in "mouth-deep", or a level reached.  Those two
+filters are applied while reading through the history (up to 20,000 events per call); \`exhaustive\` says
+whether everything was looked at, and \`nextCursor\` carries on from where it stopped.
+
+Paging: pass \`nextCursor\` back as \`cursor\` (with the same filters and order) for the next page.
+
+Summary (\`summary\` true): instead of events, counts of the matching events by kind, by group, and by day
+(UTC), how many squids took part, the busiest squids, and the first and last times.  Use it for "how
+much has happened?", "what was busiest?", "how many levels were reached today?".
+
+Examples:
+- "Has the volcano ever erupted, and who woke it?" -> kind=eruption.
+- "Who first reached chapter 8?" -> kind=chapter-reached, subject="8", order=oldest, limit=1 (or get-firsts).
+- "What has happened in the abyss?" -> level="abyss".
+- "What happened at west:123?" -> room="west:123".
+- "What did Pale-Ember-Drift do yesterday?" -> squidName, since, until.
+- "Which records have been broken?" -> kind=record-broken.
+- "How active has the world been this week?" -> summary=true, since=<a week ago>.`,
 
 
   sideEffects: 'cacheable',
@@ -40,20 +71,34 @@ chapter 8?" -> kind=chapter-reached, subject=8, order=oldest, limit=1.  "What ha
     kind: {
       type: 'string',
       isIn: KINDS,
-      example: 'eruption',
-      description: 'Only return events of this kind.'
+      example: 'level-reached',
+      description: 'Only return events of this kind (see the list above).'
+    },
+
+    group: {
+      type: 'string',
+      isIn: GROUPS,
+      example: 'west',
+      description: 'Only return events whose kind is in this group: '+GROUPS.map((g) => '"'+g+'"').join(', ')+'.'
     },
 
     subject: {
       type: 'string',
-      example: 'below:2,9',
-      description: 'Only return events with exactly this subject (a tile key, species key, "forge" (the volcano), an ending key, or a chapter number as a string).'
+      example: 'abyss',
+      description: 'Only return events with exactly this subject (a level key, tile key, skin word, native key, quest key, "forge" (the volcano), an ending key, a chapter number as a string, "west:N", a stat name, etc.; see each kind).'
     },
 
     squidName: {
       type: 'string',
       example: 'Pale-Ember-Drift',
-      description: 'Only return events caused by the squid with this public name.'
+      description: 'Only return events caused by this squid.  Its other names (before or after a rename) are included too, unless `followRenames` is false.  Matched exactly, or ignoring capital letters.'
+    },
+
+    followRenames: {
+      type: 'boolean',
+      defaultsTo: true,
+      example: false,
+      description: 'With `squidName`, also include events from when the squid had another name.'
     },
 
     since: {
@@ -68,13 +113,48 @@ chapter 8?" -> kind=chapter-reached, subject=8, order=oldest, limit=1.  "What ha
       description: 'Only return events that started at or before this JS timestamp (epoch ms).'
     },
 
+    room: {
+      type: 'string',
+      maxLength: 80,
+      example: 'west:123',
+      description: 'Only return events that happened in (or are about) this room, e.g. "mouth-deep", "below:2,9", "west:40".'
+    },
+
+    level: {
+      type: 'string',
+      regex: /^[a-z][a-z0-9-]{0,40}$/,
+      example: 'abyss',
+      description: 'Only return events in (or about) this level of the world (a level key from get-levels, e.g. "glass", "abyss", "hadal").'
+    },
+
+    includeSpoilers: {
+      type: 'boolean',
+      defaultsTo: false,
+      example: true,
+      description: 'Include story-ending spoilers (the end of Bead\'s story, the warm room, the homecoming).  Warn before sharing them.'
+    },
+
+    summary: {
+      type: 'boolean',
+      defaultsTo: false,
+      example: true,
+      description: 'Return counts (by kind, group, day and squid) instead of events.'
+    },
+
     limit: {
       type: 'number',
       defaultsTo: 50,
       min: 1,
       max: 500,
       example: 20,
-      description: 'The maximum number of events to return.'
+      description: 'The maximum number of events to return (ignored with `summary`).'
+    },
+
+    cursor: {
+      type: 'string',
+      maxLength: 200,
+      example: 'WzE3NjAwMDAwMDAwMDAsNDJd',
+      description: 'Carry on from a previous call: pass its `nextCursor` (with the same filters and order).'
     },
 
     order: {
@@ -92,39 +172,36 @@ chapter 8?" -> kind=chapter-reached, subject=8, order=oldest, limit=1.  "What ha
 
     success: {
       outputFriendlyName: 'World events',
-      outputDescription: '`{ events, count }` where `events` are the matching world events (sorted as requested, up to `limit`) and `count` is the total number of matching events (ignoring `limit`).'
+      outputDescription:
+        '`{ events: [{ key, kind, squidName, subject, startsAt, endsAt, details, line, spoiler }], count, nextCursor, exhaustive, squidNames }`.  '+
+        '`events` are sorted as asked, up to `limit`.  `count` is how many events match in all (ignoring `limit` and `cursor`; null when `room` or `level` stopped it counting everything).  '+
+        '`nextCursor` is for the next page (null if there are no more).  `exhaustive` is false if `room`/`level` filtering stopped before looking at everything.  `squidNames` lists the names searched for (with `squidName`).  '+
+        'With `summary`: `{ summary: { matched, byKind: { [kind]: count }, byGroup: { [group]: count }, byDay: [{ day, count, byKind }], squids, topSquids: [{ squidName, count }], first, last, scanned, exhaustive } }`.'
     },
 
   },
 
 
-  fn: async function ({ kind, subject, squidName, since, until, limit, order }) {
+  fn: async function ({ kind, group, subject, squidName, followRenames, since, until, room, level, includeSpoilers, summary, limit, cursor, order }) {
 
-    var where = {};
-    if (kind !== undefined) {
-      where.kind = kind;
-    }
-    if (subject !== undefined) {
-      where.subject = subject;
-    }
+    var squidNames;
     if (squidName !== undefined) {
-      where.squidName = squidName;
-    }
-    if (since !== undefined || until !== undefined) {
-      where.startsAt = {};
-      if (since !== undefined) {
-        where.startsAt['>='] = since;
-      }
-      if (until !== undefined) {
-        where.startsAt['<='] = until;
-      }
+      squidNames = followRenames ? (await sails.helpers.world.resolveSquidNames(squidName)).names : [squidName];
     }
 
-    var direction = order === 'oldest' ? 'ASC' : 'DESC';
-    var events = await WorldEvent.find(where).sort([{ startsAt: direction }, { id: direction }]).limit(Math.floor(limit));
-    var count = await WorldEvent.count(where);
+    var result = await sails.helpers.world.findEvents.with({ kind, group, subject, squidNames, since, until, room, level, includeSpoilers, order, limit, cursor, summary });
+    if (summary) {
+      return Object.assign(result, squidNames ? { squidNames } : {});
+    }
 
-    return { events, count };
+    var lines = sails.helpers.world.describeEvents(result.events);
+    var events = result.events.map((e, i) => ({
+      key: e.key, kind: e.kind, squidName: e.squidName, subject: e.subject, startsAt: e.startsAt, endsAt: e.endsAt, details: e.details || {},
+      line: lines[i],
+      spoiler: EVENT_KINDS.spoilerKinds.includes(e.kind) || EVENT_KINDS.spoilerSubjects.includes(e.subject),
+    }));
+
+    return Object.assign({ events, count: result.count, nextCursor: result.nextCursor, exhaustive: result.exhaustive }, squidNames ? { squidNames } : {});
 
   }
 

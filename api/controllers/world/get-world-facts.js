@@ -61,7 +61,10 @@ Flags on every fact:
   structured details such as a place's exits.
 
 \`source\` in the response is "database" (the WorldFact table, normally) or "built-in" (the table
-isn't available, so the same facts come straight from code).`,
+isn't available, so the same facts come straight from code).
+
+This is lore (what the world is).  For what has happened in it, use get-history, get-world-story,
+get-firsts and get-timeline; for what players think, get-answers.`,
 
 
   sideEffects: 'cacheable',
@@ -94,6 +97,7 @@ isn't available, so the same facts come straight from code).`,
     status: {
       type: 'string',
       isIn: ['built', 'planned'],
+      example: 'built',
       description: 'Only facts that are in the game now ("built"), or only designed-but-not-built ones ("planned").'
     },
 
@@ -101,16 +105,19 @@ isn't available, so the same facts come straight from code).`,
       type: 'number',
       isIn: [0, 1, 2],
       defaultsTo: 2,
+      example: 1,
       description: 'Leave out facts with a higher spoiler level. 0 = no story spoilers at all, 1 = hide endings and the final chapter, 2 = everything (the default).'
     },
 
     brief: {
       type: 'boolean',
+      example: false,
       description: 'Leave out bodies and data (just key, topic, title, flags, tags). Defaults to true when no key, topic, or search is given.'
     },
 
     limit: {
       type: 'number',
+      example: 20,
       min: 1,
       max: 500,
       description: 'The most facts to return. Defaults to 500 for a brief listing, 100 otherwise.'

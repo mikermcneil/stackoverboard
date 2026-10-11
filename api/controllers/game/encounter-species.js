@@ -12,7 +12,13 @@ module.exports = {
   extendedDescription:
 `Each squid may introduce only a small budget (1 or 2) of new species of each kind per playthrough.
 Otherwise (or by chance) the encounter is with an existing species, chosen deterministically from
-the spawn point.  At most 40 species of each kind can exist.`,
+the spawn point.  At most 40 species of each kind can exist.
+
+A newly introduced species is shared with every player (named after nobody: the squid that met it
+first is its \`discoveredBy\`), and a "species-introduced" world event is logged.  These generated
+species are different from the native ones (real animals like the moray eel); both are listed by
+get-species.  Related: get-history (kind "species-introduced"), get-firsts (\`speciesIntroducers\`),
+get-world-story.`,
 
 
   inputs: {
@@ -21,7 +27,8 @@ the spawn point.  At most 40 species of each kind can exist.`,
       type: 'string',
       isIn: ['creature', 'plant', 'item'],
       required: true,
-      example: 'creature'
+      example: 'creature',
+      description: 'What sort of thing is at the spawn point: a "creature", a "plant", or an "item".'
     },
 
     spawnKey: {

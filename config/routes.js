@@ -105,5 +105,9 @@ module.exports.routes = {
   'GET   /api/v1/world/get-records':                  { action: 'world/get-records' },
   'GET   /api/v1/world/get-interactions':             { action: 'world/get-interactions' },
   'GET   /api/v1/world/get-answers':                  { action: 'world/get-answers' },
+  'GET   /api/v1/world/get-timeline':                 { action: 'world/get-timeline' },
+  'GET   /api/v1/world/get-firsts':                   { action: 'world/get-firsts' },
+  'GET   /api/v1/world/get-leaderboards':             { action: 'world/get-leaderboards' },
+  'GET   /api/v1/world/get-world-story':              { action: 'world/get-world-story' },
 
 };

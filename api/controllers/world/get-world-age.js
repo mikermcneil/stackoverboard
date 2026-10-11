@@ -27,7 +27,10 @@ After that comes "old-sea", The old sea: everything that was going to change has
 stays that way for good.  Some changes last only while their stage does (\`during\`); others stay once
 their stage has passed (\`after\`, collected in \`lasting\`).  If no world event has happened yet, the
 world hasn't been made: \`bornAt\` and \`current\` are null and every stage is "later".  All times are JS
-timestamps (epoch ms).  Pass \`at\` to ask about another moment.`,
+timestamps (epoch ms).  Pass \`at\` to ask about another moment.
+
+Related: get-state (\`age\` at any moment), get-world-story (the world's story, which ends with its
+stage now), get-history (what squids did during each stage: pass \`since\` and \`until\` from \`stages\`).`,
 
 
   sideEffects: 'cacheable',

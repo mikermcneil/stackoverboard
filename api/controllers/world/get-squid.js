@@ -41,7 +41,15 @@ Bead (e.g. \`fate\`), which is a story-ending spoiler (\`buddySpoiler\` is true)
 
 Online: \`online\` is true if its game reported in during the last 30 seconds, with \`room\` (where it is
 in the sea).  \`place\` is roughly (city level) where the player is in the real world; \`placeSource\`
-says how it was worked out (see get-squids).  Exact locations are never stored.`,
+says how it was worked out (see get-squids).  Exact locations are never stored.
+
+History: \`events\` are the 20 most recent things the world's history remembers this squid doing (no
+spoilers), each with a plain-language \`line\`; \`names\` lists every name it has gone by.  For its whole
+life story in order, use get-timeline; for what it did before anyone else, get-firsts with
+\`squidName\`; for where it ranks, get-leaderboards with \`squidName\`.
+
+Examples: "What is Pale-Ember-Drift like?" -> \`bio\` and \`personality\`.  "Has Pale-Ember-Drift met the
+moray eel?" -> \`nativesMet\` includes "moray".  "What did it do last?" -> \`events[0].line\`.`,
 
 
   sideEffects: 'cacheable',
@@ -61,8 +69,8 @@ says how it was worked out (see get-squids).  Exact locations are never stored.`
         '`{ squidName, bio, playthrough, chapter, chapterTitle, endings, arrivedAt, lastSeenAt, place, placeSource, timeZone, device, os, browser, language, online, room, onlineSeenAt, '+
         'personality: { seed, traits: { curious, brave, gentle, playful, wistful, social, wanderer }, summary, evolvedAt, strongest } | null, stats, '+
         'skinWords, skinWordsEverLearned, nativesMet, placesVisited, levelsReached: [{ key, firstAt }], location, pearls, memories, buddy, buddySpoiler, '+
-        'chats: [{ room, text, at }], interactions: [{ key, room, kind, at, localHour, isNight, questionKey, answer }], answers: [{ key, questionKey, answer, at }], events: [{ kind, subject, startsAt }] }`.  '+
-        '`chats` (up to 20), `interactions` (up to 30), and `events` (world history, up to 20) are newest first.'
+        'chats: [{ room, text, at }], interactions: [{ key, room, kind, at, localHour, isNight, questionKey, answer }], answers: [{ key, questionKey, answer, at }], events: [{ kind, subject, startsAt, line }], names }`.  '+
+        '`chats` (up to 20), `interactions` (up to 30), and `events` (world history, up to 20, without spoilers) are newest first.  `names` is every name the squid has gone by, oldest first.'
     },
 
     notFound: { statusCode: 404, description: 'No squid has that name (names are exact; see get-squids or get-online).' },
@@ -94,7 +102,9 @@ says how it was worked out (see get-squids).  Exact locations are never stored.`
     var chats = await ChatMessage.find({ squidName: save.squidName }).sort([{ at: 'DESC' }, { id: 'DESC' }]).limit(20).tolerate(warn('chat'));
     var interactions = await ObjectInteraction.find({ tokenHash }).sort([{ at: 'DESC' }, { id: 'DESC' }]).limit(30).tolerate(warn('interactions'));
     var answers = await InteractionAnswer.find({ tokenHash }).sort([{ at: 'DESC' }, { id: 'DESC' }]).limit(100).tolerate(warn('answers'));
-    var events = await WorldEvent.find({ squidName: save.squidName }).sort([{ startsAt: 'DESC' }, { id: 'DESC' }]).limit(20);
+    var names = (await sails.helpers.world.resolveSquidNames(save.squidName)).names;
+    var events = (await sails.helpers.world.findEvents.with({ squidNames: names, order: 'newest', limit: 20 })).events;
+    var eventLines = sails.helpers.world.describeEvents(events);
 
     var chapterInfo = sails.helpers.world.getLore().chapters.find((c) => c.chapter === save.chapter);
 
@@ -125,7 +135,8 @@ says how it was worked out (see get-squids).  Exact locations are never stored.`
       chats: chats.map((m) => ({ room: m.room, text: m.text, at: m.at })),
       interactions: interactions.map((r) => ({ key: r.key, room: r.room, kind: r.kind, at: r.at, localHour: r.localHour === undefined ? null : r.localHour, isNight: !!r.isNight, questionKey: r.questionKey || '', answer: r.answer || '' })),
       answers: answers.map((a) => ({ key: a.key, questionKey: a.questionKey, answer: a.answer, at: a.at })),
-      events: events.map((e) => ({ kind: e.kind, subject: e.subject, startsAt: e.startsAt })),
+      events: events.map((e, i) => ({ kind: e.kind, subject: e.subject, startsAt: e.startsAt, line: eventLines[i] })),
+      names,
     });
 
     profile.bio = sails.helpers.world.writeSquidBio(profile);

@@ -1342,7 +1342,8 @@
     inScene(who) {
       const E = SO.E;
       if (!E) { return false; }
-      const cut = !!E.overlay || !!(SO.fp && SO.fp.playing);
+      if (SO.fp && SO.fp.playing) { return false; }// a film fills the screen; its words stay in the ribbon
+      const cut = !!E.overlay;
       const held = !!E.locked && !E._going;
       if (who === 'gold') { return cut; }
       // the squid's own face only in real scenes, or answering someone mid-conversation

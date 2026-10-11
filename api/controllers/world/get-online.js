@@ -24,7 +24,10 @@ it's mostly covered in: "sand" (sandy, from the shallows), "silt" (silty, from t
 Plunge), "mud" (muddy, from the Below or the octopus garden), "muck" (slimy, from the kelp), "soot"
 (sooty, from the volcano), or "glass" (glittery, from the glass sponges of Hollowglass).  Squids pick
 dirt up by scraping along the bottom, from clouds of silt other squids kick up, and from brushing past
-a dirty squid; it comes off as they swim.  Squids in the same place can also talk out loud (see get-chat).`,
+a dirty squid; it comes off as they swim.  Squids in the same place can also talk out loud (see get-chat).
+
+Related: get-squid (one squid's profile), get-chat (what's being said), get-timeline (what a squid
+has done over time).`,
 
 
   sideEffects: 'cacheable',

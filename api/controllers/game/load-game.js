@@ -10,7 +10,11 @@ module.exports = {
   extendedDescription:
 `The save is identified by a secret token in the requester's session, so this only ever returns
 the caller's own squid.  Read-only: nothing is created or updated (not even \`lastSeenAt\`).
-If this session has never started a game, \`save\` is null.`,
+If this session has never started a game, \`save\` is null.
+
+The save's \`data\` is the game's own state (chapter, location, flags, skin words, pearls, journal,
+stats, personality, Bead); see save-game for what the server reads from it.  For what other squids
+can see about this squid, see get-squid; for its history, get-timeline.`,
 
 
   sideEffects: 'cacheable',

@@ -18,7 +18,9 @@ per question per thing: answering again replaces the old answer.  Questions are 
 
 These are players' answers, not facts.  In particular, some questions touch on mysteries the game
 leaves open on purpose (such as how the glass city flies): a popular answer is just a popular guess.
-Never present an answer as the truth.  See get-world-facts (topic "mystery").`,
+Never present an answer as the truth.  See get-world-facts (topic "mystery").
+
+Related: get-interactions (every visit), get-squid (\`answers\`), get-world-facts (topic "mystery").`,
 
 
   sideEffects: 'cacheable',

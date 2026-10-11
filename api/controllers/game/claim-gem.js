@@ -11,7 +11,14 @@ module.exports = {
 
   extendedDescription:
 `Pearls are shared.  Octopuses collect them to decorate their dens.  Once any squid gathers a
-pearl, it's gone for everyone.  It regrows at the start of the next 15-minute regrow window.`,
+pearl, it's gone for everyone.  It regrows at the start of the next 15-minute regrow window.
+
+Each pearl gathered is logged in the world's history (a "gem-gathered" event, by whoever gathered it;
+see get-history with kind "gem-gathered").  Squids carry pearls in their save (\`data.gems\`): five buy
+the skin word "wake" from Grandmother Seven, and save-game logs "pearl-gained" and "pearl-spent" as
+the count changes.  For which pearls are gone right now, see get-map (\`gemsGathered\`).
+
+Example: claim-gem { tileKey: "below:2,9", index: 0 } -> { gathered: true, regrowsAt: 1760000900000 }.`,
 
 
   inputs: {
@@ -19,14 +26,15 @@ pearl, it's gone for everyone.  It regrows at the start of the next 15-minute re
     tileKey: {
       type: 'string',
       required: true,
-      example: 'below:2,9'
+      example: 'below:2,9',
+      description: 'The tile the pearl is on, as "below:<x>,<y>" (x from -3 to 3, y from 7 to 11).  It must already be discovered (see discover-tile and get-map).'
     },
 
     index: {
       type: 'number',
       required: true,
       example: 0,
-      description: 'Which pearl on the tile (0 or 1).'
+      description: 'Which pearl on the tile (0 or 1; see the tile\'s `gems` in get-map or discover-tile).'
     },
 
   },

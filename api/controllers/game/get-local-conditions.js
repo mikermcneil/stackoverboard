@@ -16,7 +16,10 @@ Where the player is comes from (in order) Cloudflare's location headers, an offl
 lookup, or the browser's time zone (see \`source\`).  Their IP address is never stored or sent
 anywhere.  The weather comes from Open-Meteo, asked about a spot rounded to about 10 km, and is
 cached for 20 minutes.  If there are no coordinates, or the weather can't be fetched, every field of
-\`weather\` is null and \`isNight\` comes from the local clock alone (night before 6:30 and from 19:30).`,
+\`weather\` is null and \`isNight\` comes from the local clock alone (night before 6:30 and from 19:30).
+
+Related: get-squid and get-squids (\`place\`, \`timeZone\` for other players), get-state (the sea's own
+2-hour day, which is separate from the player's real one).`,
 
 
   sideEffects: 'cacheable',
@@ -24,7 +27,7 @@ cached for 20 minutes.  If there are no coordinates, or the weather can't be fet
 
   inputs: {
 
-    timeZone: { type: 'string', defaultsTo: '', maxLength: 64, description: 'The browser\'s IANA time zone (e.g. "America/Chicago").  Optional: if left out, the one sent with start-game or save-game is used.' },
+    timeZone: { type: 'string', defaultsTo: '', maxLength: 64, example: 'Europe/Lisbon', description: 'The browser\'s IANA time zone (e.g. "America/Chicago").  Optional: if left out, the one sent with start-game or save-game is used.' },
 
   },
 

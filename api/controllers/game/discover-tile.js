@@ -10,7 +10,13 @@ module.exports = {
   extendedDescription:
 `The first squid to reach a tile is recorded as its discoverer (shared with every player), and a
 "tile-discovered" world event is logged.  Later visitors just get the tile.  Tile content is
-generated deterministically from the world seed, so every squid sees the same tile.`,
+generated deterministically from the world seed, so every squid sees the same tile.
+
+Related: get-map (every discovered tile, and who discovered the most), get-firsts
+(\`tileDiscoverers\`), get-history (kind "tile-discovered"), get-levels (the Below is level "below").
+
+Example: discover-tile { x: 0, y: 7 } -> the tile at the trench floor entrance, with
+\`firstDiscovery\` true if this squid got there first.`,
 
 
   inputs: {
@@ -35,7 +41,7 @@ generated deterministically from the world seed, so every squid sees the same ti
   exits: {
 
     success: {
-      outputDescription: '`{ tile, firstDiscovery }` where `tile` is the generated tile plus `discoveredBy`, `discoveredAt`, and `gemsGathered` (the pearls gathered in the current regrow window).'
+      outputDescription: '`{ tile, firstDiscovery }` where `tile` is the generated tile (key "below:x,y", openings, terrain, flora, gems, spawns, hint, memory, isGoal) plus `discoveredBy`, `discoveredAt` (epoch ms), and `gemsGathered` (the pearls gathered in the current regrow window).  `firstDiscovery` is true if this call made the discovery.'
     },
 
     invalid: {

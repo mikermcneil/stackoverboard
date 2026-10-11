@@ -44,7 +44,10 @@ Also each squid's character:
 Use \`knows\` to list only squids who know a particular skin word (e.g. "Who knows the swans' call?"),
 \`reached\` to list only squids that have been to a level (e.g. "Who has reached the hadal deep?"),
 and \`trait\` to list only squids strong in a trait (0.6 or more), strongest first (e.g. "Who are the
-bravest squids?").`,
+bravest squids?").
+
+Related: get-squid (one squid in depth), get-timeline (one squid's history), get-leaderboards (rank
+squids by a stat), get-records (the single best), get-online (who's playing right now).`,
 
 
   sideEffects: 'cacheable',
@@ -64,6 +67,7 @@ bravest squids?").`,
     device: {
       type: 'string',
       isIn: ['phone', 'tablet', 'desktop', 'unknown'],
+      example: 'phone',
       description: 'Only list squids whose player was last on this kind of device.'
     },
 

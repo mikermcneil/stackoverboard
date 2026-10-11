@@ -106,7 +106,7 @@
       light: 'Sunlight and caustics. Day and night come and go.',
       skinWords: 'Colors carry well. The sun drowns a glow, so it doesn’t last as long. Hiding in daylight doesn’t last.',
       danger: 'Birds from above. The Shoal and the Humboldt squid at the reef. Hot water near the top, later.',
-      life: ['turtle', 'little-fish', 'moon-jelly', 'humboldt', 'shoal', 'sargassum'],
+      life: ['turtle', 'little-fish', 'moon-jelly', 'humboldt', 'shoal', 'sargassum', 'anemone', 'clownfish', 'sea-apple', 'blue-dragon', 'man-o-war'],
       sound: 'Waves, gulls, the roar of the Plunge.',
     },
     {
@@ -120,7 +120,7 @@
       light: 'Green and gold, broken up by the kelp.',
       skinWords: 'The kelp breaks colors up, so they don’t carry as far, but hiding lasts longer in the shadows of the fronds.',
       danger: 'Something huge and kind that wants you to stay.',
-      life: ['sepia', 'kelp', 'seagrass', 'swell-shark', 'egg-case'],
+      life: ['sepia', 'kelp', 'seagrass', 'swell-shark', 'egg-case', 'sea-urchin', 'sea-cucumber', 'pearlfish', 'leafy-seadragon', 'anenema'],
       sound: 'Creaking stems. The swell, breathing.',
     },
     {
@@ -162,7 +162,7 @@
       light: 'None, except what lives here, and you.',
       skinWords: 'In the dark, colors carry far: everything sees them. A glow lasts much longer, and hiding works best of all.',
       danger: 'Everything sees your light. Things that bite in caves.',
-      life: ['nautilus', 'moray', 'gulper-eel', 'siphonophore', 'hushmouth', 'flashlight-fish', 'lantern-weed'],
+      life: ['nautilus', 'moray', 'gulper-eel', 'siphonophore', 'hushmouth', 'flashlight-fish', 'lantern-weed', 'dragonfish'],
       sound: 'Dripping in caves. Something breathing, slowly.',
     },
     {
@@ -190,7 +190,7 @@
       light: 'Dark. Your own light, and a faint glow from the anchor.',
       skinWords: 'The weight of the water dampens colors. A glow lasts longer with nothing to drown it.',
       danger: 'The cold and the weight. Being too slow.',
-      life: ['giant-isopod', 'sea-pig', 'stone-hummer', 'bone-worm', 'hagfish'],
+      life: ['giant-isopod', 'sea-pig', 'stone-hummer', 'bone-worm', 'hagfish', 'swimming-cucumber', 'flytrap-anemone'],
       sound: 'A low chord from the stones.',
     },
     {
@@ -232,7 +232,7 @@
       light: 'None. A glow lasts twice as long, with nothing else to drown it.',
       skinWords: 'Colors drain to grey and hardly carry. A glow lasts twice as long.',
       danger: 'The weight of all the water above. Something that eats sound.',
-      life: ['hushmouth', 'node-reeds'],
+      life: ['hushmouth', 'node-reeds', 'snailfish', 'dragonfish'],
       sound: 'Nothing. Your own heart.',
     },
   ];
@@ -315,7 +315,7 @@
       const l = of(room);
       room.level = l ? l.key : null;
       // Nothing from the sea lives up in the sky places: no krill, no lanternfish, no comb jellies.
-      if (room.def.sky) { room.actors = room.actors.filter((a) => !(a.type === 'food' || /^night-/.test(a.id || '') || a.type === 'lanternfish' || a.type === 'combJelly' || a.type === 'species')); }
+      if (room.def.sky === true) { room.actors = room.actors.filter((a) => !(a.type === 'food' || /^night-/.test(a.id || '') || a.type === 'lanternfish' || a.type === 'combJelly' || a.type === 'species')); }
       if (!l || !SO.save.data) { return; }
       const f = SO.save.data.flags;
       if (!f['lvl:' + l.key]) {
@@ -410,7 +410,7 @@
   // Up in the sky places, falling out of the cloud isn't a jump worth timing.
   if (SO.air) {
     const track0 = SO.air.track.bind(SO.air), land0 = SO.air.land.bind(SO.air), leave0 = SO.air.leave.bind(SO.air);
-    const sky = () => !!(E.room && E.room.def.sky);
+    const sky = () => !!(E.room && E.room.def.sky === true);
     SO.air.leave = function (sq, sY) { if (sky()) { this.jump = null; return; } return leave0(sq, sY); };
     SO.air.track = function (sq, sY, dt) { if (sky()) { this.jump = null; this.frames.length = 0; return; } return track0(sq, sY, dt); };
     SO.air.land = function (sq, sY) {

@@ -38,6 +38,12 @@ module.exports.bootstrap = async function() {
     sails.log.warn('Could not seed world facts (has the `worldfact` table been created?):', err.message);
   }
 
+  // World records (see the check-records helper): start working out, in the background, the best value
+  // any save has for each recorded stat, so records set before history kept them still count.
+  sails.helpers.world.checkRecords.with({}).catch((err) => {
+    sails.log.warn('Could not start working out world records:', err.message);
+  });
+
 };
 
 async function seedFakeData() {

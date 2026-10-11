@@ -16,7 +16,11 @@ sea is home and stayed with its friends), "gift" (the whale: calmed the sperm wh
 the open ocean with her), and "song" (the swans: called the swans, and the sky islands came down to
 rest on the sea).
 Note: if the ending is newly recorded, it's appended to \`save.endings\` and the save's \`revision\`
-increases, so clients should adopt the returned save.`,
+increases, so clients should adopt the returned save.
+
+History: an "ending" world event is logged (and a "world-first" if nobody had reached that ending
+before).  To see who reached which ending, and when, see get-history (kind "ending"), get-firsts
+(endings), and get-overview (endingsTally).`,
 
 
   inputs: {
@@ -25,7 +29,8 @@ increases, so clients should adopt the returned save.`,
       type: 'string',
       isIn: ENDINGS,
       required: true,
-      example: 'lantern'
+      example: 'lantern',
+      description: 'Which ending: "return" (home), "lantern" (stay), "gift" (the whale), or "song" (the swans).'
     },
 
   },
@@ -63,18 +68,23 @@ increases, so clients should adopt the returned save.`,
 
     var now = Date.now();
     var tokenHash = sails.helpers.world.hashToken(token);
-    var result = await sails.helpers.world.createOnce.with({
-      model: 'worldevent',
-      values: {
-        key: `ending:${tokenHash}:${save.playthrough}`,
-        kind: 'ending',
-        squidName: save.squidName,
-        subject: ending,
-        startsAt: now,
-        endsAt: now,
-        details: { playthrough: save.playthrough },
-      }
-    });
+    var values = {
+      key: `ending:${tokenHash}:${save.playthrough}`,
+      kind: 'ending',
+      squidName: save.squidName,
+      subject: ending,
+      startsAt: now,
+      endsAt: now,
+      details: { playthrough: save.playthrough },
+    };
+    var result = await sails.helpers.world.createOnce.with({ model: 'worldevent', values });
+    if (result.created && await WorldEvent.count({ kind: 'ending', subject: ending }) === 1) {
+      // The first squid in the world to reach this ending gets a "world-first" event too.
+      await sails.helpers.world.logEvents.with({ events: [{
+        key: `first:ending:${ending}`, kind: 'world-first', squidName: save.squidName, subject: `ending:${ending}`,
+        startsAt: now, endsAt: now, details: { kind: 'ending', subject: ending, eventKey: values.key },
+      }] });
+    }
 
     if (result.created) {
       // Append to the save with a compare-and-swap retry loop.

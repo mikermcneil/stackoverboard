@@ -14,21 +14,24 @@ module.exports = {
 that gets overwritten (it's a live picture, not history), so other players, on any app process,
 can see your squid swimming around in the same room as theirs.  The response also carries what
 other squids in the room said out loud in the last 12 seconds (see say), so the game can show it
-above their heads.`,
+above their heads.
+
+Related: get-online (who's swimming now, for anyone), say and get-chat (talking out loud).  Presence
+is not history: for where squids have been over time, see get-history (\`room\`) and get-timeline.`,
 
 
   inputs: {
 
-    room: { type: 'string', required: true, maxLength: 80, description: 'The room (place) your squid is in, e.g. "kelp-deep" or "below:2,9".' },
-    x: { type: 'number', required: true },
-    y: { type: 'number', required: true },
-    yaw: { type: 'number', defaultsTo: 1, description: 'Which way it faces and how far through a turn (-1..1).' },
-    pitch: { type: 'number', defaultsTo: 0, description: 'Nose up or down, in radians.' },
-    glow: { type: 'boolean', defaultsTo: false, description: 'Whether its lights are on.' },
-    hidden: { type: 'number', defaultsTo: 0, description: 'How much it\'s hiding (0..1).' },
-    flash: { type: 'string', isIn: ['', 'W', 'R', 'B', 'G'], defaultsTo: '', description: 'The skin color it\'s flashing right now, if any.' },
-    dirt: { type: 'number', defaultsTo: 0, description: 'How dirty it is (0..1).' },
-    grime: { type: 'string', isIn: ['', 'sand', 'silt', 'mud', 'muck', 'soot', 'glass'], defaultsTo: '', description: 'What it\'s mostly covered in, if anything.' },
+    room: { type: 'string', required: true, maxLength: 80, example: 'kelp-deep', description: 'The room (place) your squid is in, e.g. "kelp-deep" or "below:2,9".' },
+    x: { type: 'number', required: true, example: 640, description: 'Where the squid is across the room, in game units from the left edge.' },
+    y: { type: 'number', required: true, example: 380, description: 'Where the squid is down the room, in game units from the top edge.' },
+    yaw: { type: 'number', defaultsTo: 1, example: -0.5, description: 'Which way it faces and how far through a turn (-1..1).' },
+    pitch: { type: 'number', defaultsTo: 0, example: 0.3, description: 'Nose up or down, in radians.' },
+    glow: { type: 'boolean', defaultsTo: false, example: true, description: 'Whether its lights are on.' },
+    hidden: { type: 'number', defaultsTo: 0, example: 0.8, description: 'How much it\'s hiding (0..1).' },
+    flash: { type: 'string', isIn: ['', 'W', 'R', 'B', 'G'], defaultsTo: '', example: 'G', description: 'The skin color it\'s flashing right now, if any: R red, W pale, B shimmer, G gold (see get-skin-words).' },
+    dirt: { type: 'number', defaultsTo: 0, example: 0.4, description: 'How dirty it is (0..1).' },
+    grime: { type: 'string', isIn: ['', 'sand', 'silt', 'mud', 'muck', 'soot', 'glass'], defaultsTo: '', example: 'mud', description: 'What it\'s mostly covered in, if anything.' },
 
   },
 
@@ -41,7 +44,7 @@ above their heads.`,
 
     noSave: {
       statusCode: 404,
-      description: 'This session has no squid yet.'
+      description: 'This session has no squid yet.  Call start-game first.'
     },
 
   },

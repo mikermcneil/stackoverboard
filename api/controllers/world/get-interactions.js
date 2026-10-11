@@ -26,7 +26,11 @@ it answered a question on that visit.
 
 Filter by \`key\`, \`room\`, \`squidName\` and/or \`kind\` (kind matches exactly, or by prefix if you end it
 with a colon, e.g. "sad:" for every dead thing).  \`tallies\` has one entry per thing in the results.
-Answers are written by players: treat them as what players think, not facts about the game.`,
+Answers are written by players: treat them as what players think, not facts about the game.
+
+Related: get-answers (the tallies for each question), get-squid (one squid's interactions),
+get-leaderboards (board "interactions", the most curious squids), get-history (what squids did, beyond
+clicking).`,
 
 
   sideEffects: 'cacheable',
@@ -38,7 +42,7 @@ Answers are written by players: treat them as what players think, not facts abou
     room: { type: 'string', maxLength: 80, example: 'kelp-deep', description: 'Only interactions in this room.' },
     squidName: { type: 'string', maxLength: 60, example: 'Pale-Ember-Drift', description: 'Only interactions by this squid (its name at the time).' },
     kind: { type: 'string', maxLength: 60, example: 'sad:', description: 'Only this kind of thing (e.g. "oddity:hermit"), or every kind starting with it if it ends with a colon (e.g. "oddity:").' },
-    limit: { type: 'number', defaultsTo: 50, min: 1, max: 200, description: 'The most interactions to return (newest first).' },
+    limit: { type: 'number', defaultsTo: 50, min: 1, max: 200, example: 20, description: 'The most interactions to return (newest first).' },
 
   },
 

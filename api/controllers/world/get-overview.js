@@ -73,8 +73,18 @@ get-lore (story, places, smells, dirt), get-skin-words (the melodies), get-speci
 plants), get-squids (players, and what each knows), get-online (who's swimming right now), get-chat (what
 squids have said), get-world-age (the world's stages of life), get-west-path (the long way west), get-squid (one
 player's full profile, personality, and bio), get-records (the world's records), get-interactions
-(what squids have clicked on), get-answers (how squids answered shared questions), get-history,
-get-state, and get-map for detail.
+(what squids have clicked on), get-answers (how squids answered shared questions), get-history (the
+world's whole history, with filters and summaries), get-timeline (one squid's life story),
+get-firsts (who did each thing first), get-leaderboards (rankings), get-world-story (the story of the
+world so far, in plain language), get-state, and get-map for detail.
+
+The world keeps a rich, permanent history (WorldEvent): besides what squids do on purpose (arriving,
+discovering tiles and species, waking the volcano, gathering pearls, endings, renames, first words),
+every save is compared with the last one and what changed is logged too: chapters, levels first reached,
+skin words learned, pieces of glass from home, pearls gained and spent, natives met, places, side quests,
+story moments, Bead, west milestones, landmarks and crossings, climbs, leaps, world records, world
+firsts, chat milestones, personality shifts, and close calls (the whale, the slow hunter, water
+elementals, blacking out).  Story-ending spoilers in it are hidden unless asked for.
 
 Things squids click on can be clicked again: every visit is shared, and coming back can show
 something new (at night, at another time of day where the player is, or after another squid has been
@@ -108,6 +118,15 @@ How to answer common questions (which read-only tool to call):
 - "What happened to Bead?" get-world-facts with \`key\` "character-buddy-fate" (a story-ending
   spoiler: warn first).
 - "What did squids say recently?" get-chat.  "What happened in the world?" get-history, or \`recent\`.
+- "Catch me up / what's the story of this world?" get-world-story (quote \`story\`).
+- "What happened lately / today / this week?" get-history with \`since\` (add \`summary\` true for counts
+  by kind and day).  "What happened in <room> / <level>?" get-history with \`room\` or \`level\`.
+- "Tell me <squid>'s story / when did <squid> learn <word>?" get-timeline with \`squidName\` (it follows
+  renames).
+- "Who was first to <reach the hadal deep / learn wake / meet the whale / reach an ending>?" get-firsts.
+- "Who is the best at <going west / leaping / exploring / quests / chatting>?" or "where does <squid>
+  rank?" get-leaderboards (with \`squidName\`); get-records for the single best and totals.
+- "Which records have been broken, and by whom?" get-history with \`kind\` "record-broken".
 - Anything about the story, places, chapters, mechanics: get-world-facts with \`search\`.
 - Open mysteries (topic "mystery", e.g. how the glass city flies): say they're open on purpose, and
   never invent an answer, even if players' answers (get-answers) favor one.`,
@@ -127,7 +146,7 @@ How to answer common questions (which read-only tool to call):
         '`{ serverNow, worldSeed, bornAt, squids, finishedSquids, endingsTally: {return,lantern,gift,song}, tilesDiscovered, tilesTotal, '+
         'speciesCount: {creature,plant,item}, nativeSpeciesCount, worldFactsCount, eruptionsTotal, state, age, recent }`.  `bornAt` is when the first world event happened (epoch ms, or null). '+
         '`devices` = how many squids were last played on each kind of device; `speciesCount` counts procedurally generated species; `nativeSpeciesCount` counts the native (real) ones; `worldFactsCount` counts the facts get-world-facts can search.  `squids` = squids ever hatched; `finishedSquids` = distinct squids who reached at least one ending.  `state` is the live world state '+
-        '(same as get-state).  `age` is the stage of life the world is in now, `{ index, key, name, progress, startsAt, endsAt, during }` (null before the world is made; see get-world-age for the whole schedule).  `recent` is the 10 most recent world events, newest first.'
+        '(same as get-state).  `age` is the stage of life the world is in now, `{ index, key, name, progress, startsAt, endsAt, during }` (null before the world is made; see get-world-age for the whole schedule).  `recent` is the 10 most recent world events (no spoilers), newest first, each with a plain-language `line` (see get-history).  `historyEvents` is how many events the history holds.'
     },
 
   },
@@ -166,7 +185,12 @@ How to answer common questions (which read-only tool to call):
       eruptionsTotal: await WorldEvent.count({ kind: 'eruption' }),
       state: await sails.helpers.world.getWorldState(now),
       age: (await sails.helpers.world.getWorldAge.with({ bornAt: first ? first.startsAt : null, at: now })).current,
-      recent: await WorldEvent.find().sort([{ startsAt: 'DESC' }, { id: 'DESC' }]).limit(10),
+      recent: await (async () => {
+        var events = (await sails.helpers.world.findEvents.with({ order: 'newest', limit: 10 })).events;
+        var lines = sails.helpers.world.describeEvents(events);
+        return events.map((e, i) => Object.assign({}, e, { line: lines[i] }));
+      })(),
+      historyEvents: await WorldEvent.count(),
     };
 
   }

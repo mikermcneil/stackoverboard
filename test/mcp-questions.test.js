@@ -10,6 +10,9 @@
  * Setup goes through the normal HTTP API, like the game does: two test squids are hatched (each with its
  * own session), renamed to unique "Mcp ..." names, given a save with a personality, stats and a buddy,
  * put in a room, made to say something, and made to click the same thing and answer its question.
+ * Then A saves again with more progress (a chapter, a level, a skin word, quests, pearls spent, close
+ * calls, farther west, a new personality summary), so save-game logs history from the difference, and
+ * once more with the same data (which must log nothing new).
  * Then every question goes through JSON-RPC `tools/call` on /mcp/safe (the read-only endpoint).
  *
  * Prints a pass/fail table and exits non-zero if anything failed.  (The test squids stay in the
@@ -128,10 +131,30 @@ async function setUp() {
   await wait(900);
   var again = await a.request('POST', '/api/v1/game/note-interaction', { key: thing, room: 'mouth-deep', kind: 'oddity:test', localHour: 23.25, isNight: true, questionKey: question, answer: 'Swans carry it' });
 
+  // A plays on: a second save that changes things, so save-game logs history from the difference.
+  await wait(20);
+  var beforeSecond = Date.now();
+  var dataA2 = JSON.parse(JSON.stringify(dataA));
+  dataA2.chapter = 4;
+  dataA2.location = 'below:0,7';
+  dataA2.gems = 0;
+  dataA2.patterns.push('wake');
+  Object.assign(dataA2.flags, { 'lvl:below': Date.now(), 'q:reeds': true, 'q:reeds:done': true, [`q:mcp-${RUN}`]: true, [`q:mcp-${RUN}:done`]: true, 'q:kept': true, morayCalmed: true });
+  Object.assign(dataA2.stats, { westFarthest: 3612, bestAirTime: 3.1, whaleCatches: 3, stalkerEscapes: 2, chats: 10 });
+  dataA2.personality.summary = 'brave, curious';
+  var rev = (await a.request('GET', '/api/v1/game/load-game')).save.revision;
+  await a.request('PUT', '/api/v1/game/save-game', { revision: rev, data: dataA2, timeZone: 'America/Chicago', language: 'en-US', touch: true });
+  var afterSecond = Date.now();
+  // The same save again: nothing new should be logged.
+  var eventsBefore = (await ask('getHistory', { squidName: nameA, includeSpoilers: true, limit: 1 })).count;
+  rev = (await a.request('GET', '/api/v1/game/load-game')).save.revision;
+  await a.request('PUT', '/api/v1/game/save-game', { revision: rev, data: dataA2, timeZone: 'America/Chicago', language: 'en-US', touch: true });
+  var eventsAfter = (await ask('getHistory', { squidName: nameA, includeSpoilers: true, limit: 1 })).count;
+
   var noSave;
   try { await new Player('C').request('POST', '/api/v1/game/note-interaction', { key: thing, room: 'mouth-deep', kind: 'oddity:test' }); } catch (err) { noSave = err.status; }
 
-  return { a, b, nameA, nameB, question, thing, chatText, first, fromB, again, tooFast, noSave, startA, startB };
+  return { a, b, nameA, nameB, question, thing, chatText, first, fromB, again, tooFast, noSave, startA, startB, beforeSecond, afterSecond, eventsBefore, eventsAfter };
 }
 
 // ---------------------------------------------------------------------------------------------------
@@ -170,11 +193,11 @@ function questions(t) {
 
     ['What is <A> like?', async () => {
       var r = await ask('getSquid', { name: t.nameA });
-      check(r.personality && r.personality.summary === 'curious, gentle, a little wistful', 'summary should come through');
+      check(r.personality && r.personality.summary === 'brave, curious', 'summary should come through (as of its latest save)');
       check(r.personality.traits.curious === 0.97 && r.personality.strongest[0] === 'curious', 'traits and strongest');
       check(r.personality.seed === 0.4242 && r.personality.evolvedAt > 1.5e12, 'seed and evolvedAt come through');
-      check(r.stats.westFarthest === 3599 && r.stats.eaten.krill === 40 && r.stats.patterns.glow === 20, 'stats come through');
-      check(r.bio.includes(t.nameA) && r.bio.includes('curious, gentle, a little wistful'), 'bio should describe the personality');
+      check(r.stats.westFarthest === 3612 && r.stats.eaten.krill === 40 && r.stats.patterns.glow === 20, 'stats come through');
+      check(r.bio.includes(t.nameA) && r.bio.includes('brave, curious'), 'bio should describe the personality');
     }],
 
     ['Where is <A> playing from?', async () => {
@@ -257,7 +280,7 @@ function questions(t) {
     ['Which levels has <A> reached?', async () => {
       var r = await ask('getSquid', { name: t.nameA });
       var keys = r.levelsReached.map((l) => l.key);
-      check(JSON.stringify(keys) === JSON.stringify(['glass', 'abyss']), `glass then abyss (got ${keys})`);
+      check(JSON.stringify(keys) === JSON.stringify(['glass', 'abyss', 'below']), `glass, abyss, then the Below (got ${keys})`);
       check(r.levelsReached[0].firstAt > 1.5e12, 'with when');
       var s = await ask('getSquids', { reached: 'abyss', limit: 500 });
       check(s.squids.some((x) => x.squidName === t.nameA) && !s.squids.some((x) => x.squidName === t.nameB), 'get-squids reached=abyss lists A, not B');
@@ -354,7 +377,7 @@ function questions(t) {
     ['How far west has anyone gone?', async () => {
       var r = await ask('getRecords');
       var west = r.records.westFarthest;
-      check(west.value >= 3599 && west.top.some((x) => x.squidName === t.nameA && x.value === 3599), 'A has been 3599 rooms west');
+      check(west.value >= 3612 && west.top.some((x) => x.squidName === t.nameA && x.value === 3612), 'A has been 3612 rooms west');
       check(r.totals.playSeconds >= 6000, 'totals add up');
       check(r.personality.squids >= 2 && r.personality.averages.curious > 0, 'personality averages');
     }],
@@ -403,6 +426,151 @@ function questions(t) {
       }
       var r = await ask('getWorldFacts', { search: 'time of day other players revisit' });
       check(r.facts.some((f) => f.key === 'mechanic-revisiting'), 'searchable');
+    }],
+
+    // ── History, timelines, firsts, leaderboards, and the world's story ──
+
+    ['tools/list has the history tools, each saying when to use it', async () => {
+      var tools = (await rpc('tools/list', {})).tools;
+      for (let n of ['getHistory', 'getTimeline', 'getFirsts', 'getLeaderboards', 'getWorldStory']) {
+        let tool = tools.find((x) => x.name === n);
+        check(tool, `missing ${n}`);
+        check(/Use this/.test(tool.description) && /Related/.test(tool.description), `${n} should say when to use it, and what's related`);
+      }
+      var undocumented = [];
+      for (let tool of tools) {
+        for (let [name, schema] of Object.entries(tool.inputSchema.properties || {})) { if (!schema.description) { undocumented.push(tool.name+'.'+name); } }
+      }
+      check(!undocumented.length, `every input should be described (missing: ${undocumented.join(', ')})`);
+    }],
+
+    ['Tell me <A>\'s story (timeline, following the rename)', async () => {
+      var r = await ask('getTimeline', { squidName: t.nameA });
+      check(r.squidName === t.nameA && r.exists === true, 'current name');
+      check(r.names[0] === t.startA.save.squidName && r.names.includes(t.nameA), `names should start with the hatched name (got ${r.names})`);
+      check(r.events[0].kind === 'arrival' && r.events[0].squidName === t.startA.save.squidName, 'starts with the arrival, under the old name');
+      for (let i = 1; i < r.events.length; i++) { check(r.events[i - 1].startsAt <= r.events[i].startsAt, 'oldest first'); }
+      check(r.events.every((e) => typeof e.line === 'string' && e.line.length > 10), 'every event has a line');
+      check(r.events.some((e) => e.kind === 'renamed' && e.details.to === t.nameA), 'the rename is there');
+      check(typeof r.story === 'string' && r.story.includes(t.nameA) && r.story.length > 100, 'a story paragraph');
+    }],
+
+    ['When did <A> learn wake?', async () => {
+      var r = await ask('getTimeline', { squidName: t.nameA, kind: 'skin-word-learned' });
+      var words = r.events.map((e) => e.subject);
+      check(['glow', 'open', 'calm', 'cloud', 'wake'].every((w) => words.includes(w)), `five words (got ${words})`);
+      var wake = r.events.find((e) => e.subject === 'wake');
+      check(wake.startsAt >= t.beforeSecond && /"wake"/.test(wake.line), 'wake came with the second save');
+    }],
+
+    ['Timelines keep Bead\'s fate and the warm room behind a spoiler flag', async () => {
+      var plain = await ask('getTimeline', { squidName: t.nameA });
+      check(!plain.events.some((e) => e.kind === 'bead-fate' || e.subject === 'kept'), 'no spoilers by default');
+      var spoiled = await ask('getTimeline', { squidName: t.nameA, includeSpoilers: true });
+      var fate = spoiled.events.find((e) => e.kind === 'bead-fate');
+      check(fate && fate.spoiler === true, 'with includeSpoilers, the fate event is there, flagged');
+      check(spoiled.events.some((e) => e.kind === 'quest-started' && e.subject === 'kept' && e.spoiler), 'the warm room too');
+      check(!JSON.stringify(spoiled).includes('test-fate-secret'), 'the fate itself is never stored or shown');
+    }],
+
+    ['Which levels did <A> reach, and when? (history by kind)', async () => {
+      var r = await ask('getHistory', { kind: 'level-reached', squidName: t.nameA, order: 'oldest' });
+      check(JSON.stringify(r.events.map((e) => e.subject)) === JSON.stringify(['glass', 'abyss', 'below']), `glass, abyss, below (got ${r.events.map((e) => e.subject)})`);
+      check(r.count === 3 && /the Below/.test(r.events[2].line), 'counted, with lines');
+    }],
+
+    ['What happened at west:123, and in the Below? (room and level filters)', async () => {
+      var room = await ask('getHistory', { room: 'west:123', squidName: t.nameA, limit: 100 });
+      check(room.events.some((e) => e.kind === 'first-words' && e.details.text === t.chatText), 'A\'s first words were at west:123');
+      check(room.events.every((e) => e.subject === 'west:123' || e.details.room === 'west:123' || e.details.location === 'west:123'), 'only west:123');
+      var below = await ask('getHistory', { level: 'below', squidName: t.nameA, limit: 100 });
+      check(below.events.some((e) => e.kind === 'level-reached' && e.subject === 'below'), 'reaching the Below');
+      check(below.events.some((e) => e.kind === 'chapter-reached' && e.subject === '4'), 'chapter 4 was reached in below:0,7');
+    }],
+
+    ['Paging through <A>\'s history with a cursor', async () => {
+      var page1 = await ask('getHistory', { squidName: t.nameA, limit: 3, order: 'oldest' });
+      check(page1.events.length === 3 && page1.nextCursor, 'a first page and a cursor');
+      var page2 = await ask('getHistory', { squidName: t.nameA, limit: 3, order: 'oldest', cursor: page1.nextCursor });
+      check(page2.events.length === 3, 'a second page');
+      check(!page2.events.some((e) => page1.events.some((x) => x.key === e.key)), 'no overlap');
+      check(page2.events[0].startsAt >= page1.events[2].startsAt, 'carries on in order');
+    }],
+
+    ['What happened in a time window? (since and until)', async () => {
+      var r = await ask('getHistory', { squidName: t.nameA, since: t.beforeSecond, until: t.afterSecond, limit: 200 });
+      check(r.events.length && r.events.every((e) => e.startsAt >= t.beforeSecond && e.startsAt <= t.afterSecond), 'only the second save');
+      var kinds = r.events.map((e) => e.kind);
+      for (let k of ['chapter-reached', 'level-reached', 'pearl-spent', 'quest-finished', 'story-moment', 'whale-caught', 'hunter-escaped', 'west-milestone', 'air-milestone', 'chat-milestone', 'personality-shift']) {
+        check(kinds.includes(k), `the second save should log ${k}`);
+      }
+      var spent = r.events.find((e) => e.kind === 'pearl-spent');
+      check(spent.details.from === 2 && spent.details.to === 0, 'two pearls spent');
+      var shift = r.events.find((e) => e.kind === 'personality-shift');
+      check(shift.details.from === 'curious, gentle, a little wistful' && shift.subject === 'brave, curious', 'from one summary to the next');
+    }],
+
+    ['Saving the same thing twice logs nothing new', async () => {
+      check(t.eventsBefore > 20 && t.eventsAfter === t.eventsBefore, `same count after a repeat save (${t.eventsBefore} then ${t.eventsAfter})`);
+    }],
+
+    ['How much has <A> done, by kind and by day? (summary)', async () => {
+      var r = await ask('getHistory', { squidName: t.nameA, summary: true });
+      var s = r.summary;
+      check(s.byKind['level-reached'] === 3 && s.byKind['skin-word-learned'] === 5 && s.byKind['quest-finished'] === 2, `counts by kind (got ${JSON.stringify(s.byKind)})`);
+      check(!s.byKind['bead-fate'], 'no spoilers in the summary');
+      var today = new Date().toISOString().slice(0, 10);
+      check(s.byDay.some((d) => d.day === today && d.count > 0), 'counted by day');
+      check(s.matched === Object.values(s.byKind).reduce((x, y) => x + y, 0) && r.squidNames.includes(t.nameA), 'adds up');
+    }],
+
+    ['Who finished each side quest first? (firsts)', async () => {
+      var r = await ask('getFirsts', { category: 'quests' });
+      var mine = r.firsts.quests.find((q) => q.subject === `mcp-${RUN}`);
+      check(mine && mine.squidName === t.nameA && /before any other squid/.test(mine.line), 'A was first to finish its own test quest');
+      check(!r.firsts.quests.some((q) => q.subject === 'kept'), 'the warm room is hidden');
+      var all = await ask('getFirsts');
+      for (let cat of ['chapters', 'levels', 'skinWords', 'memories', 'natives', 'quests', 'westLandmarks', 'endings']) { check(Array.isArray(all.firsts[cat]), `category ${cat}`); }
+      check(all.firsts.levels.every((l) => l.name && l.squidName && l.at > 1.5e12), 'levels have names, squids and times');
+      check(all.firstArrival && all.firstArrival.squidName, 'the first squid in the world');
+    }],
+
+    ['What has <A> done before anyone else?', async () => {
+      var r = await ask('getFirsts', { squidName: t.nameA });
+      var everything = [].concat(...Object.values(r.firsts));
+      check(everything.length >= 1 && everything.every((f) => r.squidNames.includes(f.squidName)), 'only A\'s firsts');
+      check(r.firsts.quests.some((q) => q.subject === `mcp-${RUN}`), 'including its test quest');
+    }],
+
+    ['Where does <A> rank? (leaderboards)', async () => {
+      var r = await ask('getLeaderboards', { squidName: t.nameA, limit: 5 });
+      for (let b of ['westFarthest', 'deepest', 'climb', 'bestAirTime', 'nativesMet', 'quests', 'interactions', 'chats', 'playSeconds']) { check(r.boards[b] && Array.isArray(r.boards[b].entries), `board ${b}`); }
+      var west = r.boards.westFarthest;
+      check(west.squid && west.squid.value === 3612 && west.squid.display === 'west:3612' && west.squid.rank >= 1, `A's place on the west board (got ${JSON.stringify(west.squid)})`);
+      check(west.entries[0].value >= 3612 && (west.squid.rank > 1 || west.entries[0].value === 3612), 'ranked against the top of the board');
+      check(r.boards.quests.squid && r.boards.quests.squid.value === 2, `two quests finished, reeds and the test quest (got ${JSON.stringify(r.boards.quests.squid)})`);
+      check(r.boards.climb.entries.length && r.boards.climb.entries[0].value > 0 && /m$/.test(r.boards.climb.entries[0].display), 'climb in meters');
+      var one = await ask('getLeaderboards', { board: 'bestAirTime', limit: 3 });
+      check(Object.keys(one.boards).length === 1 && one.boards.bestAirTime.entries.length <= 3, 'one board, three squids');
+      for (let i = 1; i < one.boards.bestAirTime.entries.length; i++) { check(one.boards.bestAirTime.entries[i - 1].value >= one.boards.bestAirTime.entries[i].value, 'sorted'); }
+    }],
+
+    ['Catch me up: the story of the world', async () => {
+      var r = await ask('getWorldStory', { recentHours: 1 });
+      check(typeof r.story === 'string' && r.paragraphs.length >= 4 && r.story.length > 300, 'a few paragraphs');
+      check(/This sea began on/.test(r.story) && /last 1 hour/.test(r.story), 'how it began, and lately');
+      check(r.numbers.squids >= 2 && r.numbers.events > 20 && r.bornAt > 1.5e12, 'numbers');
+      check(r.highlights.length && r.highlights.every((h) => h.key && h.line), 'highlights with lines');
+      check(!r.story.includes('test-fate-secret') && !/end of Bead/.test(r.story), 'no spoilers');
+    }],
+
+    ['<A>\'s profile shows its latest history, in words', async () => {
+      var r = await ask('getSquid', { name: t.nameA });
+      check(r.events.length === 20 && r.events.every((e) => e.line), 'twenty events with lines');
+      check(!r.events.some((e) => e.kind === 'bead-fate'), 'no spoilers');
+      check(r.names.includes(t.startA.save.squidName), 'its old name too');
+      var o = await ask('getOverview');
+      check(o.recent.length && o.recent.every((e) => e.line) && o.historyEvents > 0, 'the overview has lines too');
     }],
 
     ['Asking about a squid that doesn\'t exist', async () => {

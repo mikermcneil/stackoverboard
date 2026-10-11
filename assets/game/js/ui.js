@@ -290,6 +290,52 @@
       await U.wait(1400);
     },
 
+    // A small note at the top when something new goes in the journal: its portrait and its name,
+    // so every name I come across has a face. (Waits for scenes; never blocks anything.)
+    notice(key, o = {}) {
+      const N = (SO.story && SO.story.NATIVE[key]) || {};
+      const name = o.name || N.name;
+      if (!name) { return; }
+      this._notes = this._notes || [];
+      if (this._notes.length > 3 && !o.kicker) { return; }// busy: it's in the journal anyway
+      this._notes.push({ key, name, kicker: o.kicker || 'Remembered', line: o.line || '' });
+      if (!this._noteOn) { this._nextNote(); }
+    },
+    _nextNote() {
+      const E = SO.E;
+      if (!this._notes.length) { this._noteOn = false; return; }
+      this._noteOn = true;
+      if ((SO.fp && SO.fp.playing) || (E && E.mode !== 'play') || (SO.journal && SO.journal.open)) { setTimeout(() => this._nextNote(), 500); return; }
+      const n = this._notes.shift();
+      if (!this.note$) {
+        const el = this.note$ = document.createElement('div');
+        el.setAttribute('aria-live', 'polite');
+        el.style.cssText = 'position:fixed;top:calc(env(safe-area-inset-top,0px) + 10px);left:50%;transform:translate(-50%,-14px);z-index:6;display:flex;align-items:center;gap:10px;padding:6px 14px 6px 6px;max-width:calc(100vw - 32px);box-sizing:border-box;background:rgba(3,9,15,0.86);border:1px solid rgba(190,220,235,0.28);border-radius:12px;color:#e6ebf2;font:14px/1.25 system-ui,sans-serif;pointer-events:none;opacity:0;transition:opacity .35s ease,transform .35s ease;';
+        const cv = this.noteCv$ = document.createElement('canvas'); cv.width = cv.height = 112; cv.style.cssText = 'width:56px;height:56px;flex:none;border-radius:8px;background:radial-gradient(circle at 50% 40%,#17384a,#050b12);';
+        const txt = document.createElement('div');
+        this.noteK$ = document.createElement('div'); this.noteK$.style.cssText = 'font-size:11px;letter-spacing:.06em;text-transform:uppercase;color:#a8b0c4;';
+        this.noteN$ = document.createElement('div'); this.noteN$.style.cssText = 'font-size:16px;font-weight:600;';
+        this.noteL$ = document.createElement('div'); this.noteL$.style.cssText = 'font-size:12px;color:#c8d2de;';
+        txt.appendChild(this.noteK$); txt.appendChild(this.noteN$); txt.appendChild(this.noteL$);
+        el.appendChild(cv); el.appendChild(txt);
+        document.body.appendChild(el);
+      }
+      this.noteK$.textContent = n.kicker; this.noteN$.textContent = n.name; this.noteL$.textContent = n.line;
+      this.noteL$.style.display = n.line ? '' : 'none';
+      const el = this.note$; el.style.opacity = '1'; el.style.transform = 'translate(-50%,0)';
+      const until = U.now() + (n.line ? 5200 : 3400);
+      const draw = () => {
+        const c = this.noteCv$.getContext('2d');
+        c.setTransform(1, 0, 0, 1, 0, 0); c.clearRect(0, 0, 112, 112);
+        c.translate(56, 58); c.scale(0.42, 0.42);
+        try { if (SO.journal && SO.journal.portrait) { SO.journal.portrait(c, n.key, U.now() / 1000); } } catch (err) { /* no picture is fine */ }
+        if (U.now() < until) { requestAnimationFrame(draw); return; }
+        el.style.opacity = '0'; el.style.transform = 'translate(-50%,-14px)';
+        setTimeout(() => this._nextNote(), 600);
+      };
+      requestAnimationFrame(draw);
+    },
+
     fade(to = 1, ms = 600, color) {
       const el = this.fade$;
       if (color) { el.style.background = color; }

@@ -57,7 +57,11 @@ time a squid enters a level, the game notes it in its save).  Every squid knows 
 cloud sea, the rain and the surface from the start (\`knownFromTheStart\`): it hatched up there and fell
 through them.  They are counted only once a squid has actually been there since.
 
-Use the text as it is.  How the sky islands stay up is an open question on purpose: never explain it.`,
+Use the text as it is.  How the sky islands stay up is an open question on purpose: never explain it.
+
+Related: get-firsts (category "levels": who reached each level first), get-history (\`level\`: what
+has happened in a level; kind "level-reached"), get-squids (\`reached\`), get-squid (\`levelsReached\`),
+get-leaderboards (board "levelsReached").`,
 
 
   sideEffects: 'cacheable',

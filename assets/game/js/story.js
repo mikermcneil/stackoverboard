@@ -38,6 +38,7 @@
     'pearl-octopus': { kind: 'creature', name: 'Pearl octopuses', line: 'Hundreds of mothers, curled on warm rocks, guarding their eggs.' },
     'humboldt': { kind: 'creature', name: 'Humboldt squid', line: 'Cousins. They hunt in gangs and flash red and white at you.' },
     'glass-squid': { kind: 'creature', name: 'Glass squid', line: 'So see-through you only notice its eyes and its lunch.' },
+    'bead': { kind: 'creature', name: 'Bead', line: 'A little glass squid. I found it caught in the kelp and pulled it free. Its heart shows through, like a red bead, so I called it Bead. It keeps finding me.' },
     'strawberry-squid': { kind: 'creature', name: 'Strawberry squid', line: 'One big eye for looking up, one small eye for looking down.' },
     'firefly-squid': { kind: 'creature', name: 'Firefly squid', line: 'Tiny and blue. They come up at night.' },
     'moon-jelly': { kind: 'creature', name: 'Moon jelly', line: 'A see-through bell with four rings inside. Just drifts.' },
@@ -244,6 +245,8 @@
       if (!base) { return false; }
       const fresh = save.remember(key, Object.assign({}, base, extra || {}));
       if (fresh) { AU.page(); }
+      // A little note with its picture and name, so every name has a face (Bead gets its own).
+      if (fresh && key !== 'bead' && ['creature', 'plant', 'item'].includes(base.kind) && UI.notice) { UI.notice(key); }
       return fresh;
     },
     // A good look at something from the wider sea: remember it, and say so the first time.
@@ -324,7 +327,8 @@
       }
       if (ch === 4) { return 'The snow is drifting one way. I’ll follow it.'; }
       if (ch === 5) {
-        if (this.riserOpen()) { return 'The volcano is awake. The warm water is going up, past Grandmother Seven.'; }
+        if (this.riserOpen()) { return this.has('metGrandmother') ? 'The volcano is awake. The warm water is going up, past Grandmother Seven.' : 'The volcano is awake. Warm water is going up, somewhere past the octopus mothers.'; }
+        if (!this.has('metGrandmother')) { return 'Past the octopus mothers there’s a den, and something huge in it. Maybe it knows a way up.'; }
         if (!save.knows('wake')) { return d.gems >= 5 ? 'I have five pearls for Grandmother Seven.' : `Grandmother Seven wants five pearls. I have ${d.gems}. There were pearls in the dark bits.`; }
         return 'Wake the volcano. Gold, red, gold, red.';
       }
@@ -342,10 +346,10 @@
       if (id.startsWith('friend-')) { return 'A friend'; }
       if (t === 'archivist') { return o.idle && o.idle.name === 'feed' ? 'A vampire squid, feeding' : 'A vampire squid'; }
       if (t === 'nautilus') { return 'An old nautilus'; }
-      if (t === 'sepia') { return o.hiding ? 'Something shimmering' : 'A cuttlefish'; }
-      if (t === 'turtle') { return 'An old sea turtle'; }
+      if (t === 'sepia') { return o.hiding ? 'Something shimmering' : (this.has('named:sepia') ? 'Sepia, a cuttlefish' : 'A cuttlefish'); }
+      if (t === 'turtle') { return this.has('named:turtle') ? 'Old Drift, a sea turtle' : 'An old sea turtle'; }
       if (t === 'tongue') { return o.calmed ? 'A calm moray eel' : 'A moray eel. Teeth.'; }
-      if (t === 'keeper') { return 'A huge octopus'; }
+      if (t === 'keeper') { return this.has('named:grandmother') ? 'Grandmother Seven' : 'A huge octopus'; }
       if (t === 'dumbo') { return 'A dumbo octopus'; }
       if (t === 'humboldt') { return 'Humboldt squid'; }
       if (t === 'whale') { return 'A sperm whale'; }
@@ -1022,7 +1026,7 @@
             AU.noise({ dur: 4, freq: 90, q: 0.7, gain: 0.5, sweep: 2 });
             E.ring(vent.x, vent.y - 200, '#ff8a3a', 1400, 3);
             vent.eruptions = (vent.eruptions || 0) + 1;
-            me('It’s awake! The water’s getting warm. Back to Grandmother Seven’s crack in the roof.');
+            me(this.has('metGrandmother') ? 'It’s awake! The water’s getting warm. Back to Grandmother Seven’s crack in the roof.' : 'It’s awake! The water’s getting warm. Warm water goes up. I should find where.');
           } else if (r.body.vent.phase !== 'dormant') {
             me(`It’s already awake. ${r.body.vent.wokenBy || 'Someone'} got here first.`);
           }
@@ -1265,11 +1269,13 @@
     this.remember('sepia');
     const O = { who: 'sepia', voice: 'sepia' };
     const finds = this.d.flags.sepiaFinds || 0;
+    if (this.has('sepiaGame') && !this.has('named:sepia')) { this.flag('named:sepia'); await speak(o, ['I never said, did I? I’m Sepia.'], O); }
     if (this.has('sepiaDone')) { await speak(o, ['You’re a natural. A big, big natural.'], O); return; }
     if (!this.has('sepiaGame')) {
       await speak(o, ['Oh! A big one.'], O);
       await me('Hi. I need to learn how to hide.');
-      await speak(o, ['From what? Never mind. Everything.', 'Watch. This is the passing cloud.'], O);
+      this.flag('named:sepia');
+      await speak(o, ['From what? Never mind. Everything.', 'I’m Sepia. Watch closely. This is the passing cloud.'], O);
       E.lock();
       o.cloud = true;
       await E.showPattern(o.x, o.y, 'cloud', { voice: 8, gap: 560 });
@@ -1310,11 +1316,15 @@
     const O = { who: 'turtle', voice: 'turtle' };
     if (!this.has('metTurtle')) {
       this.flag('metTurtle');
+      this.flag('named:turtle');
       await speak(null, ['Mm. A big one. Fell, did you?'], O);
+      await me('I think so. Who are you?');
+      await speak(null, ['Old Drift, they call me. I’ve been round this whole sea twice.'], O);
       await me('Do you know the way to the waterfall?');
       await speak(null, ['East. But nobody gets through that current up top. Not even me. And I’ve tried.'], O);
       return;
     }
+    if (!this.has('named:turtle')) { this.flag('named:turtle'); await speak(null, ['Old Drift, they call me, by the way. I’ve been round this whole sea twice.'], O); return; }
     const night = this.seaDay().name === 'night';
     await speak(null, [night ? 'See the little blue ones? Firefly squid. They only come up at night.' : 'Your eyes are as big as my whole shell. Made for the dark, those.'], O);
   }
@@ -1325,10 +1335,12 @@
     const O = { who: 'keeper', voice: 'keeper' };
     const d = this.d;
     const open = this.riserOpen();
+    if (this.has('metGrandmother') && !this.has('named:grandmother')) { this.flag('named:grandmother'); await speak(k, ['Grandmother Seven, they call me down here. I should have said.'], O); }
     if (this.ch >= 6) { await speak(k, ['You came back down! Mind the eggs.'], O); return; }
     if (!this.has('metGrandmother')) {
       this.flag('metGrandmother');
-      await speak(k, ['Hello, big squid. Mind the eggs.'], O);
+      this.flag('named:grandmother');
+      await speak(k, ['Hello, big squid. Mind the eggs.', 'Everyone down here calls me Grandmother Seven. It’s the arms. Count them if you like.'], O);
       await me('I’m trying to get back up to the top.');
       if (open) {
         await speak(k, ['Then you’re lucky. The volcano next door is awake, so warm water is going up through that crack in my roof. Ride it.'], O);

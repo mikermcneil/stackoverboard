@@ -26,7 +26,10 @@ and the pieces of glass from home (memories 2 "The edge" and 3 "The shaking") sm
 squid to reach a tile leaves a fading trace of its colors there for later squids to find.  Strawberry
 squid and glass squid drift through, procedurally generated species live at the spawn points (see
 get-species), and about one tile in six has spiral marks with three colored dots that light up when a
-squid flashes the same colors (they aren't real skin words).`,
+squid flashes the same colors (they aren't real skin words).
+
+Related: get-history (kind "tile-discovered" or "gem-gathered", or \`level\` "below"), get-firsts
+(\`tileDiscoverers\`), get-levels (the Below is level "below").`,
 
 
   sideEffects: 'cacheable',

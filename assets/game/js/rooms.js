@@ -275,9 +275,10 @@
     exits: { right: 'sinking', left: 'kelp-deep', up: 'bright-reef' },
     terrain: { floor: [0.08, 0.1, 0.12, 0.1, 0.09, 0.11, 0.1] },
     sand: '#c8bb8c',
+    barren: [40, 720],// at the near end, the urchins have eaten the kelp down to the rock (seafloor.js)
     props: (() => {
       const p = [];
-      for (let i = 0; i < 14; i++) { p.push({ type: 'kelp', x: 80 + i * 170 + (i % 3) * 30, h: 420 + (i * 97 % 300), seed: i * 3.1, layer: i % 3 === 0 ? 'front' : 'back', dark: i % 3 === 0 }); }
+      for (let i = 4; i < 14; i++) { p.push({ type: 'kelp', x: 80 + i * 170 + (i % 3) * 30, h: 420 + (i * 97 % 300), seed: i * 3.1, layer: i % 3 === 0 ? 'front' : 'back', dark: i % 3 === 0 }); }
       return p;
     })(),
     ambient: { fish: 12 },

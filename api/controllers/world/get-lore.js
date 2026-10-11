@@ -46,7 +46,10 @@ past another leaves some on it.  It comes off as they swim.  (get-online shows h
 For the creatures and plants, see get-species.  For what's happening right now, see get-state,
 get-online, and get-overview.  For anything more specific (one room and its exits, how to get
 through a chapter, how a mechanic works, idle creature behaviors, cutscenes, the dead things on the
-seafloor, Sails.js trivia, or planned systems), search get-world-facts.`,
+seafloor, Sails.js trivia, or planned systems), search get-world-facts.
+
+This is the world as written.  For what squids have actually done in it, see get-history,
+get-world-story and get-timeline.`,
 
 
   sideEffects: 'cacheable',

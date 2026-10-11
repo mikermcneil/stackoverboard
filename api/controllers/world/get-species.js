@@ -57,7 +57,10 @@ hues 0-360, glow, size, body shape, appendages, eyes, pattern, behavior), \`lore
 lives: "below", "kelp", or "undershine", which is the octopus garden), \`discoveredBy\` (squid name) and
 \`discoveredAt\` (epoch ms).  At most 40 of each kind can exist.
 
-Use \`search\` to find something by name (e.g. "moray", "jelly", "octopus", "Aurelia").`,
+Use \`search\` to find something by name (e.g. "moray", "jelly", "octopus", "Aurelia").
+
+Related: get-firsts (category "natives": who met each native first; \`speciesIntroducers\`),
+get-history (kind "native-met" or "species-introduced"), get-leaderboards (board "nativesMet").`,
 
 
   sideEffects: 'cacheable',

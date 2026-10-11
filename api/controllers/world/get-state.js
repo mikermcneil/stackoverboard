@@ -42,7 +42,10 @@ hides with the skin word "passing cloud" (red, red, shimmer; D5 D5 A5 on a piano
 Pass \`at\` to ask about another moment.  The sea-day and the Shoal follow a fixed schedule, so past
 and future times are exact.  The vent's status at a past time is derived from the eruption history;
 for a future time it only reflects eruptions that have already happened (no one can predict who'll
-wake it next).  All times are JS timestamps (epoch ms).`,
+wake it next).  All times are JS timestamps (epoch ms).
+
+Related: get-history (kind "eruption" for every eruption and who woke it), wake-vent, get-world-age,
+get-world-story.`,
 
 
   sideEffects: 'cacheable',
