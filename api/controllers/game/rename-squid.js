@@ -9,7 +9,7 @@ module.exports = {
 
   extendedDescription:
 `Every squid starts with a generated name made of three words (like "Moon-Drift-Salt").  This lets
-a player choose their own instead.  Names are 2 to 24 characters: letters, numbers, spaces,
+a player choose their own instead.  Names are 2 to 40 characters: letters, numbers, spaces,
 hyphens, and apostrophes.  No two squids can share a name (ignoring capital letters): the first
 to claim it keeps it.  Other players see the new name right away.`,
 
@@ -25,7 +25,7 @@ to claim it keeps it.  Other players see the new name right away.`,
 
     success: { outputDescription: '`{ squidName }`: the name now in use.' },
     noSave: { statusCode: 404, description: 'This session has no squid yet.' },
-    invalid: { statusCode: 400, description: 'Names are 2 to 24 characters: letters, numbers, spaces, hyphens, and apostrophes.' },
+    invalid: { statusCode: 400, description: 'Names are 2 to 40 characters: letters, numbers, spaces, hyphens, and apostrophes.' },
     taken: { statusCode: 409, description: 'Another squid already has that name.' },
 
   },
@@ -34,7 +34,7 @@ to claim it keeps it.  Other players see the new name right away.`,
   fn: async function ({ name }) {
 
     var clean = name.replace(/\s+/g, ' ').trim();
-    if (clean.length < 2 || clean.length > 24 || !/^[\p{L}\p{N}][\p{L}\p{N} '’-]*$/u.test(clean)) {
+    if (clean.length < 2 || clean.length > 40 || !/^[\p{L}\p{N}][\p{L}\p{N} '’-]*$/u.test(clean)) {
       throw 'invalid';
     }
 

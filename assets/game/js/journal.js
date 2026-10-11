@@ -83,7 +83,7 @@
       this.el.querySelector('.j-close').addEventListener('click', () => this.close());
       // Your name, which you can change right here.
       const row = document.createElement('div'); row.className = 'j-namerow';
-      this.nameInput = document.createElement('input'); this.nameInput.maxLength = 24; this.nameInput.placeholder = 'Name your squid'; this.nameInput.spellcheck = false; this.nameInput.setAttribute('aria-label', 'Your name');
+      this.nameInput = document.createElement('input'); this.nameInput.maxLength = 40; this.nameInput.placeholder = 'Name your squid'; this.nameInput.spellcheck = false; this.nameInput.setAttribute('aria-label', 'Your name');
       this.nameMsg = document.createElement('span'); this.nameMsg.className = 'j-namemsg';
       row.appendChild(this.nameInput); row.appendChild(this.nameMsg);
       this.el.querySelector('.j-head').insertAdjacentElement('afterend', row);
@@ -93,7 +93,7 @@
         this.nameMsg.textContent = '…';
         if (!save.enabled) { await save.start(false); }// lost the save (say, the server restarted)? get it back first
         const r = await save.rename(v);
-        this.nameMsg.textContent = r.ok ? 'That’s me now.' : r.why === 'taken' ? 'Another squid has that name.' : r.why === 'invalid' ? '2 to 24 letters, please.' : 'Can’t reach the sea right now.';
+        this.nameMsg.textContent = r.ok ? 'That’s me now.' : r.why === 'taken' ? 'Another squid has that name.' : r.why === 'invalid' ? '2 to 40 letters, please.' : 'Can’t reach the sea right now.';
         if (!r.ok) { this.nameInput.value = v; } else { this.nameInput.value = r.squidName; SO.audio.page(); }
       };
       this.nameInput.addEventListener('keydown', (e) => { e.stopPropagation(); if (e.key === 'Enter') { this.nameInput.blur(); } });

@@ -249,6 +249,7 @@
         if (k > 0.94) { ctx.fillStyle = `rgba(255,255,255,${(k - 0.94) / 0.06})`; ctx.fillRect(-900, -900, VW + 1800, VH + 1800); }
       }
       if (n === 3 && el > 2 && el < 14 && Math.random() < 0.02) { AU.noise({ dur: 1.5, freq: 100, q: 0.8, gain: 0.25, sweep: 0.5 }); }
+      if (SO.closeups) { SO.closeups.layer(ctx, 'flashback' + n, el); }// the swans' faces, close
     }, dur, { vignette: 0.55 });
     await UI.fade(0, 900);
     await p;
@@ -314,6 +315,7 @@
       sq.hearts = Object.values(SO.story.HEART);
       E.updateArms(sq, 1 / 60); E.updateSquidSkin(sq, 1 / 60);
       A.squid(ctx, sq);
+      if (SO.closeups) { SO.closeups.layer(ctx, 'returnHome', el, t); }// the swans' faces, close
       if (k > 0.75) { ctx.fillStyle = `rgba(250,252,246,${(k - 0.75) * 4 * 0.6})`; ctx.fillRect(-900, -900, VW + 1800, VH + 1800); }
     }, Math.max(22, musicMs / 1000 - 6), { vignette: 0.25, holdEnd: true });
     UI.say('I’m home. I miss the sea already.', { who: 'squid' });
@@ -417,6 +419,7 @@
       sq.hearts = Object.values(SO.story.HEART);
       E.updateArms(sq, 1 / 60); E.updateSquidSkin(sq, 1 / 60);
       A.squid(ctx, sq);
+      if (SO.closeups) { SO.closeups.layer(ctx, 'song', el, t); }// the swans' faces, close
       if (k > 0.85) { ctx.fillStyle = `rgba(252,250,240,${(k - 0.85) / 0.15 * 0.7})`; ctx.fillRect(-900, -900, VW + 1800, VH + 1800); }
     }, Math.max(34, musicMs / 1000 - 4), { vignette: 0.25, holdEnd: true });
     UI.say('The islands are sitting on the sea now. Huh. That works too.', { who: 'squid' });

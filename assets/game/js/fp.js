@@ -359,20 +359,19 @@
         c.strokeStyle = 'rgba(255,255,255,0.4)'; c.lineWidth = 1.5;
         for (let r = 0; r < 3; r++) { const k = ((t * 0.3 + r / 3) % 1); c.globalAlpha = 1 - k; c.beginPath(); c.ellipse(W / 2, H * 0.8, W * 0.38 * k, H * 0.12 * k, 0, 0, TAU); c.stroke(); }
         c.globalAlpha = 1;
-        // swans at the edge, necks bent down to the water, looking
-        for (let i = 0; i < 3; i++) {
-          const x = W * (0.25 + i * 0.25), y = H * 0.62, dip = Math.sin(t * 0.6 + i * 2) * 10;
-          c.fillStyle = 'rgba(250,250,246,0.95)'; c.beginPath(); c.ellipse(x, y, 46, 20, 0, 0, TAU); c.fill();
-          c.strokeStyle = 'rgba(250,250,246,0.95)'; c.lineWidth = 9; c.lineCap = 'round';
-          c.beginPath(); c.moveTo(x + 30, y - 6); c.quadraticCurveTo(x + 64, y - 70, x + 50 + dip * 0.3, y + 26 + dip); c.stroke();
-          c.fillStyle = '#c87a3a'; c.beginPath(); c.moveTo(x + 50 + dip * 0.3, y + 26 + dip); c.lineTo(x + 58, y + 40 + dip); c.lineTo(x + 46, y + 34 + dip); c.fill();
+        // swans at the edge, close, necks bent right down to the water, looking for you
+        const CU = SO.closeups, u = H / 900, push = 1 + 0.1 * U.smooth(Math.min(1, t / 9));
+        if (CU) {
+          CU.swanAt(c, W * 0.5 - 250 * u * push, H * 0.36 + (30 + Math.sin(t * 0.6) * 8) * u, 1.8 * u * push, t, { mood: 'sad', dir: 1, rot: 0.9 + 0.08 * Math.sin(t * 0.4), seed: 4 });
+          CU.swanAt(c, W * 0.5 + 240 * u * push, H * 0.36 + (Math.sin(t * 0.6 + 2) * 8) * u, 1.65 * u * push, t + 1, { mood: 'worried', dir: -1, rot: -0.8 - 0.08 * Math.sin(t * 0.5), seed: 8 });
         }
         // and one, apart, weaving a long strip of reed, then pulling a row back out
-        const wx = W * 0.85, wy = H * 0.45, len = 80 + 60 * Math.abs(Math.sin(t * 0.35));
+        const wx = W * 0.85, wy = H * (CU ? 0.3 : 0.45), len = 80 + 60 * Math.abs(Math.sin(t * 0.35));
         c.fillStyle = 'rgba(214,200,150,0.9)'; c.fillRect(wx - len, wy + 30, len, 10);
         c.strokeStyle = 'rgba(160,140,90,0.8)'; c.lineWidth = 1;
         for (let x = wx - len; x < wx; x += 6) { c.beginPath(); c.moveTo(x, wy + 30); c.lineTo(x + 3, wy + 40); c.stroke(); }
-        c.fillStyle = 'rgba(250,250,246,0.95)'; c.beginPath(); c.ellipse(wx, wy, 34, 16, 0, 0, TAU); c.fill();
+        if (CU) { CU.sitting(c, wx + 40 * u, wy - 60 * u, 0.5 * u, t, { mood: 'tired', dir: -1, rot: -0.5 - 0.15 * Math.sin(t * 0.8), seed: 6 }); }
+        else { c.fillStyle = 'rgba(250,250,246,0.95)'; c.beginPath(); c.ellipse(wx, wy, 34, 16, 0, 0, TAU); c.fill(); }
         specks(c, W, H, t, 20, [0.1, 0.05], '255,255,255');
         eye(c, W, H, t, { rim: 0.5, blink: blinkAt(t, 0.3, 0.8) + blinkAt(t, 8.5, 0.5) });
       },
@@ -426,7 +425,8 @@
         c.globalAlpha = 1;
         // a swan, at the back, turning away
         const turn = U.smoothstep(4, 7, t);
-        c.fillStyle = 'rgba(250,250,246,0.9)'; c.beginPath(); c.ellipse(W * 0.82, H * 0.35, 36 * (1 - turn * 0.4), 16, 0, 0, TAU); c.fill();
+        if (SO.closeups) { SO.closeups.sitting(c, W * 0.8, H * 0.42, 0.9 * H / 900, t, { mood: 'sad', dir: -1, turn: U.smoothstep(4.2, 4.9, t), rot: -0.1 + turn * 0.45, seed: 5 }); }
+        else { c.fillStyle = 'rgba(250,250,246,0.9)'; c.beginPath(); c.ellipse(W * 0.82, H * 0.35, 36 * (1 - turn * 0.4), 16, 0, 0, TAU); c.fill(); }
         specks(c, W, H, t, 16, [0.1, 0.05], '255,255,255');
         eye(c, W, H, t, { rim: 0.55, blink: blinkAt(t, 0.3, 0.8) + blinkAt(t, 7.5, 0.5) });
       },
@@ -530,6 +530,14 @@
           const x = W * (0.3 + i * 0.2) + Math.sin(t * 0.5 + i) * 30, y = H * 0.14, f = Math.sin(t * 5 + i * 2);
           c.strokeStyle = 'rgba(255,255,255,0.7)'; c.lineWidth = 4;
           c.beginPath(); c.moveTo(x - 40, y - f * 20); c.quadraticCurveTo(x, y + 10, x + 40, y - f * 20); c.stroke();
+        }
+        // and then two of them, bending down over the edge to look at you
+        const lean = U.smoothstep(2.8, 5.2, t);
+        if (SO.closeups && lean > 0) {
+          const u = H / 900;
+          SO.closeups.swanAt(c, W * 0.36, H * (0.04 + 0.2 * lean), 2 * u, t, { mood: 'tender', dir: 1, rot: 1.45, seed: 3, alpha: lean * 0.85 });
+          SO.closeups.swanAt(c, W * 0.64, H * (0.02 + 0.18 * lean), 1.9 * u, t + 1, { mood: 'happy', dir: -1, rot: -1.45, seed: 9, alpha: lean * 0.85 });
+          c.fillStyle = 'rgba(120,200,210,' + (0.25 * lean) + ')'; c.fillRect(0, 0, W, H * 0.45);// seen through the water
         }
         specks(c, W, H, t, 50, [0, 0.8], '255,255,255');
         // light growing to white

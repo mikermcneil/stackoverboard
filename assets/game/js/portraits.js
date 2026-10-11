@@ -291,6 +291,17 @@
     c.restore();
   }
 
+  // How open a mouth (or bill, or beak) is, from the letters typing out right
+  // now: open on the sounds, shut between words and at the stops, still once
+  // the whole line is there.
+  function mouthFor(item) {
+    if (!item || item.revealedAt) { return 0; }
+    const n = item.chars || 0;
+    const ch = item.text[Math.floor(n)] || ' ';
+    if (/[\s.,!?;:\u2026\u2014()-]/.test(ch)) { return 0.05; }
+    return 0.3 + 0.7 * Math.abs(Math.sin(n * Math.PI / 3.1));
+  }
+
   // From mood weights to the handful of things a face actually does.
   function features(w, st, t, seed) {
     const f = Object.create(w);
@@ -305,7 +316,7 @@
     f.pale = 0.9 * w.afraid + 0.3 * w.surprised * st.jolt;
     f.tilt = 0.45 * w.angry - 0.38 * w.sad - 0.12 * w.afraid;
     f.jolt = st.jolt;
-    f.talk = st.talk * (0.5 + 0.5 * Math.sin(t * 15 + seed));
+    f.talk = st.mouth || 0;// opens and closes with the letters as they type
     f.blink = blink(t, seed) * (1 - 0.8 * w.surprised) * (1 - 0.5 * w.afraid);
     const gz = gaze(t, seed, w);
     f.lx = gz[0] + 0.9 * w.sly; f.ly = gz[1] + 0.55 * w.sad + 0.4 * w.tired - 0.15 * w.surprised;
@@ -420,26 +431,32 @@
 
   // A mute swan: head and neck in profile, orange bill with its black knob and
   // the black lore from eye to bill. Feathers lift when angry; wings arch up.
-  FACES.swan = function (c, t, f) {
+  // Also drawn inside the cutscenes (see SO.portraits.swan), so it takes a few
+  // options: o.partner (a faint second swan behind), o.wings (arch up in anger),
+  // o.turn (0..1, the head turning away from you).
+  FACES.swan = function (c, t, f) { drawSwan(c, t, f, { partner: true, wings: true }); };
+  function drawSwan(c, t, f, o) {
     const sc = 1.5;
-    // a second swan, softly behind (there are always two)
-    c.save(); c.globalAlpha = 0.28;
-    c.translate(-62, -6 + Math.sin(t * 0.8 + 1) * 3); c.scale(-0.75, 0.75);
-    c.fillStyle = '#f3f6fb';
-    c.beginPath(); c.moveTo(-30, 160); c.bezierCurveTo(-40, 60, 10, 20, 0, -40); c.bezierCurveTo(10, -60, 40, -60, 54, -44); c.lineTo(84, -30); c.lineTo(52, -26); c.bezierCurveTo(40, -10, 20, 40, 30, 160); c.closePath(); c.fill();
-    c.restore();
+    if (o.partner) {// a second swan, softly behind (there are always two)
+      c.save(); c.globalAlpha *= 0.28;
+      c.translate(-62, -6 + Math.sin(t * 0.8 + 1) * 3); c.scale(-0.75, 0.75);
+      c.fillStyle = '#f3f6fb';
+      c.beginPath(); c.moveTo(-30, 160); c.bezierCurveTo(-40, 60, 10, 20, 0, -40); c.bezierCurveTo(10, -60, 40, -60, 54, -44); c.lineTo(84, -30); c.lineTo(52, -26); c.bezierCurveTo(40, -10, 20, 40, 30, 160); c.closePath(); c.fill();
+      c.restore();
+    }
+    const turn = o.turn || 0;
     // pose
     const hx = -14 - f.angry * 14 - f.afraid * 4 + f.tender * 6;
     const hy = -24 - f.lift * 16 + f.droop * 26 - f.afraid * 14 + f.breath * 2 + Math.sin(t * 30) * f.jolt * 2;
-    const ha = -0.04 + f.droop * 0.32 - f.lift * 0.14 + f.angry * 0.2 + f.tender * 0.22 + 0.03 * Math.sin(t * 0.7);
+    const ha = -0.04 + f.droop * 0.32 - f.lift * 0.14 + f.angry * 0.2 + f.tender * 0.22 + 0.03 * Math.sin(t * 0.7) + turn * 0.25;
     const P = (x, y) => {// head-local to frame
       const cs = Math.cos(ha), sn = Math.sin(ha);
       return [hx + (x * cs - y * sn) * sc, hy + (x * sn + y * cs) * sc];
     };
     // wings arched up behind (busking), when angry
-    if (f.angry > 0.03) {
+    if (o.wings && f.angry > 0.03) {
       const k = f.angry;
-      c.save(); c.globalAlpha = Math.min(1, k * 1.5);
+      c.save(); c.globalAlpha *= Math.min(1, k * 1.5);
       [1, -1].forEach((sd, j) => {
         c.save(); c.translate(70 + j * -150 * 0.25, 120); c.scale(sd > 0 ? 1 : -0.8, 1);
         c.beginPath(); c.moveTo(-50, 30);
@@ -462,8 +479,9 @@
     };
     const ng = c.createLinearGradient(-110, 0, 20, 0);
     ng.addColorStop(0, '#c9cfe4'); ng.addColorStop(0.5, '#f4f6fb'); ng.addColorStop(1, '#ffffff');
+    const ext = o.ext || 0;// in scenes the neck runs on down out of frame
     c.beginPath();
-    c.moveTo(-96, 130);
+    c.moveTo(-104, 130 + ext); c.lineTo(-96, 130);
     for (let i = 1; i <= 16; i++) {
       const u = i / 16, p = bx(u);
       if (ruffle > 0.04 && i < 16) {// raised feathers along the nape
@@ -475,6 +493,7 @@
     }
     c.lineTo(throat[0], throat[1]);
     c.bezierCurveTo(throat[0] - 10 + curl * 0.3, throat[1] + 40, -42, 80, -48, 130);
+    c.lineTo(-44, 130 + ext);
     c.closePath();
     c.fillStyle = ng; c.fill(); c.strokeStyle = A.C.ink; c.lineWidth = 1.8; c.lineJoin = 'round'; c.stroke();
     // soft feather lines down the neck
@@ -485,7 +504,7 @@
     }
     // head
     c.save();
-    c.translate(hx, hy); c.rotate(ha); c.scale(sc, sc);
+    c.translate(hx, hy); c.rotate(ha); c.scale(sc * Math.cos(turn * Math.PI), sc);
     c.lineJoin = 'round';
     const lw = 1.8 / sc;
     const hg = c.createLinearGradient(0, -26, 0, 28);
@@ -499,15 +518,17 @@
     c.closePath();
     c.fillStyle = hg; c.fill(); c.strokeStyle = A.C.ink; c.lineWidth = lw; c.stroke();
     // the bill: lower half drops open to talk, or to hiss
-    const open = f.talk * 0.1 + f.angry * 0.24 + f.afraid * 0.1 + f.surprised * 0.12 + f.happy * 0.04;
+    const open = f.talk * 0.24 + f.angry * 0.24 + f.afraid * 0.1 + f.surprised * 0.12 + f.happy * 0.04;
+    if (open > 0.03) {// inside the mouth, and the tongue
+      c.fillStyle = '#4a1c22';
+      c.beginPath(); c.moveTo(16, 4); c.lineTo(60, 7); c.lineTo(18 + Math.cos(open) * 44, 7 + Math.sin(open) * 44); c.closePath(); c.fill();
+      c.fillStyle = 'rgba(200,110,120,0.8)';
+      c.beginPath(); c.ellipse(30 + Math.cos(open) * 6, 8 + Math.sin(open) * 8, 12, 2.4, open * 0.5, 0, TAU); c.fill();
+    }
     c.save(); c.translate(18, 7); c.rotate(open);
     c.beginPath(); c.moveTo(0, -2); c.bezierCurveTo(16, -1, 36, 1, 48, 4); c.bezierCurveTo(44, 8, 20, 8, 0, 6); c.closePath();
     c.fillStyle = '#d9732f'; c.fill(); c.strokeStyle = A.C.ink; c.lineWidth = lw; c.stroke();
     c.restore();
-    if (open > 0.03) {// inside the mouth
-      c.fillStyle = '#5a2228';
-      c.beginPath(); c.moveTo(18, 4); c.lineTo(56, 6); c.lineTo(18 + Math.cos(open) * 40, 7 + Math.sin(open) * 40); c.closePath(); c.fill();
-    }
     c.beginPath(); c.moveTo(14, -14); c.bezierCurveTo(30, -14, 52, -6, 72, 6);
     c.bezierCurveTo(74, 9, 70, 10, 66, 9);
     c.bezierCurveTo(48, 5, 30, 4, 18, 5); c.closePath();
@@ -529,7 +550,7 @@
     const bY = -8 - f.browUp * 2.5;
     c.beginPath(); c.moveTo(-7, bY - f.browIn * 0.6); c.quadraticCurveTo(0, bY - 2, 7, bY + 0.5 - f.browIn * 1.8 + f.angry * 2.5); c.stroke();
     c.restore();
-  };
+  }
 
   // The vampire squid: velvet red, a cloak of webbed arms, the biggest eyes
   // for its size of anything in the sea, and blue lights. When frightened it
@@ -1229,11 +1250,36 @@
 
     has(who) { return !!FACES[who]; },
 
+    // A swan's head and neck, drawn into a scene (not a panel): centred on
+    // (x, y), `s` = 1 for the usual 200-unit box. With o.speaker it wears the
+    // mood of the line being said and its bill moves with the letters; other
+    // swans take o.mood (and o.talk, 0..1). Also o.dir (-1 faces left), o.rot,
+    // o.turn (0..1, turning away), o.seed (so two swans don't blink together),
+    // o.partner, o.wings, o.alpha.
+    swan(c, x, y, s, t, o = {}) {
+      let w, st;
+      if (o.speaker) { st = this.state('swan'); w = st.w; }
+      else {
+        const tg = target(o.mood || 'neutral');
+        w = {}; MOODS.forEach((m) => { w[m] = tg[m] || 0; });
+        st = { jolt: 0, mouth: o.talk || 0 };
+      }
+      c.save();
+      c.translate(x, y); c.rotate(o.rot || 0); c.scale(s * (o.dir || 1), s);
+      if (o.alpha !== undefined) { c.globalAlpha *= o.alpha; }
+      if (o.ext === undefined) { o.ext = 420; }
+      drawSwan(c, t, features(w, st, t, o.seed || 2), o);
+      c.restore();
+    },
+
+    // How the swans' bills are moving right now (0..1), for scenes that draw their own.
+    mouth(who) { return this.state(who).mouth || 0; },
+
     state(who) {
       if (!this.states[who]) {
         const w = {};
         MOODS.forEach((m) => { w[m] = 0; });
-        this.states[who] = { w, target: {}, mood: 'neutral', jolt: 0, talk: 0 };
+        this.states[who] = { w, target: {}, mood: 'neutral', jolt: 0, talk: 0, mouth: 0 };
       }
       return this.states[who];
     },
@@ -1287,6 +1333,7 @@
         st.jolt = Math.max(0, st.jolt - dt * 2.5);
         const talking = item && item.who === who && !item.revealedAt ? 1 : 0;
         st.talk += (talking - st.talk) * Math.min(1, dt * 10);
+        st.mouth += ((talking ? mouthFor(item) : 0) - st.mouth) * Math.min(1, dt * 22);
       }
       this._bigFrame(t, dt, now);
     },

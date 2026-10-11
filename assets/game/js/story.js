@@ -311,9 +311,17 @@
         if (!save.knows('cloud')) { left.push('learn to hide from the cuttlefish in the kelp'); }
         if (!save.knows('calm')) { left.push('learn to calm things from the nautilus in the cliff cave'); }
         if (left.length) { return 'I need to ' + left.join(', and ') + '.'; }
-        return 'Down the trench, past the cliff. The long way home.';
+        return E.roomKey === 'cliff-foot' ? 'The trench starts at the bottom of this cliff. The gap in the floor. Down.' : 'Down the trench, below the foot of the cliff. The long way home.';
       }
-      if (ch === 3) { return 'Down. When it clicks close, hide under a ledge. Or go dark.'; }
+      if (ch === 3) {// always say exactly where the next step is
+        const k = E.roomKey;
+        if (this.has('fellThrough')) { return 'The floor of the trench cracked open. Down through the crack.'; }
+        if (k === 'trench-lip') { return 'Down through the gap in the floor. When it clicks close, hide under a ledge, or go dark: red, red, shimmer.'; }
+        if (k === 'trench-wall') { return 'All the way down this wall, to the bottom. Ledges to hide under on the way.'; }
+        if (k === 'trench-floor') { return 'The very bottom. Nowhere left to go but down.'; }
+        if (k === 'cliff-foot') { return 'The trench is through the gap in the floor here. Down.'; }
+        return 'Back to the foot of the cliff, then down into the trench, all the way to the bottom.';
+      }
       if (ch === 4) { return 'The snow is drifting one way. I’ll follow it.'; }
       if (ch === 5) {
         if (this.riserOpen()) { return 'The volcano is awake. The warm water is going up, past Grandmother Seven.'; }
@@ -416,7 +424,8 @@
         });
       }
       if (this.rt.lastProgressAt === undefined) { this.rt.lastProgressAt = E.t; }
-      if (!E.locked && !UI.talking && E.t - this.rt.lastProgressAt > 120 && (!this.rt.hintAt || E.t - this.rt.hintAt > 100)) {
+      const stuckAfter = this.ch === 3 ? 60 : 120;// (getting to chapter 4 is the easiest place to get lost)
+      if (!E.locked && !UI.talking && E.t - this.rt.lastProgressAt > stuckAfter && (!this.rt.hintAt || E.t - this.rt.hintAt > stuckAfter * 0.8)) {
         this.rt.hintAt = E.t;
         UI.thought(this.hint());
       }

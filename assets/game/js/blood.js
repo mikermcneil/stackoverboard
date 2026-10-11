@@ -66,8 +66,15 @@
 
     update(dt, room) {
       const sq = E.squid;
-      // The water clears, slowly.
-      this.level = Math.max(0, this.level - dt * 0.012);
+      // The water clears, slowly. (Faster than it used to.)
+      this.level = Math.max(0, this.level - dt * 0.03);
+      // While something important is being said, the things that come for blood stay away.
+      const hush = SO.ui.important;
+      if (hush) { (this.strikers || []).forEach((s) => { if (!s.hit) { s.hit = true; s.life = s.t + 1.5; } }); const sh = E.actor('frenzy-shark'); if (sh) { sh.leaving = true; } }
+      // When it's all cleared (no blood, nothing hunting), things calm back down.
+      const calm = this.level < 0.3 && (sq.blood || 0) < 0.1 && !E.actor('frenzy-shark') && !(this.strikers || []).length;
+      if (calm && !this.calmed) { this.calmed = true; sq.fear = Math.min(sq.fear || 0, 0.2); if (this.dreadOn) { this.dreadOn = false; SO.audio && SO.audio.dread && SO.audio.dread(0); } }
+      if (!calm) { this.calmed = false; }
       // Blood on you: from clouds you swim through.
       let inBlood = 0;
       for (const p of E.particles) {
@@ -80,7 +87,7 @@
       // ...and it comes off as you swim.
       const speed = Math.hypot(sq.vx, sq.vy);
       // ...and it comes off as you swim: hardly at all drifting, quickly if you really swim.
-      sq.blood = Math.max(0, sq.blood - dt * (0.004 + Math.pow(U.clamp(speed / 450, 0, 1.4), 2) * 0.22) * (sq.flourish && sq.flourish.kind === 'shiver' ? 4 : 1));
+      sq.blood = Math.max(0, sq.blood - dt * (0.02 + Math.pow(U.clamp(speed / 400, 0, 1.5), 2) * 0.45) * (sq.flourish && sq.flourish.kind === 'shiver' ? 4 : 1));
       if (sq.blood > 0.05 && Math.random() < dt * sq.blood * 6) {// a little trail of it, wherever you go
         E.particles.push({ kind: 'blood', trail: true, x: sq.x - sq.vx * 0.1, y: sq.y, vx: 0, vy: -4, t: 0, life: 6, r: 6 + Math.random() * 6, grow: 5, col: sq.bloodBlue ? BLUE : RED, amt: 0 });
       }
@@ -88,6 +95,7 @@
       if (sq.blood < 0.2) { this.saidBloody = false; }
       // Now and then: a striker takes one of the little fish.
       if (!E.locked && (room.surfaceY === null || sq.y > room.surfaceY + 200)) {
+        if (hush) { this.nextKill = Math.max(this.nextKill, 20); }
         this.nextKill -= dt * (0.2 + this.level * 1.5);
         if (this.nextKill < 0) { this.nextKill = 120 + Math.random() * 180; this.huntFish(room); }
       }
@@ -114,13 +122,13 @@
       }
       // Blood draws strikers, and they go for the biggest glob, or you if you're bloody.
       this.rogueIn = (this.rogueIn === undefined ? 600 + Math.random() * 900 : this.rogueIn) - dt;// once in a long while, one comes for you anyway
-      if (this.rogueIn < 0 && !E.locked) { this.rogueIn = 900 + Math.random() * 1500; this.spawnStriker(room, null).rogue = true; }
+      if (this.rogueIn < 0 && !E.locked && !hush) { this.rogueIn = 900 + Math.random() * 1500; this.spawnStriker(room, null).rogue = true; }
       const want = Math.floor(this.level * 1.2 + (sq.blood > 0.4 ? 1 : 0));
       this.strikers = (this.strikers || []).filter((s) => s.t < s.life);
-      if (this.strikers.length < Math.min(5, want) && Math.random() < dt * 0.5) { this.spawnStriker(room, null); }
+      if (!hush && this.strikers.length < Math.min(5, want) && Math.random() < dt * 0.5) { this.spawnStriker(room, null); }
       this.strikers.forEach((s) => this.stepStriker(s, dt, room));
       // A lot of blood in one place: something much bigger comes.
-      if (this.level > 2.6 && !E.actor('frenzy-shark') && !E.locked) { this.callShark(room); }
+      if (this.level > 2.6 && !E.actor('frenzy-shark') && !E.locked && !hush) { this.callShark(room); }
       const shark = E.actor('frenzy-shark');
       if (shark) { this.stepShark(shark, dt, room); }
     },
@@ -182,15 +190,15 @@
       this.wound(sq.x, sq.y, 0.5, { blue: true });
       sq.blood = Math.min(1, (sq.blood || 0) + 0.25);
       AU().tock && AU().tock(AU().NOTE(40), { gain: 0.2 });
-      if (!this.saidHit || E.t - this.saidHit > 20) { this.saidHit = E.t; SO.ui.thought(['Ow! Something bit me. That’s my blood. It’s blue.', 'They’re going for the blood on me.', 'Get away from the blood. Get away.'][Math.floor(Math.random() * 3)]); }
+      if (!this.saidHit || E.t - this.saidHit > 20) { this.saidHit = E.t; SO.ui.aside(['Ow! Something bit me. That’s my blood. It’s blue.', 'They’re going for the blood on me.', 'Get away from the blood. Get away.'][Math.floor(Math.random() * 3)]); }
     },
 
     // ── The frenzy: a big shark comes for the blood ─────────────────────────
     callShark(room) {
       const dir = Math.random() < 0.5 ? 1 : -1;
       E.addActor(room, { id: 'frenzy-shark', type: 'frenzyShark', x: dir > 0 ? E.cam.x - 700 : E.cam.x + E.W / E.scale + 700, y: E.cam.y + (E.H / E.scale) * 0.5, dir, t: 0, life: 22 });
-      AU().dread && AU().dread(0.7);
-      SO.ui.thought('Something big smelled the blood.');
+      AU().dread && AU().dread(0.7); this.dreadOn = true;
+      SO.ui.aside('Something big smelled the blood.');
     },
     stepShark(a, dt) {
       const sq = E.squid;
@@ -202,8 +210,9 @@
       a.vx = U.lerp(a.vx || 0, dx / d * sp, dt * 1.2); a.vy = U.lerp(a.vy || 0, dy / d * sp, dt * 1.2);
       a.x += a.vx * dt; a.y += a.vy * dt; a.dir = a.vx >= 0 ? 1 : -1;
       a.cool = Math.max(0, (a.cool || 0) - dt);
-      if (d < 110 && !a.cool && !E.locked) { a.cool = 3; this.hitSquid(a.vx, a.vy); }
-      if (a.t > a.life || this.level < 1) { a.leaving = true; }
+      if (d < 110 && !a.cool && !E.locked && !a.leaving) { a.cool = 3; this.hitSquid(a.vx, a.vy); }
+      if (a.t > a.life || this.level < 1 || SO.ui.important) { a.leaving = true; }
+      if (a.leaving && this.dreadOn) { this.dreadOn = false; AU().dread && AU().dread(0); }// (no scary music for a shark that's going)
       if (a.leaving) { a.x += a.dir * 400 * dt; a.alpha = Math.max(0, (a.alpha === undefined ? 1 : a.alpha) - dt * 0.4); if (a.alpha <= 0) { E.removeActor('frenzy-shark'); AU().dread && AU().dread(0); } }
     },
 
