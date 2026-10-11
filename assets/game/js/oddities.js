@@ -19,7 +19,7 @@
 
     // A hermit crab that has moved into a piece of fallen dome glass.
     hermit: {
-      desc: 'A hermit crab, wearing dome glass.', r: 50,
+      desc: 'Hermit crab in dome glass', r: 50,
       update(a, dt, room) {
         a.hide = Math.max(0, (a.hide || 0) - dt);
         if (!a.hide) { a.x = a.home.x + Math.sin(a.t * 0.25) * 140; }
@@ -43,7 +43,7 @@
 
     // A swan carved out of glass, half buried. Who made it?
     'glass-swan': {
-      desc: 'A glass swan. Someone made this.', r: 90,
+      desc: 'A glass swan?', r: 90,
       init(a, room) { a.y = room.floorY(a.x) - 30; },
       draw(ctx, a, room, t) {
         ctx.save();
@@ -58,7 +58,7 @@
 
     // Rings of bubbles rising out of a crack in the floor, one after another.
     'bubble-rings': {
-      desc: 'Bubble rings. Who’s blowing them?', r: 70,
+      desc: 'Bubble rings', r: 70,
       init(a, room) { a.y = room.floorY(a.x) - 6; },
       draw(ctx, a, room, t) {
         for (let i = 0; i < 4; i++) {
@@ -73,7 +73,7 @@
 
     // A school of little fish that, every so often, makes the shape of a swan.
     'swan-school': {
-      desc: 'Fish. Did they just make a swan?', r: 220,
+      desc: 'Fish, shaped like a swan?', r: 220,
       init(a) {
         // points along a swan's outline (drawn once, flattened to a list)
         const c = document.createElement('canvas').getContext('2d');
@@ -102,7 +102,7 @@
 
     // Lights very far away, blinking in some kind of order.
     'far-lights': {
-      desc: 'Lights far off, blinking. Talking?', r: 160, front: false,
+      desc: 'Far lights, blinking', r: 160, front: false,
       draw(ctx, a, room, t) {
         const seq = [1, 0, 1, 1, 0, 0, 1, 0, 1, 0, 0, 0];
         for (let i = 0; i < 5; i++) {
@@ -118,7 +118,7 @@
 
     // The bones of something enormous, slowly being eaten by tiny worms.
     'whale-fall': {
-      desc: 'Bones of something enormous.', r: 200,
+      desc: 'Enormous bones', r: 200,
       init(a, room) { a.y = room.floorY(a.x) + 4; },
       draw(ctx, a, room, t) {
         ctx.save(); ctx.translate(a.x, a.y);
@@ -139,7 +139,7 @@
 
     // A crab drumming on a shell. Flash your lights at it and it dances.
     drummer: {
-      desc: 'A crab, drumming on a shell.', r: 50,
+      desc: 'A drumming crab', r: 50,
       init(a, room) { a.y = room.floorY(a.x) - 14; },
       update(a, dt) {
         a.dance = Math.max(0, (a.dance || 0) - dt);
@@ -167,7 +167,7 @@
 
     // Sea cucumbers, all inching the same way. Nobody knows where.
     cucumbers: {
-      desc: 'Sea cucumbers, all heading one way.', r: 140,
+      desc: 'Sea cucumbers, marching', r: 140,
       draw(ctx, a, room, t) {
         for (let i = 0; i < 6; i++) {
           const x = ((a.x + i * 90 + t * 6) % (room.w - 200)) + 100;
@@ -180,7 +180,7 @@
 
     // One of the octopus mothers, idly juggling three pearls.
     juggler: {
-      desc: 'Is that octopus juggling?', r: 70,
+      desc: 'A juggling octopus?', r: 70,
       init(a, room) { a.y = room.floorY(a.x) - 40; },
       draw(ctx, a, room, t) {
         ctx.fillStyle = 'hsla(340,45%,74%,0.95)';
@@ -197,7 +197,7 @@
     // Strange spiral marks scratched into the rock, with colored dots in a row.
     // Flash the same colors at it and it lights up. That's all it does.
     spiral: {
-      desc: 'Spiral marks, and colors in a row.', r: 70,
+      desc: 'Spiral marks', r: 70,
       draw(ctx, a, room, t) {
         ctx.save(); ctx.translate(a.x, a.y);
         const lit = a.lit || 0;
@@ -214,7 +214,7 @@
 
     // A swan feather, now and then drifting down from very far above.
     'drift-feather': {
-      desc: 'A feather, falling from up there.', r: 40, touch: false,
+      desc: 'A falling feather', r: 40, touch: false,
       update(a, dt, room) {
         a.y += 28 * dt; a.x = a.home.x + Math.sin(a.t * 0.9) * 60;
         if (a.y > room.h + 60) { a.y = (room.surfaceY || 0) - 300; a.home.x = 200 + Math.random() * (room.w - 400); }

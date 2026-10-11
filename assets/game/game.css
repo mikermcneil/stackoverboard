@@ -98,11 +98,12 @@ body.game-mode #sound-hint { display: none; }
   opacity: 0; transition: opacity 0.35s ease;
 }
 #ribbon-line.in { opacity: 1; }
+#ribbon-line .unsaid { opacity: 0; }
 #inspect { position: absolute; left: 24px; top: 50%; transform: translateY(-50%); width: 200px; display: flex; flex-direction: column; align-items: flex-start; gap: 8px; opacity: 0; pointer-events: none; transition: opacity 0.4s; }
 #inspect.show { opacity: 1; pointer-events: auto; }
 #inspect-canvas { width: 104px; height: 104px; border-radius: 12px; border: 1px solid rgba(255, 255, 255, 0.22); background: #050b12; cursor: pointer; transition: border-color 0.2s; }
 #inspect-canvas:hover { border-color: rgba(255, 255, 255, 0.6); }
-#inspect-label { margin: 0; min-height: 1.4em; font: 500 14px/1.35 var(--sans); color: #fff; max-width: 200px; }
+#inspect-label { margin: 0; min-height: 1.4em; font: 500 14px/1.35 var(--sans); color: #fff; max-width: 200px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
 .ribbon-choices { display: flex; gap: 14px; flex-wrap: wrap; justify-content: center; }
 .ribbon-choices button { border: 1px solid rgba(255, 154, 118, 0.6); background: transparent; color: #ff9a76; border-radius: 999px; padding: 10px 20px; font: 500 18px var(--sans); cursor: pointer; }
 .ribbon-choices button:hover { background: rgba(255, 154, 118, 0.12); }

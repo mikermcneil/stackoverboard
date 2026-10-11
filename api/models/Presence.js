@@ -20,6 +20,8 @@ module.exports = {
     glow: { type: 'boolean', defaultsTo: false },
     hidden: { type: 'number', defaultsTo: 0 },
     flash: { type: 'string', isIn: ['', 'W', 'R', 'B', 'G'], defaultsTo: '' },
+    dirt: { type: 'number', defaultsTo: 0, description: 'How dirty the squid is (0..1).' },
+    grime: { type: 'string', isIn: ['', 'sand', 'silt', 'mud', 'muck', 'soot', 'glass'], defaultsTo: '', description: 'What it is mostly covered in.' },
     seenAt: { type: 'number', required: true, description: 'When it last reported in (JS epoch ms).' },
 
   },

@@ -176,6 +176,7 @@
       ctx.fillStyle = hslStr([col[0] - 4, Math.min(90, col[1] + 18), col[2]], -34, 0.2 + 0.25 * open);
       ctx.beginPath(); ctx.ellipse(px * c + (py / 24) * 18 * ss, py * squeeze, sz * (0.6 + open), sz * (0.6 + open), 0, 0, U.TAU); ctx.fill();
     }
+    if (sq.dirt && sq.dirt.length && SO.dirt) { SO.dirt.draw(ctx, sq, c, squeeze, ss); }// sand, silt, soot...
     ctx.save(); ctx.globalCompositeOperation = 'lighter';// iridescent sheen along the back
     const shk = (tt * 0.15) % 1;
     const sh = ctx.createLinearGradient(0, -28, L * c + 1, -8);
@@ -255,7 +256,9 @@
     if (ay > 0.9 || !sq.eyeSide) { sq.eyeSide = sgn; }
     ctx.scale(s * sgn, s);
     // Nose up/down eases out as the squid comes nose-on (where its mirror image takes over).
-    ctx.rotate(o.pitch * U.smoothstep(0, 0.32, ay) + (sq.spinRot || 0));
+    // A slow, living sway of the whole body (a touch more when it's swimming hard).
+    const sway = Math.sin(tt * 2.3 + (sq.swaySeed || 0)) * 0.022 * (1 + U.clamp(Math.hypot(sq.vx || 0, sq.vy || 0) / 400, 0, 1));
+    ctx.rotate(o.pitch * U.smoothstep(0, 0.32, ay) + (sq.spinRot || 0) + sway);
     squid3D(ctx, sq, col, ay, squeeze, tt, sq.eyeSide * sgn);
     ctx.restore();
   };
@@ -264,7 +267,7 @@
   A.fish = function (ctx, x, y, s, angle, hue, t, opts = {}) {
     ctx.save();
     ctx.translate(x, y); ctx.rotate(angle); ctx.scale(s, s);
-    const wag = Math.sin(t * 14) * 0.35;
+    const wag = Math.sin(t * 14) * 0.45 + Math.sin(t * 3.1) * 0.08;// a quick tail beat, and a slower sway
     const body = ctx.createLinearGradient(0, -5, 0, 5);
     if (opts.silver) { body.addColorStop(0, '#7f97a4'); body.addColorStop(1, '#eef4f6'); }
     else { body.addColorStop(0, U.hsl(hue, 45, 38)); body.addColorStop(0.6, U.hsl(hue, 60, 62)); body.addColorStop(1, '#f2f2e8'); }
@@ -336,44 +339,84 @@
   };
 
   // ── Sky: clouds, islands, domes, towers, trees, waterfalls, swans ──────────
-  A.cloud = function (ctx, x, y, w, h, seed = 1, opts = {}) {
-    const r = U.rng(seed);
-    const n = 7 + Math.floor(r() * 4);
-    ctx.save();
-    ctx.globalAlpha *= (opts.alpha === undefined ? 1 : opts.alpha);
+  // Clouds are painted once into soft, lit sprites (dozens of overlapping
+  // puffs, sunlit on top, shadowed underneath) and after that just stamped.
+  const rgbOf = (c) => (c.charAt(0) === '#' ? U.hexToRgb(c) : c.match(/[\d.]+/g).slice(0, 3).map(Number));
+  const rgbStr = (c, a) => `rgba(${Math.round(c[0])},${Math.round(c[1])},${Math.round(c[2])},${a})`;
+  const mixRgb = (a, b, k) => [a[0] + (b[0] - a[0]) * k, a[1] + (b[1] - a[1]) * k, a[2] + (b[2] - a[2]) * k];
+  A.rgbOf = rgbOf; A.rgbStr = rgbStr; A.mixRgb = mixRgb;
+  const CW = 448, CH = 160, CLOUDS = {};
+  let cloudN = 0;
+  function cloudSprite(variant, fill) {
+    const key = variant + '|' + fill;
+    if (CLOUDS[key]) { return CLOUDS[key]; }
+    if (++cloudN > 90) { Object.keys(CLOUDS).forEach((k) => { delete CLOUDS[k]; }); cloudN = 1; }
+    const c = document.createElement('canvas'); c.width = CW; c.height = CH;
+    const g = c.getContext('2d');
+    const lit = rgbOf(fill);
+    const storm = lit[0] + lit[1] + lit[2] < 400;
+    const shade = mixRgb(lit, storm ? [12, 16, 26] : [118, 142, 168], storm ? 0.45 : 0.42);
+    const deep = mixRgb(lit, storm ? [6, 8, 14] : [78, 98, 124], 0.62);
+    const r = U.rng(variant * 977 + 13);
     const puffs = [];
+    const n = 15 + Math.floor(r() * 6);
     for (let i = 0; i < n; i++) {
-      const px = x - w / 2 + (i + 0.5) * w / n + (r() - 0.5) * w * 0.08;
-      const pr = h * (0.45 + r() * 0.55) * (1 - Math.abs(i - n / 2) / n * 0.8);
-      puffs.push([px, y - pr * 0.3, pr]);
+      const u = (i + 0.5) / n, hump = Math.pow(Math.sin(u * Math.PI), 0.8);
+      const pr = CH * (0.12 + 0.2 * hump * (0.55 + 0.45 * r()));
+      puffs.push([CW * (0.08 + 0.84 * u) + (r() - 0.5) * 20, CH * 0.76 - pr * 0.55 - hump * CH * 0.12 * r(), pr]);
     }
-    // outline pass then fill pass so the puffs merge
-    const base = (grow) => { ctx.beginPath(); ctx.ellipse(x, y + h * 0.05, w / 2 + grow, h * 0.32 + grow, 0, 0, TAU); ctx.fill(); };
-    ctx.fillStyle = opts.line || C.cloudLine;
-    puffs.forEach(([px, py, pr]) => { ctx.beginPath(); ctx.arc(px, py, pr + 2.5, 0, TAU); ctx.fill(); });
-    base(2.5);
-    ctx.fillStyle = opts.fill || C.cloud;
-    puffs.forEach(([px, py, pr]) => { ctx.beginPath(); ctx.arc(px, py, pr, 0, TAU); ctx.fill(); });
-    base(0);
-    ctx.restore();
+    for (let i = 0; i < 8; i++) {// billows heaped up near the middle
+      const u = 0.22 + r() * 0.56, hump = Math.sin(u * Math.PI);
+      puffs.push([CW * u, CH * (0.44 - 0.18 * hump * r()), CH * (0.08 + 0.13 * r()) * hump]);
+    }
+    const blob = (x, y, rad, col, a) => {
+      const gr = g.createRadialGradient(x, y, 0, x, y, rad);
+      gr.addColorStop(0, rgbStr(col, a)); gr.addColorStop(0.5, rgbStr(col, a * 0.85)); gr.addColorStop(1, rgbStr(col, 0));
+      g.fillStyle = gr; g.fillRect(x - rad, y - rad, rad * 2, rad * 2);
+    };
+    g.save(); g.translate(CW / 2, CH * 0.74); g.scale(1, 0.2); blob(0, 0, CW * 0.45, shade, 0.95); g.restore();
+    puffs.forEach(([x, y, pr]) => blob(x, y, pr * 1.18, shade, 1));
+    // Sunlight from above and a little to the right.
+    puffs.forEach(([x, y, pr]) => blob(x + pr * 0.2, y - pr * 0.3, pr * 0.86, lit, 0.95));
+    g.globalCompositeOperation = 'source-atop';
+    const ug = g.createLinearGradient(0, CH * 0.42, 0, CH * 0.86);
+    ug.addColorStop(0, rgbStr(deep, 0)); ug.addColorStop(1, rgbStr(deep, 0.6));
+    g.fillStyle = ug; g.fillRect(0, 0, CW, CH);
+    const sg = g.createRadialGradient(CW * 0.72, -CH * 0.35, 0, CW * 0.72, -CH * 0.35, CW * 0.7);
+    sg.addColorStop(0, storm ? 'rgba(255,240,220,0.06)' : 'rgba(255,247,230,0.5)'); sg.addColorStop(1, 'rgba(255,247,230,0)');
+    g.fillStyle = sg; g.fillRect(0, 0, CW, CH);
+    CLOUDS[key] = c;
+    return c;
+  }
+
+  A.cloud = function (ctx, x, y, w, h, seed = 1, opts = {}) {
+    const spr = cloudSprite(Math.abs(Math.floor(seed)) % 12, opts.fill || C.cloud);
+    const a = ctx.globalAlpha;
+    ctx.globalAlpha = a * (opts.alpha === undefined ? 1 : opts.alpha);
+    const dw = w * 1.15, dh = h * 2;
+    ctx.drawImage(spr, x - dw / 2, y + h * 0.37 - dh * 0.76, dw, dh);
+    ctx.globalAlpha = a;
   };
 
-  // A whole bank of clouds (the bottom of the reference picture).
+  // A whole bank of clouds (the bottom of the reference picture): a soft deck
+  // with lit billows along its top.
   A.cloudBank = function (ctx, x0, x1, y, h, seed, opts = {}) {
     const r = U.rng(seed);
     ctx.save();
     ctx.globalAlpha *= (opts.alpha === undefined ? 1 : opts.alpha);
-    const line = opts.line || C.cloudLine, fill = opts.fill || C.cloud;
-    const puffs = [];
-    for (let x = x0; x < x1 + 200; x += 90 + r() * 140) {
-      puffs.push([x, y + (r() - 0.5) * h * 0.4, h * (0.35 + r() * 0.45)]);
+    const fill = opts.fill || C.cloud, lit = rgbOf(fill);
+    const storm = lit[0] + lit[1] + lit[2] < 400;
+    const shade = mixRgb(lit, storm ? [12, 16, 26] : [118, 142, 168], storm ? 0.4 : 0.32);
+    const depth = opts.depth || 3000;
+    const g = ctx.createLinearGradient(0, y - h * 0.2, 0, y + h * 2.5);
+    g.addColorStop(0, rgbStr(lit, 0)); g.addColorStop(0.12, rgbStr(lit, 1)); g.addColorStop(0.5, rgbStr(shade, 1)); g.addColorStop(1, rgbStr(mixRgb(lit, shade, 0.6), 1));
+    ctx.fillStyle = g;
+    ctx.fillRect(x0 - 200, y - h * 0.2, x1 - x0 + 400, depth + h * 0.2);
+    let i = 0;
+    for (let x = x0 - 120; x < x1 + 200; x += 80 + r() * 120) {
+      const pr = h * (0.4 + r() * 0.5);
+      A.cloud(ctx, x, y + (r() - 0.6) * h * 0.4, pr * 4.4, pr * 1.25, seed * 7 + i++, { fill });
     }
-    ctx.fillStyle = line;
-    puffs.forEach(([px, py, pr]) => { ctx.beginPath(); ctx.arc(px, py, pr + 2.5, 0, TAU); ctx.fill(); });
-    ctx.fillRect(x0 - 200, y, x1 - x0 + 400, opts.depth || 3000);
-    ctx.fillStyle = fill;
-    puffs.forEach(([px, py, pr]) => { ctx.beginPath(); ctx.arc(px, py, pr, 0, TAU); ctx.fill(); });
-    ctx.fillRect(x0 - 200, y + 2.5, x1 - x0 + 400, opts.depth || 3000);
     ctx.restore();
   };
 
@@ -611,21 +654,66 @@
   };
 
   // ── Underwater set dressing ────────────────────────────────────────────────
-  A.lightRays = function (ctx, x0, w, top, h, t, alpha = 0.18, color = '#ffffff') {
+  // One soft shaft of light, made once per color: narrow and bright where it
+  // comes through the surface, spreading and fading as it goes down, with faint
+  // streaks along its length.
+  const RAYS = {};
+  const RW = 160, RH = 256;
+  function rayTexture(color) {
+    if (RAYS[color]) { return RAYS[color]; }
+    const c = document.createElement('canvas'); c.width = RW; c.height = RH;
+    const g = c.getContext('2d');
+    const img = g.createImageData(RW, RH), d = img.data;
+    const rgb = rgbOf(color);
+    for (let y = 0; y < RH; y++) {
+      const v = y / RH;
+      const fade = Math.min(1, 0.45 + v * 9) * Math.pow(1 - v, 1.6);
+      const sig = 4 + 21 * v;
+      for (let x = 0; x < RW; x++) {
+        const dx = (x - RW / 2) / sig;
+        const streak = 0.62 + 0.38 * U.noise1(dx * 2.4 + 20, 7);
+        const a = Math.exp(-dx * dx * 0.5) * fade * streak;
+        const i = (y * RW + x) * 4;
+        d[i] = rgb[0]; d[i + 1] = rgb[1]; d[i + 2] = rgb[2]; d[i + 3] = Math.round(a * 255);
+      }
+    }
+    g.putImageData(img, 0, 0);
+    RAYS[color] = c;
+    return c;
+  }
+  const hash01 = (n) => { const s = Math.sin(n * 127.1 + 311.7) * 43758.5453; return s - Math.floor(s); };
+
+  // God rays: broad hazy shafts plus a few crisp ones, fanning out from a sun
+  // high above, swaying and shimmering as the waves pass over. opts.shift moves
+  // the field of rays (for parallax), opts.fan spreads them.
+  A.lightRays = function (ctx, x0, w, top, h, t, alpha = 0.18, color = '#ffffff', opts = {}) {
+    if (alpha <= 0.002) { return; }
+    const tex = rayTexture(color);
+    const shift = opts.shift || 0, fan = opts.fan === undefined ? 0.22 : opts.fan, slant = opts.slant === undefined ? 0.12 : opts.slant;
+    const cx = x0 + w / 2, a0 = ctx.globalAlpha;
     ctx.save();
     ctx.globalCompositeOperation = 'lighter';
-    for (let i = 0; i < 7; i++) {
-      const cx = x0 + (i + 0.5) * w / 7 + Math.sin(t * 0.2 + i * 1.7) * 40;
-      const ww = 30 + 40 * (0.5 + 0.5 * Math.sin(t * 0.33 + i * 2.1));
-      const a = alpha * (0.4 + 0.6 * (0.5 + 0.5 * Math.sin(t * 0.5 + i)));
-      const g = ctx.createLinearGradient(0, top, 0, top + h);
-      g.addColorStop(0, U.rgba(color, a)); g.addColorStop(1, U.rgba(color, 0));
-      ctx.fillStyle = g;
-      ctx.beginPath();
-      ctx.moveTo(cx - ww * 0.3, top); ctx.lineTo(cx + ww * 0.3, top);
-      ctx.lineTo(cx + ww * 1.8 + 120, top + h); ctx.lineTo(cx - ww * 1.2 + 120, top + h);
-      ctx.closePath(); ctx.fill();
-    }
+    const pass = (sp, wide, bright, keep, salt) => {
+      const k0 = Math.floor((x0 - shift - h * 0.4) / sp), k1 = Math.ceil((x0 + w - shift + 60) / sp);
+      for (let k = k0; k <= k1; k++) {
+        const h1 = hash01(k + salt), h2 = hash01(k * 1.31 + salt + 50), h3 = hash01(k * 0.77 + salt + 90);
+        if (h3 > keep) { continue; }
+        const x = shift + (k + (h1 - 0.5) * 0.8) * sp + Math.sin(t * 0.13 + k * 1.7) * 22;
+        const ang = slant + U.clamp((x - cx) / (w / 2), -1.4, 1.4) * fan + Math.sin(t * 0.09 + k * 2.3) * 0.025;
+        // Brightness drifts slowly, with a quicker ripple from the waves.
+        const a = alpha * bright * (0.2 + 0.8 * U.noise1(t * 0.21 + k * 5.3, salt)) * (0.86 + 0.14 * Math.sin(t * 2.1 + k * 2.9));
+        if (a < 0.003) { continue; }
+        const len = h * (0.7 + 0.5 * h2);
+        ctx.globalAlpha = a0 * Math.min(1, a);
+        ctx.save();
+        ctx.translate(x, top); ctx.rotate(-ang);
+        ctx.scale(wide * (0.7 + h1 * 1.1), len / RH);
+        ctx.drawImage(tex, -RW / 2, 0);
+        ctx.restore();
+      }
+    };
+    pass(opts.spacing || 150, 2.4, 0.9, 0.8, 1);// haze
+    pass((opts.spacing || 150) * 0.6, 0.55, 1.5, 0.45, 7);// crisp shafts
     ctx.restore();
   };
 

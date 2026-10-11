@@ -126,6 +126,10 @@
         }
         card.appendChild(p('j-name', e.name));
         if (e.line) { card.appendChild(p('j-line', e.line)); }
+        if (tab === 'skin' && e.colors) {// the same backwards can't be taken back
+          const cs = e.colors.split(' ');
+          card.appendChild(p('j-meta', cs.join('') === cs.slice().reverse().join('') ? 'Same backwards. Can’t be undone.' : 'Backwards undoes it.'));
+        }
         if (e.generated) {
           const who = e.discoveredBy ? (e.discoveredBy === save.squidName ? 'First seen by you' : 'First seen by ' + e.discoveredBy) : '';
           const when = e.discoveredAt ? ago(e.discoveredAt) : '';

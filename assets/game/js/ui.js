@@ -72,8 +72,9 @@
     say(text, opts = {}) {
       return new Promise((resolve) => {
         const who = opts.who || 'other';
-        // Don't stack the same line twice.
-        if ((this.current && this.current.text === text) || this.queue.some((q) => q.text === text)) { resolve(); return; }
+        // Don't stack the same line twice (or say it again right after).
+        if ((this.current && this.current.text === text) || this.queue.some((q) => q.text === text) || (this._lastText === text && U.now() - this._lastAt < 15000)) { resolve(); return; }
+        this._lastText = text; this._lastAt = U.now();
         // Background chatter gives way if the queue gets long.
         if (opts.minor && this.queue.length >= 2) { resolve(); return; }
         this.queue.push({ text, who, opts, resolve });
@@ -92,12 +93,19 @@
         this.current = null;
         if (SO.E && SO.E.squid) { SO.E.squid.talking = false; }
         clearTimeout(this._hideT);
-        this._hideT = setTimeout(() => { if (!this.current) { this.ribbon$.classList.remove('show'); document.body.classList.remove('ribbon-up'); } }, 500);
+        this._hideT = setTimeout(() => { if (!this.current) { this.ribbon$.classList.remove('show'); document.body.classList.remove('ribbon-up'); } }, 700);
         return;
       }
       clearTimeout(this._hideT);
       this.current = item;
-      this.line$.textContent = item.text;
+      // The line types itself out, letter by letter: what's shown, and the rest held invisible
+      // (so the words don't jump around as it wraps).
+      this.line$.textContent = '';
+      item.shown$ = document.createElement('span');
+      item.rest$ = document.createElement('span');
+      item.rest$.className = 'unsaid';
+      item.rest$.textContent = item.text;
+      this.line$.appendChild(item.shown$); this.line$.appendChild(item.rest$);
       const color = COLORS[item.who] || COLORS.other;
       this.line$.style.color = color;
       this.speaker = PORTRAITS[item.who] ? item.who : null;
@@ -107,28 +115,65 @@
       document.body.classList.add('ribbon-up');
       this.line$.classList.remove('in'); void this.line$.offsetWidth; this.line$.classList.add('in');
       item.shownAt = U.now();
+      item.chars = 0;
+      item.fast = false;
+      item.revealedAt = 0;
       if (SO.E && SO.E.squid) { SO.E.squid.talking = item.who === 'squid'; }
       if (item.opts.voice && SO.audio) { SO.audio.voice(item.opts.voice, item.opts.syllables || Math.min(5, 1 + Math.floor(item.text.length / 14))); }
-      // Long enough to read, comfortably.
-      const words = item.text.split(/\s+/).length;
-      const ms = Math.max(item.opts.ms || 0, 3200 + words * 420);
-      this._timer = setTimeout(() => this._finish(), ms);
+      clearInterval(this._typeT);
+      let last = U.now();
+      this._typeT = setInterval(() => this._type(item, (U.now() - last) / 1000, (last = U.now())), 30);
+    },
+
+    // Letters appear at a steady, readable pace (faster after one click, never instantly),
+    // with a faint bubbling as they come.
+    _type(item) {
+      if (this.current !== item) { clearInterval(this._typeT); return; }
+      const dt = arguments[1];
+      const rate = item.fast ? 110 : 34;// letters per second
+      const before = Math.floor(item.chars);
+      item.chars = Math.min(item.text.length, item.chars + rate * dt);
+      const n = Math.floor(item.chars);
+      if (n !== before) {
+        item.shown$.textContent = item.text.slice(0, n);
+        item.rest$.textContent = item.text.slice(n);
+        const ch = item.text[n - 1];
+        if (SO.audio && SO.audio.blip && ch && ch !== ' ' && (n % (item.fast ? 4 : 2) === 0)) { SO.audio.blip(); }
+      }
+      if (n >= item.text.length) {
+        clearInterval(this._typeT);
+        item.revealedAt = U.now();
+        // Then it stays up long enough to read, comfortably.
+        const words = item.text.split(/\s+/).length;
+        const ms = Math.max(item.opts.ms ? item.opts.ms - (item.revealedAt - item.shownAt) : 0, 2800 + words * 420);
+        this._timer = setTimeout(() => this._finish(), ms);
+      }
     },
 
     _finish() {
       clearTimeout(this._timer);
+      clearInterval(this._typeT);
       const item = this.current;
       if (!item) { return; }
       this.line$.classList.remove('in');
       this.current = null;
       if (!this.queue.length) { this.portrait$.classList.remove('show'); }
       item.resolve();
-      setTimeout(() => { if (!this.current) { this._next(); } }, 280);
+      // A breath between lines, so one never lands right on top of the last.
+      setTimeout(() => { if (!this.current) { this._next(); } }, 650);
     },
 
-    // Skip ahead (click on the ribbon, space, or enter), but never by accident.
+    // Clicking (or space / enter) while someone's talking takes two goes: the first hurries the
+    // letters along, the second (once the line is all there, and you've had a moment) moves on.
     advance() {
-      if (!this.current || U.now() - this.current.shownAt < 700) { return false; }
+      const item = this.current;
+      if (!item) { return false; }
+      const now = U.now();
+      if (!item.revealedAt) {
+        if (now - item.shownAt > 350) { item.fast = true; }
+        return false;
+      }
+      if (now - item.revealedAt < 900) { return false; }
       this._finish();
       return true;
     },

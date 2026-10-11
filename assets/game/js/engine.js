@@ -23,6 +23,7 @@
     call: ['B', 'G', 'B', 'W'],
     wake: ['G', 'R', 'G', 'R'],
   };
+  const GLOW_SECONDS = 60;// how long a glow lasts before it wears off
   const SKIN_HEX = { W: '#eef6fa', R: '#c8353f', B: '#3fc6d8', G: '#ffd36a' };
 
   // Depth -> water colors (top, bottom).
@@ -202,7 +203,8 @@
   E.reachable = function (x, y) {
     const room = this.room, R = 46 * this.squid.scale;
     x = U.clamp(x, R, room.w - R); y = U.clamp(y, R, room.h - R);
-    const fits = (px, py) => !room.solidAt(px, py) && !room.solidAt(px, py + R) && !room.solidAt(px - R, py) && !room.solidAt(px + R, py);
+    const F = 36 * this.squid.scale;// close enough to the floor to skim it (the body is 30 across)
+    const fits = (px, py) => !room.solidAt(px, py) && !room.solidAt(px, py + F) && !room.solidAt(px - R, py) && !room.solidAt(px + R, py);
     if (fits(x, y)) { return [x, y]; }
     for (let d = 20; d < 900; d += 20) { if (y - d > R && fits(x, y - d)) { return [x, y - d]; } }
     return this.findFreeBody(x, y);
@@ -307,7 +309,7 @@
       let cx = ax, cy = ay, dbx = bx, dby = by;
       for (let k = 1; k < arm.length; k++) {
         const p = arm[k], prev = arm[k - 1];
-        let wave = Math.sin(sq.t * (opts.flutter || 2.4) + i * 0.9 - k * 0.5) * k * (opts.wiggle || 1.1) * s;
+        let wave = Math.sin(sq.t * (opts.flutter || 2.4) + i * 0.9 - k * 0.5) * k * (opts.wiggle || 1.5) * s;
         if (opts.twist) { wave += Math.cos(sq.t * 9 + i * 0.63 - k * 0.8) * k * opts.twist * s; }// a corkscrew running down the arms
         if (curl) { const a = curl * 0.16, ca = Math.cos(a), sa = Math.sin(a); const nbx = dbx * ca - dby * sa; dby = dbx * sa + dby * ca; dbx = nbx; }
         cx += dbx * seg; cy += dby * seg;
@@ -603,7 +605,8 @@
     this.lastSkinAt = now;
     this.skinBuffer.push(c);
     if (this.skinBuffer.length > 6) { this.skinBuffer.shift(); }
-    // Longest match wins.
+    // Longest match wins. A pattern played backwards undoes it, unless it reads the same both
+    // ways: those (glow, open, calm) can't be taken back. They just wear off, or stay done.
     const names = Object.keys(PATTERNS).sort((a, b) => PATTERNS[b].length - PATTERNS[a].length);
     for (const name of names) {
       const p = PATTERNS[name];
@@ -614,7 +617,32 @@
         setTimeout(() => this.castPattern(name), 220);
         return;
       }
+      if (!E.isPalindrome(name) && tail.every((v, i) => v === p[p.length - 1 - i]) && SO.save.data && SO.save.knows(name)) {
+        this.skinBuffer = [];
+        setTimeout(() => this.undoPattern(name), 220);
+        return;
+      }
     }
+  };
+  E.isPalindrome = function (name) {
+    const p = PATTERNS[name];
+    return !!p && p.every((v, i) => v === p[p.length - 1 - i]);
+  };
+
+  // A pattern, backwards: takes back what it did (if that's still yours to take back).
+  E.undoPattern = function (name) {
+    const sq = this.squid;
+    this.lastPatternAt = U.now();
+    this.ring(sq.x, sq.y, '#9aa7b8', 300, 1.1);
+    AU.bell(AU.NOTE(66), { gain: 0.035, dur: 1.6 });
+    let undid = false;
+    if (name === 'cloud' && this.t < sq.hideUntil) {// the ink clears
+      sq.hideUntil = this.t; undid = true;
+      AU.noise({ dur: 0.8, freq: 520, q: 1.2, gain: 0.05, sweep: 1.6 });
+    } else if (name === 'wake') {// whatever you woke nearby settles back down
+      this.room.actors.forEach((a) => { if (a.awake && !a.calmed && U.dist(a.x, a.y, sq.x, sq.y) < 900) { a.awake = false; undid = true; } });
+    } else if (name === 'call') { undid = true; }// a hush: the call is taken back
+    if (SO.story.onUndo) { SO.story.onUndo(name, undid, this.room); }
   };
   E.lastSkinAt = 0;
 
@@ -623,12 +651,12 @@
     this.lastPatternAt = U.now();
     const hex = { glow: '#ffd36a', open: '#e8656d', calm: '#bfeaf2', cloud: '#2b3b52', call: '#7fd8ff', wake: '#ff9a4a' }[name];
     this.ring(sq.x, sq.y, hex, name === 'cloud' ? 260 : 420);
-    if (name === 'glow') {
-      sq.glowOn = !sq.glowOn;
-      AU.bell(AU.NOTE(sq.glowOn ? 90 : 78), { gain: 0.04, dur: 2 });
+    if (name === 'glow') {// gold, gold, gold reads the same backwards: there's no unglow, it just wears off
+      sq.glowOn = true;
+      sq.glowUntil = this.t + GLOW_SECONDS;
+      AU.bell(AU.NOTE(90), { gain: 0.04, dur: 2 });
     } else if (name === 'cloud') {
       sq.hideUntil = this.t + 6;
-      sq.glowOn = false;
       AU.noise({ dur: 1.2, freq: 260, q: 1.2, gain: 0.08, sweep: 0.5 });
     }
     const wasNew = SO.save.data && SO.save.learn(name);
@@ -797,6 +825,8 @@
         wd.x = sq.x; wd.y = sq.y; wd.t = 0;
       }
     } else { wd.x = sq.x; wd.y = sq.y; wd.t = 0; }
+    if (SO.dirt) { SO.dirt.update(sq, dt, room); }
+    if (SO.smell) { SO.smell.update(dt, room); }
 
     // Facing. Turning around is a turn of the whole body through depth: `yaw`
     // eases through 0 (nose toward you) while the nose dips, like a bank.
@@ -834,7 +864,10 @@
 
     // Skin & light.
     sq.hidden = U.lerp(sq.hidden, this.t < sq.hideUntil ? 1 : 0, Math.min(1, dt * 4));
-    sq.glow = U.lerp(sq.glow, sq.glowOn ? 1 : 0, Math.min(1, dt * 2.5));
+    // A glow fades over its last few seconds, then goes out on its own.
+    if (sq.glowOn && sq.glowUntil && this.t > sq.glowUntil) { sq.glowOn = false; sq.glowUntil = 0; if (SO.story.onGlowOut) { SO.story.onGlowOut(); } }
+    const glowLeft = sq.glowOn && sq.glowUntil ? U.clamp((sq.glowUntil - this.t) / 10, 0.2, 1) : 1;
+    sq.glow = U.lerp(sq.glow, sq.glowOn ? glowLeft : 0, Math.min(1, dt * 2.5));
     this.updateSquidSkin(sq, dt);
     // The spin: two full turns, easing in and out, with a shudder at the end.
     if (sq.spin) {
@@ -1085,6 +1118,11 @@
     if ((ex.down && maxY > room.h - 10 && sq.vy > 15) || sq.y > room.h) { push('down'); }
     else if (room.surfaceY === null && ((ex.up && minY < 10 && sq.vy < -15) || sq.y < 0)) { push('up'); }
     if (room.surfaceY !== null) { sq.y = Math.max(sq.y, -500); }
+    // Safety net: never left floating outside the room (say, out through rock) without actually leaving it.
+    if (!this._going && (sq.y > room.h + 80 || sq.x < -80 || sq.x > room.w + 80 || (room.surfaceY === null && sq.y < -80))) {
+      const f = this.findFreeBody(U.clamp(sq.x, 80, room.w - 80), U.clamp(sq.y, 80, room.h - 80));
+      sq.x = f[0]; sq.y = f[1]; sq.vx = sq.vy = sq.dvx = sq.dvy = 0;
+    }
   };
 
   // Doing something with a thing: go through a door, talk, pick it up...
@@ -1220,6 +1258,8 @@
         p.vy += 900 * dt; p.x += p.vx * dt; p.y += p.vy * dt;
         return p.t < p.life && (room.surfaceY === null || p.y < room.surfaceY + 5);
       }
+      if (SO.dirt) { const keep = SO.dirt.stepParticle(p, dt); if (keep !== null) { return keep; } }
+      if (SO.smell) { const keep = SO.smell.stepParticle(p, dt); if (keep !== null) { return keep; } }
       return p.t < p.life;
     });
   };
@@ -1477,7 +1517,7 @@
       } else if (p.kind === 'drop') {
         ctx.fillStyle = '#e9fbfb'; ctx.strokeStyle = A.C.ink; ctx.lineWidth = 1.2;
         ctx.beginPath(); ctx.arc(p.x, p.y, p.r, 0, TAU); ctx.fill(); ctx.stroke();
-      }
+      } else if (!(SO.dirt && SO.dirt.drawParticle(ctx, p)) && SO.smell) { SO.smell.drawParticle(ctx, p); }
     });
   };
 

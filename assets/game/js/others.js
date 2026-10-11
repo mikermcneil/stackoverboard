@@ -56,6 +56,20 @@
       sq.blink = Math.max(0, (sq.blink || 0) - dt * 7);
       E.updateArms(sq, dt);
       a.x = sq.x; a.y = sq.y;
+      // Dirt: theirs shows on them, and rubs off on you when they brush past.
+      if (SO.dirt) {
+        SO.dirt.syncOther(sq, g.dirt || 0, g.grime, a.name);
+        const me = E.squid, rel = Math.hypot(sq.vx - me.vx, sq.vy - me.vy);
+        if (!a.gone && (g.dirt || 0) > 0.12 && rel > 40 && U.dist(me.x, me.y, sq.x, sq.y) < 130 * me.scale) {
+          SO.dirt.add(me, g.grime || 'silt', dt * (0.4 + g.dirt) * 2.5, 0);
+          if (!a._rubbedAt || E.t - a._rubbedAt > 6) { a._rubbedAt = E.t; SO.ui && Math.random() < 0.5 && SO.ui.thought(['Hey! That’s all over me now.', 'Thanks for sharing.', 'Ugh. Some of that came off on me.'][Math.floor(Math.random() * 3)]); }
+        }
+        // Racing low over the floor, they stir up silt too (and it settles on whoever swims through it).
+        const sp = Math.hypot(sq.vx, sq.vy), room = E.room;
+        if (!a.gone && room && sp > 200 && (room.solidAt(sq.x, sq.y + 115 * sq.scale) || room.solidAt(sq.x, sq.y + 150 * sq.scale)) && Math.random() < dt * sp / 120) {
+          SO.dirt.puff(sq.x - sq.vx * 0.15, sq.y + 70 * sq.scale, SO.dirt.kindFor(room), 'other', sp);
+        }
+      }
       // Fade in when they arrive; fade out if they stop reporting.
       a.alpha = U.lerp(a.alpha || 0, a.gone ? 0 : 1, Math.min(1, dt * 2));
       if (a.gone && a.alpha < 0.02) { a.hidden = true; }
@@ -92,6 +106,8 @@
         glow: !!sq.glowOn,
         hidden: Math.round((sq.hidden || 0) * 100) / 100,
         flash: sq.flash && sq.flashAmt > 0.3 ? sq.flash : '',
+        dirt: SO.dirt ? Math.round(SO.dirt.level(sq) * 100) / 100 : 0,
+        grime: SO.dirt ? SO.dirt.mainKind(sq) : '',
       });
       this.busy = false;
       // The session lost track of our squid: saving again picks it back up.
@@ -101,7 +117,7 @@
       (r.body.others || []).forEach((p) => {
         const id = 'other:' + p.squidName;
         seen[id] = true;
-        const goal = { x: p.x, y: p.y, yaw: p.yaw, pitch: p.pitch, glow: p.glow, hidden: p.hidden, flash: p.flash };
+        const goal = { x: p.x, y: p.y, yaw: p.yaw, pitch: p.pitch, glow: p.glow, hidden: p.hidden, flash: p.flash, dirt: p.dirt || 0, grime: p.grime || '' };
         const a = E.actor(id);
         if (a) { a.goal = goal; a.gone = false; a.hidden = false; }
         else { E.addActor(E.room, { id, type: 'otherSquid', name: p.squidName, x: p.x, y: p.y, goal, alpha: 0 }); }

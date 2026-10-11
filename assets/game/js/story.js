@@ -28,7 +28,7 @@
 
   // Everything the squid can remember: real animals, plants, and things.
   const NATIVE = {
-    'vampire-squid': { kind: 'creature', name: 'Vampire squid', line: 'Lives in the fallen dome. Not really a squid, and not a vampire. Eats marine snow.' },
+    'vampire-squid': { kind: 'creature', name: 'Vampire squid', line: 'Lives in the fallen dome. Not really a squid. Only drinks from things that are already dead.' },
     'nautilus': { kind: 'creature', name: 'Nautilus', line: 'An old shelled cousin from the cliff cave. Can calm anything.' },
     'sepia': { kind: 'creature', name: 'Sepia', line: 'A cuttlefish in the kelp. Changes color faster than I can blink.' },
     'turtle': { kind: 'creature', name: 'Old Drift', line: 'A green sea turtle. Has seen everything twice.' },
@@ -54,7 +54,7 @@
     'glass': { kind: 'item', name: 'Glass from home', line: 'A piece of the island. When I touch one, I remember things.' },
   };
   const SKIN_WORDS = {
-    glow: { name: 'Glow', colors: 'G G G', line: 'Gold, gold, gold. Little lights along my belly turn on.', learn: 'Oh. I glow. That’s great, actually.' },
+    glow: { name: 'Glow', colors: 'G G G', line: 'Gold, gold, gold. Little lights along my belly turn on, for a minute or so.', learn: 'Oh. I glow. That’s great, actually.' },
     open: { name: 'Open', colors: 'R W R', line: 'Red, pale, red. Doors in the dome open. So do clams.', learn: 'Red, pale, red. And it opened!' },
     calm: { name: 'Calm', colors: 'W B W', line: 'Pale, shimmer, pale. Angry things settle down.', learn: 'Pale, shimmer, pale. That calms things down. Me included.' },
     cloud: { name: 'Passing cloud', colors: 'R R B', line: 'Red, red, shimmer. Dark bands roll over me and I turn into a shadow.', learn: 'Red, red, shimmer. I’m a shadow now. A very big shadow.' },
@@ -197,29 +197,33 @@
     describe(o) {
       const id = o.id || '', t = o.type;
       if (t === 'oddity') { return SO.oddities.KINDS[o.kind].desc; }
-      if (t === 'otherSquid') { return ('Another squid: ' + o.name).slice(0, 39); }
-      if (id.startsWith('friend-')) { return 'A friend, here to see you off.'; }
-      if (t === 'archivist') { return 'A vampire squid. Seems friendly.'; }
-      if (t === 'nautilus') { return 'An old nautilus. Very slow.'; }
-      if (t === 'sepia') { return o.hiding ? 'Something shimmering in the kelp.' : 'A cuttlefish. Hard to keep track of.'; }
-      if (t === 'turtle') { return 'A sea turtle, old as rocks.'; }
-      if (t === 'tongue') { return o.calmed ? 'A moray eel, calm for now.' : 'A moray eel. Mostly teeth.'; }
-      if (t === 'keeper') { return 'A huge seven-arm octopus.'; }
-      if (t === 'dumbo') { return 'A dumbo octopus, flapping.'; }
-      if (t === 'humboldt') { return 'Humboldt squid. Grumpy cousins.'; }
-      if (t === 'whale') { return 'A sperm whale. Very big.'; }
-      if (t === 'jellies') { return 'Crown jellies, blinking blue.'; }
-      if (t === 'gem') { return 'A pearl. Shiny!'; }
-      if (t === 'memory') { return 'A piece of glass from home.'; }
-      if (t === 'feather') { return 'A swan feather.'; }
-      if (t === 'bubble') { return o.golden ? 'A golden bubble?!' : 'A bubble.'; }
-      if (t === 'trace') { return 'Another squid\u2019s colors, fading.'; }
-      if (t === 'vent') { return 'An underwater volcano.'; }
-      if (t === 'species') { return o.sp ? (o.sp.name + (o.remembered ? '.' : '. Never seen one.')).slice(0, 39) : 'Something I don\u2019t recognize.'; }
-      if (id === 'petal-door') { return this.petalOpen() >= 1 ? 'Glass petals, wide open.' : 'Glass petals, closed tight.'; }
-      if (id === 'hall-door') { return 'A crack in the dome. I fit.'; }
-      if (id === 'mouth-door') { return 'A cave. Very, very dark.'; }
-      if (id === 'thread') { return 'The waterfall. Home is up there.'; }
+      if (t === 'otherSquid') {
+        const lvl = o.sq && SO.dirt ? SO.dirt.level(o.sq) : 0;
+        const grime = { sand: 'Sandy', silt: 'Silty', mud: 'Muddy', muck: 'Slimy', soot: 'Sooty', glass: 'Glittery' }[o.goal && o.goal.grime];
+        return lvl > 0.25 && grime ? grime + ' ' + o.name.split('-')[0] + ' squid' : 'Squid ' + o.name;
+      }
+      if (id.startsWith('friend-')) { return 'A friend'; }
+      if (t === 'archivist') { return 'A vampire squid'; }
+      if (t === 'nautilus') { return 'An old nautilus'; }
+      if (t === 'sepia') { return o.hiding ? 'Something shimmering' : 'A cuttlefish'; }
+      if (t === 'turtle') { return 'An old sea turtle'; }
+      if (t === 'tongue') { return o.calmed ? 'A calm moray eel' : 'A moray eel. Teeth.'; }
+      if (t === 'keeper') { return 'A huge octopus'; }
+      if (t === 'dumbo') { return 'A dumbo octopus'; }
+      if (t === 'humboldt') { return 'Humboldt squid'; }
+      if (t === 'whale') { return 'A sperm whale'; }
+      if (t === 'jellies') { return 'Crown jellies'; }
+      if (t === 'gem') { return 'A pearl'; }
+      if (t === 'memory') { return 'Glass from home'; }
+      if (t === 'feather') { return 'A swan feather'; }
+      if (t === 'bubble') { return o.golden ? 'A golden bubble' : 'A bubble'; }
+      if (t === 'trace') { return 'Fading squid colors'; }
+      if (t === 'vent') { return 'An undersea volcano'; }
+      if (t === 'species') { return o.sp ? o.sp.name : 'Something new'; }
+      if (id === 'petal-door') { return this.petalOpen() >= 1 ? 'Open glass petals' : 'Closed glass petals'; }
+      if (id === 'hall-door') { return 'A crack in the dome'; }
+      if (id === 'mouth-door') { return 'A dark cave'; }
+      if (id === 'thread') { return 'The waterfall home'; }
       return '';
     },
 
@@ -312,6 +316,16 @@
         UI.thought('Oh no. It noticed that.');
       }
       return false;
+    },
+
+    // Patterns played backwards, and glows wearing off. (Things that read the same both ways
+    // can't be undone.)
+    onUndo(name, undid, room) {
+      if (undid && !this.has('undoSaid')) { this.flag('undoSaid'); UI.thought('Backwards, it takes itself back.'); return; }
+      if (!undid && name === 'wake' && E.actor('vent')) { UI.thought('The volcano’s not listening. Too late for that.'); }
+    },
+    onGlowOut() {
+      if (!this.has('glowOutSaid')) { this.flag('glowOutSaid'); UI.thought('My light went out. There’s no taking a glow back. It just wears off.'); }
     },
 
     // ── Bubbles: now and then a few drift through. Golden ones are special. ────
@@ -998,7 +1012,7 @@
       this.flag('metVamp');
       await speak(v, ['Oh! Hello. Did you fall too?'], VAMP);
       await me('I think so. I was up there. Then I wasn’t.');
-      await speak(v, ['This dome fell a long time ago. I live in it now.', 'I’m a vampire squid. Don’t worry. I only eat snow.'], VAMP);
+      await speak(v, ['This dome fell a long time ago. I live in it now.', 'I’m a vampire squid. Don’t worry. I only drink from things that are already dead.'], VAMP);
       await me('I want to go home.');
       await speak(v, ['Everyone who falls says that.', 'First things first. The doors in here open if you flash at them. Watch.'], VAMP);
       E.lock();

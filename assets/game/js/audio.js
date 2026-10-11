@@ -147,6 +147,13 @@
       const n = SKIN_NOTES[color];
       if (n) { this.bell(NOTE(n), Object.assign({ gain: 0.07, dur: 1.8 }, opts)); }
     },
+    // A tiny, soft bubble for each few letters of text appearing. Almost not there.
+    blip() {
+      if (!this.ctx || this.muted) { return; }
+      const f = 520 + Math.random() * 520;
+      this.tone(f, { dur: 0.05 + Math.random() * 0.03, gain: 0.0035 + Math.random() * 0.002, attack: 0.004, glide: 1.5 + Math.random() * 0.4, type: 'sine' });
+    },
+
     // Someone else's skin-speech: exactly the same notes as yours (so you can play it back and
     // hear that it matches), just a little further away. Each voice only changes how far off it sounds.
     skinOther(color, voice = 0) {

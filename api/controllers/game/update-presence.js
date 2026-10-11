@@ -23,6 +23,8 @@ can see your squid swimming around in the same room as theirs.`,
     glow: { type: 'boolean', defaultsTo: false, description: 'Whether its lights are on.' },
     hidden: { type: 'number', defaultsTo: 0, description: 'How much it\'s hiding (0..1).' },
     flash: { type: 'string', isIn: ['', 'W', 'R', 'B', 'G'], defaultsTo: '', description: 'The skin color it\'s flashing right now, if any.' },
+    dirt: { type: 'number', defaultsTo: 0, description: 'How dirty it is (0..1).' },
+    grime: { type: 'string', isIn: ['', 'sand', 'silt', 'mud', 'muck', 'soot', 'glass'], defaultsTo: '', description: 'What it\'s mostly covered in, if anything.' },
 
   },
 
@@ -30,7 +32,7 @@ can see your squid swimming around in the same room as theirs.`,
   exits: {
 
     success: {
-      outputDescription: '`{ others: [{ squidName, x, y, yaw, pitch, glow, hidden, flash, age }], serverNow }`: the other squids in the same room, seen in the last 10 seconds.'
+      outputDescription: '`{ others: [{ squidName, x, y, yaw, pitch, glow, hidden, flash, dirt, grime, age }], serverNow }`: the other squids in the same room, seen in the last 10 seconds.'
     },
 
     noSave: {
@@ -41,7 +43,7 @@ can see your squid swimming around in the same room as theirs.`,
   },
 
 
-  fn: async function ({ room, x, y, yaw, pitch, glow, hidden, flash }) {
+  fn: async function ({ room, x, y, yaw, pitch, glow, hidden, flash, dirt, grime }) {
 
     // Remember the squid's name on the session, so this doesn't hit the database every time.
     // (It's remembered alongside the save token it came from, so falling again as a new squid
@@ -62,6 +64,7 @@ can see your squid swimming around in the same room as theirs.`,
       x: Math.round(x), y: Math.round(y),
       yaw: Math.max(-1, Math.min(1, yaw)), pitch: Math.max(-1.6, Math.min(1.6, pitch)),
       glow, hidden: Math.max(0, Math.min(1, hidden)), flash,
+      dirt: Math.max(0, Math.min(1, dirt)), grime,
       seenAt: now,
     };
 
@@ -79,7 +82,7 @@ can see your squid swimming around in the same room as theirs.`,
     }
 
     var rows = await Presence.find({ room, seenAt: { '>=': now - 10000 }, squidName: { '!=': squidName } });
-    var others = rows.map((p) => ({ squidName: p.squidName, x: p.x, y: p.y, yaw: p.yaw, pitch: p.pitch, glow: p.glow, hidden: p.hidden, flash: p.flash, age: now - p.seenAt }));
+    var others = rows.map((p) => ({ squidName: p.squidName, x: p.x, y: p.y, yaw: p.yaw, pitch: p.pitch, glow: p.glow, hidden: p.hidden, flash: p.flash, dirt: p.dirt || 0, grime: p.grime || '', age: now - p.seenAt }));
     return { others, serverNow: now };
 
   }
