@@ -448,6 +448,8 @@
       // The wider sea: side places, opened up so they don't skip the story.
       if (room.key === 'tether-twilight' && dir === 'up' && ch < 6) { return 'The water up the chain tears along too fast. I can’t swim up into that. Not yet.'; }
       if (room.key === 'trench-floor' && dir === 'right' && !this.has('fellThrough')) { return 'Something’s out there in the dark. Not now.'; }
+      // The sky: the keels of the islands are the highest a squid can swim, and not until the end.
+      if (room.key === 'rain-cloud' && dir === 'up' && ch < 7) { return 'Wind pours down off the island up there. It shoves me back into the cloud. Not yet.'; }
       return null;
     },
 

@@ -10,9 +10,12 @@ module.exports = {
   extendedDescription:
 `Use this for "what is the <creature>?", "what lives in <region>?" (search by region or room), or "how many squids have met <creature>?".
 
-"native" species are the world's permanent inhabitants, nearly all real.  A few are made up for
-this world (the stone hummer, the hushmouth, the bell whelk, and node reeds): those have an empty
-\`commonName\` and \`latin\`, and their first \`realWorld\` line says so.  They're stored in the database
+"native" species are the world's permanent inhabitants, mostly real.  Some are made up for this
+world: those have \`madeUp\` true (\`real\` false), an empty \`commonName\` and \`latin\`, and their first
+\`realWorld\` line says so.  Made up: the stone hummer, the hushmouth, the bell whelk, node reeds, the
+Holder, the swan who waited (a character), the singing shards, the pale reed stalk, the float full of
+rain, cucumberbananadogs, spine sponges, sphinx fish, hookbills, and spearnecks.  Everything else is a
+real animal, plant, or thing, and its \`realWorld\` facts are true.  They're stored in the database
 (NativeSpecies), each with \`key\`, \`kind\`, \`name\` (what it's called in the game), \`commonName\`,
 \`latin\`, \`regions\` and \`places\` (region and room keys where it lives; see get-lore), \`teaches\` (the skin
 word it teaches, if any; see get-skin-words), \`smell\` (the scent trail a squid can follow to it, if any),
@@ -38,6 +41,15 @@ The natives:
   ("glass-coral"), sea fans ("bone-fan"), sargassum, seagrass, bacterial mats (which live on
   chemicals, not light), and node reeds (made up: each stalk is tuned to one skin color).
 - Items: pearls (called gems in the API), a swan feather, and glass from home (three memories).
+- From the side places and the way home: the swell shark and its egg case (a mermaid's purse),
+  flashlight fish (in the cave behind the glowing ledges), the singing shards and the pale reed stalk
+  (which lead to the skin words lift and still), the float full of rain, the Holder (the warm room), and,
+  at home at the very end (spoilers), the old axolotl, the strangers (cormorants), and the swan who waited.
+- From the far west (see get-west-path): lungfish, mudskippers, sea stars, flying fish, ghost crabs,
+  golden jellies, brine shrimp, sea skaters, snake eels, blind cave fish, the tongue louse, bone worms,
+  hagfish, ribbonfish, lightning glass (fulgurite), green glass lumps (glassy slag), squid beaks, and the
+  made-up cucumberbananadogs, spine sponges, sphinx fish, hookbills, and spearnecks.  Their \`places\`
+  use room keys like "west:14" (the first crossing's place) and "west-in:42:4" (inside a landmark).
 
 "generated" species are procedurally generated and shared: each was introduced to the world by the
 first squid to meet it.  Each has \`key\` (e.g. "creature:3"), \`kind\`, \`slot\`, \`name\`, \`traits\` (colours as
@@ -75,7 +87,7 @@ Use \`search\` to find something by name (e.g. "moray", "jelly", "octopus", "Aur
     success: {
       outputFriendlyName: 'Species',
       outputDescription:
-        '`{ native: [{ key, kind, name, commonName, latin, regions, places, teaches, smell, blurb, role, realWorld, metBy }], generated }`.  '+
+        '`{ native: [{ key, kind, name, commonName, latin, madeUp, real, regions, places, teaches, smell, blurb, role, realWorld, metBy }], generated }`.  '+
         'Natives in the order creatures, plants, items; generated species sorted by kind, then by the order they were introduced.'
     },
 
@@ -104,7 +116,12 @@ Use \`search\` to find something by name (e.g. "moray", "jelly", "octopus", "Aur
     native = _.sortBy(native, (species) => order.indexOf(species.key)).map((species) => _.omit(species, ['id', 'createdAt', 'updatedAt', 'contentHash']));
 
     var tally = await sails.helpers.world.tallySquidKnowledge();
-    native.forEach((species) => { species.metBy = tally.nativesMet[species.key] || 0; });
+    var madeUp = _.indexBy(expected, 'key');
+    native.forEach((species) => {
+      species.madeUp = !!(madeUp[species.key] && madeUp[species.key].madeUp);
+      species.real = !species.madeUp;
+      species.metBy = tally.nativesMet[species.key] || 0;
+    });
 
     var generated = await Species.find(kind ? { kind } : {}).sort([{ kind: 'ASC' }, { slot: 'ASC' }]);
 

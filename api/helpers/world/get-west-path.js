@@ -5,7 +5,7 @@
 // what kind, how high, its name and ways out) is exactly what the game makes.  If any of that can't
 // be read, the snapshots below are used instead.
 //
-// The west never ends now (CROSSINGS = Infinity, WEST_END = null in west.js), and past west:120 it
+// The west never ends now (CROSSINGS = Infinity, WEST_END = null in west.js), and from HIGH_FROM on it
 // rises into the highlands.
 //
 // A deliberate mystery: how the glass city flies is an open question.  Never state an answer here,
@@ -48,7 +48,7 @@ const BAND_NOTES = {
 const SCARY_BIRDS_FROM = 22;
 const CROSSING_SNAPSHOT = 60;
 const CROSSINGS_SNAPSHOT = Infinity;// it never ends
-const HIGH_FROM_SNAPSHOT = 121;
+const HIGH_FROM_SNAPSHOT = 15;
 const RECALL_SNAPSHOT = ['', 'again', 'older', 'grown over', 'half buried', 'in the dark', 'smaller than I remember', 'upside down', 'still there', 'remembered wrong', 'crowded', 'empty', 'singing', 'bleached', 'broken', 'mended', 'very old', 'new again', 'far away', 'close up'];
 const ORD = ['first', 'second', 'third', 'fourth', 'fifth', 'sixth', 'seventh', 'eighth', 'ninth', 'tenth'];
 const ordinal = (k) => { var m = k % 100; return k + (m >= 11 && m <= 13 ? 'th' : ({ 1: 'st', 2: 'nd', 3: 'rd' }[k % 10] || 'th')); };
@@ -150,6 +150,10 @@ function readFromClient() {
     var crossings = src.match(/\bCROSSINGS\s*=\s*(\d+|Infinity)/);
     var westEnd = src.match(/\bWEST_END\s*=\s*(\d+|null)/);
     var highFrom = src.match(/\bHIGH_FROM\s*=\s*(\d+)/);
+    // How likely a place is to be highland: clamp(base + (n - HIGH_FROM) / per, base, 1) (or the older
+    // clamp((n - HIGH_FROM) / per, base, 1)).
+    var chance = src.match(/clamp\(([0-9.]+) \+ \(n - HIGH_FROM\) \/ (\d+), ([0-9.]+), 1\)/);
+    var chanceOld = src.match(/clamp\(\(n - HIGH_FROM\) \/ (\d+), ([0-9.]+), 1\)/);
     var recallLine = src.match(/const RECALL = \[(.*)\];/);
     var recall = recallLine ? (recallLine[1].match(/'((?:[^'\\]|\\.)*)'/g) || []).map((q) => unquote(q.slice(1, -1))) : [];
     out = {
@@ -160,6 +164,7 @@ function readFromClient() {
       crossings: crossings ? Number(crossings[1]) : null,// Number('Infinity') is Infinity
       westEnd: westEnd ? (westEnd[1] === 'null' ? null : Number(westEnd[1])) : undefined,
       highFrom: highFrom ? Number(highFrom[1]) : null,
+      highChance: chance ? { base: Number(chance[1]), per: Number(chance[2]), offset: Number(chance[1]) } : chanceOld ? { base: Number(chanceOld[2]), per: Number(chanceOld[1]), offset: 0 } : null,
       recall: recall.length ? recall : null,
     };
   } catch (err) {
@@ -250,6 +255,10 @@ run in a sandbox so the answer is exactly the place the game makes.`,
     var perCrossing = read.crossing || CROSSING_SNAPSHOT;
     var crossings = read.crossings || CROSSINGS_SNAPSHOT;
     var highFrom = read.highFrom || HIGH_FROM_SNAPSHOT;
+    var highChance = read.highChance || { base: 0.15, per: 600, offset: 0.15 };
+    // Where every place is highland: offset + (n - highFrom) / per reaches 1.
+    var allHighFrom = Math.round(highFrom + (1 - highChance.offset) * highChance.per);
+    var pct = (v) => Math.round(v * 100)+'%';
     var recall = read.recall || RECALL_SNAPSHOT;
     // It never ends, unless the game ever gives it an end again.
     var end = read.westEnd ? read.westEnd : (read.westEnd === null || !isFinite(crossings) ? null : perCrossing * crossings);
@@ -298,9 +307,9 @@ run in a sandbox so the answer is exactly the place the game makes.`,
       },
       highlands: {
         from: highFrom,
-        about: 'Past west:'+(highFrom - 1)+' the land rises out of the sea. More and more places are highland: about one in ten just past west:'+(highFrom - 1)+', more the farther you go, until every place is (around west:'+(highFrom + 7080)+'). Highland places are fresh water between rock, with mountains behind, higher and whiter the higher you have come. Out of the water, on ridges and snowfields, the breath runs down (see the breath limit). Some climbs go up a waterfall (the way on is up), some go down a sinkhole and through an aquifer in the rock ("aq:N", then "aq2:N"), which is an ice cave higher up (above about 1,200 m). Above about 1,400 m it is cold, with snow everywhere. It gets harder the farther you go, and it never ends.',
+        about: 'From west:'+highFrom+' on, the land rises out of the sea. More and more places are highland: about '+pct(highChance.base)+' of them at first, more the farther you go, until every place is (from around west:'+allHighFrom+'). Highland places are fresh water between rock, with mountains behind, higher and whiter the higher you have come. Out of the water, on ridges and snowfields, the breath runs down (see the breath limit). Some climbs go up a waterfall (the way on is up), some go down a sinkhole and through an aquifer in the rock ("aq:N", then "aq2:N"), which is an ice cave higher up (above about 1,200 m). Above about 1,400 m it is cold, with snow everywhere. It gets harder the farther you go, and it never ends.',
         types: _.map(HIGHLAND_TYPES, (about, type) => ({ type, about })),
-        elevation: 'Measured in meters climbed since west:'+(highFrom - 1)+' (0 before it): each climb (a waterfall or a sinkhole) is about 140 m, each other highland place about 6 m, each place at sea level 1 m. Highland rooms have it in their names, e.g. "A high lake (1,106 m up)".',
+        elevation: 'Measured in meters climbed from west:'+highFrom+' on (0 before it): each climb (a waterfall or a sinkhole) is about 140 m, each other highland place about 6 m, each place at sea level 1 m. Highland rooms have it in their names, e.g. "A high lake (1,106 m up)".',
         aquifers: 'Under a sinkhole lake at west:N: "aq:N" (east, then west), "aq2:N" (going up), coming out at the spring at west:N+1.',
       },
       interiors: _.map(interiorNames, (names, key) => {
@@ -383,7 +392,7 @@ run in a sandbox so the answer is exactly the place the game makes.`,
         interiors: landmarkKey && interiorNames[landmarkKey] ? interiorNames[landmarkKey].map((nm, i) => ({ room: 'west-in:'+at+':'+(i + 1), name: nm })) : [],
         exits,
         leadsWestTo: !exists ? null : exits ? (exits.left || exits.up || exits.down || null) : 'west:'+(at + 1),
-        note: !exists ? 'There\'s no place there: places west start at west:1.' : !made && at >= highFrom ? 'Past west:'+(highFrom - 1)+' a place may be highland; this one is too far out to work out here.' : '',
+        note: !exists ? 'There\'s no place there: places west start at west:1.' : !made && at >= highFrom ? 'From west:'+highFrom+' on a place may be highland; this one is too far out to work out here.' : '',
       };
     }
 

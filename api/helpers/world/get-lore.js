@@ -59,6 +59,13 @@ const REGIONS = [
     summary: 'An undersea volcano and hydrothermal vent next to the octopus garden ("forge" in the API). Any squid can wake it with "wake" while it\'s dormant; it erupts for 20 minutes and cools for 40, for everyone.' },
   { key: 'plunge', name: 'The Plunge', dirt: 'silt', places: [{ key: 'plunge', name: 'The Plunge' }, { key: 'plunge-deep', name: 'Beneath the Plunge' }],
     summary: 'Far to the east, where the water from the sky islands pours into the sea. The swans\' song comes down with the falling water.' },
+  { key: 'sky', name: 'The sky', dirt: null, places: [
+    { key: 'rain-column', name: 'In the rain' }, { key: 'rain-cloud', name: 'Inside the rain cloud' }, { key: 'rain-keel', name: 'Under the keel' },
+    { key: 'spray-mist', name: 'The spray' }, { key: 'cloud-sea', name: 'The cloud sea' },
+  ], summary: 'Above the sea, where there is just enough water in the air to swim: up a sheet of rain under the low island (Where it rains), or up the waterfall\'s spray at the spray zone, into the cloud sea, and, from chapter 7, up to the dripping keels under an island. Out of the rain, the mist or the cloud, it\'s only air, and falling. See get-levels (the rain and the spray, the cloud sea, the keels).' },
+  { key: 'home', name: 'Home (the island tops)', dirt: null, places: [
+    { key: 'home-lip', name: 'The top of the waterfall' }, { key: 'home-rings', name: 'The twelve rings' }, { key: 'home-pool', name: 'The pool' },
+  ], summary: 'The tops of the sky islands, where the squid hatched: grass, glass domes, streams running to the edge. Only reachable at the very end, up the waterfall (a story-ending spoiler; see story-homecoming).' },
 ];
 
 const SMELLS = [

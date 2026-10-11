@@ -540,7 +540,10 @@
     else if (entry.from) {
       const fx = entry.frac !== undefined ? entry.frac : 0.5;
       if (entry.from === 'up') {// came down from above: appear at the top
-        x = room.ceilGap ? (room.ceilGap[0] + room.ceilGap[1]) / 2 * w : fx * w; y = room.surfaceY ? room.surfaceY + 120 : 90;
+        // (Falling out of the sky, you come down wherever you fell; through a hole in rock, at the hole.)
+        const open = room.surfaceY !== null && (room.def.upExit || room.def.sky);
+        x = room.ceilGap && !open ? (room.ceilGap[0] + room.ceilGap[1]) / 2 * w : fx * w;
+        y = room.surfaceY !== null && !room.def.sky ? room.surfaceY + 120 : 90;
       } else if (entry.from === 'down') {
         x = room.floorGap ? (room.floorGap[0] + room.floorGap[1]) / 2 * w : fx * w; y = h - 90;
       } else if (entry.from === 'left') { x = 90; y = fx * h; }
@@ -797,6 +800,12 @@
     if (inAir) {
       sq.vy += 760 * dt;// out of the water you're just a falling squid
       if (sq._touchingRock) { sq.vx *= Math.exp(-4 * dt); }// lying on rock: you don't slide far
+      // On land, heading somewhere: it walks, slowly, on its arms (a little hitch with each step).
+      if (sq._touchingRock && strength > 0.05 && !this.locked && !(SO.breath && SO.breath.thrashing)) {
+        sq.vx = U.clamp(sq.vx + Math.sign(dx || 0) * 600 * dt, -110, 110);
+        if (Math.sin(sq.t * 9) > 0.9 && sq.vy > -20) { sq.vy = -70; }
+        sq.walking = true;
+      } else { sq.walking = false; }
       sq.dvx = sq.vx; sq.dvy = sq.vy;
       sq.vx *= Math.exp(-0.15 * dt);
     } else {
@@ -1245,7 +1254,7 @@
     let fx = sq.x + Math.cos(sq.angle) * 50 + sq.vx * 0.3, fy = sq.y + sq.vy * 0.22;
     if (this.camFocus) { fx = this.camFocus.x; fy = this.camFocus.y; }
     let tx = fx - vw / 2, ty = fy - vh / 2;
-    const top = room.surfaceY !== null ? room.surfaceY - 170 : 0;
+    const top = room.def.camTop !== undefined ? room.def.camTop : room.surfaceY !== null ? room.surfaceY - 170 : 0;// (sky places show all of themselves)
     tx = room.w <= vw ? (room.w - vw) / 2 : U.clamp(tx, 0, room.w - vw);
     ty = room.h - top <= vh ? (room.h + top - vh) / 2 : U.clamp(ty, top, room.h - vh);
     if (snap || !isFinite(this.cam.x) || !isFinite(this.cam.y)) { this.cam.x = tx; this.cam.y = ty; return; }
@@ -1626,15 +1635,19 @@
     if (open('left')) { band(0, 0, 220, 0); }
     if (open('right')) { band(room.w, 0, room.w - 220, 0); }
     if (open('down')) { const g0 = room.floorGap ? room.floorGap[0] * room.w : 0, g1 = room.floorGap ? room.floorGap[1] * room.w : room.w; ctx.save(); ctx.beginPath(); ctx.rect(g0, 0, g1 - g0, room.h + 10); ctx.clip(); band(0, room.h, 0, room.h - 220); ctx.restore(); }
-    if (open('up') && room.surfaceY === null) { const g0 = room.ceilGap ? room.ceilGap[0] * room.w : 0, g1 = room.ceilGap ? room.ceilGap[1] * room.w : room.w; ctx.save(); ctx.beginPath(); ctx.rect(g0, -10, g1 - g0, room.h); ctx.clip(); band(0, 0, 0, 220); ctx.restore(); }
+    // (In a surface place, up is the sky: only a way you can climb, like a waterfall or a sheet of rain, counts.
+    // Up in the sky places themselves, it's a side like any other.)
+    const upSide = room.surfaceY === null || !!room.def.upExit || !!room.def.sky;
+    if (open('up') && upSide) { const g0 = room.ceilGap ? room.ceilGap[0] * room.w : 0, g1 = room.ceilGap ? room.ceilGap[1] * room.w : room.w; ctx.save(); ctx.beginPath(); ctx.rect(g0, -10, g1 - g0, room.h); ctx.clip(); band(0, 0, 0, 220); ctx.restore(); }
     ['left', 'right', 'up', 'down'].forEach((d) => {
-      if (d === 'up' && room.surfaceY !== null) { return; }
+      if (d === 'up' && !upSide) { return; }
       if (blocked(d)) { this.drawCurrent(ctx, d); return; }
       if (ex[d]) { return; }
       // a gap in the rock with nowhere to go through it: show the water pushing back there, too
       if ((d === 'up' && room.ceilGap && room.ceiling) || (d === 'down' && room.floorGap && room.floor)) { this.drawCurrent(ctx, d); return; }
       const covered = d === 'left' ? room.wallL : d === 'right' ? room.wallR : d === 'up' ? !!room.ceiling : !!room.floor;
-      if (!covered) { this.drawEdgeRock(ctx, d); }
+      if (!covered && room.def.edge === 'wind') { this.drawCurrent(ctx, d); }// (open sky: wind pushing you back)
+      else if (!covered && !(d === 'up' && room.surfaceY !== null)) { this.drawEdgeRock(ctx, d); }
     });
     ctx.restore();
   };
@@ -1648,10 +1661,11 @@
     ctx.save();
     const edge = d === 'left' ? 0 : d === 'right' ? room.w : d === 'up' ? 0 : room.h, inward = d === 'left' || d === 'up' ? 1 : -1;
     const g = vert ? ctx.createLinearGradient(0, edge, 0, edge + inward * W) : ctx.createLinearGradient(edge, 0, edge + inward * W, 0);
-    g.addColorStop(0, 'rgba(6,14,22,0.55)'); g.addColorStop(1, 'rgba(6,14,22,0)');
+    const sky = !!room.def.sky;// (up in the sky it's wind: pale, not dark water)
+    g.addColorStop(0, sky ? 'rgba(236,242,248,0.45)' : 'rgba(6,14,22,0.55)'); g.addColorStop(1, sky ? 'rgba(236,242,248,0)' : 'rgba(6,14,22,0)');
     ctx.fillStyle = g;
-    if (vert) { ctx.fillRect(g0, Math.min(edge, edge + inward * W), g1 - g0, W); } else { ctx.fillRect(Math.min(edge, edge + inward * W), 0, W, room.h); }
-    ctx.strokeStyle = 'rgba(190,215,230,0.22)'; ctx.lineWidth = 1.5;
+    if (vert) { ctx.fillRect(g0, Math.min(edge, edge + inward * W), g1 - g0, W); } else { ctx.fillRect(Math.min(edge, edge + inward * W), sky ? -100 : 0, W, room.h + (sky ? 200 : 0)); }
+    ctx.strokeStyle = sky ? 'rgba(255,255,255,0.5)' : 'rgba(190,215,230,0.22)'; ctx.lineWidth = 1.5;
     for (let i = 0; i < 26; i++) {
       const along = g0 + (i / 26) * (g1 - g0), k = ((t * 0.7 + i * 0.37) % 1), dep = k * W, len = 26;
       ctx.globalAlpha = 1 - k;

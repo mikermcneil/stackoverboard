@@ -17,6 +17,9 @@
  * Deliberate exceptions are listed in EXCEPTIONS below, each with the reason.
  */
 
+/* global Set, Proxy */
+/* eslint-disable one-var */
+
 const fs = require('fs');
 const path = require('path');
 const vm = require('vm');
@@ -34,7 +37,7 @@ const EXCEPTIONS = {
   'riser>down': ['map'], 'riser>up': ['map'], 'keeper-hall>up': ['map'], 'warm-shallows>down': ['map'],
   // Falling out of the sky: you can drop into a surface place anywhere, but only climb back up where
   // there's water to climb (a sheet of rain, the spray).  The way up is narrower than the way down.
-  'rain-column>down': ['width'], 'spray-mist>down': ['width'], 'rain-cloud>down': ['width'], 'cloud-sea>down': ['width'],
+  'rain-column>down': ['width'], 'spray-mist>down': ['width'], 'rain-cloud>down': ['width'], 'cloud-sea>down': ['width'], 'rain-keel>down': ['width'],
 };
 const excused = (room, dir, check) => {
   const e = EXCEPTIONS[dir ? room + '>' + dir : room];

@@ -32,6 +32,28 @@
           SO.story.screenFx(this.ctx, this.W, this.H, this.t);
         }
       };
+      // Naming your squid on the first page: Enter confirms it (and you can see and hear that it did).
+      const pick = $('name-pick');
+      if (pick) {
+        const ok = document.createElement('span'); ok.className = 'name-ok'; pick.insertAdjacentElement('afterend', ok);
+        const confirm = async () => {
+          const v = pick.value.trim();
+          if (!v) { ok.textContent = ''; return; }
+          AU.start(); AU.marimba && [74, 81].forEach((n, i) => AU.marimba(AU.NOTE(n), { when: i * 0.1, gain: 0.06, dur: 1.4 }));
+          ok.textContent = '✓ That’s my name now: ' + v + '. Scroll down to begin.';
+          pick.classList.add('saved');
+          if (save.enabled) {// already have a squid? rename it right now
+            const r = await save.rename(v);
+            ok.textContent = r.ok ? '✓ That’s my name now: ' + r.squidName + '. Scroll down to begin.' : (r.why === 'taken' ? 'Another squid has that name. Try another?' : r.why === 'invalid' ? 'A letter or number, please (2 to 40).' : '✓ I’ll remember it. Scroll down to begin.');
+            if (!r.ok && r.why !== 'offline') { pick.classList.remove('saved'); }
+          }
+        };
+        pick.addEventListener('keydown', (e) => { e.stopPropagation(); if (e.key === 'Enter') { e.preventDefault(); confirm(); pick.blur(); } });
+        pick.addEventListener('input', () => { pick.classList.remove('saved'); ok.textContent = ''; });
+        pick.addEventListener('change', confirm);
+        pick.addEventListener('pointerdown', (e) => e.stopPropagation());
+      }
+
       // Any first gesture can start the sound.
       const unlock = () => { AU.start(); AU.setMuted(save.data ? save.data.settings.muted : false); $('sound-hint').classList.add('gone'); };
       window.addEventListener('pointerdown', unlock, { once: true });
@@ -60,7 +82,7 @@
         2: { chapter: 1, room: 'hollowglass-hall', patterns: ['glow', 'open'], flags: ['skinRevealed', 'metVamp', 'petalOpen'] },
         3: { chapter: 2, room: 'cliff-foot', patterns: ['glow', 'open', 'calm', 'cloud'], flags: ['skinRevealed', 'metVamp', 'petalOpen', 'morayCalmed'] },
         4: { chapter: 3, room: 'below:0,7', patterns: ['glow', 'open', 'calm', 'cloud'], flags: ['skinRevealed', 'metVamp', 'petalOpen', 'morayCalmed', 'whaleIntro', 'fellThrough'] },
-        5: { chapter: 4, room: 'undershine-gate', patterns: ['glow', 'open', 'calm', 'cloud'], flags: ['skinRevealed', 'metVamp', 'petalOpen', 'morayCalmed', 'whaleIntro', 'fellThrough'] },
+        5: { chapter: 4, room: 'undershine-gate', patterns: ['glow', 'open', 'calm', 'cloud'], flags: ['skinRevealed', 'metVamp', 'petalOpen', 'morayCalmed', 'whaleIntro', 'fellThrough'], gems: 5 },// (Grandmother Seven teaches wake for five pearls)
         6: { chapter: 5, room: 'warm-shallows', patterns: ['glow', 'open', 'calm', 'cloud', 'wake'], flags: ['skinRevealed', 'metVamp', 'petalOpen', 'morayCalmed', 'whaleIntro', 'fellThrough'], memories: [1, 2] },
         7: { chapter: 6, room: 'plunge', patterns: ['glow', 'open', 'calm', 'cloud', 'wake'], flags: ['skinRevealed', 'metVamp', 'petalOpen', 'morayCalmed', 'whaleIntro', 'fellThrough', 'plungeSaid'], memories: [1, 2, 3] },
       }[ch];
@@ -69,6 +91,7 @@
       SKIP.patterns.forEach((p) => save.learn(p));
       SKIP.flags.forEach((f) => save.flag(f));
       (SKIP.memories || []).forEach((m) => { if (d.memories.indexOf(m) === -1) { d.memories.push(m); } });
+      if (SKIP.gems) { d.gems = Math.max(d.gems || 0, SKIP.gems); }
       for (let c = 1; c <= SKIP.chapter; c++) { save.flag('fp:ch' + c); }// (no catching up on old cutscenes)
       save.flag('skippedTo', ch);
       save.touch(100);
@@ -89,8 +112,11 @@
       if (!save.enabled) { await save.start(false); }
       if (!save.data) { save.data = save.defaults(); }
       // A name chosen on the first page.
-      const picked = (document.getElementById('name-pick') || {}).value;
-      if (picked && picked.trim() && save.enabled) { save.rename(picked.trim()); }
+      const picked = ((document.getElementById('name-pick') || {}).value || '').trim();
+      if (picked && save.enabled && picked !== save.squidName) {
+        const r = await save.rename(picked);
+        if (r.ok) { setTimeout(() => UI.thought('My name is ' + r.squidName + '.'), 9000); }
+      }
       // Skipping ahead (the first page's "Start at")?
       const skipTo = +((document.getElementById('cheat-chapter') || {}).value || 1);
       if (skipTo > 1) { return this.skipAhead(skipTo); }

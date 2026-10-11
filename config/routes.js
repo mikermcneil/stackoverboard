@@ -100,6 +100,7 @@ module.exports.routes = {
   'GET   /api/v1/world/get-chat':                     { action: 'world/get-chat' },
   'GET   /api/v1/world/get-world-age':                { action: 'world/get-world-age' },
   'GET   /api/v1/world/get-west-path':                { action: 'world/get-west-path' },
+  'GET   /api/v1/world/get-levels':                   { action: 'world/get-levels' },
   'GET   /api/v1/world/get-squid':                    { action: 'world/get-squid' },
   'GET   /api/v1/world/get-records':                  { action: 'world/get-records' },
   'GET   /api/v1/world/get-interactions':             { action: 'world/get-interactions' },

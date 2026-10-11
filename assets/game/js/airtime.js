@@ -84,7 +84,7 @@
       $s().textContent = `${(h / UNITS_PER_M).toFixed(1)} m · ${words}`;
       clearTimeout(this._hideT);
       this._hideT = setTimeout(() => { if (!this.jump && !E.replaying) { hud.style.opacity = '0'; } }, 3200);
-      if (big) { setTimeout(() => this.replay(sY, power, sp), 1300); }
+      if (record && air > 1) { setTimeout(() => this.replay(sY, power, sp), 1300); }// a replay only for a new record
       else if (Math.random() < 0.4 && SO.ui) { SO.ui.thought(flop ? 'Ow. Flat. Every arm.' : 'Whee.'); }
     },
 

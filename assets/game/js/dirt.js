@@ -26,7 +26,7 @@
     glass: [190, 22, 78],// glass-sponge dust: pale and glittery
   };
   const REGION = { surface: 'sand', kelp: 'muck', cliff: 'silt', trench: 'silt', plunge: 'silt', below: 'mud', undershine: 'mud', hollowglass: 'glass', forge: 'soot' };
-  const MAX_SPOTS = 44;
+  const MAX_SPOTS = 60;
 
   const hsla = (c, a) => `hsla(${c[0]},${c[1]}%,${c[2]}%,${a})`;
 
@@ -54,7 +54,7 @@
         }
         const along = 24 + Math.random() * 150;
         const bias = side ? side * (6 + Math.random() * 16) : (Math.random() - 0.5) * 40;
-        sq.dirt.push({ x: along, y: U.clamp(bias + (Math.random() - 0.5) * 10, -26, 26), r: 2.5 + Math.random() * 5.5, a: 0.55 + Math.random() * 0.4, kind, rot: Math.random() * U.TAU, seed: Math.random() });
+        sq.dirt.push({ x: along, y: U.clamp(bias + (Math.random() - 0.5) * 10, -26, 26), r: 3.5 + Math.random() * 6.5, a: 0.55 + Math.random() * 0.4, kind, rot: Math.random() * U.TAU, seed: Math.random() });
       }
     },
 
@@ -79,27 +79,46 @@
       const speed = Math.hypot(sq.vx, sq.vy);
       const kind = this.kindFor(room);
       // Brushing along rock: the floor gets your belly, a ceiling your back, a wall anywhere.
+      const s0 = sq.scale, reach = 56 * s0;
+      let below = 0, above = 0, beside = 0;
+      for (const lx of [20, 80, 140]) {
+        const [x, y] = E.toWorld(sq, lx, 0);
+        if (room.solidAt(x, y + reach)) { below++; }
+        if (room.solidAt(x, y - reach)) { above++; }
+        if (room.solidAt(x - reach, y) || room.solidAt(x + reach, y)) { beside++; }
+      }
+      const nearRock = !!(below || above || beside || sq._touchingRock);
       if (speed > 30) {
-        const s = sq.scale, reach = 56 * s;
-        let below = 0, above = 0, beside = 0;
-        for (const lx of [20, 80, 140]) {
-          const [x, y] = E.toWorld(sq, lx, 0);
-          if (room.solidAt(x, y + reach)) { below++; }
-          if (room.solidAt(x, y - reach)) { above++; }
-          if (room.solidAt(x - reach, y) || room.solidAt(x + reach, y)) { beside++; }
-        }
-        if (below || above || beside || sq._touchingRock) {
+        if (nearRock) {
           const side = below > above ? 1 : above > below ? -1 : 0;
           this.add(sq, kind, dt * (0.2 + speed / 600) * (0.5 + 0.25 * (below + above + beside)) * (sq._touchingRock ? 2 : 1), side);
           if (sq._touchingRock && SO.blood) { SO.blood.stir = (SO.blood.stir || 0) + dt * 0.4; }
         }
+      }
+      // Bumping into rock (not just brushing it): a splat of whatever it's made of, and a cloud.
+      if (nearRock && !this._wasTouching && (speed > 90 || (this._lastSpeed || 0) > 160)) {// coming up against rock, fast
+        this.add(sq, kind, 0.25 + Math.min(0.4, speed / 900), 0);
+        this.puff(sq.x, sq.y + 20, kind, 'me', speed); this.puff(sq.x + (Math.random() - 0.5) * 60, sq.y, kind, 'me', speed);
+        if (SO.blood) { SO.blood.stir = (SO.blood.stir || 0) + 0.5; }
+      }
+      this._wasTouching = nearRock;
+      this._lastSpeed = speed;
+      // Dirt spreads: a thick patch creeps out into the skin around it, unless you swim it off.
+      this._spreadT = (this._spreadT || 0) - dt;
+      if (this._spreadT < 0 && sq.dirt && sq.dirt.length && speed < 250) {
+        this._spreadT = 2;
+        sq.dirt.slice().forEach((d) => {
+          if (d.a > 0.6 && sq.dirt.length < MAX_SPOTS * 0.6 && Math.random() < 0.04) {// slowly
+            sq.dirt.push({ x: U.clamp(d.x + (Math.random() - 0.5) * 36, 20, 178), y: U.clamp(d.y + (Math.random() - 0.5) * 20, -26, 26), r: d.r * (0.6 + Math.random() * 0.3), a: d.a * 0.6, kind: d.kind, rot: Math.random() * U.TAU, seed: Math.random() });
+          }
+        });
       }
       // Racing low over the floor kicks up silt.
       const nearFloor = room.solidAt(sq.x, sq.y + 115 * sq.scale) || room.solidAt(sq.x, sq.y + 150 * sq.scale);
       if (nearFloor && speed > 200 && Math.random() < dt * (speed / 120)) { this.puff(sq.x - sq.vx * 0.15, sq.y + 70 * sq.scale, kind, 'me', speed); }
       // Swimming through a silt cloud (not one you just made).
       for (const p of E.particles) {
-        if (p.kind !== 'silt' || (p.owner === 'me' && p.t < 1.2)) { continue; }
+        if (p.kind !== 'silt' || p.owner === 'me') { continue; }// (not the clouds you kicked up yourself)
         const a = this.puffAlpha(p);
         if (a > 0.08 && U.dist(sq.x, sq.y, p.x, p.y) < p.r + 30) { this.add(sq, p.dirt, dt * a * 1.6, 0); }
       }
@@ -166,7 +185,7 @@
     draw(ctx, sq, c, squeeze, ss) {
       for (const s of sq.dirt) {
         const col = KINDS[s.kind];
-        ctx.fillStyle = hsla(col, 0.75 * s.a);
+        ctx.fillStyle = hsla(col, Math.min(0.92, 0.9 * s.a));
         const x = s.x * c + (s.y / 24) * 18 * ss, y = s.y * squeeze;
         ctx.beginPath();
         // a lumpy blot, not a perfect circle

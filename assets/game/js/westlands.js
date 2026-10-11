@@ -788,7 +788,7 @@
       // Water so still the islands show in it, upside down, under the surface.
       const sy = room.surfaceY;
       ctx.save(); ctx.globalAlpha = 0.18; ctx.translate(SO.E.cam.x * 0.9, sy * 2 + 40); ctx.scale(1, -1);
-      (room.def.isles && room.def.isles.length ? room.def.isles : [[600, 0.8], [1700, 1.1]]).forEach(([ix, s], i) => A.island(ctx, ix, sy - 250 - i * 30, 240 * s, { seed: 40 + i, trees: 3, lw: 0.8, domes: [[0, 0.16]] }));
+      (room.def.isles && room.def.isles.length ? room.def.isles : [[600, 0.8], [1700, 1.1]]).forEach(([ix, s], i) => A.island(ctx, ix, sy - 250 - i * 30, 240 * s, { seed: 40 + i, trees: 3, lw: 0.8, domes: [] }));
       ctx.restore();
     } };
   }
@@ -853,7 +853,7 @@
 
   // ── 3: the glass buoy. Rings with the waves, and with your colors. ──
   KINDS.buoy = {
-    desc: 'A piece of sky dome, floating', r: 170, hear: 900,
+    desc: 'A shard of dome glass', r: 120, hear: 900,
     update(a, dt, room) {
       a.y = top(room) + 40 + Math.sin(a.t * 0.9) * 10;
       a.ringT = Math.min(1, (a.ringT === undefined ? 1 : a.ringT) + dt * 0.5);
@@ -862,7 +862,8 @@
     },
     draw(ctx, a, room, t) {
       ctx.save(); ctx.translate(a.x, a.y); ctx.rotate(Math.sin(a.t * 0.7) * 0.08 - 0.3);
-      A.dome(ctx, 0, 0, 160, { cracked: true, seed: 3, alpha: 0.9, spire: false });
+      ctx.rotate(0.9); ctx.beginPath(); ctx.rect(-80, -90, 160, 90); ctx.clip();// only a broken shard of it, tilted, half sunk
+      A.dome(ctx, 0, 0, 80, { cracked: true, seed: 3, alpha: 0.85, spire: false });
       if (a.dull) { ctx.fillStyle = 'rgba(120,110,90,0.5)'; for (let i = 0; i < 26; i++) { ctx.beginPath(); ctx.arc(Math.cos(i) * 120, -Math.abs(Math.sin(i * 1.3)) * 120, 6, 0, TAU); ctx.fill(); } }
       ctx.restore();
       if (a.ringT < 1) { ctx.save(); ctx.globalCompositeOperation = 'lighter'; A.glow(ctx, a.x, a.y - 60, 260, a.color || '#dff8ff', 0.3 * (1 - a.ringT)); ctx.restore(); }

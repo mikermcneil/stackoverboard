@@ -34,8 +34,10 @@ Rows for natives that no longer exist in code are removed.`,
     var result = { created: 0, updated: 0, removed: 0 };
 
     for (let native of natives) {
-      let values = Object.assign({}, native, {
-        contentHash: crypto.createHash('sha1').update(JSON.stringify(native)).digest('hex')
+      // `madeUp` isn't a column: get-species adds it back from the code.
+      let stored = _.omit(native, ['madeUp']);
+      let values = Object.assign({}, stored, {
+        contentHash: crypto.createHash('sha1').update(JSON.stringify(stored)).digest('hex')
       });
       let { record, created } = await sails.helpers.world.createOnce.with({ model: 'nativespecies', values });
       if (created) {

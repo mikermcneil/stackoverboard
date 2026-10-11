@@ -94,6 +94,7 @@ async function setUp() {
   var dataA = {
     chapter: 3, location: 'west:123', gems: 2, memories: [1],
     patterns: ['glow', 'open', 'calm', 'cloud'],
+    flags: { 'lvl:glass': Date.now() - 60000, 'lvl:abyss': Date.now() - 30000, 'not-a-level': true },
     carried: { remembered: { 'moray': true, 'nautilus': true, 'vampire-squid': true, 'skin:calm': true, 'place:mouth-deep': true, 'place:kelp-deep': true } },
     personality: { seed: 0.4242, traits: { curious: 0.97, brave: 0.35, gentle: 0.81, playful: 0.4, wistful: 0.55, social: 0.62, wanderer: 0.9 }, summary: 'curious, gentle, a little wistful', evolvedAt: Date.now() },
     stats: {
@@ -141,7 +142,7 @@ function questions(t) {
     ['tools/list shows the new read-only tools (and no write tools)', async () => {
       var tools = (await rpc('tools/list', {})).tools;
       var names = tools.map((x) => x.name);
-      for (let n of ['getSquid', 'getRecords', 'getInteractions', 'getAnswers', 'getSquids', 'getOnline', 'getWorldFacts']) { check(names.includes(n), `missing ${n}`); }
+      for (let n of ['getSquid', 'getRecords', 'getInteractions', 'getAnswers', 'getSquids', 'getOnline', 'getWorldFacts', 'getLevels']) { check(names.includes(n), `missing ${n}`); }
       check(!names.includes('noteInteraction') && !names.includes('saveGame'), 'write tools must not be on /mcp/safe');
       var overview = tools.find((x) => x.name === 'getOverview');
       check(/How to answer common questions/.test(overview.description), 'getOverview should carry the question guide');
@@ -199,7 +200,17 @@ function questions(t) {
     ['Which skin words can\'t be undone?', async () => {
       var r = await ask('getSkinWords');
       var permanent = r.skinWords.filter((w) => w.canBeUndone === false).map((w) => w.key).sort();
-      check(JSON.stringify(permanent) === JSON.stringify(['calm', 'glow', 'open']), `got ${permanent}`);
+      check(JSON.stringify(permanent) === JSON.stringify(['calm', 'glow', 'open', 'still']), `got ${permanent}`);
+    }],
+
+    ['How do I play lift on a piano?', async () => {
+      var r = await ask('getSkinWords', { name: 'lift' });
+      var lift = r.skinWords.find((w) => w.key === 'lift');
+      check(lift && lift.melody === 'A5 A5 B5', `lift is A5 A5 B5 (got ${lift && lift.melody})`);
+      check(lift.canBeUndone === true && lift.undoMelody === 'B5 A5 A5', 'lift can be undone (backwards sinks you)');
+      check(lift.piano && /nobody/i.test(lift.teacher) && lift.learnedAt.includes('spire-inside'), 'piano directions, nobody teaches it, found in the spire');
+      var still = (await ask('getSkinWords', { name: 'still' })).skinWords[0];
+      check(still.melody === 'F#5 B5 F#5' && still.canBeUndone === false, 'still is F#5 B5 F#5, a palindrome');
     }],
 
     ['What\'s at west:123?', async () => {
@@ -208,9 +219,69 @@ function questions(t) {
       check(r.at.landmark && r.at.landmark.key === 'glass-buoy', 'the glass buoy, recalled');
     }],
 
-    ['What\'s at the end of the west?', async () => {
+    ['Does the west ever end?', async () => {
       var r = await ask('getWestPath');
-      check(r.end === 3600 && r.endLandmark && r.endLandmark.n === 3600 && r.wrapsTo === 'spray-zone', 'west:3600 wraps to the spray zone');
+      check(r.endless === true && r.end === null && r.endLandmark === null && r.wrapsTo === null, 'endless: no end, no wrap');
+      check(r.highlands && r.highlands.from > 1 && /highland/i.test(r.highlands.about), 'a highland note');
+      check(/never ends/i.test(r.explanation), 'the explanation says it never ends');
+      var far = await ask('getWestPath', { n: 3601 });
+      check(far.at.exists === true && far.at.crossing === 61 && far.at.leadsWestTo, 'west:3601 exists, in the 61st crossing, and leads on');
+      var f = await ask('getWorldFacts', { key: 'mechanic-endless-west' });
+      check(/never ends/i.test(f.facts[0].body), 'a fact says so');
+    }],
+
+    ['What are the levels of the world?', async () => {
+      var r = await ask('getLevels');
+      check(r.levels.length === 15, `15 levels (got ${r.levels.length})`);
+      check(r.levels[0].key === 'isles' && r.levels[14].key === 'hadal', 'isles at the top, hadal at the bottom');
+      check(r.levels.every((l, i) => l.index === i), 'in order');
+      check(r.levels.every((l) => typeof l.reachedBy === 'number') && r.squids >= 2, 'reachedBy counts');
+      check(r.levels.find((l) => l.key === 'abyss').reachedBy >= 1, 'A has reached the abyss');
+      var f = await ask('getWorldFacts', { key: 'level-hadal' });
+      check(f.facts[0].topic === 'level', 'a fact per level');
+    }],
+
+    ['Which level is abyssal-plain in?', async () => {
+      var r = await ask('getLevels', { room: 'abyssal-plain' });
+      check(r.at && r.at.level && r.at.level.key === 'abyss', `abyss (got ${r.at && r.at.level && r.at.level.key})`);
+      check((await ask('getLevels', { room: 'below:0,7' })).at.level.key === 'below', 'below:0,7 is the Below');
+      check((await ask('getLevels', { room: 'aq:301' })).at.level.key === 'highwater', 'aq:301 is the high waters');
+    }],
+
+    ['What happens to skin words in Hollowglass?', async () => {
+      var r = await ask('getLevels', { key: 'glass' });
+      check(r.levels.length === 1 && r.levels[0].rules.skin.echo === true, 'echo is true');
+      check(/back/i.test(r.levels[0].skinWords), 'says the words come back');
+    }],
+
+    ['Which levels has <A> reached?', async () => {
+      var r = await ask('getSquid', { name: t.nameA });
+      var keys = r.levelsReached.map((l) => l.key);
+      check(JSON.stringify(keys) === JSON.stringify(['glass', 'abyss']), `glass then abyss (got ${keys})`);
+      check(r.levelsReached[0].firstAt > 1.5e12, 'with when');
+      var s = await ask('getSquids', { reached: 'abyss', limit: 500 });
+      check(s.squids.some((x) => x.squidName === t.nameA) && !s.squids.some((x) => x.squidName === t.nameB), 'get-squids reached=abyss lists A, not B');
+    }],
+
+    ['Is the cucumberbananadog real?', async () => {
+      var r = await ask('getSpecies', { search: 'cucumberbananadog' });
+      var dog = r.native.find((n) => n.key === 'cucumberbananadog');
+      check(dog && dog.madeUp === true && dog.real === false && !dog.latin, 'made up');
+    }],
+
+    ['What is a tongue louse?', async () => {
+      var r = await ask('getSpecies', { search: 'tongue' });
+      var louse = r.native.find((n) => n.key === 'tongue-louse');
+      check(louse && louse.madeUp === false && louse.real === true && /Cymothoa/.test(louse.latin) && louse.realWorld.length >= 2, 'real, Cymothoa, with facts');
+    }],
+
+    ['What happens in the warm room? (spoiler)', async () => {
+      var r = await ask('getWorldFacts', { key: 'quest-warm-room' });
+      check(r.facts[0].spoilerLevel === 2 && /stay/i.test(r.facts[0].body), 'a story spoiler about staying');
+      var home = await ask('getWorldFacts', { key: 'story-homecoming' });
+      check(home.facts[0].spoilerLevel === 2 && /twelve/i.test(home.facts[0].body), 'the homecoming, flagged');
+      var quests = await ask('getWorldFacts', { topic: 'quest', maxSpoilerLevel: 1 });
+      check(quests.facts.length >= 5 && !quests.facts.some((f) => f.key === 'quest-warm-room'), 'side quests listed, warm room hidden');
     }],
 
     ['What stage is the world in, and what\'s next?', async () => {

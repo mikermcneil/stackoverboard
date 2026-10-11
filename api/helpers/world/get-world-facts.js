@@ -21,7 +21,7 @@ const fs = require('fs');
 const path = require('path');
 
 const TOPICS = [
-  'story', 'chapter', 'ending', 'memory', 'region', 'place', 'skin-word', 'mechanic', 'creature', 'plant', 'item',
+  'story', 'chapter', 'ending', 'memory', 'level', 'region', 'place', 'quest', 'skin-word', 'mechanic', 'creature', 'plant', 'item',
   'character', 'oddity', 'seafloor', 'behavior', 'cutscene', 'trivia', 'mystery',
 ];
 
@@ -110,10 +110,12 @@ const straighten = (s) => String(s).replace(/[\u2018\u2019]/g, '\'').replace(/[\
 function readRoomsFromClient() {
   try {
     var src = fs.readFileSync(path.resolve(sails.config.appPath, 'assets/game/js/rooms.js'), 'utf8');
-    var re = /def\(\s*'([^']+)'\s*,\s*\{/g;
+    // Rooms are \`def('key', { ... })\`, or \`def('key', skyPlace({ ... }))\` for the sky places
+    // (whose region defaults to "sky" inside skyPlace).
+    var re = /def\(\s*'([^']+)'\s*,\s*(skyPlace\s*\(\s*)?\{/g;
     var starts = [];
     var m;
-    while ((m = re.exec(src))) { starts.push({ key: m[1], at: m.index + m[0].length }); }
+    while ((m = re.exec(src))) { starts.push({ key: m[1], at: m.index + m[0].length, sky: !!m[2] }); }
     var rooms = starts.map((s, i) => {
       var chunk = src.slice(s.at, i + 1 < starts.length ? starts[i + 1].at : src.length);
       var exitsAt = chunk.search(/\bexits\s*:/);
@@ -133,7 +135,7 @@ function readRoomsFromClient() {
         var x;
         while ((x = exitRe.exec(block))) { exits[x[1]] = x[2] || x[3]; }
       }
-      return [s.key, str('name') || s.key, str('region') || 'unknown', num('depth'), num('dark') || 0, /\bsurface\s*:\s*true/.test(head), exits];
+      return [s.key, str('name') || s.key, str('region') || (s.sky ? 'sky' : 'unknown'), num('depth'), num('dark') || 0, /\bsurface\s*:\s*true/.test(head), exits];
     });
     // Some exits are wired up after the fact with `link('from', 'dir', 'to')` (one way: the
     // new room's own exits are written inline), so apply those too.
@@ -142,6 +144,12 @@ function readRoomsFromClient() {
     var l;
     while ((l = linkRe.exec(src))) {
       if (byKey[l[1]]) { byKey[l[1]][6][l[2]] = l[3]; }
+    }
+    // ...or set directly: \`defs.holdfasts.exits.down = 'kept-garden';\` (or defs['spray-zone'].exits.up = ...).
+    var setRe = /\bdefs(?:\.([\w]+)|\[\s*'([^']+)'\s*\])\.exits\.(\w+)\s*=\s*'([^']+)'/g;
+    while ((l = setRe.exec(src))) {
+      var from = l[1] || l[2];
+      if (byKey[from]) { byKey[from][6][l[3]] = l[4]; }
     }
     return rooms.length ? rooms : null;
   } catch (err) {
@@ -197,7 +205,7 @@ const CHAPTER_DETAILS = {
 };
 
 const ENDING_DETAILS = {
-  return: 'Swim straight up the waterfall at the Plunge, as fast as possible.',
+  return: 'Swim straight up the waterfall at the Plunge, as fast as possible. At the top, the way home isn\'t over yet (see story-homecoming): the ending comes when the swan who waited knows the squid.',
   lantern: 'When asked "So. Are you really going?", decide to stay.',
   gift: 'Beneath the Plunge, play "calm" (pale, shimmer, pale) to the sperm whale.',
   song: 'Find all three pieces of glass from home first, then play the swans\' call (blue, gold, blue, pale) at the Plunge. With fewer than three memories it comes out wrong.',
@@ -205,10 +213,10 @@ const ENDING_DETAILS = {
 
 const MECHANICS = [
   { key: 'mechanic-skin-words', title: 'Talking with skin (skin words)', tags: ['skin', 'colors', 'notes', 'music', 'controls'],
-    body: 'A squid has four skin colors, and each sings a note like a bell: red (D5), pale (F#5), shimmer or blue (A5), and glow or gold (B5). Short patterns of colors are skin words, which are also little melodies: glow, open, calm, passing cloud, call, and wake. In the game, keys A or 1 = pale, B or 2 = red, C or 3 = shimmer, D or 4 = glow (or tap the four skin buttons). More than about 1.9 seconds between notes and the squid starts over. Any squid can say any word; the trick is knowing it exists.',
-    related: ['skin-word-glow', 'skin-word-open', 'skin-word-calm', 'skin-word-cloud', 'skin-word-call', 'skin-word-wake', 'mechanic-palindromes'], seeAlso: ['get-skin-words'] },
+    body: 'A squid has four skin colors, and each sings a note like a bell: red (D5), pale (F#5), shimmer or blue (A5), and glow or gold (B5). Short patterns of colors are skin words, which are also little melodies: glow, open, calm, passing cloud, call, and wake, plus lift and still, which nobody teaches (they\'re found on the side). In the game, keys A or 1 = pale, B or 2 = red, C or 3 = shimmer, D or 4 = glow (or tap the four skin buttons). More than about 1.9 seconds between notes and the squid starts over. Any squid can say any word; the trick is knowing it exists.',
+    related: ['skin-word-glow', 'skin-word-open', 'skin-word-calm', 'skin-word-cloud', 'skin-word-call', 'skin-word-wake', 'skin-word-lift', 'skin-word-still', 'mechanic-palindromes', 'levels'], seeAlso: ['get-skin-words'] },
   { key: 'mechanic-palindromes', title: 'The palindrome rule (undoing skin words)', tags: ['skin words', 'undo', 'palindrome', 'backwards'],
-    body: 'A skin word played backwards takes back what it did, unless it reads the same both ways. Glow, open, and calm are palindromes, so they can\'t be undone: there\'s no "unglow", opened petals stay open, and what\'s calm stays calm. Passing cloud, call, and wake can be undone by playing them backwards (shimmer, red, red clears an ink cloud early; pale, blue, gold, blue hushes a call; red, gold, red, gold settles what you woke nearby, though the volcano won\'t go back to sleep). A squid can only undo a word it knows.',
+    body: 'A skin word played backwards takes back what it did, unless it reads the same both ways. Glow, open, calm, and still are palindromes, so they can\'t be undone: there\'s no "unglow", opened petals stay open, what\'s calm stays calm, and the stillness only wears off by itself. Passing cloud, call, wake, and lift can be undone by playing them backwards (shimmer, red, red clears an ink cloud early; pale, blue, gold, blue hushes a call; red, gold, red, gold settles what you woke nearby, though the volcano won\'t go back to sleep; gold, blue, blue is lift backwards, and pushes the squid down). A squid can only undo a word it knows.',
     related: ['mechanic-skin-words', 'mechanic-glow'], seeAlso: ['get-skin-words'] },
   { key: 'mechanic-glow', title: 'Glow, and how it wears off', tags: ['glow', 'light', 'dark', 'timer'],
     body: 'Gold, gold, gold turns on little lights along the squid\'s belly. They last about 60 seconds and then wear off; there\'s no way to turn them off early, because glow is a palindrome. Glow is needed to find the way through the Mouth, the pitch-black cave in the cliff. In the trench it draws the sperm whale\'s attention. Flash glow at the drumming crab and it dances.',
@@ -316,14 +324,11 @@ const PLANNED_THINGS = [
     body: 'Spoiler. In the later chapters, something awful happens to Bead. Glass squid can\'t take warm water, and in chapter 6 Bead follows the squid up into the warm shallows anyway. It drifts up into the warm water, goes white all the way through, and sinks. Its body stays where it fell, and the crabs find it. In chapter 7 the squid thinks of it once more.',
     related: ['character-buddy', 'chapter-6', 'place-warm-shallows'] },
   { key: 'creature-birds', topic: 'creature', title: 'Birds of the west', tags: ['birds', 'seabirds', 'gulls', 'dark birds', 'west', 'surface', 'danger'],
-    body: 'Out in the procedural west, gulls wheel over the surface, harmless and loud. Farther out, in the wet desert (from about 22 rooms west), big dark birds with red eyes circle over the water, and when a squid comes near the surface they dive, splash in, and hit it hard enough to draw blood. Stay deep out there. Not swans, which only belong to the sky islands.',
+    body: 'Out in the procedural west, gulls wheel over the surface, harmless and loud. Farther out, in the wet desert (from about 22 rooms west), big dark birds with red eyes circle over the water, and when a squid comes near the surface they dive, splash in, and hit it hard enough to draw blood. Stay deep out there. Terns, frigatebirds and pelicans fly over the lands past the desert. Very far out come hookbills, which grab a squid, carry it up out of the water and drop it (from 40 places into any crossing, and everywhere past west:240), and then spearnecks, standing on stilts and stabbing down through the water (from 50 places in, and everywhere past west:600). Not swans, which only belong to the sky islands.',
     related: ['place-west-surface', 'mechanic-blood'], seeAlso: ['get-west-path'] },
   { key: 'creature-sea-spiders', topic: 'creature', title: 'Sea spiders', tags: ['sea spiders', 'pycnogonids', 'west'],
     body: 'Sea spiders pick their way slowly along the bottom of the western reef and the tidepool coast: tiny bodies, enormous legs. Real animals (pycnogonids). Their guts run down inside their legs, because there\'s nowhere else in the body to put them.',
     related: ['place-west-surface'], seeAlso: ['get-west-path'] },
-  { key: 'creature-lungfish', topic: 'creature', optional: true, title: 'Lungfish', tags: ['lungfish', 'west', 'surface', 'air'],
-    body: 'On the lungfish steps (13 to 18 rooms west), lungfish lie out on stone plateaus at the surface, gulping air. Real lungfish breathe air and can sleep through a whole dry season in a cocoon of mud.',
-    related: ['place-west-surface', 'place-west-first-lungfish'], seeAlso: ['get-west-path'] },
   { key: 'creature-light-drinkers', topic: 'creature', spoilerLevel: 0, optional: true, title: 'Light-drinkers', tags: ['light-drinkers', 'dark', 'light', 'west', 'procedural', 'day'],
     body: 'In the procedural west, by day only, there are things that drink light. They suck the light in from around them, and wherever they are, it gets dark, even at noon under the open sky. They come out with the daylight and are gone at night. Made up for this world.',
     related: ['place-west-surface', 'mechanic-local-sky'], seeAlso: ['get-west-path'] },
@@ -367,6 +372,76 @@ const CUTSCENES = [
   { key: 'home', chapter: 7, title: 'Up the waterfall', body: 'Under the waterfall, looking up the column of falling water to the light, with wings beating far above the surface, and the light growing to white.' },
   { key: 'whale-glimpse', chapter: null, title: 'The whale, far off', body: 'In the deep, every few minutes, a glimpse of the whale far off, passing. Its teeth catch the light once.' },
 ];
+
+// Side places and the way home (assets/game/js/quests.js).  Nobody tells the squid any of this:
+// it talks to itself, and things say what they are when it looks at them.
+const QUEST_FACTS = [
+  { key: 'quest-singing-shards', title: 'The singing shards (side quest)', spoilerLevel: 1,
+    tags: ['quest', 'side quest', 'singing shards', 'shards', 'spire', 'lift', 'glass', 'pearl'],
+    body: 'Inside the fallen spire (spire-inside, the tower from home lying on its side by Hollowglass), four empty threads hang around a big cracked shard of dome glass that hums by itself. Four smaller shards, one for each skin color, fell out when the tower fell and drifted off. The pale one is buried in the sand of the meadow (dig it out). The red one is held by the holdfast roots, like hands; red, pale, red (open) makes them let go. The blue one lies on the brine lake as if it were a floor, and only shows in the squid\'s own light (glow). The gold one is in the dark cave behind the glowing ledges. The squid can carry one thing at a time; carry each back and hang it. With all four back, the big shard keeps humming four notes: gold, pale, blue, red. Hum them back and all the shards hum together, going up, and the whole tower lifts off the floor for a moment. The squid learns the skin word lift (blue, blue, gold), and a pearl rolls out from under the tower. Scratches under each thread mark a note and how long to hold it; the longest says longer than a year. All of it is reachable in chapters 2 and 3 without going down the trench.',
+    related: ['skin-word-lift', 'item-singing-shard', 'place-spire-inside', 'place-meadow', 'place-holdfasts', 'place-brine-lake', 'place-ledge-cave', 'quest-glowing-ledges'] },
+  { key: 'quest-quiet-reeds', title: 'The quiet reeds (side quest)', spoilerLevel: 1,
+    tags: ['quest', 'side quest', 'quiet reeds', 'node reeds', 'stalk', 'still', 'mud volcanoes', 'cold seep', 'beat'],
+    body: 'At the mud volcanoes, one clump of node reeds is silent: there\'s a gap where its pale stalk should be. Reeds don\'t walk. It drifted to the cold seep, and is caught in the worms there. Carry it back and plant it, and the whole clump shivers every time the mud mounds burp (about every 4 seconds). Flash all four colors at it on the beat (off the beat, it goes quiet again) and the water between the reeds stands still, and holds. The squid learns the skin word still (pale, gold, pale), which stills the water around it for a while. Reachable in chapters 2 and 3.',
+    related: ['skin-word-still', 'item-reed-stalk', 'plant-node-reeds', 'place-mud-volcanoes', 'place-cold-seep'] },
+  { key: 'quest-fallen-egg-case', title: 'The fallen egg case (side quest)', spoilerLevel: 0,
+    tags: ['quest', 'side quest', 'egg case', 'mermaid\'s purse', 'swell shark', 'holdfasts', 'drop-off', 'pearl', 'waiting'],
+    body: 'An egg case is caught on a fan right at the edge of the drop-off, something wriggling inside. It fell from somewhere. On the holdfast roots under the kelp, where other egg cases hang (one has a neat round hole where a snail drilled through and ate what was inside), there\'s a bare place with the curly strings still wound round for one. Hang it back there, and wait: it takes a while (about two and a half minutes of real time), and the squid has to be there. Then a tiny spotted shark wriggles out, glowing green, just a little, and swims away without looking back. Where the case hung, tucked in the roots: a pearl.',
+    related: ['item-egg-case', 'creature-swell-shark', 'place-drop-off', 'place-holdfasts'] },
+  { key: 'quest-glowing-ledges', title: 'The glowing ledges, and the cave behind them (side quest)', spoilerLevel: 1,
+    tags: ['quest', 'side quest', 'glowing ledges', 'sea pens', 'cave', 'flashlight fish', 'swans', 'glow', 'pearl'],
+    body: 'On the glowing ledges off the foot of the cliff, six sea pens light up when the squid glows near them, then go dark again after about 45 seconds. They all lean toward the back of the ledges, like they\'re pointing; the back is just rock. Light all six at once and the rock moves: a cave opens behind the ledges (ledge-cave). It is very dark in there, except for little lights blinking in pairs: flashlight fish. Swans are carved into the rock, beaks open, singing, with a long wavy line like the sea far below them and nothing in between. The gold singing shard is in there, and a pearl pressed into the mud.',
+    related: ['place-lantern-ledges', 'place-ledge-cave', 'creature-flashlight-fish', 'quest-singing-shards', 'plant-lantern-weed', 'skin-word-glow'] },
+  { key: 'quest-rain-for-the-lungfish', title: 'Rain for the lungfish (side quest)', spoilerLevel: 1,
+    tags: ['quest', 'side quest', 'rain', 'lungfish', 'float', 'west', 'burrow', 'where it rains'],
+    body: 'Under the low island at Where it rains (rain-sea), a glass ball from the islands is caught under a root, full of rain. Fresh water. Somebody, somewhere, wants rain. Far out west, at the first lungfish (west:14), an old lungfish sleeps in a cocoon of dried mud on the highest step, waiting for rain; it has been asleep a long, long time. Carry the float all the way out there and it rains on the hot mud, rain from home. The mud cracks, an eye opens, and the lungfish slides off the step into the mud. There\'s a hole there now, going in: the lungfish burrow (west-in:14:1), with rings in the mud wall, one for every dry season it slept through, and a pearl.',
+    related: ['item-rain-float', 'creature-lungfish', 'place-rain-sea', 'place-west-first-lungfish', 'place-west-interiors'] },
+  { key: 'quest-warm-room', title: 'The warm room (spoiler)', spoilerLevel: 2,
+    tags: ['quest', 'warm room', 'kept garden', 'holder', 'stay', 'forever', 'calypso', 'holdfasts', 'time', 'open', 'spoiler'],
+    body: 'Spoiler. Under the holdfasts, a gap in the floor leads down into the warm room (kept-garden): gold water, warm from a spring somewhere under the floor. It feels like being held. Nothing in here wants to eat the squid. Something huge, soft and warm lives here, the Holder, with slow gentle arms and one half-shut eye. It brings the squid little shrimp held out in the tips of its arms; the squid doesn\'t even have to hunt. It doesn\'t want anything, only for the squid to stay. Forever. After a while, while the squid isn\'t looking, soft arms close across the way out: not tight, just there. A gentle pull draws the squid back toward it. Time runs differently in here: the light through the gap comes and goes, faster and faster. Red, pale, red (open) opens the arms, slowly, for a little while: it\'s letting you go, if you go now. Still (pale, gold, pale) stops the pull. Leaving takes doing. Outside, the longer the squid stayed, the more the world moved on without it: the light is different, its skin may have gone pale in patches, and it is very hungry.',
+    related: ['creature-holder', 'place-kept-garden', 'place-holdfasts', 'skin-word-open', 'skin-word-still'] },
+  { key: 'story-homecoming', topic: 'story', title: 'The homecoming (spoiler)', spoilerLevel: 2,
+    tags: ['homecoming', 'home', 'ending', 'return', 'axolotl', 'strangers', 'cormorants', 'twelve rings', 'swan', 'waiting', 'chapter 7', 'spoiler', 'ithaca'],
+    body: 'Story-ending spoiler. In chapter 7, swimming straight up the waterfall at the Plunge doesn\'t end the story at once: the squid comes out at the top of the waterfall, at home, on the island tops (home-lip). It\'s so quiet. Where is everybody? In the run-off, in the silt, the old axolotl from its pool lifts its head. It knows the squid, after all this time, after everything. Then it puts its head down and doesn\'t move again. It waited; nobody looked after it while the squid was gone. Up the stream (home-rings), strangers fill the water: big dark diving birds with green eyes, lots of them, and they won\'t let the squid past into its own pool. Twelve glass rings stand in the stream in a row; someone set them out, for someone. Four are crooked, each humming a color: flash its color at each crooked ring to set it true. (Wait by the first ring and the swans sing their song overhead, if the squid doesn\'t know it yet.) Then the swans\' song (call), from this end, goes through all twelve, and the strangers go, up and away, screaming. In the pool (home-pool), full of black feathers, the banks eaten to the roots, a swan sits apart, weaving a long strip of reed and pulling rows back out. She doesn\'t know the squid: it\'s so big now, scarred and dark. She sings the old song, then sings it backwards, slow, like a hush. Singing it forward to her means nothing; anybody could sing that. Sung backwards (pale, blue, gold, blue), the way she used to at night when the squid couldn\'t sleep, she knows it, and bends her neck all the way down to the water. She waited. Then the "return" ending.',
+    related: ['ending-return', 'chapter-7', 'creature-old-axolotl', 'creature-cormorant', 'creature-waiting-swan', 'skin-word-call', 'place-home-lip', 'place-home-rings', 'place-home-pool', 'level-isles'] },
+];
+
+// Notes for places added after ROOM_NOTES (sky places, side places, home).
+const MORE_ROOM_NOTES = {
+  'spire-inside': 'Inside the fallen tower, lying on its side, so the stairs run along the wall. Something hums at the far end: a big cracked shard of dome glass among four empty threads (the singing shards).',
+  'ledge-cave': 'The dark cave behind the glowing ledges, opened by lighting all six sea pens at once. Flashlight fish blink in pairs, swans are carved in the rock, and the gold singing shard lies here.',
+  'kept-garden': 'The warm room under the holdfasts: gold water, warm from below. Something huge and kind lives here and wants the squid to stay forever (a spoiler; see quest-warm-room).',
+  'home-lip': 'The top of the waterfall, at home on the island tops, in chapter 7. Past the edge, the water goes over, and there are clouds below. The old axolotl waits in the silt.',
+  'home-rings': 'A stream between grass and glass banks at home, with twelve glass rings standing in it, and strangers (big dark birds) that won\'t let the squid by.',
+  'home-pool': 'The squid\'s pool, under a dome, full of black feathers. A swan sits apart, weaving.',
+  'rain-column': 'The rain under the low island, above Where it rains: sheets of falling water thick enough to swim up through. Out of the rain, it\'s only air, and falling.',
+  'rain-cloud': 'The cloud sea above the rain: cloud so wet a squid can swim in it, slowly, and breathe a little.',
+  'rain-keel': 'The keels: the dripping rock underside of an island, above the cloud. Roots dangle out of the stone, moss grows thick and soaked, and above there is only rock. Reachable from chapter 7 on; before that the wind off the island pushes you back down.',
+  'spray-mist': 'The spray above the spray zone, where the waterfall\'s mist hangs in the air thick enough to climb.',
+  'cloud-sea': 'The cloud sea above the spray: white on every side, wind, and nothing under it.',
+};
+const PLACE_SPOILERS = { 'kept-garden': 2, 'home-lip': 2, 'home-rings': 2, 'home-pool': 2, 'rain-keel': 1, 'ledge-cave': 1, 'spire-inside': 1 };
+
+// Read the breath limit from assets/game/js/breath.js (falls back to the numbers below).
+function readBreathFromClient() {
+  var out = { air: 8, panic: 3, refill: 4, grace: 1.2 };
+  try {
+    var src = fs.readFileSync(path.resolve(sails.config.appPath, 'assets/game/js/breath.js'), 'utf8');
+    var num = (re) => { var m = src.match(re); return m ? Number(m[1]) : null; };
+    var air = num(/\bconst AIR\s*=\s*([0-9.]+)/);
+    var panic = num(/\bPANIC\s*=\s*([0-9.]+)/);
+    var refill = num(/this\.air \+ dt \* ([0-9.]+)/);
+    var grace = num(/this\.out < ([0-9.]+)\)/);
+    if (air) { out.air = air; }
+    if (panic) { out.panic = panic; }
+    if (refill) { out.refill = refill; }
+    if (grace) { out.grace = grace; }
+    out.source = 'assets/game/js/breath.js';
+  } catch (unusedErr) {
+    out.source = 'snapshot';
+  }
+  return out;
+}
 
 const ODDITY_EXTRA = {
   hermit: 'Touch it and it hides in its glass for a few seconds.',
@@ -486,7 +561,7 @@ fallback when that table isn't available.  Places are read from the client's roo
         key: 'place-'+key, topic: 'place', title: name,
         body: [
           name+' ('+key+') is in '+regionName(region).replace(/^The /, 'the ')+'.',
-          ROOM_NOTES[key] || '',
+          ROOM_NOTES[key] || MORE_ROOM_NOTES[key] || '',
           surface ? 'It\'s at the surface.' : (dark >= 0.85 ? 'It\'s pitch black.' : dark >= 0.5 ? 'It\'s dark.' : ''),
           exitList.length ? 'Ways out: '+exitList.join(', ')+'.' : '',
           key === 'undershine-gate' ? 'The way up leads back into the Below, wherever the maze\'s way down came out.' : '',
@@ -495,6 +570,7 @@ fallback when that table isn't available.  Places are read from the client's roo
         ].filter(Boolean).join(' '),
         tags: ['place', key, name.toLowerCase(), region, regionName(region).toLowerCase()].concat(surface ? ['surface'] : []),
         related: ['region-'+region].concat(Object.values(exits).map((k) => k.startsWith('below:') ? 'place-below' : 'place-'+k), here.map((n) => n.kind+'-'+n.key), odd.map((o) => 'oddity-'+o.key)),
+        spoilerLevel: PLACE_SPOILERS[key] || 0,
         data: { room: key, region, exits, depth, darkness: dark, surface, nativeSpecies: _.pluck(here, 'key') },
         seeAlso: here.length ? ['get-species'] : [], source: roomsFrom,
       });
@@ -542,36 +618,116 @@ fallback when that table isn't available.  Places are read from the client's roo
 
     // The way west (procedural surface rooms, with landmarks at fixed distances)
     var west = sails.helpers.world.getWestPath();
+    var lc = (s) => s.replace(/^The /, 'the ');
+    var hf = west.highlands.from;
     add({
-      key: 'place-west-surface', topic: 'place', title: 'The way west (the long surface west of the Bright)',
-      body: 'West of the Bright, the surface goes on and on. Past the last hand-built place, every step west is a made-up room with the key "west:N" (N = how far west), generated from the world seed so it\'s the same for everyone, and stranger the farther you go: '+
-        west.bands.map((b) => b.name.replace(/^The /, 'the ')+' ('+b.from+(b.to ? ' to '+b.to : ' on')+(b.about ? ': '+b.about.replace(/\.$/, '').replace(/^./, (c) => c.toLowerCase()) : '')+')').join('; ')+
-        '. Whatever the seed, '+west.path.length+' landmarks are always at the same distance, in the same order: '+west.path.map((p) => p.name.replace(/^The /, 'the ')+' ('+p.n+')').join(', ')+
-        '. It is '+west.end+' places long: '+west.crossings+' crossings of '+west.placesPerCrossing+'. Every later crossing brings the same landmarks back at the same distances within it, recalled and changed, with a word added to the name (such as "older", "half buried", or "in the dark"). '+
-        'The last place, west:'+west.end+', is '+west.endLandmark.name.replace(/^The /, 'the ')+'; going on west from there comes back into the world from the east, at the spray zone ('+west.wrapsTo+'), because the sea goes all the way around. '+
-        'In the daytime, light-drinkers can make it dark. None of it is on the way anywhere; it\'s just there, if you keep going.',
-      tags: ['west', 'surface', 'procedural', 'exploration', 'birds', 'sea spiders', 'lungfish', 'landmarks', 'crossings', 'end of the west'],
-      related: ['creature-birds', 'creature-sea-spiders', 'creature-lungfish', 'creature-light-drinkers', 'region-surface', 'place-bright-reef', 'place-west-end', 'place-'+west.wrapsTo].concat(west.path.map((p) => 'place-west-'+p.key)),
-      data: { room: 'west:N', end: west.end, crossings: west.crossings, placesPerCrossing: west.placesPerCrossing, wrapsTo: west.wrapsTo, recallWords: west.recallWords, bands: west.bands, landmarks: west.path.map((p) => ({ n: p.n, key: p.key, room: 'west:'+p.n })) },
+      key: 'place-west-surface', topic: 'place', title: 'The way west (the endless surface west of the Bright)',
+      body: 'West of the Bright, the surface goes on and on, and never ends. Past the last hand-built place, every step west is a made-up room with the key "west:N" (N = how far west), generated from the world seed so it\'s the same for everyone, and stranger the farther you go. It comes in crossings of '+west.placesPerCrossing+' places, one after another, forever. Within each crossing, in bands: '+
+        west.bands.map((b, i) => lc(b.name)+' ('+b.from+(i === west.bands.length - 1 ? ' on' : ' to '+b.to)+(b.about ? ': '+b.about.replace(/\.$/, '').replace(/^./, (c) => c.toLowerCase()) : '')+')').join('; ')+
+        '. Past the wet desert, the land changes every few places: '+west.lands.map((l) => lc(l.name)+' ('+l.from+')').join(', ')+' (see place-west-lands). '+
+        'Whatever the seed, '+west.path.length+' landmarks are always at the same distance, in the same order: '+west.path.map((p) => lc(p.name)+' ('+p.n+')').join(', ')+
+        '. Every later crossing brings the same landmarks back at the same distances within it, recalled and changed, with a word added to the name (such as "older", "half buried", or "in the dark"). Some landmarks have rooms inside (see place-west-interiors). '+
+        'From west:'+hf+' on, the land rises into highlands (see place-west-highlands). In the daytime, light-drinkers can make it dark. None of it is on the way anywhere; it\'s just there, if you keep going.',
+      tags: ['west', 'surface', 'procedural', 'exploration', 'birds', 'sea spiders', 'lungfish', 'landmarks', 'crossings', 'endless', 'end of the west'],
+      related: ['mechanic-endless-west', 'place-west-lands', 'place-west-interiors', 'place-west-highlands', 'creature-birds', 'creature-sea-spiders', 'creature-lungfish', 'creature-light-drinkers', 'region-surface', 'place-bright-reef', 'level-surface'].concat(west.path.map((p) => 'place-west-'+p.key)),
+      data: { room: 'west:N', endless: west.endless, end: west.end, placesPerCrossing: west.placesPerCrossing, highlandsFrom: hf, recallWords: west.recallWords, bands: west.bands, lands: west.lands, landmarks: west.path.map((p) => ({ n: p.n, key: p.key, room: 'west:'+p.n })) },
       seeAlso: ['get-west-path'], source: west.source,
     });
-    west.path.forEach((p) => add({
-      key: 'place-west-'+p.key, topic: 'place', title: p.name+' (west:'+p.n+')', optional: true,
-      body: p.line+' It\'s always '+p.n+' rooms west of the Bright (room "west:'+p.n+'"), whatever the seed, and it comes back, recalled and changed, in every later crossing ('+p.n+' + '+west.placesPerCrossing+' for each crossing before'+(p.n === west.placesPerCrossing ? ', except at the very end' : '')+').',
-      tags: ['west', 'landmark', p.key, p.name.toLowerCase()],
-      related: ['place-west-surface'].concat(p.key === 'sand-cuts' ? ['dome-glass-sand'] : []),
-      data: { room: 'west:'+p.n, n: p.n, landmark: p.key },
+    west.path.forEach((p) => {
+      var inside = west.interiors.find((i) => i.landmark === p.key);
+      add({
+        key: 'place-west-'+p.key, topic: 'place', title: p.name+' (west:'+p.n+')', optional: true,
+        body: p.line+' It\'s always '+p.n+' rooms west of the Bright (room "west:'+p.n+'"), whatever the seed, and it comes back, recalled and changed, in every later crossing, forever ('+p.n+' + '+west.placesPerCrossing+' for each crossing before).'+
+          (inside ? ' There are rooms inside ('+inside.rooms.map((r) => r.name+', "'+r.room+'"').join('; ')+'). '+inside.about : ''),
+        tags: ['west', 'landmark', p.key, p.name.toLowerCase()].concat(inside ? ['inside', 'interior'] : []),
+        related: ['place-west-surface'].concat(p.key === 'sand-cuts' ? ['dome-glass-sand'] : [], inside ? ['place-west-interiors'] : [], p.key === 'first-lungfish' ? ['quest-rain-for-the-lungfish'] : []),
+        data: { room: 'west:'+p.n, n: p.n, landmark: p.key, interiors: inside ? inside.rooms : [] },
+        seeAlso: ['get-west-path'], source: west.source,
+      });
+    });
+    add({
+      key: 'place-west-lands', topic: 'place', title: 'The far-west lands (past the wet desert)', optional: true,
+      body: 'Past the wet desert, the land out west changes every few places, the same distances in every crossing: '+
+        west.lands.map((l) => lc(l.name)+' ('+l.from+' to '+l.to+(l.about ? ': '+l.about.replace(/\.$/, '').replace(/^./, (c) => c.toLowerCase()) : '')+')').join('; ')+'. '+
+        west.laterCrossings.about+' '+west.laterCrossings.features.map((f) => f.about).join(' ')+' The birds get worse the farther you go (see creature-birds).',
+      tags: ['west', 'lands', 'dune sea', 'cactus shallows', 'humming flats', 'ribbon shallows', 'bone coast', 'dog plains', 'schooling sands', 'glass flats', 'lifting ground', 'salt pans', 'jelly lake', 'tar', 'later crossings'],
+      related: ['place-west-surface', 'creature-birds', 'creature-cucumberbananadog', 'creature-ribbonfish', 'creature-ghost-crab', 'creature-spine-sponge', 'creature-sea-skater', 'item-fulgurite', 'creature-golden-jelly', 'creature-brine-shrimp'],
+      data: { lands: west.lands, laterFeatures: west.laterCrossings.features },
+      seeAlso: ['get-west-path'], source: 'assets/game/js/westlands.js',
+    });
+    add({
+      key: 'place-west-interiors', topic: 'place', title: 'Inside the landmarks out west', optional: true,
+      body: 'Some of the landmarks out west can be gone into. The rooms inside have keys "west-in:N:K": N is the landmark\'s place out west, K counts the rooms going in, from 1. They come back with their landmark in every crossing (west-in:'+(west.interiors[0] ? west.interiors[0].n + west.placesPerCrossing : 74)+':1 is the same burrow, one crossing on). '+
+        west.interiors.map((i) => i.name+' ('+i.rooms.map((r) => r.name+', "'+r.room+'"').join('; ')+'): '+i.about).join(' '),
+      tags: ['west', 'inside', 'interiors', 'west-in', 'landmarks', 'burrow', 'cenote', 'whale', 'fish', 'sphinx', 'sand engine'],
+      related: ['place-west-surface'].concat(west.interiors.map((i) => 'place-west-'+i.landmark), ['creature-tongue-louse', 'creature-hagfish', 'creature-bone-worm', 'item-squid-beaks', 'creature-blind-cave-fish']),
+      data: { room: 'west-in:N:K', interiors: west.interiors },
+      seeAlso: ['get-west-path'], source: 'assets/game/js/westlands.js',
+    });
+    add({
+      key: 'mechanic-endless-west', topic: 'mechanic', title: 'Does the west ever end? (No.)', optional: true,
+      body: 'The west never ends. It used to run out after 60 crossings, at the end of the west, and wrap around to the spray zone; now there is no last place. Crossing after crossing of '+west.placesPerCrossing+' places goes on forever, the landmarks coming back at the same distances in every one, recalled with a new word each time (the words come round again every '+west.recallWords.length+' crossings), and the crossings keep their names: the 61st, the 1,000th. And it rises: from west:'+hf+' on, more and more of it is highland, and the farther you go the higher it gets, measured in meters, with no top. It gets harder the farther you go, and it never ends.',
+      tags: ['west', 'endless', 'end of the west', 'forever', 'crossings', 'highlands', 'elevation', 'wrap'],
+      related: ['place-west-surface', 'place-west-highlands', 'place-west-lands', 'level-highwater'],
+      data: { endless: west.endless, end: west.end, placesPerCrossing: west.placesPerCrossing, highlandsFrom: hf },
       seeAlso: ['get-west-path'], source: west.source,
-    }));
+    });
+    var breath = readBreathFromClient();
+    add({
+      key: 'place-west-highlands', topic: 'place', title: 'The highlands (the far west, rising)', optional: true,
+      body: west.highlands.about+' Kinds of highland place: '+west.highlands.types.map((t) => t.type+' ('+t.about.replace(/\.$/, '').replace(/^./, (c) => c.toLowerCase())+')').join('; ')+'. Elevation: '+west.highlands.elevation+' Aquifers: '+west.highlands.aquifers+' The fresh water up here doesn\'t hold a squid up the way the sea does. Highland places are the level called the high waters.',
+      tags: ['west', 'highlands', 'high waters', 'mountains', 'streams', 'lakes', 'ridges', 'snowfields', 'waterfalls', 'sinkholes', 'aquifers', 'ice caves', 'elevation', 'snow', 'fresh water'],
+      related: ['mechanic-endless-west', 'mechanic-breath', 'level-highwater', 'place-west-surface', 'creature-lungfish', 'creature-mudskipper', 'creature-hookbill'],
+      data: { from: hf, types: west.highlands.types, rooms: ['west:N', 'aq:N', 'aq2:N'] },
+      seeAlso: ['get-west-path', 'get-levels'], source: 'assets/game/js/west.js',
+    });
+    add({
+      key: 'mechanic-breath', topic: 'mechanic', title: 'The breath limit (out of the water)',
+      body: 'A squid can only be out of the water so long. It can walk a little way on land on its arms, or flop; a quick leap out of the water doesn\'t count, but after about '+breath.grace+' seconds out, an air bar appears and gets shorter fast: about '+breath.air+' seconds of air. Some levels use it up faster (the keels and the cloud sea, high up), by the "air" rule in get-levels. Snow helps a little, the first time (the squid can almost breathe it), and then hardly at all. Run out and the squid panics, about '+breath.panic+' seconds of thrashing, flopping and spinning, and then everything goes dark, and it comes to back in the last water it was in. Back in the water, a few breaths and it\'s fine again. It matters on the ridges and snowfields of the highlands, in the rain and the cloud, and anywhere a squid leaps out onto land.',
+      tags: ['breath', 'air', 'out of water', 'land', 'snow', 'pass out', 'highlands', 'flop'],
+      related: ['place-west-highlands', 'level-clouds', 'level-keels', 'level-rain', 'mechanic-airtime'],
+      data: { airSeconds: breath.air, panicSeconds: breath.panic, refillPerSecond: breath.refill, graceSeconds: breath.grace },
+      source: breath.source,
+    });
 
+    // Side quests and the way home
+    QUEST_FACTS.forEach((q) => add(Object.assign({ topic: 'quest', optional: q.spoilerLevel < 2, seeAlso: [], source: 'assets/game/js/quests.js' }, q)));
+
+    // Levels (read from assets/game/js/levels.js at the time the facts are built)
+    var built = sails.helpers.world.getLevels();
+    var ruleText = (rules) => _.map(rules || {}, (v, k) => {
+      if (v === null || v === undefined) { return null; }
+      if (k === 'skin' && typeof v === 'object') { return 'skin words: '+_.map(v, (sv, sk) => (sv === null ? null : sk+' '+sv)).filter(Boolean).join(', '); }
+      return k+' '+(Array.isArray(v) ? v.join(' every ')+' s' : v);
+    }).filter(Boolean).join('; ');
     add({
-      key: 'place-west-end', topic: 'place', title: west.endLandmark.name+' (west:'+west.end+')', optional: true, spoilerLevel: 1,
-      body: west.endLandmark.line+' It\'s the last place west, '+west.end+' rooms west of the Bright, at the end of the '+west.crossings+'th crossing. Going on west from there comes back into the world from the east, at the spray zone ('+west.wrapsTo+'). There are no rooms past it.',
-      tags: ['west', 'end', 'wrap', 'around the world', 'spray zone'],
-      related: ['place-west-surface', 'place-'+west.wrapsTo],
-      data: { room: 'west:'+west.end, n: west.end, wrapsTo: west.wrapsTo },
-      seeAlso: ['get-west-path'], source: west.source,
+      key: 'levels', topic: 'level', title: 'The levels of the world',
+      body: 'The world is stacked in '+built.levels.length+' levels, each with its own rules: how the water (or the air) holds you, what pushes you around, how far your colors carry and how long they last, how long you can be out of the water, what lives there, what you hear. Top to bottom: '+
+        built.levels.map((l) => l.index+' '+l.name+' ("'+l.key+'")').join(', ')+'. The squid knows the '+built.knownFromTheStart.map((k) => { var l = built.levels.find((x) => x.key === k); return l ? lc(l.name) : k; }).join(', ')+' from the start: it hatched up there and fell through them. Which levels a particular squid has actually been to is in its own save (get-squid, levelsReached).',
+      tags: ['levels', 'layers', 'depth', 'height', 'rules', 'world'],
+      related: built.levels.map((l) => 'level-'+l.key),
+      data: { levels: built.levels.map((l) => ({ key: l.key, index: l.index, name: l.name })), source: built.source },
+      seeAlso: ['get-levels'], source: built.source,
     });
+    built.levels.forEach((l) => add({
+      key: 'level-'+l.key, topic: 'level', title: 'Level '+l.index+': '+l.name,
+      body: [
+        l.short, l.about,
+        l.above ? 'Above: '+l.above : '', l.below ? 'Below: '+l.below : '',
+        l.reach ? 'How to get there: '+l.reach : '',
+        l.feel ? 'What it\'s like: '+l.feel : '', l.light ? 'Light: '+l.light : '',
+        l.skinWords ? 'Skin words here: '+l.skinWords : '',
+        l.danger ? 'Danger: '+l.danger : '', l.sound ? 'Sound: '+l.sound : '',
+        l.rooms && l.rooms.length ? 'Places: '+l.rooms.map((r) => (roomName[r] || r)+' ('+r+')').join(', ')+'.' : '',
+        l.regions && l.regions.length ? 'Regions: '+l.regions.join(', ')+'.' : '',
+        l.rules ? 'Rules: '+ruleText(l.rules)+'.' : '',
+      ].filter(Boolean).join(' '),
+      tags: ['level', l.key, l.name.toLowerCase()].concat(l.rules && l.rules.skin && l.rules.skin.echo ? ['echo'] : []),
+      related: ['levels'].concat(built.levels.filter((x) => Math.abs(x.index - l.index) === 1).map((x) => 'level-'+x.key), (l.rooms || []).map((r) => 'place-'+r), (l.regions || []).map((r) => 'region-'+r), (l.life || []).map((k) => { var nat = natives.find((n) => n.key === k); return nat ? nat.kind+'-'+nat.key : null; }).filter(Boolean)),
+      spoilerLevel: l.key === 'isles' || l.key === 'keels' ? 1 : 0,
+      data: { level: l.key, index: l.index, rooms: l.rooms || [], regions: l.regions || [], rules: l.rules || null, life: l.life || [] },
+      seeAlso: ['get-levels'], source: built.source,
+    }));
 
     // Oddities
     lore.oddities.forEach((o) => add({
@@ -622,6 +778,9 @@ fallback when that table isn't available.  Places are read from the client's roo
       tags: ['trivia', 'sails.js', /sailsconf/i.test(t) ? 'sailsconf' : 'sails'].concat(/\b(20\d\d)\b/.test(t) ? [t.match(/\b(20\d\d)\b/)[1]] : []),
       related: ['mechanic-golden-bubbles'], source: clientTrivia ? 'assets/game/js/story.js' : 'snapshot',
     }));
+
+    // One fact per key (the first wins), so a hand-written fact never collides with a generated one.
+    facts = _.uniq(facts, 'key');
 
     // Keep `related` tidy: only keys that exist, no self-links, no duplicates.
     var keys = _.indexBy(facts, 'key');

@@ -234,3 +234,6 @@ body.ribbon-fixed #stage { height: calc(100vh - var(--ribbon-h)); }
 #cheat { position: fixed; left: 16px; bottom: 14px; z-index: 4; font: 500 11px var(--mono, monospace); letter-spacing: 0.06em; color: rgba(25, 33, 71, 0.55); display: flex; align-items: center; gap: 6px; pointer-events: auto; }
 #cheat select { font: inherit; color: inherit; background: rgba(255, 255, 255, 0.6); border: 1px solid rgba(25, 33, 71, 0.2); border-radius: 6px; padding: 3px 6px; -webkit-user-select: auto; user-select: auto; }
 body.game-mode #cheat { display: none; }
+
+.name-pick input.saved { border-color: var(--fleet-green, #009A7D); background: rgba(232, 255, 248, 0.85); }
+.name-ok { display: block; min-height: 1.3em; margin-top: 2px; font: 500 12px var(--sans); letter-spacing: 0; text-transform: none; color: var(--fleet-green, #009A7D); }

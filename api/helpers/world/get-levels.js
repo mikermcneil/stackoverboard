@@ -31,7 +31,7 @@ const LEVELS_SNAPSHOT = [
 // By depth, for anything not listed (deepest first), and the levels a squid knows from the start.
 const DEPTHS_SNAPSHOT = [[0.95, 'hadal'], [0.88, 'undershine'], [0.86, 'abyss'], [0.62, 'trench'], [0.5, 'midnight'], [0.36, 'dusk'], [0.15, 'swaying'], [-1, 'surface']];
 const KNOWN_FROM_THE_START_SNAPSHOT = ['isles', 'clouds', 'rain', 'surface'];
-const HIGH_FROM_SNAPSHOT = 121;
+const HIGH_FROM_SNAPSHOT = 15;
 
 const FIELDS = ['key', 'index', 'name', 'short', 'about', 'rooms', 'regions', 'above', 'below', 'reach', 'rules', 'feel', 'light', 'skinWords', 'danger', 'life', 'sound'];
 
@@ -173,7 +173,7 @@ or the high waters where that place is highland), then the room's region, then i
           note = 'Out west, at sea level, on the surface.';
         } else {
           found = byKey.surface;
-          note = 'Past west:'+(highFrom - 1)+', a place out west may be highland (the high waters) instead of surface; which, depends on the place.';
+          note = 'From west:'+highFrom+' on, a place out west may be highland (the high waters) instead of surface; which, depends on the place.';
         }
       } else if (def && def.region && byRegion[def.region]) {
         found = byRegion[def.region]; how = 'region';

@@ -10,7 +10,7 @@ module.exports = {
   extendedDescription:
 `Every squid starts with a generated name made of three words (like "Moon-Drift-Salt").  This lets
 a player choose their own instead.  Names are 2 to 40 characters: letters, numbers, spaces,
-hyphens, and apostrophes.  No two squids can share a name (ignoring capital letters): the first
+punctuation, even emoji (at least one letter or number).  No two squids can share a name (ignoring capital letters): the first
 to claim it keeps it.  Other players see the new name right away.`,
 
 
@@ -25,7 +25,7 @@ to claim it keeps it.  Other players see the new name right away.`,
 
     success: { outputDescription: '`{ squidName }`: the name now in use.' },
     noSave: { statusCode: 404, description: 'This session has no squid yet.' },
-    invalid: { statusCode: 400, description: 'Names are 2 to 40 characters: letters, numbers, spaces, hyphens, and apostrophes.' },
+    invalid: { statusCode: 400, description: 'Names are 2 to 40 characters, with at least one letter or number.' },
     taken: { statusCode: 409, description: 'Another squid already has that name.' },
 
   },
@@ -33,8 +33,10 @@ to claim it keeps it.  Other players see the new name right away.`,
 
   fn: async function ({ name }) {
 
-    var clean = name.replace(/\s+/g, ' ').trim();
-    if (clean.length < 2 || clean.length > 40 || !/^[\p{L}\p{N}][\p{L}\p{N} '’-]*$/u.test(clean)) {
+    // Any letters, numbers, spaces, punctuation, even emoji; no control characters or angle brackets;
+    // at least one letter or number.
+    var clean = name.replace(/[\p{C}<>]/gu, '').replace(/\s+/g, ' ').trim();
+    if ([...clean].length < 2 || [...clean].length > 40 || !/[\p{L}\p{N}]/u.test(clean)) {
       throw 'invalid';
     }
 
@@ -46,13 +48,26 @@ to claim it keeps it.  Other players see the new name right away.`,
     var tokenHash = sails.helpers.world.hashToken(token);
     var nameKey = clean.toLowerCase();
 
-    // Someone using it as their generated name already?
+    // Someone using it right now (and recently)?
+    var WEEK = 7 * 24 * 60 * 60 * 1000;
     var other = await Save.findOne({ squidName: clean });
-    if (other && other.token !== token) { throw 'taken'; }
+    if (other && other.token !== token && Date.now() - (other.lastSeenAt || 0) < WEEK) { throw 'taken'; }
 
     // Claim it.  The unique key means only one squid can ever win a given name.
     var claim = (await sails.helpers.world.createOnce.with({ model: 'nameclaim', uniqueBy: 'nameKey', values: { nameKey, name: clean, tokenHash } })).record;
-    if (!claim || claim.tokenHash !== tokenHash) { throw 'taken'; }
+    if (!claim) { throw 'taken'; }
+    if (claim.tokenHash !== tokenHash) {
+      // An old claim: if whoever held it isn't using it anymore (renamed, gone, or not seen in a
+      // week), take it over. Compare-and-swap on the old holder, so only one squid can win it.
+      var holderInUse = other && other.token !== token && Date.now() - (other.lastSeenAt || 0) < WEEK;
+      if (holderInUse) { throw 'taken'; }
+      await NameClaim.update({ nameKey, tokenHash: claim.tokenHash }).set({ tokenHash, name: clean });
+      claim = await NameClaim.findOne({ nameKey });
+      if (!claim || claim.tokenHash !== tokenHash) { throw 'taken'; }
+      if (other && other.token !== token) {// the old squid (long gone) gives the name up
+        await Save.update({ token: other.token, squidName: clean }).set({ squidName: other.squidName + ' (old)' });
+      }
+    }
 
     // Rename the save without clobbering a save landing at the same moment (compare-and-swap).
     var oldName = save.squidName;

@@ -60,7 +60,7 @@ for good.  Some changes last only while their stage does; some stay.  See get-wo
 
 West of the Bright, the surface goes on forever: made-up places that are the same for everyone,
 crossing after crossing of 60, with a dozen landmarks always at the same distances, recalled in every
-crossing, and past west:120 it rises into highlands of streams, lakes, snow and waterfalls (see
+crossing, and not far out it starts to rise into highlands of streams, lakes, snow and waterfalls (see
 get-west-path).  The world is in fifteen levels, from the island tops down to the bottom of everything,
 each with its own rules (see get-levels).  Squids can talk out loud
 (see get-chat), and the sky at the surface follows each player's real local weather and time of day.

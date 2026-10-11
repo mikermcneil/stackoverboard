@@ -15,7 +15,7 @@
  *   buoyancy   pull while swimming, in units/s² (more = you sink; less than 0 = you rise)
  *   drag       extra slowing per second (thick or crushing water)
  *   sway       [strength, seconds]: a side-to-side surge
- *   breathGrace  seconds out of the water (or mist) before the countdown starts
+ *   air        how fast your air runs out when you are out of the water (or mist), x
  *   skin       reach (how far skin-words carry, x), glow (how long a glow lasts, x),
  *              hide (seconds a passing cloud lasts), echo (the word comes back),
  *              tint (the color of the ring), fear (dread builds while you stay)
@@ -31,7 +31,7 @@
       rooms: ['home-lip', 'home-rings', 'home-pool'], regions: ['home'],
       above: 'Open sky.', below: 'The keels of the islands, and the cloud sea.',
       reach: 'Only at the end (chapter 7), up the waterfall. Never from below.',
-      rules: { buoyancy: 70, drag: 0, sway: null, breathGrace: 15, skin: { reach: 1.3, glow: 0.5, hide: 3, echo: false, tint: null, fear: 0 } },
+      rules: { buoyancy: 70, drag: 0, sway: null, air: 1, skin: { reach: 1.3, glow: 0.5, hide: 3, echo: false, tint: null, fear: 0 } },
       feel: 'Bright, thin, quiet. Fresh water does not hold you up the way the sea does: you sit low in it.',
       light: 'Full daylight. A glow hardly shows.',
       skinWords: 'Colors carry a long way in the clear air and water. Glow is drowned out by the sun and lasts half as long. Hiding barely works: there is nowhere dark.',
@@ -45,7 +45,7 @@
       rooms: ['rain-keel'], regions: [],
       above: 'Solid island rock. No way up.', below: 'The cloud sea.',
       reach: 'Up through the rain cloud under the island where it rains, from chapter 7 on. Before that the wind off the island pushes you back down.',
-      rules: { buoyancy: 100, drag: 0.15, sway: null, breathGrace: 12, skin: { reach: 0.8, glow: 1.5, hide: 8, echo: false, tint: null, fear: 0.2 } },
+      rules: { buoyancy: 100, drag: 0.15, sway: null, air: 1.25, skin: { reach: 0.8, glow: 1.5, hide: 8, echo: false, tint: null, fear: 0.2 } },
       feel: 'Dim and dripping. The moss holds water like a sponge, but not for long, and you sag in it.',
       light: 'Shade under the rock, grey light from below.',
       skinWords: 'The moss soaks colors up: words do not carry far. A glow lasts longer in the shade. Hiding works well among the roots.',
@@ -59,7 +59,7 @@
       rooms: ['rain-cloud', 'cloud-sea'], regions: [],
       above: 'The keels of the islands. Wind pours down off them.', below: 'The rain and the spray.',
       reach: 'Up through the rain where it rains (far west), or up the spray at the spray zone (east, past the Plunge).',
-      rules: { buoyancy: 60, drag: 0.35, sway: [40, 11], breathGrace: 10, skin: { reach: 0.6, glow: 1, hide: 10, echo: false, tint: '#f2f6fa', fear: 0.1 } },
+      rules: { buoyancy: 60, drag: 0.35, sway: [40, 11], air: 1.5, skin: { reach: 0.6, glow: 1, hide: 10, echo: false, tint: '#f2f6fa', fear: 0.1 } },
       feel: 'Thick, white, slow. The cloud holds you, but barely: stop swimming and you sag out of it. It drifts.',
       light: 'White, from every side. No shadows.',
       skinWords: 'Colors scatter in the cloud and come out white. They don’t reach far. A passing cloud hides you for a long time here, of course.',
@@ -73,7 +73,7 @@
       rooms: ['rain-column', 'spray-mist'], regions: [],
       above: 'The cloud sea.', below: 'The surface.',
       reach: 'Up a sheet of rain at Where it rains, or up the spray at the spray zone.',
-      rules: { buoyancy: 50, drag: 0.1, sway: null, breathGrace: 15, skin: { reach: 1, glow: 0.8, hide: 2, echo: false, tint: null, fear: 0 } },
+      rules: { buoyancy: 50, drag: 0.1, sway: null, air: 1, skin: { reach: 1, glow: 0.8, hide: 2, echo: false, tint: null, fear: 0 } },
       feel: 'Wet air. Rain pushes down on you; spray lifts. Out of it, you drop.',
       light: 'Grey and silver, with rainbows in the spray.',
       skinWords: 'The rain washes colors off: a passing cloud only lasts a moment. Glow fades a little faster.',
@@ -83,11 +83,11 @@
     },
     {
       key: 'highwater', index: 4, name: 'The high waters', short: 'The far west, rising: streams, lakes and ice caves above the sea.',
-      about: 'Far out west, past the first two crossings, the land rises out of the sea. Fresh water runs in streams and lakes between ridges you have to flop across in the air. You climb up waterfalls to the pools above them, or go up through aquifers in the rock, icy higher up. It never ends.',
+      about: 'Out west, the land rises out of the sea. Fresh water runs in streams and lakes between ridges you have to flop across in the air. You climb up waterfalls to the pools above them, or go up through aquifers in the rock, icy higher up. It never ends.',
       rooms: [], regions: ['highland', 'aquifer'],
       above: 'Mountains, snow, sky.', below: 'Rock. The sea is behind you, far to the east.',
-      reach: 'West, and west, and west: past about 120 places west of the Bright, more and more of it is highland.',
-      rules: { buoyancy: 60, drag: 0.05, sway: null, breathGrace: 15, skin: { reach: 1.2, glow: 1, hide: 5, echo: false, tint: null, fear: 0 } },
+      reach: 'West, and west, and west. A little way out the land starts to rise, and the farther you go, the more of it is highland.',
+      rules: { buoyancy: 60, drag: 0.05, sway: null, air: 1, skin: { reach: 1.2, glow: 1, hide: 5, echo: false, tint: null, fear: 0 } },
       feel: 'Fresh water, cold and thin. It doesn’t hold you up. Ridges and snowfields between waters: out of the water, the breath runs down.',
       light: 'Mountain light. Snow glare.',
       skinWords: 'Colors carry in the thin, clear water.',
@@ -101,7 +101,7 @@
       rooms: ['splash', 'bright-reef', 'open-blue', 'warm-shallows', 'shoal-reef', 'plunge', 'sargasso', 'rain-sea', 'anchored-isle', 'spray-zone'], regions: ['surface', 'west', 'westin'],
       above: 'The sky, and the islands, far up.', below: 'The Swaying, the long sink, the cliff.',
       reach: 'You fall into it.',
-      rules: { buoyancy: -15, drag: 0, sway: null, breathGrace: 15, skin: { reach: 1.1, glow: 0.6, hide: 4, echo: false, tint: null, fear: 0 } },
+      rules: { buoyancy: -15, drag: 0, sway: null, air: 1, skin: { reach: 1.1, glow: 0.6, hide: 4, echo: false, tint: null, fear: 0 } },
       feel: 'Salt water holds you up. Waves, light, room to leap.',
       light: 'Sunlight and caustics. Day and night come and go.',
       skinWords: 'Colors carry well. The sun drowns a glow, so it doesn’t last as long. Hiding in daylight doesn’t last.',
@@ -115,7 +115,7 @@
       rooms: ['kelp-edge', 'kelp-deep', 'kelp-heart', 'meadow', 'drop-off', 'holdfasts', 'kept-garden'], regions: ['kelp'],
       above: 'The surface.', below: 'The blue dusk.',
       reach: 'Down from the Bright or the golden mat, or left from the long sink.',
-      rules: { buoyancy: 0, drag: 0.05, sway: [70, 7], breathGrace: 15, skin: { reach: 0.8, glow: 1, hide: 9, echo: false, tint: null, fear: 0 } },
+      rules: { buoyancy: 0, drag: 0.05, sway: [70, 7], air: 1, skin: { reach: 0.8, glow: 1, hide: 9, echo: false, tint: null, fear: 0 } },
       feel: 'A slow surge, side to side, every few seconds. Green light through the fronds.',
       light: 'Green and gold, broken up by the kelp.',
       skinWords: 'The kelp breaks colors up, so they don’t carry as far, but hiding lasts longer in the shadows of the fronds.',
@@ -129,7 +129,7 @@
       rooms: ['sinking', 'cliff-face', 'blue-dusk', 'tether-twilight'], regions: ['twilight'],
       above: 'The surface and the Swaying.', below: 'Hollowglass, and midnight.',
       reach: 'Sinking.',
-      rules: { buoyancy: 10, drag: 0, sway: null, breathGrace: 15, skin: { reach: 1.1, glow: 1.2, hide: 6, echo: false, tint: null, fear: 0 } },
+      rules: { buoyancy: 10, drag: 0, sway: null, air: 1, skin: { reach: 1.1, glow: 1.2, hide: 6, echo: false, tint: null, fear: 0 } },
       feel: 'Open blue, with nothing to hold on to. You drift down a little when you rest.',
       light: 'Blue, fading. Your own light starts to matter.',
       skinWords: 'Colors carry. A glow lasts a little longer than up top.',
@@ -143,7 +143,7 @@
       rooms: ['glow-below', 'hollowglass-rim', 'hollowglass-hall', 'mural-room', 'fallen-spire', 'spire-inside'], regions: ['hollowglass'],
       above: 'The long sink.', below: 'Rock.',
       reach: 'Down from the long sink, toward the light that blinks gold three times.',
-      rules: { buoyancy: 0, drag: 0, sway: null, breathGrace: 15, skin: { reach: 1.1, glow: 1.2, hide: 6, echo: true, tint: null, fear: 0 } },
+      rules: { buoyancy: 0, drag: 0, sway: null, air: 1, skin: { reach: 1.1, glow: 1.2, hide: 6, echo: true, tint: null, fear: 0 } },
       feel: 'Still water inside curved glass. It hums.',
       light: 'Pale green glow from the cracked dome.',
       skinWords: 'Every word comes back off the glass, twice, fainter each time.',
@@ -157,7 +157,7 @@
       rooms: ['midnight', 'mouth', 'mouth-deep', 'cliff-foot', 'lantern-ledges', 'ledge-cave', 'tether-breathless', 'tether-curtain', 'plunge-deep'], regions: ['cliff', 'tether', 'plunge'],
       above: 'The blue dusk.', below: 'The trench and the seeps.',
       reach: 'Into the Mouth with a light, down the cliff, or down the chain.',
-      rules: { buoyancy: 10, drag: 0.05, sway: null, breathGrace: 15, skin: { reach: 1.4, glow: 1.6, hide: 10, echo: false, tint: null, fear: 0.1 } },
+      rules: { buoyancy: 10, drag: 0.05, sway: null, air: 1, skin: { reach: 1.4, glow: 1.6, hide: 10, echo: false, tint: null, fear: 0.1 } },
       feel: 'Black water. Little lights going off, now and then, out there.',
       light: 'None, except what lives here, and you.',
       skinWords: 'In the dark, colors carry far: everything sees them. A glow lasts much longer, and hiding works best of all.',
@@ -171,7 +171,7 @@
       rooms: ['trench-lip', 'trench-wall', 'trench-floor', 'brine-lake', 'cold-seep', 'mud-volcanoes'], regions: ['trench', 'seep'],
       above: 'Midnight.', below: 'The abyss, and the Below.',
       reach: 'Down from the foot of the cliff (once you can hide and calm things), or down from midnight water.',
-      rules: { buoyancy: 40, drag: 0.12, sway: null, breathGrace: 15, skin: { reach: 0.9, glow: 1.3, hide: 6, echo: false, tint: null, fear: 0.15 } },
+      rules: { buoyancy: 40, drag: 0.12, sway: null, air: 1, skin: { reach: 0.9, glow: 1.3, hide: 6, echo: false, tint: null, fear: 0.15 } },
       feel: 'Cold, heavy water. It pulls you down when you rest.',
       light: 'Almost none. Lantern weed on the ledges.',
       skinWords: 'Colors don’t carry quite as far in the cold. The whale hears clicks, not colors.',
@@ -185,7 +185,7 @@
       rooms: ['whale-fall', 'abyssal-plain', 'stone-choir', 'tether-anchor'], regions: ['abyss'],
       above: 'The trench, and the chain.', below: 'The hadal deep.',
       reach: 'Along the bottom from the trench, or all the way down the chain.',
-      rules: { buoyancy: 15, drag: 0.25, sway: null, breathGrace: 15, skin: { reach: 0.8, glow: 1.3, hide: 6, echo: false, tint: null, fear: 0.1 } },
+      rules: { buoyancy: 15, drag: 0.25, sway: null, air: 1, skin: { reach: 0.8, glow: 1.3, hide: 6, echo: false, tint: null, fear: 0.1 } },
       feel: 'So much water on top of you. Everything is slow.',
       light: 'Dark. Your own light, and a faint glow from the anchor.',
       skinWords: 'The weight of the water dampens colors. A glow lasts longer with nothing to drown it.',
@@ -199,7 +199,7 @@
       rooms: [], regions: ['below'],
       above: 'The trench floor.', below: 'The Undershine.',
       reach: 'Through the floor of the trench, when it cracks.',
-      rules: { buoyancy: 0, drag: 0.1, sway: null, breathGrace: 15, skin: { reach: 1, glow: 1.2, hide: 6, echo: false, tint: null, fear: 0.1 } },
+      rules: { buoyancy: 0, drag: 0.1, sway: null, air: 1, skin: { reach: 1, glow: 1.2, hide: 6, echo: false, tint: null, fear: 0.1 } },
       feel: 'Every way looks the same. The snow drifts one way.',
       light: 'Faint glows from the weed.',
       skinWords: 'Colors carry as usual. Other squids’ colors linger in the water where they passed.',
@@ -213,7 +213,7 @@
       rooms: ['undershine-gate', 'undershine', 'keeper-hall', 'hatchery', 'forge', 'smokers', 'riser'], regions: ['undershine', 'forge'],
       above: 'The Below. The Riser runs up through every level to the warm shallows.', below: 'Volcanic glass.',
       reach: 'Out of the bottom of the maze.',
-      rules: { buoyancy: -30, drag: 0, sway: null, breathGrace: 15, skin: { reach: 1.4, glow: 1, hide: 6, echo: false, tint: '#ffb48a', fear: 0 } },
+      rules: { buoyancy: -30, drag: 0, sway: null, air: 1, skin: { reach: 1.4, glow: 1, hide: 6, echo: false, tint: '#ffb48a', fear: 0 } },
       feel: 'Warm water. It rises, and lifts you with it.',
       light: 'Warm orange haze from below.',
       skinWords: 'Warm water carries colors far, tinted orange.',
@@ -227,7 +227,7 @@
       rooms: ['hadal', 'hadal-floor', 'glass-caves'], regions: [],
       above: 'The abyss, and the volcano.', below: 'Nothing.',
       reach: 'Down from the anchor, or down from the black smokers.',
-      rules: { buoyancy: 30, drag: 0.45, sway: null, breathGrace: 15, skin: { reach: 0.5, glow: 2, hide: 6, echo: false, tint: '#8a9098', fear: 0.35 } },
+      rules: { buoyancy: 30, drag: 0.45, sway: null, air: 1, skin: { reach: 0.5, glow: 2, hide: 6, echo: false, tint: '#8a9098', fear: 0.35 } },
       feel: 'Crushing. Slow. Dread builds the longer you stay.',
       light: 'None. A glow lasts twice as long, with nothing else to drown it.',
       skinWords: 'Colors drain to grey and hardly carry. A glow lasts twice as long.',
@@ -297,6 +297,11 @@
   // Levels the squid knows before it ever reaches them: it hatched on the islands, fell through
   // the cloud and the rain, and landed in the sea.
   const KNOWN_FROM_THE_START = ['isles', 'clouds', 'rain', 'surface'];
+  // How the squid remembers each level it has been to, in its own words (for the journal).
+  SO.levels.MEMORY = Object.assign({
+    isles: 'Home. Grass and glass and swans. Up there, somewhere.',
+    surface: 'The top of the sea. Where I fell in.',
+  }, FIRST);
   SO.levels.reached = (key) => {
     const f = SO.save && SO.save.data && SO.save.data.flags;
     return !!(f && f['lvl:' + key]) || KNOWN_FROM_THE_START.indexOf(key) !== -1;
@@ -309,6 +314,8 @@
     try {
       const l = of(room);
       room.level = l ? l.key : null;
+      // Nothing from the sea lives up in the sky places: no krill, no lanternfish, no comb jellies.
+      if (room.def.sky) { room.actors = room.actors.filter((a) => !(a.type === 'food' || /^night-/.test(a.id || '') || a.type === 'lanternfish' || a.type === 'combJelly' || a.type === 'species')); }
       if (!l || !SO.save.data) { return; }
       const f = SO.save.data.flags;
       if (!f['lvl:' + l.key]) {
@@ -330,6 +337,11 @@
         if (R.buoyancy) { sq.vy += R.buoyancy * dt; }
         if (R.drag) { const k = Math.exp(-R.drag * dt); sq.vx *= k; sq.vy *= k; }
         if (R.sway && !(SO.quests && SO.quests.stilled && SO.quests.stilled())) { sq.vx += R.sway[0] * Math.cos(E.t * U.TAU / R.sway[1]) * dt; }
+      }
+      // Thin air up high: out of the water (or the cloud), your air runs out faster.
+      const B = SO.breath;
+      if (sq.inAir && R.air && R.air !== 1 && B) {
+        if (typeof B.air === 'number') { B.air -= dt * (R.air - 1); } else if (typeof B.out === 'number') { B.out += dt * (R.air - 1); }
       }
       const fear = skinRule(room, 'fear', 0);
       if (fear > 0.2) { sq.fear = Math.max(sq.fear || 0, Math.min(fear, (S.rt.roomT || 0) / 90 * fear)); }
@@ -404,6 +416,57 @@
     SO.air.land = function (sq, sY) {
       if (sky()) { this.jump = null; const a = AU(); if (a.bubbles) { a.bubbles(4, 0.4); } return; }
       return land0(sq, sY);
+    };
+  }
+
+  // ── What lives up in the sky places (each says what it is only when you look) ──
+  const K = SO.things && SO.things.KINDS;
+  if (K) {
+    K['ballooning-spiders'] = {
+      desc: 'Spiders, on threads of silk', r: 120,
+      draw(ctx, a, room, t) {
+        ctx.save(); ctx.lineWidth = 1;
+        for (let i = 0; i < 7; i++) {
+          const x = a.x + Math.sin(t * 0.3 + i * 1.9) * 90 + (i - 3) * 30, y = a.y + Math.cos(t * 0.25 + i) * 50 + (i % 3) * 30;
+          ctx.strokeStyle = 'rgba(255,255,255,0.35)';
+          ctx.beginPath(); ctx.moveTo(x, y); ctx.quadraticCurveTo(x - 40, y - 60, x - 20 + Math.sin(t + i) * 20, y - 140); ctx.stroke();
+          ctx.fillStyle = i === 4 ? '#8a8270' : '#2a2620';
+          ctx.beginPath(); ctx.arc(x, y, 2.6, 0, U.TAU); ctx.fill();
+        }
+        ctx.restore();
+      },
+      lines: ['Spiders. Tiny ones, each on a thread of silk, riding the wind this high up.', 'Some of them are dead on their threads. They keep flying anyway.'],
+    };
+    K.swifts = {
+      desc: 'Swifts', r: 160,
+      draw(ctx, a, room, t) {
+        ctx.save(); ctx.fillStyle = '#1c1e22';
+        for (let i = 0; i < 5; i++) {
+          const an = t * (0.5 + i * 0.07) + i * 1.3, x = a.x + Math.cos(an) * (120 + i * 30), y = a.y + Math.sin(an * 1.3) * (40 + i * 8), f = Math.sin(t * 9 + i) * 6;
+          ctx.beginPath(); ctx.moveTo(x - 18, y - f); ctx.quadraticCurveTo(x - 6, y - 3, x, y); ctx.quadraticCurveTo(x + 6, y - 3, x + 18, y - f); ctx.quadraticCurveTo(x, y + 4, x - 18, y - f); ctx.fill();
+        }
+        ctx.restore();
+      },
+      lines: ['Swifts. They never land. They eat up here, and sleep up here, flying.', 'One of them has something small in its beak. Pale. Arms. It didn’t stop.'],
+    };
+    K['keel-roots'] = {
+      desc: 'Roots, out of the rock', r: 150,
+      draw(ctx, a, room, t) {
+        ctx.save(); ctx.strokeStyle = 'rgba(214,206,186,0.8)'; ctx.lineWidth = 2;
+        for (let i = 0; i < 4; i++) { const x = a.x - 30 + i * 20, y = a.y + Math.sin(t * 0.3 + i) * 3; ctx.beginPath(); ctx.moveTo(x, y); ctx.lineTo(x + 4, y + 16); ctx.moveTo(x - 4, y + 8); ctx.lineTo(x + 8, y + 6); ctx.stroke(); }
+        ctx.restore();
+      },
+      lines: ['Roots, out of the bottom of the island. They grew down through the rock, looking for water.', 'Bones, wound into the roots. Little ones. Bird, I think. I hope.', 'They move. Very slowly. Toward the wet.'],
+    };
+    K['wet-moss'] = {
+      desc: 'Soaked moss', r: 140,
+      draw() {},
+      lines: ['Moss, soaked through like a sponge. I can breathe in it, a little.', 'Things are curled up in it. Pale, and very still.'],
+    };
+    K['spray-rainbow'] = {
+      desc: 'A rainbow, from inside', r: 220,
+      draw() {},
+      lines: ['A rainbow. From inside, it’s only wet light.', 'Every color in it but mine.'],
     };
   }
 

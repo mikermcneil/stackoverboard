@@ -21,16 +21,22 @@ facts.  Search matches every word you give against the key, title, body, and tag
 best matches first.
 
 Topics:
-- story: the premise, the sky islands and the glass city, and background lore.
+- story: the premise, the sky islands and the glass city, background lore, and the homecoming at the
+  end ("story-homecoming", a story-ending spoiler).
 - chapter: chapters 0 to 8, each with a summary and how to progress.
 - ending: the four endings and how to reach each (spoilers).
 - memory: the three pieces of glass from home and where they are.
-- region / place: the way west ("place-west-surface", the long procedural surface, and one fact per
-  landmark, "place-west-<key>"), every region, and every room in the sea (key, name, region, exits, depth,
+- level: the fifteen levels of the world, top to bottom ("levels", and "level-<key>", e.g. "level-glass"),
+  each with its places and rules (from the game's own table; get-levels has the full detail and counts).
+- region / place: the way west ("place-west-surface", the endless procedural surface; one fact per
+  landmark, "place-west-<key>"; "place-west-lands", "place-west-interiors", "place-west-highlands"), every region, and every room in the sea (key, name, region, exits, depth,
   darkness, who lives there, oddities), read from the game's own room list.  Room keys match the
   ones used elsewhere (e.g. get-species \`places\`, get-online).
+- quest: the side quests ("quest-singing-shards", "quest-quiet-reeds", "quest-fallen-egg-case",
+  "quest-glowing-ledges", "quest-rain-for-the-lungfish") and the warm room ("quest-warm-room", a spoiler).
 - skin-word: the eight color words (summary; get-skin-words has the full detail).
-- mechanic: how things work (smell, dirt, glow wearing off, the palindrome rule, air time and the
+- mechanic: how things work (the breath limit out of water, "mechanic-breath"; whether the west ends,
+  "mechanic-endless-west"; smell, dirt, glow wearing off, the palindrome rule, air time and the
   splash, rumbles, other squids and presence, pearls, procedural species, the Below maze, the volcano,
   the sea-day clock, the Shoal, golden bubbles, saving and playthroughs, blood, fish scales, hunger,
   chat, the real local weather and time of day, night life, and the world getting older).
@@ -73,7 +79,7 @@ isn't available, so the same facts come straight from code).`,
 
     topic: {
       type: 'string',
-      isIn: ['story', 'chapter', 'ending', 'memory', 'region', 'place', 'skin-word', 'mechanic', 'creature', 'plant', 'item', 'character', 'oddity', 'seafloor', 'behavior', 'cutscene', 'trivia', 'mystery'],
+      isIn: ['story', 'chapter', 'ending', 'memory', 'level', 'region', 'place', 'quest', 'skin-word', 'mechanic', 'creature', 'plant', 'item', 'character', 'oddity', 'seafloor', 'behavior', 'cutscene', 'trivia', 'mystery'],
       example: 'mechanic',
       description: 'Only facts on this topic.'
     },

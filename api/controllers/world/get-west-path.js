@@ -4,7 +4,7 @@ module.exports = {
   friendlyName: 'Get west path',
 
 
-  description: 'Get the way west: the endless made-up surface west of the Bright (crossing after crossing of sixty places, rising into highlands past west:120), how it changes with distance, the rooms inside its landmarks, and the landmarks that are always at the same distance, in the same order.',
+  description: 'Get the way west: the endless made-up surface west of the Bright (crossing after crossing of sixty places, rising into highlands the farther you go), how it changes with distance, the rooms inside its landmarks, and the landmarks that are always at the same distance, in the same order.',
 
 
   extendedDescription:
@@ -27,7 +27,7 @@ Later crossings add features now and then (\`laterCrossings\`: salt pans, mirror
 tar seeps, drowned trees, shell heaps), and the birds get worse the farther you go (\`birds\`:
 hookbills that grab and drop you, spearnecks that stab down through the water).
 
-And the land rises.  Past west:120 (\`highlands.from\` is 121), more and more places are highland:
+And the land rises.  From \`highlands.from\` on (read from the game), more and more places are highland:
 streams, high lakes, ridges and snowfields you have to flop across out of the water (the breath runs
 down out of water), waterfalls you swim up to the pools above (the way on is up), sinkholes down into
 aquifers in the rock (room keys "aq:N" and "aq2:N"; ice caves higher up).  Height is in meters
@@ -97,7 +97,7 @@ the question of how the glass city flies is never answered: don't guess or add t
       west.path.map((p) => p.name+' ('+p.n+')').join(', ')+'. '+
       'Every later crossing recalls them at the same distances within it, with a word added to the name (like "'+(west.path[0] ? west.path[0].name : 'The glass buoy')+', '+(west.recallWords[2] || 'older')+'"). '+
       'Some have rooms inside ("west-in:N:K"): '+west.interiors.map((i) => i.name.replace(/^The /, 'the ')).join(', ')+'. '+
-      'And the land rises: past west:'+(west.highlands.from - 1)+', more and more of it is highland, with streams, lakes, ridges and snowfields to flop across out of the water, waterfalls to swim up, and aquifers ("aq:N") under the mountains, icy higher up. Height is counted in meters, and it keeps going up. '+
+      'And the land rises: from west:'+west.highlands.from+' on, more and more of it is highland, with streams, lakes, ridges and snowfields to flop across out of the water, waterfalls to swim up, and aquifers ("aq:N") under the mountains, icy higher up. Height is counted in meters, and it keeps going up. '+
       'Everything between the landmarks is made up as you swim into it.';
 
     return Object.assign({ path: west.path, explanation }, _.omit(west, ['path']));

@@ -828,6 +828,134 @@
     snow: 0.05,
   });
 
+  // ── Up into the sky: the rain, the cloud, the keels ─────────────────────────
+  // (levels.js: the rain and the spray, the cloud sea, the keels.) Places of air with water hanging
+  // in it. Out of the water you fall, and the breath runs down. The island tops are never up here.
+  const grey = (ctx, room, a) => { ctx.fillStyle = `rgba(214,222,230,${a})`; ctx.fillRect(-200, -200, room.w + 400, room.h + 400); };
+  const streaks = (ctx, room, t, n, a) => {// rain everywhere, thin
+    ctx.strokeStyle = `rgba(225,238,250,${a})`; ctx.lineWidth = 1.2;
+    ctx.beginPath();
+    for (let i = 0; i < n; i++) { const x = (i * 211) % room.w, y = ((t * 560 + i * 137) % (room.h + 100)) - 60; ctx.moveTo(x, y); ctx.lineTo(x - 3, y + 20); }
+    ctx.stroke();
+  };
+  def('rain-column', skyPlace({
+    name: 'In the rain', map: [-3, -1], w: 1.4, h: 1.2,
+    exits: { down: 'rain-sea', up: { key: 'rain-cloud', at: 'fromBelow' } },
+    terrain: { ceilGap: [0.45, 0.94] },
+    // The sheet of rain off the island, all the way up to the bottom of the cloud, where it spreads out.
+    waterRects: [
+      { x: 1480, y: -60, w: 260, h: 1200, current: [0, 110] },
+      { x: 1000, y: -60, w: 1100, h: 200, current: [0, 50] },
+    ],
+    entries: { default: [1610, 900], fromBelow: [1610, 980] },
+    bg(ctx, t, room) {
+      // Far below and behind: the low island the rain falls on, and the sea.
+      ctx.save(); ctx.globalAlpha = 0.45;
+      A.island(ctx, 900, room.h + 120, 900, { seed: 21, keel: 0.26, trees: 10, domes: [[0.18, 0.08]], cracked: true, t, lw: 0.8 });
+      ctx.restore();
+      grey(ctx, room, 0.18);
+    },
+    props: [{ layer: 'mid', draw(ctx, t, room) {
+      const W = room.def.waterRects;
+      mist(ctx, [W[1]], t, '#9aa6b0', 0.6);
+      sheet(ctx, W[0], t, 1.1);
+      streaks(ctx, room, t, 50, 0.2);
+    } }],
+    actors: [{ id: 'spiders-r', type: 'thing', kind: 'ballooning-spiders', x: 700, y: 420 }],
+  }));
+  def('rain-cloud', skyPlace({
+    name: 'Inside the rain cloud', map: [-3, -2], w: 1.4, h: 1.2,
+    exits: { down: 'rain-column', up: { key: 'rain-keel', at: 'fromBelow' } },
+    terrain: { ceilGap: [0.58, 0.81] },
+    waterRects: [
+      { x: 0, y: 820, w: 2240, h: 380, current: [0, 30] },
+      { x: 1300, y: -60, w: 520, h: 900, current: [0, 20] },
+      { x: 250, y: 320, w: 1100, h: 260 },
+    ],
+    entries: { default: [1600, 980], fromBelow: [1600, 1000] },
+    bg(ctx, t, room) { grey(ctx, room, 0.35); },
+    props: [{ layer: 'mid', draw(ctx, t, room) { mist(ctx, room.def.waterRects, t, '#e8edf2', 0.75); streaks(ctx, room, t, 24, 0.12); } }],
+    actors: [{ id: 'swifts-c', type: 'thing', kind: 'swifts', x: 1560, y: 260 }, { id: 'spiders-c', type: 'thing', kind: 'ballooning-spiders', x: 520, y: 430 }],
+  }));
+  def('rain-keel', skyPlace({
+    name: 'Under the keel', map: [-3, -3], w: 1.4, h: 1.1, upExit: false,
+    exits: { down: 'rain-cloud' },
+    // The rock bottom of an island, hanging down out of the cloud. No way up through that.
+    terrain: { ceiling: [0.32, 0.22, 0.26, 0.16, 0.2, 0.24, 0.3], walls: { left: true, right: true } },
+    rock: '#3b3a34', rockHi: '#5d5a4c', rockColor: '#3b3a34',
+    waterRects: [
+      { x: 1300, y: 300, w: 520, h: 760, current: [0, 90] },// water running off the roots, in threads
+      { x: 1100, y: 150, w: 900, h: 240 },// soaked moss
+      { x: 250, y: 200, w: 900, h: 260 },
+    ],
+    entries: { default: [1560, 900], fromBelow: [1560, 930] },
+    bg(ctx, t, room) { grey(ctx, room, 0.12); ctx.fillStyle = 'rgba(20,24,22,0.35)'; ctx.fillRect(-200, -200, room.w + 400, room.h * 0.5 + 200); },
+    props: [
+      { layer: 'mid', draw(ctx, t, room) {
+        const W = room.def.waterRects;
+        mist(ctx, [W[1], W[2]], t, '#4f6a34', 0.55);// the moss
+        sheet(ctx, W[0], t, 0.7);
+        // roots, hanging out of the rock
+        ctx.strokeStyle = '#4a3f2e'; ctx.lineCap = 'round';
+        for (let i = 0; i < 16; i++) {
+          const x = 120 + i * 135, top = room.ceilY(x) - 10, len = 160 + (i * 73 % 260);
+          ctx.lineWidth = 3 + (i % 3) * 2;
+          ctx.beginPath(); ctx.moveTo(x, top);
+          ctx.quadraticCurveTo(x + Math.sin(t * 0.3 + i) * 14, top + len * 0.5, x + Math.sin(i * 1.7) * 30, top + len); ctx.stroke();
+        }
+      } },
+    ],
+    onUpdate(room, dt) {
+      if (Math.random() < dt * 14) { SO.E.particles.push({ kind: 'drop', x: 150 + Math.random() * (room.w - 300), y: 260 + Math.random() * 80, vx: 0, vy: 60, t: 0, life: 1.6, r: 1.5 + Math.random() * 2 }); }
+    },
+    actors: [{ id: 'roots-k', type: 'thing', kind: 'keel-roots', x: 640, y: 470 }, { id: 'moss-k', type: 'thing', kind: 'wet-moss', x: 1700, y: 270 }],
+  }));
+  def('spray-mist', skyPlace({
+    name: 'In the spray', map: [6, -1], w: 1.3, h: 1.2,
+    exits: { down: 'spray-zone', up: { key: 'cloud-sea', at: 'fromBelow' } },
+    // On the left, the side of the anchored isle, going up into the cloud.
+    terrain: { ceilGap: [0.14, 0.87], walls: { left: true } },
+    rock: '#56605c', rockHi: '#7d8a84',
+    waterRects: [
+      { x: 400, y: -60, w: 370, h: 1200, current: [0, -40] },
+      { x: 300, y: -60, w: 1500, h: 260, current: [0, -20] },
+    ],
+    entries: { default: [585, 900], fromBelow: [585, 980] },
+    props: [{ layer: 'mid', draw(ctx, t, room) {
+      mist(ctx, room.def.waterRects, t, '#ffffff', 0.6);
+      ['#ff8a8a', '#ffd38a', '#fff59a', '#9aff9a', '#8ad8ff', '#b08aff'].forEach((c, i) => {
+        ctx.strokeStyle = U.rgba(c, 0.1 + 0.04 * Math.sin(t * 0.4)); ctx.lineWidth = 9;
+        ctx.beginPath(); ctx.arc(room.w * 0.55, room.h + 300, 900 - i * 9, Math.PI * 1.1, Math.PI * 1.9); ctx.stroke();
+      });
+    } }],
+    onUpdate(room, dt) {
+      if (Math.random() < dt * 10) { SO.E.particles.push({ kind: 'drop', x: Math.random() * room.w, y: room.h * Math.random(), vx: 30, vy: -20, t: 0, life: 2, r: 1.5 + Math.random() * 2 }); }
+    },
+    roar: 0.4,
+    actors: [{ id: 'rainbow-s', type: 'thing', kind: 'spray-rainbow', x: 1300, y: 560 }],
+  }));
+  def('cloud-sea', skyPlace({
+    name: 'The cloud sea', map: [6, -2], w: 1.3, h: 1.2, upExit: false,
+    exits: { down: 'spray-mist' },
+    terrain: { walls: { left: true } },
+    rock: '#56605c', rockHi: '#7d8a84',
+    waterRects: [
+      { x: 0, y: 760, w: 2080, h: 440, current: [0, 20] },
+      { x: 150, y: 250, w: 600, h: 560 },
+      { x: 1250, y: 80, w: 650, h: 720 },
+      { x: 700, y: 300, w: 600, h: 180 },
+    ],
+    entries: { default: [1000, 980], fromBelow: [1000, 1000] },
+    bg(ctx, t) {
+      // High above: the island tops. Home is up there. Not from here.
+      ctx.save(); ctx.globalAlpha = 0.5;
+      A.island(ctx, 1500 + SO.E.cam.x * 0.1, -380, 700, { seed: 33, keel: 0.3, trees: 8, domes: [[0, 0.12]], t, lw: 0.8 });
+      ctx.restore();
+    },
+    props: [{ layer: 'mid', draw(ctx, t, room) { mist(ctx, room.def.waterRects, t, '#f6f9fb', 0.8); } }],
+    actors: [{ id: 'swifts-s', type: 'thing', kind: 'swifts', x: 1100, y: 160 }],
+  }));
+
   // ── West: the meadow, the drop-off, and down into the dark ──────────────────
   def('meadow', {
     name: 'The meadow', region: 'kelp', map: [-3, 1], w: 1.8, depth: 0.2, dark: 0.08, palette: 'kelp',

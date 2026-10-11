@@ -34,7 +34,7 @@
 
   const BANDS = [
     { from: 1, name: 'The western reef', palette: 'warm', depth: 0.04, floor: [0.16, 0.26], sand: '#e2d3a0', plants: 'seagrass', spiders: 3, birds: 0, fish: 16 },
-    { from: 4, name: 'The tidepool coast', palette: 'glass', depth: 0.03, floor: [0.3, 0.45], sand: '#bdb39a', plants: 'kelp', rocks: true, spiders: 2, birds: 3, fish: 8 },
+    { from: 2, name: 'The tidepool coast', palette: 'glass', depth: 0.03, floor: [0.3, 0.45], sand: '#bdb39a', plants: 'kelp', rocks: true, spiders: 2, birds: 3, fish: 8 },
     { from: 8, name: 'The sargassum drift', palette: 'warm', depth: 0.1, floor: [0.05, 0.12], sand: '#9a9070', plants: 'sargassum', spiders: 0, birds: 2, fish: 20 },
     { from: 13, name: 'The lungfish steps', palette: 'kelp', depth: 0.05, floor: [0.12, 0.2], sand: '#8a7a5a', plants: 'seagrass', plateaus: true, spiders: 1, birds: 2, fish: 6 },
     { from: 19, name: 'The wet desert', palette: 'warm', depth: 0.02, floor: [0.3, 0.42], sand: '#efe2bd', plants: null, spikes: true, spiders: 0, birds: 1, scary: true, fish: 2 },
@@ -104,18 +104,26 @@
   }
 
   // ── The land rising ─────────────────────────────────────────────────────────
-  const HIGH_FROM = 121;
-  function isHigh(n) { return n >= HIGH_FROM && rand('high:' + n) < U.clamp((n - HIGH_FROM) / 7080, 0.1, 1); }
+  const HIGH_FROM = 15;// the land starts rising early, and more and more the farther you go
+  function isHigh(n) { return n >= HIGH_FROM && rand('high:' + n) < U.clamp(0.15 + (n - HIGH_FROM) / 600, 0.15, 1); }
   // A climb takes two places: a waterfall and the pool above it, or a sinkhole and the spring
   // the aquifer comes up in. Climbs start on odd places, so they never overlap.
-  function climbAt(n) { return n % 2 === 1 && isHigh(n) && rand('climb:' + n) < 0.4 ? (rand('climbkind:' + n) < 0.6 ? 'falls' : 'sinkhole') : null; }
+  // A few early places are always the same, so the land starts changing soon: a stream, then
+  // snow, then the first waterfall to climb.
+  const EARLY = { 16: 'stream', 24: 'snowfield', 31: 'falls' };
+  function climbAt(n) {
+    if (EARLY[n] === 'falls') { return 'falls'; }
+    if (EARLY[n] || EARLY[n - 1] === 'falls') { return null; }
+    return n % 2 === 1 && isHigh(n) && rand('climb:' + n) < 0.4 ? (rand('climbkind:' + n) < 0.6 ? 'falls' : 'sinkhole') : null;
+  }
   function typeOf(n) {
     if (n % 2 === 0 && climbAt(n - 1)) { return climbAt(n - 1) === 'falls' ? 'pooltop' : 'spring'; }
     const cl = climbAt(n);
     if (cl) { return cl; }
+    if (EARLY[n]) { return EARLY[n]; }
     if (!isHigh(n)) { return null; }
-    const r = rand('kind:' + n), cold = U.clamp((n - HIGH_FROM) / 3000, 0, 0.6);
-    return r < 0.35 ? 'stream' : r < 0.55 ? 'lake' : r < 0.8 - cold * 0.3 ? 'ridge' : 'snowfield';
+    const r = rand('kind:' + n), cold = U.clamp((n - HIGH_FROM) / 300, 0, 0.6);
+    return r < 0.3 ? 'stream' : r < 0.45 ? 'lake' : r < 0.65 - cold * 0.3 ? 'ridge' : 'snowfield';// (snow comes soon)
   }
   const elevCache = {};
   function elevation(n) {// meters climbed: each climb about 140 m, plus the gentle rise in between
@@ -173,7 +181,7 @@
       terrain: { floor },
       solids, props, actors,
       ambient: { fish: b.fish },
-      isles: n < 6 ? [[400 + r() * 1200, 0.6 + n * 0.08]] : [],
+      isles: [],
       snow: 0.1,
       west: n,
     };
