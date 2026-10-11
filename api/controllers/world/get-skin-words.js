@@ -17,7 +17,8 @@ Squids talk with their skin.  A squid has four skin colors, and each one sings a
   shimmer (blue) = A5   (MIDI 81, 880.00 Hz)  white key   game key C or 3
   glow (gold)    = B5   (MIDI 83, 987.77 Hz)  white key   game key D or 4
 
-A skin word is a short pattern of colors, so it is also a little melody.  There are six:
+A skin word is a short pattern of colors, so it is also a little melody.  There are eight: six on
+the way through the story, and two (lift and still) that nobody teaches, found in side places:
 
   glow           gold, gold, gold            B5 B5 B5         lights along the belly for about 60 s
   open           red, pale, red              D5 F#5 D5        opens doors in the dome (and clams)
@@ -25,6 +26,8 @@ A skin word is a short pattern of colors, so it is also a little melody.  There 
   passing cloud  red, red, shimmer           D5 D5 A5         turns the squid into a shadow (hiding) for about 6 s
   call           blue, gold, blue, pale      A5 B5 A5 F#5     the swans' song from home
   wake           gold, red, gold, red        B5 D5 B5 D5      wakes up the undersea volcano
+  lift           blue, blue, gold            A5 A5 B5         the water pushes the squid up (backwards: down)
+  still          pale, gold, pale            F#5 B5 F#5       the water stops moving for about 8 s
 
 How to play them on a real piano or keyboard at home:
 1. Find middle C (C4, MIDI 60): the C nearest the middle of the keyboard, usually right under the
@@ -42,7 +45,8 @@ How to play them on a real piano or keyboard at home:
    piano, and lift it between words.  On a digital keyboard, a bell, celesta, glockenspiel, music box,
    or vibraphone sound is closest to the game.  Teachers have their own pace: the nautilus plays calm
    slowly (about 67 BPM), Sepia plays passing cloud quickly (about 107 BPM), the swans sing their call
-   at about 80 BPM, the crown jellies blink glow at about 86 BPM.
+   at about 80 BPM, the crown jellies blink glow at about 86 BPM, the singing shards hum lift at about
+   80 BPM, and still is slow and even (about 60 BPM).
 6. Keyboard too small (25 to 49 keys)?  Use the octave-up button, or play everything one octave lower
    (D4, F#4, A4, B4, starting from the D right next to middle C).  Same melody, lower.
 
@@ -52,11 +56,13 @@ notes and the squid starts over.  Careful: the game's A, B, C, D keys are button
 (the game's A key plays F#).
 
 Palindromes can't be undone.  A skin word played backwards takes back what it did, unless it reads the
-same both ways.  Glow, open, and calm are palindromes, so they're permanent: there's no "unglow" (it
-just wears off after a minute), opened petals stay open, and what's calm stays calm.  Passing cloud,
-call, and wake can be undone by playing them backwards: shimmer, red, red (A5 D5 D5) clears your ink
-cloud early; pale, blue, gold, blue (F#5 A5 B5 A5) hushes a call; red, gold, red, gold (D5 B5 D5 B5)
-settles what you woke nearby, though the volcano won't go back to sleep.  (A squid can only undo a word
+same both ways.  Glow, open, calm, and still are palindromes, so they're permanent: there's no
+"unglow" (it just wears off after a minute), opened petals stay open, what's calm stays calm, and the
+stillness only wears off by itself.  Passing cloud, call, wake, and lift can be undone by playing them
+backwards: shimmer, red, red (A5 D5 D5) clears your ink cloud early; pale, blue, gold, blue (F#5 A5 B5
+A5) hushes a call; red, gold, red, gold (D5 B5 D5 B5) settles what you woke nearby, though the volcano
+won't go back to sleep; and gold, blue, blue (B5 A5 A5) is lift backwards, which pushes the squid down
+instead of up.  (A squid can only undo a word
 it knows.)
 
 Who teaches what: glow is discovered by copying the crown jellies' gold blink seen while sinking (or
@@ -64,7 +70,10 @@ by accident: anyone who flashes gold three times learns it); the vampire squid i
 teaches open; the nautilus in the cliff cave teaches calm (practice on the moray eel); Sepia the
 cuttlefish in the kelp teaches passing cloud (then plays hide and seek); Grandmother Seven, the
 seven-arm octopus, teaches wake for five pearls; and the swans' call comes down with the waterfall at
-the Plunge.  Any squid can say any word; the trick is knowing it exists.
+the Plunge.  Nobody teaches lift or still (\`optional\` is true for them): lift comes from hanging the
+four singing shards back in the fallen spire and humming back what the big shard hums, and still from
+planting the quiet reeds' lost stalk back at the mud volcanoes and tuning them on the mounds' beat.
+Any squid can say any word; the trick is knowing it exists.
 
 Which squids know a word: \`knownBy\` counts squids who know it in their current playthrough (skin words
 are forgotten when a squid falls again as a new playthrough); \`everLearnedBy\` counts squids who have
@@ -80,7 +89,7 @@ software can render as sheet music.`,
 
     name: {
       type: 'string',
-      isIn: ['glow', 'open', 'calm', 'cloud', 'call', 'wake'],
+      isIn: ['glow', 'open', 'calm', 'cloud', 'call', 'wake', 'lift', 'still'],
       example: 'call',
       description: 'Only return this skin word, and include the names of the squids who know it.',
       extendedDescription: '"cloud" is the key for "passing cloud".'
@@ -97,7 +106,7 @@ software can render as sheet music.`,
         '`{ colors, howToPlay, skinWords, squids }`.  `colors` maps each color letter (R, W, B, G) to `{ color, gameKeys, note, midi, hz, pianoKey, keyColor, findIt }` '+
         '(`pianoKey` is the key number on an 88-key piano, counting from 1 at the bottom; `findIt` says how to find that key).  `howToPlay` is step-by-step instructions for playing the '+
         'melodies on a real piano or keyboard.  Each of `skinWords` is `{ key, name, colors, colorNames, gameKeys, notes: [{ color, note, midi, hz, pianoKey, keyColor }], melody, '+
-        'melodyOneOctaveLower, piano, tempoBpm, secondsBetweenNotes, abc, meaning, inGame, teacher, learnedAt, isPalindrome, canBeUndone, undoColors, undoMelody, undo, knownBy, '+
+        'melodyOneOctaveLower, piano, tempoBpm, secondsBetweenNotes, abc, meaning, inGame, teacher, learnedAt, optional, isPalindrome, canBeUndone, undoColors, undoMelody, undo, knownBy, '+
         'everLearnedBy, squidNames? }`.  `melody` is the notes in scientific pitch notation (e.g. "A5 B5 A5 F#5"); `piano` is a one-line recipe for playing it (hand, keys, fingers, tempo); '+
         '`learnedAt` is room keys; `squidNames` (only when `name` is given) lists squids who know it now, most recently seen first.  `squids` is how many squids there are in total.'
     },

@@ -6,7 +6,7 @@ const STAT_NUMBERS = [
 ];
 const STAT_GROUPS = {
   eaten: ['krill', 'shrimp', 'minnow'],
-  patterns: ['glow', 'open', 'calm', 'cloud', 'call', 'wake'],
+  patterns: ['glow', 'open', 'calm', 'cloud', 'call', 'wake', 'lift', 'still'],
 };
 
 module.exports = {

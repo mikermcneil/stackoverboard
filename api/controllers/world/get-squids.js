@@ -17,13 +17,16 @@ when it was last seen.  Times are JS timestamps (epoch ms).
 
 Also what each squid knows:
 - \`skinWords\`: the skin words it knows in its current playthrough, in the order it learned them
-  ("glow", "open", "calm", "cloud" = passing cloud, "call", "wake").  Skin words are flashed with the
+  ("glow", "open", "calm", "cloud" = passing cloud, "call", "wake", and the two found on the side,
+  "lift" and "still").  Skin words are flashed with the
   squid's four skin colors, each a note, so each word is a short melody; see get-skin-words for the
   notes and how to play them on a real piano.  A squid forgets its skin words when it falls again as a
   new playthrough; \`skinWordsEverLearned\` is every word it has learned in any playthrough.
 - \`nativesMet\`: keys of the native creatures, plants, and items it has met (in its journal, kept across
   playthroughs; see get-species, e.g. "moray", "moon-jelly", "grandmother").
 - \`placesVisited\`: room keys it has been to (see get-lore).  \`location\`: the room it was last in.
+- \`levelsReached\`: the levels of the world it has been to, oldest first, as \`{ key, firstAt }\` (its own
+  experience; see get-levels for what each level is).
 - \`pearls\`: pearls it's carrying (it takes five to learn "wake" from Grandmother Seven).
 - \`memories\`: which of the three pieces of glass from home it has found this playthrough (1 "The pool",
   2 "The edge", 3 "The shaking"; all three are needed for the "song" ending).
@@ -39,6 +42,7 @@ Also each squid's character:
   has the world's records (e.g. who has gone farthest west).
 
 Use \`knows\` to list only squids who know a particular skin word (e.g. "Who knows the swans' call?"),
+\`reached\` to list only squids that have been to a level (e.g. "Who has reached the hadal deep?"),
 and \`trait\` to list only squids strong in a trait (0.6 or more), strongest first (e.g. "Who are the
 bravest squids?").`,
 
@@ -63,9 +67,16 @@ bravest squids?").`,
       description: 'Only list squids whose player was last on this kind of device.'
     },
 
+    reached: {
+      type: 'string',
+      regex: /^[a-z][a-z0-9-]{0,40}$/,
+      example: 'hadal',
+      description: 'Only list squids that have been to this level (a level key from get-levels, e.g. "abyss", "keels", "hadal").'
+    },
+
     knows: {
       type: 'string',
-      isIn: ['glow', 'open', 'calm', 'cloud', 'call', 'wake'],
+      isIn: ['glow', 'open', 'calm', 'cloud', 'call', 'wake', 'lift', 'still'],
       example: 'wake',
       description: 'Only list squids who know this skin word in their current playthrough.'
     },
@@ -84,13 +95,13 @@ bravest squids?").`,
 
     success: {
       outputFriendlyName: 'Squids',
-      outputDescription: '`{ squids: [{ squidName, playthrough, chapter, endings, arrivedAt, lastSeenAt, skinWords, skinWordsEverLearned, nativesMet, placesVisited, location, pearls, memories, device, os, browser, place, placeSource, timeZone, language, userAgent, personality: { summary, traits, strongest } | null, stats: { playSeconds, roomsEntered, westFarthest, bestAirTime, deepest, interactions, answers, chats } }] }` sorted by lastSeenAt, most recent first (or by the trait, with `trait`).  `device` is phone, tablet, desktop or unknown.  `place` is roughly (city level) where the player is playing from, e.g. "Austin, Texas, US".  `placeSource` says how: "ip" (an offline lookup of their IP address in a city database, done once per session; the address is never stored), "cloudflare" (Cloudflare\'s location headers), or "timezone" (guessed from the browser\'s time zone, e.g. "Chicago, America", which only names the zone\'s main city).  Older squids may only have a time zone guess.  Exact locations are never stored.'
+      outputDescription: '`{ squids: [{ squidName, playthrough, chapter, endings, arrivedAt, lastSeenAt, skinWords, skinWordsEverLearned, nativesMet, placesVisited, levelsReached, location, pearls, memories, device, os, browser, place, placeSource, timeZone, language, userAgent, personality: { summary, traits, strongest } | null, stats: { playSeconds, roomsEntered, westFarthest, bestAirTime, deepest, interactions, answers, chats } }] }` sorted by lastSeenAt, most recent first (or by the trait, with `trait`).  `device` is phone, tablet, desktop or unknown.  `place` is roughly (city level) where the player is playing from, e.g. "Austin, Texas, US".  `placeSource` says how: "ip" (an offline lookup of their IP address in a city database, done once per session; the address is never stored), "cloudflare" (Cloudflare\'s location headers), or "timezone" (guessed from the browser\'s time zone, e.g. "Chicago, America", which only names the zone\'s main city).  Older squids may only have a time zone guess.  Exact locations are never stored.'
     },
 
   },
 
 
-  fn: async function ({ limit, device, knows, trait }) {
+  fn: async function ({ limit, device, knows, reached, trait }) {
 
     var where = device ? { device } : {};
     var saves;
@@ -98,7 +109,7 @@ bravest squids?").`,
       var personality = sails.helpers.world.getSquidCharacter(save).personality;
       return personality && typeof personality.traits[trait] === 'number' ? personality.traits[trait] : 0;
     };
-    if (knows || trait) {
+    if (knows || reached || trait) {
       // Which skin words a squid knows lives inside its save's game state, so look through them
       // a page at a time, most recently seen first, until there are enough.
       saves = [];
@@ -106,6 +117,7 @@ bravest squids?").`,
         let page = await Save.find(where).sort([{ lastSeenAt: 'DESC' }, { id: 'DESC' }]).skip(skip).limit(500);
         saves = saves.concat(page.filter((save) =>
           (!knows || sails.helpers.world.getSquidKnowledge(save).skinWords.includes(knows)) &&
+          (!reached || sails.helpers.world.getSquidKnowledge(save).levelsReached.some((l) => l.key === reached)) &&
           (!trait || traitOf(save) >= 0.6)
         ));
         if (page.length < 500 || (!trait && saves.length >= limit)) {

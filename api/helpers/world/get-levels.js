@@ -75,7 +75,7 @@ function readRoom(key) {
     var str = (name) => { var m = head.match(new RegExp('\\b'+name+'\\s*:\\s*\'([^\']*)\'')); return m ? m[1] : null; };
     var num = (name) => { var m = head.match(new RegExp('\\b'+name+'\\s*:\\s*(-?[0-9.]+)')); return m ? Number(m[1]) : null; };
     return { name: str('name'), region: str('region'), depth: num('depth'), level: str('level') };
-  } catch (err) {
+  } catch (unusedErr) {
     return null;
   }
 }

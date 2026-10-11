@@ -366,7 +366,7 @@
           CU.swanAt(c, W * 0.5 + 240 * u * push, H * 0.36 + (Math.sin(t * 0.6 + 2) * 8) * u, 1.65 * u * push, t + 1, { mood: 'worried', dir: -1, rot: -0.8 - 0.08 * Math.sin(t * 0.5), seed: 8 });
         }
         // and one, apart, weaving a long strip of reed, then pulling a row back out
-        const wx = W * 0.85, wy = H * (CU ? 0.3 : 0.45), len = 80 + 60 * Math.abs(Math.sin(t * 0.35));
+        const wx = W * 0.85, wy = H * (CU ? 0.24 : 0.45), len = 80 + 60 * Math.abs(Math.sin(t * 0.35));
         c.fillStyle = 'rgba(214,200,150,0.9)'; c.fillRect(wx - len, wy + 30, len, 10);
         c.strokeStyle = 'rgba(160,140,90,0.8)'; c.lineWidth = 1;
         for (let x = wx - len; x < wx; x += 6) { c.beginPath(); c.moveTo(x, wy + 30); c.lineTo(x + 3, wy + 40); c.stroke(); }
@@ -425,7 +425,7 @@
         c.globalAlpha = 1;
         // a swan, at the back, turning away
         const turn = U.smoothstep(4, 7, t);
-        if (SO.closeups) { SO.closeups.sitting(c, W * 0.8, H * 0.42, 0.9 * H / 900, t, { mood: 'sad', dir: -1, turn: U.smoothstep(4.2, 4.9, t), rot: -0.1 + turn * 0.45, seed: 5 }); }
+        if (SO.closeups) { SO.closeups.sitting(c, W * 0.8, H * 0.4, 1.25 * H / 900, t, { mood: 'sad', dir: -1, turn: U.smoothstep(4.2, 4.9, t), rot: -0.1 + turn * 0.45, seed: 5 }); }
         else { c.fillStyle = 'rgba(250,250,246,0.9)'; c.beginPath(); c.ellipse(W * 0.82, H * 0.35, 36 * (1 - turn * 0.4), 16, 0, 0, TAU); c.fill(); }
         specks(c, W, H, t, 16, [0.1, 0.05], '255,255,255');
         eye(c, W, H, t, { rim: 0.55, blink: blinkAt(t, 0.3, 0.8) + blinkAt(t, 7.5, 0.5) });
@@ -535,8 +535,8 @@
         const lean = U.smoothstep(2.8, 5.2, t);
         if (SO.closeups && lean > 0) {
           const u = H / 900;
-          SO.closeups.swanAt(c, W * 0.36, H * (0.04 + 0.2 * lean), 2 * u, t, { mood: 'tender', dir: 1, rot: 1.45, seed: 3, alpha: lean * 0.85 });
-          SO.closeups.swanAt(c, W * 0.64, H * (0.02 + 0.18 * lean), 1.9 * u, t + 1, { mood: 'happy', dir: -1, rot: -1.45, seed: 9, alpha: lean * 0.85 });
+          SO.closeups.swanAt(c, W * 0.36, H * (0.06 + 0.24 * lean), 2 * u, t, { mood: 'tender', dir: 1, rot: 1.45, seed: 3, alpha: lean * 0.85 });
+          SO.closeups.swanAt(c, W * 0.64, H * (0.04 + 0.22 * lean), 1.9 * u, t + 1, { mood: 'happy', dir: -1, rot: -1.45, seed: 9, alpha: lean * 0.85 });
           c.fillStyle = 'rgba(120,200,210,' + (0.25 * lean) + ')'; c.fillRect(0, 0, W, H * 0.45);// seen through the water
         }
         specks(c, W, H, t, 50, [0, 0.8], '255,255,255');

@@ -114,7 +114,7 @@
   def('hollowglass-rim', {
     name: 'Hollowglass', region: 'hollowglass', map: [0, 3], w: 1.8, depth: 0.5, dark: 0.45, palette: 'glass',
     exits: { up: 'glow-below', right: 'cliff-foot' },
-    terrain: { floor: [0.12, 0.14, 0.1, 0.12, 0.16, 0.15, 0.14, 0.12, 0.13, 0.18, 0.2], walls: { left: true, right: false } },
+    terrain: { floor: [0.12, 0.14, 0.1, 0.12, 0.16, 0.15, 0.14, 0.12, 0.13, 0.18, 0.2], ceiling: [0.05, 0.02, 0, 0, 0, 0, 0, 0, 0, 0, 0], ceilGap: [0.12, 1], walls: { left: true, right: false } },
     sand: '#a9b7a6',
     entries: { default: [700, 300], fromHall: [1000, 520] },
     props: [
@@ -303,9 +303,10 @@
   def('kelp-heart', {
     name: 'The heart of the Swaying', region: 'kelp', map: [-2, 2], w: 1.4, depth: 0.42, dark: 0.4, palette: 'kelp',
     exits: { up: 'kelp-deep' },
-    terrain: { floor: [0.14, 0.12, 0.1, 0.12, 0.16, 0.2], ceilGap: [0.4, 0.62], walls: { left: true, right: true } },
+    // Overhead, the floor of the Swaying, with the hole you came down through.
+    terrain: { floor: [0.14, 0.12, 0.1, 0.12, 0.16, 0.2], ceiling: [0.1, 0.06, 0.04, 0.04, 0.05, 0.07], ceilGap: [0.62, 0.78], walls: { left: true, right: true } },
     sand: '#a99f7a',
-    entries: { default: [1150, 160] },
+    entries: { default: [1560, 180] },
     props: [
       { layer: 'back', draw(ctx, t, room) {
         // The Mother Kelp: older than the cliff.
@@ -363,7 +364,7 @@
   def('cliff-foot', {
     name: 'The foot of the cliff', region: 'cliff', map: [1, 3], w: 1.6, depth: 0.56, dark: 0.55,
     exits: { up: 'cliff-face', left: 'hollowglass-rim', down: 'trench-lip' },
-    terrain: { floor: [0.14, 0.16, 0.12, 0.15, 0.13, 0.12, 0.1, 0.1, 0.12], floorGap: [0.72, 0.9], walls: { left: false, right: true } },
+    terrain: { floor: [0.14, 0.16, 0.12, 0.15, 0.13, 0.12, 0.1, 0.1, 0.12], floorGap: [0.72, 0.9], ceiling: [0, 0, 0, 0, 0, 0, 0.02, 0.04, 0.05], ceilGap: [0, 0.74], walls: { left: false, right: true } },
     solids: [
       { type: 'rect', x: 620, y: 480, w: 360, h: 60 },// a ledge to hide under
       { type: 'rect', x: 1500, y: 380, w: 300, h: 56 },
@@ -385,7 +386,8 @@
   def('trench-wall', {
     name: 'The trench wall', region: 'trench', map: [1, 5], mapH: 1, w: 1.1, h: 1.6, depth: 0.75, dark: 0.78,
     exits: { up: 'trench-lip', down: 'trench-floor' },
-    terrain: { walls: { left: true, right: true } },
+    // Rock above and below, with the holes the trench goes down through.
+    terrain: { ceiling: [0.03, 0.02, 0.02, 0.02, 0.03], ceilGap: [0.34, 0.62], floor: [0.03, 0.02, 0.02, 0.02, 0.03], floorGap: [0.3, 0.7], walls: { left: true, right: true } },
     solids: [
       { type: 'rect', x: 60, y: 420, w: 520, h: 50 },
       { type: 'rect', x: 1100, y: 760, w: 600, h: 50 },
@@ -439,7 +441,7 @@
   def('undershine-gate', {
     name: 'Warm water', region: 'undershine', map: [0, 12], w: 1.2, depth: 0.88, dark: 0.55, palette: 'shine',
     exits: { down: 'undershine' },// up is set from the maze goal
-    terrain: { walls: { left: true, right: true } },
+    terrain: { floor: [0.04, 0.03, 0.03, 0.03, 0.04], floorGap: [0.4, 0.6], walls: { left: true, right: true } },
     bg(ctx, t, room) {
       const g = ctx.createRadialGradient(room.w / 2, room.h + 200, 0, room.w / 2, room.h + 200, 800);
       g.addColorStop(0, 'rgba(255,190,150,0.45)'); g.addColorStop(1, 'rgba(255,190,150,0)');
@@ -509,7 +511,7 @@
   def('forge', {
     name: 'The volcano', region: 'forge', map: [-1, 13], w: 1.5, depth: 0.9, dark: 0.55, palette: 'forge',
     exits: { right: 'undershine' },
-    terrain: { floor: [0.14, 0.16, 0.18, 0.12, 0.12, 0.16, 0.2], ceiling: [0.1, 0.06, 0.04, 0.04, 0.04, 0.08, 0.12], ceilGap: [0.36, 0.6], walls: { left: true, right: false } },
+    terrain: { floor: [0.14, 0.16, 0.18, 0.12, 0.12, 0.14, 0.1], ceiling: [0.1, 0.06, 0.04, 0.04, 0.04, 0.08, 0.12], walls: { left: true, right: false } },
     rock: '#2a2422', rockHi: '#4a3a34', floorTop: '#5a3a2a',
     bg(ctx, t, room) {
       // basalt columns
@@ -526,7 +528,8 @@
   def('riser', {
     name: 'The Riser', region: 'undershine', map: [1, 12], w: 1, h: 3, depth: 0.5, dark: 0.3, palette: 'warm',
     exits: { down: 'keeper-hall', up: 'warm-shallows' },
-    terrain: { walls: { left: true, right: true } },
+    // A crack in the octopus den's roof at the bottom, a hole in the floor of the shallows at the top.
+    terrain: { floor: [0.01, 0.01, 0.01], floorGap: [0.74, 0.94], ceiling: [0.01, 0.01, 0.01], ceilGap: [0.74, 0.92], walls: { left: true, right: true } },
     current: [0, -520],
     drift: [0, -260],
     rays: false,
@@ -548,12 +551,13 @@
   def('warm-shallows', {
     name: 'The warm shallows', region: 'surface', map: [2, 0], w: 1.8, depth: 0.06, surface: true, palette: 'warm',
     exits: { left: 'open-blue', right: 'shoal-reef', down: 'riser' },
-    terrain: { floor: [0.1, 0.12, 0.14, 0.1, 0.08, 0.1, 0.12, 0.14], floorGap: [0.46, 0.58] },
+    // (The hole in the floor is the top of the Riser, straight down.)
+    terrain: { floor: [0.1, 0.12, 0.14, 0.1, 0.08, 0.1, 0.12, 0.14], floorGap: [0.74, 0.9] },
     sand: '#ecd9a0', rayColor: '#fff2c8',
     entries: { default: [1500, 760] },
     props: (() => {
       const p = [];
-      for (let i = 0; i < 10; i++) { const x = 100 + i * 290; if (x > 1300 && x < 1700) { continue; } p.push({ layer: 'mid', draw(ctx, t, room) { coral(ctx, x, room.floorY(x) + 8, 1 + (i % 3) * 0.3, [20, 40, 330][i % 3], t, i + 50); } }); }
+      for (let i = 0; i < 10; i++) { const x = 100 + i * 290; if (x > 2050 && x < 2650) { continue; } p.push({ layer: 'mid', draw(ctx, t, room) { coral(ctx, x, room.floorY(x) + 8, 1 + (i % 3) * 0.3, [20, 40, 330][i % 3], t, i + 50); } }); }
       return p;
     })(),
     ambient: { fish: 16 },
@@ -611,7 +615,8 @@
   def('plunge-deep', {
     name: 'Beneath the Plunge', region: 'plunge', map: [4, 1], w: 1.2, h: 2.4, depth: 0.7, dark: 0.7,
     exits: { up: 'plunge' },
-    terrain: { walls: { left: true, right: true } },
+    // Overhead: the bottom of the Plunge, and the hole the falling water pours through.
+    terrain: { ceiling: [0.03, 0.02, 0.02, 0.02, 0.03], ceilGap: [0.42, 0.62], walls: { left: true, right: true } },
     entries: { default: [960, 160] },
     bg(ctx, t, room) {
       const lit = SO.story.threadLit ? SO.story.threadLit() : 0;
@@ -667,11 +672,50 @@
     }
     ctx.restore();
   };
+  // A sheet of heavy rain (water you can swim up, in the sky): dense streaks falling through a band.
+  const sheet = (ctx, r, t, k = 1) => {
+    const g = ctx.createLinearGradient(r.x, 0, r.x + r.w, 0);
+    g.addColorStop(0, 'rgba(210,230,245,0)'); g.addColorStop(0.5, `rgba(210,230,245,${0.22 * k})`); g.addColorStop(1, 'rgba(210,230,245,0)');
+    ctx.fillStyle = g; ctx.fillRect(r.x - 20, r.y, r.w + 40, r.h);
+    ctx.strokeStyle = `rgba(235,245,255,${0.45 * k})`; ctx.lineWidth = 1.6;
+    ctx.beginPath();
+    const n = Math.round(r.w * r.h / 2600);
+    for (let i = 0; i < n; i++) {
+      const x = r.x + ((i * 131) % r.w), y = r.y + ((t * 640 + i * 97) % r.h);
+      ctx.moveTo(x, y); ctx.lineTo(x - 3, y + 26);
+    }
+    ctx.stroke();
+  };
+  // Mist or cloud: soft white banks (water enough to swim in, barely). A few big soft blobs per bank.
+  const mist = (ctx, rects, t, col = '#f4f8fb', a = 0.5) => {
+    ctx.save();
+    rects.forEach((r, j) => {
+      const n = Math.max(3, Math.round((r.w + r.h) / 260));
+      for (let i = 0; i < n; i++) {
+        const f = (i + 0.5) / n, long = r.w > r.h;
+        const cx = long ? r.x + f * r.w : r.x + r.w / 2 + Math.sin(t * 0.2 + i + j) * r.w * 0.1;
+        const cy = long ? r.y + r.h / 2 + Math.sin(t * 0.25 + i * 1.7 + j) * r.h * 0.12 : r.y + f * r.h;
+        const rad = (long ? r.h : r.w) * (0.7 + 0.25 * Math.sin(i * 2.1 + j));
+        const g = ctx.createRadialGradient(cx, cy, rad * 0.2, cx, cy, rad);
+        g.addColorStop(0, U.rgba(col, a)); g.addColorStop(1, U.rgba(col, 0));
+        ctx.fillStyle = g; ctx.fillRect(cx - rad, cy - rad, rad * 2, rad * 2);
+      }
+    });
+    ctx.restore();
+  };
+  // A place up in the sky: all air (the water line is below the bottom), with mist, cloud or rain
+  // in it (`waterRects`) that you can swim in. Out of them, you fall. Closed sides show wind pushing back.
+  const skyPlace = (o) => Object.assign({
+    surface: true, sky: true, surfaceY: (o.h || 1) * RH + 60, camTop: -60, upExit: true, edge: 'wind',
+    region: 'sky', depth: 0, safe: true, isles: [], ambient: {}, noBubbles: true, snow: 0, rays: false,
+  }, o);
 
   // ── The top: under the islands ──────────────────────────────────────────────
   def('sargasso', {
     name: 'The golden mat', region: 'surface', map: [-2, 0], w: 1.6, depth: 0.05, surface: true, palette: 'warm',
     exits: { left: 'rain-sea', right: 'bright-reef', down: 'kelp-deep' },
+    // The reef's bottom comes in from the right and stops; under the mats it's open, down to the kelp.
+    terrain: { floor: [0, 0, 0, 0, 0, 0.04, 0.14, 0.18], floorGap: [0, 0.76] },
     rayColor: '#fff2c8',
     isles: [[400, 0.7], [1500, 0.5], [2300, 0.9]],
     bg(ctx, t, room) {
@@ -693,11 +737,16 @@
 
   def('rain-sea', {
     name: 'Where it rains', region: 'surface', map: [-3, 0], w: 1.4, depth: 0.04, surface: true,
-    exits: { right: 'sargasso', down: 'meadow' },// (west.js chains the endless west on to the left)
+    exits: { right: 'sargasso', down: 'meadow', up: { key: 'rain-column', at: 'fromBelow' } },// (west.js chains the endless west on to the left)
+    // The sea floor comes in from the west, and drops away into the meadow.
+    terrain: { floor: [0.2, 0.15, 0.06, 0, 0, 0, 0, 0], floorGap: [0.25, 1], ceilGap: [0.66, 0.78] },
+    // Off the island's keel, the rain comes down in one heavy sheet: thick enough to swim up.
+    upExit: true,
+    waterRects: [{ x: 1480, y: -100, w: 260, h: 270, current: [0, 110] }],
     rayColor: '#e8f6ff',
     isles: [[300, 0.6], [1800, 0.8]],
     // (Drawn after the sky, so it shows above the surface.)
-    props: [{ layer: 'back', draw(ctx, t, room) { room.def.sky(ctx, t, room); } }],
+    props: [{ layer: 'back', draw(ctx, t, room) { room.def.sky(ctx, t, room); } }, { layer: 'mid', draw(ctx, t, room) { sheet(ctx, room.def.waterRects[0], t, 1); } }],
     sky(ctx, t, room) {
       // An island hanging low over the sea, dripping. Its keel almost touches the water.
       A.island(ctx, 1150, -60, 1100, { seed: 21, keel: 0.26, trees: 12, domes: [[0.18, 0.08]], cracked: true, t });
@@ -729,6 +778,8 @@
   def('anchored-isle', {
     name: 'Under the anchored isle', region: 'surface', map: [5, 0], w: 1.6, depth: 0.08, surface: true, roar: 0.5,
     exits: { left: 'plunge', right: 'spray-zone', down: 'tether-twilight' },
+    // The bottom comes in from both sides and stops at a deep hole, where the chain goes down.
+    terrain: { floor: [0.14, 0.1, 0.04, 0, 0, 0.06, 0.2, 0.3], floorGap: [0.27, 0.72] },
     isles: [[300, 1.0], [2300, 0.7]],
     // (Drawn after the sky, so it shows above the surface.)
     props: [{ layer: 'back', draw(ctx, t, room) { room.def.sky(ctx, t, room); } }],
@@ -745,11 +796,14 @@
 
   def('spray-zone', {
     name: 'The spray zone', region: 'surface', map: [6, 0], w: 1.3, depth: 0.05, surface: true, palette: 'warm', roar: 0.3,
-    exits: { left: 'anchored-isle' },
-    terrain: { floor: [0.3, 0.32, 0.28, 0.33, 0.37, 0.42], walls: { right: true } },
+    exits: { left: 'anchored-isle', up: { key: 'spray-mist', at: 'fromBelow' } },
+    terrain: { floor: [0.3, 0.32, 0.28, 0.33, 0.37, 0.42], walls: { right: true }, ceilGap: [0.19, 0.37] },
+    // Where the spray off the far waterfall hangs thickest, it's wet enough to swim up into.
+    upExit: true,
+    waterRects: [{ x: 400, y: -100, w: 370, h: 270, current: [0, -40] }],
     sand: '#e2d6a8', rayColor: '#fffbe8',
     // (Drawn after the sky, so it shows above the surface.)
-    props: [{ layer: 'back', draw(ctx, t, room) { room.def.sky(ctx, t, room); } }],
+    props: [{ layer: 'back', draw(ctx, t, room) { room.def.sky(ctx, t, room); } }, { layer: 'mid', draw(ctx, t, room) { mist(ctx, room.def.waterRects, t, '#ffffff', 0.55); } }],
     sky(ctx, t, room) {
       // Mist off the far waterfall, and rainbows standing in it.
       const sy = room.surfaceY;
@@ -778,7 +832,8 @@
   def('meadow', {
     name: 'The meadow', region: 'kelp', map: [-3, 1], w: 1.8, depth: 0.2, dark: 0.08, palette: 'kelp',
     exits: { right: 'kelp-deep', left: 'drop-off', up: 'rain-sea' },
-    terrain: { floor: [0.14, 0.12, 0.13, 0.11, 0.12, 0.13, 0.12, 0.14] },
+    // (Overhead on the left, the underside of the sea floor running out west.)
+    terrain: { floor: [0.14, 0.12, 0.13, 0.11, 0.12, 0.13, 0.12, 0.14], ceiling: [0.05, 0.03, 0, 0, 0, 0, 0, 0], ceilGap: [0.2, 1] },
     sand: '#cbbf8e',
     props: [
       { layer: 'back', draw(ctx, t, room) { for (let i = 0; i < 18; i++) { const x = 60 + i * 160 + (i % 3) * 30; A.seagrass(ctx, x, room.floorY(x) + 8, 0.8 + (i % 4) * 0.12, t, i); } } },
@@ -813,7 +868,8 @@
   def('blue-dusk', {
     name: 'The blue dusk', region: 'twilight', map: [-4, 2], w: 1.4, h: 1.4, depth: 0.42, dark: 0.45,
     exits: { up: 'drop-off', down: 'midnight', right: 'holdfasts' },
-    terrain: { walls: { left: true } },
+    // Open blue on the left, under the drop-off; on the right, the rock the holdfasts grip closes in.
+    terrain: { floor: [0, 0, 0, 0.06, 0.14], floorGap: [0, 0.6], ceiling: [0, 0, 0, 0.05, 0.12], ceilGap: [0, 0.6], walls: { left: true } },
     actors: [life('barreleye', 900, 520, { s: 1.4 }), life('barreleye', 1650, 880, { s: 1.2 })],
     ambient: { jelly: 4, firefly: 6 },
     snow: 0.5,
@@ -848,7 +904,7 @@
   def('midnight', {
     name: 'Midnight water', region: 'twilight', map: [-4, 3], w: 1.3, h: 1.2, depth: 0.6, dark: 0.9,
     exits: { up: 'blue-dusk', down: 'brine-lake' },
-    terrain: { walls: { left: true, right: true } },
+    terrain: { ceiling: [0.03, 0.02, 0.02, 0.03, 0.05, 0.06], ceilGap: [0.04, 0.6], floor: [0.04, 0.03, 0.03, 0.04, 0.05, 0.06], floorGap: [0.04, 0.55], walls: { left: true, right: true } },
     bg(ctx, t, room) { flickers(ctx, room, t, 8, 3.1); },
     actors: [life('gulper-eel', 1250, 600, { s: 1 })],
     ambient: { jelly: 3 },
@@ -858,7 +914,7 @@
   def('brine-lake', {
     name: 'The brine lake', region: 'seep', map: [-4, 4], w: 1.8, depth: 0.7, dark: 0.78,
     exits: { up: 'midnight', right: 'cold-seep' },
-    terrain: { floor: [0.2, 0.22, 0.12, 0.04, 0.04, 0.04, 0.12, 0.22, 0.2], walls: { left: true } },
+    terrain: { floor: [0.2, 0.22, 0.12, 0.04, 0.04, 0.04, 0.12, 0.22, 0.2], ceiling: [0, 0, 0, 0, 0, 0.02, 0.04, 0.05, 0.05], ceilGap: [0, 0.55], walls: { left: true } },
     // The lake is heavy water: too salty to swim into. It fills the hollow to the brim.
     solids: [{ type: 'rect', x: 750, y: 796, w: 1380, h: 300, invisible: true }],
     props: [
@@ -926,7 +982,7 @@
   def('mud-volcanoes', {
     name: 'The mud volcanoes', region: 'seep', map: [-3, 5], w: 1.4, depth: 0.82, dark: 0.85,
     exits: { up: 'cold-seep' },
-    terrain: { floor: [0.16, 0.22, 0.14, 0.26, 0.16, 0.24, 0.18], walls: { left: true, right: true } },
+    terrain: { floor: [0.16, 0.22, 0.14, 0.26, 0.16, 0.24, 0.18], ceiling: [0.06, 0.05, 0.04, 0.04, 0.04, 0.05, 0.06], ceilGap: [0.66, 0.84], walls: { left: true, right: true } },
     onUpdate(room, dt) {
       // The mounds burp mud, all together, about once every four seconds.
       const beat = Math.floor(SO.E.t / 4);
@@ -980,7 +1036,7 @@
   def('tether-twilight', {
     name: 'The twilight', region: 'tether', map: [5, 1], w: 1.2, h: 1.4, depth: 0.4, dark: 0.45,
     exits: { up: 'anchored-isle', down: 'tether-breathless' },
-    terrain: { walls: { left: true, right: true } },
+    terrain: { ceiling: [0.06, 0.05, 0.03, 0.02, 0.02, 0.03, 0.05, 0.06], ceilGap: [0.27, 0.72], walls: { left: true, right: true } },
     bg(ctx, t, room) { chain(ctx, 960, -120, room.h + 120, t); },
     actors: [life('barreleye', 560, 480, { s: 1.3 }), life('barreleye', 1380, 920, { s: 1.5, seed: 4 })],
     ambient: { jelly: 4, firefly: 4 },
@@ -1024,7 +1080,7 @@
   def('tether-anchor', {
     name: 'The anchor', region: 'tether', map: [5, 6], w: 1.6, depth: 0.85, dark: 0.82,
     exits: { up: 'tether-curtain', left: 'stone-choir', down: 'hadal' },
-    terrain: { floor: [0.16, 0.14, 0.12, 0.12, 0.12, 0.14, 0.18], floorGap: [0.7, 0.88], walls: { right: true } },
+    terrain: { floor: [0.16, 0.14, 0.12, 0.12, 0.12, 0.14, 0.18], floorGap: [0.7, 0.88], ceiling: [0.05, 0.03, 0, 0, 0, 0, 0], ceilGap: [0.15, 1], walls: { right: true } },
     bg(ctx, t, room) {
       const fy = room.floorY(1100);
       chain(ctx, 1100, -120, fy - 260, t);
@@ -1058,7 +1114,8 @@
   def('whale-fall', {
     name: 'The whale fall', region: 'abyss', map: [2, 6], w: 1.6, depth: 0.86, dark: 0.8,
     exits: { left: 'trench-floor', right: 'abyssal-plain' },
-    terrain: { floor: [0.14, 0.12, 0.12, 0.12, 0.13, 0.14] },
+    // The trench's roof runs out over the whale, and lifts away.
+    terrain: { floor: [0.14, 0.12, 0.12, 0.12, 0.13, 0.14], ceiling: [0.3, 0.14, 0.07, 0.05, 0.05, 0.05] },
     props: [
       { layer: 'back', draw(ctx, t, room) {
         // A whale, years dead. First the sharks came, then the worms, then the bugs.
@@ -1106,7 +1163,7 @@
   def('hadal', {
     name: 'The hadal deep', region: 'abyss', map: [5, 7], w: 1.2, h: 2, depth: 0.95, dark: 0.9,
     exits: { up: 'tether-anchor', down: 'hadal-floor' },
-    terrain: { walls: { left: true, right: true } },
+    terrain: { ceiling: [0.05, 0.04, 0.03, 0.03, 0.03, 0.04, 0.05], ceilGap: [0.7, 0.88], walls: { left: true, right: true } },
     solids: [{ type: 'rect', x: 60, y: 620, w: 400, h: 52 }, { type: 'rect', x: 1440, y: 1180, w: 420, h: 52 }],
     bg(ctx, t, room) {
       // The walls lean in as you go down. (They don't really. It just looks that way.)

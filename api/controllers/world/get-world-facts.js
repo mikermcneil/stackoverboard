@@ -29,7 +29,7 @@ Topics:
   landmark, "place-west-<key>"), every region, and every room in the sea (key, name, region, exits, depth,
   darkness, who lives there, oddities), read from the game's own room list.  Room keys match the
   ones used elsewhere (e.g. get-species \`places\`, get-online).
-- skin-word: the six color words (summary; get-skin-words has the full detail).
+- skin-word: the eight color words (summary; get-skin-words has the full detail).
 - mechanic: how things work (smell, dirt, glow wearing off, the palindrome rule, air time and the
   splash, rumbles, other squids and presence, pearls, procedural species, the Below maze, the volcano,
   the sea-day clock, the Shoal, golden bubbles, saving and playthroughs, blood, fish scales, hunger,

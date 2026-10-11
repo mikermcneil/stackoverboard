@@ -70,6 +70,25 @@ const SKIN_WORDS = [
     undo: 'Play it backwards (red, gold, red, gold: D5 B5 D5 B5) to settle down whatever you woke nearby. But the volcano won\'t go back to sleep: "Too late for that."',
     tempoBpm: 100,
   },
+  // Two more, for those who find them (assets/game/js/quests.js).  Nobody teaches them.
+  {
+    key: 'lift', name: 'Lift', colors: ['B', 'B', 'G'], optional: true,
+    meaning: 'Blue, blue, gold. The water under the squid pushes it up. Backwards, it pushes down.',
+    inGame: 'A hard push upward, with a rush of bubbles, and small loose things nearby lift too. Useful for climbing. It comes from the singing shards, a side quest in chapters 2 and 3 (no need to go down the trench).',
+    teacher: 'Nobody teaches it. It\'s found. Inside the fallen spire, a big cracked shard of dome glass hangs among four empty threads. Four smaller singing shards, one for each color, fell out when the tower fell: one is buried in the meadow sand, one is held by the holdfast roots (they let go for red, pale, red), one lies on the brine lake and only shows in the squid\'s own light, and one is in the dark cave behind the glowing ledges. Carry each one back and hang it. Then the big shard keeps humming four notes, gold, pale, blue, red. Hum them back, and all the shards hum together, going up, and the whole tower lifts off the floor for a moment. Blue, blue, gold is what they sounded like, going up.',
+    learnedAt: ['spire-inside'],
+    undo: 'Play it backwards to undo it: gold, blue, blue (B5 A5 A5). It doesn\'t cancel the push. It pushes the other way: the water presses the squid down.',
+    tempoBpm: 80,
+  },
+  {
+    key: 'still', name: 'Still', colors: ['W', 'G', 'W'], optional: true,
+    meaning: 'Pale, gold, pale. The water stops moving around the squid for a while (about 8 seconds): currents, the swell, drifting bubbles, everything.',
+    inGame: 'Currents stop pushing, the Swaying stops swaying, and anything that pulls at the squid through the water lets go for a while. It comes from the quiet reeds, a side quest at the mud volcanoes in chapters 2 and 3.',
+    teacher: 'Nobody teaches it. It\'s found. At the mud volcanoes, a clump of node reeds stands silent: its pale stalk is missing. The stalk drifted off to the cold seep and got caught in the worms there. Carry it back and plant it, and the whole clump shivers every time the mud mounds burp. Flash all four colors at it on the beat, and the water between the reeds stands still, and holds. Pale, gold, pale is the sound the stillness made.',
+    learnedAt: ['mud-volcanoes'],
+    undo: 'Can\'t be undone. Pale, gold, pale reads the same backwards. The stillness wears off by itself after a few seconds.',
+    tempoBpm: 60,
+  },
 ];
 
 const PALINDROME = (colors) => colors.every((c, i) => c === colors[colors.length - 1 - i]);
@@ -97,7 +116,7 @@ module.exports = {
   friendlyName: 'Get skin words',
 
 
-  description: 'Return the six skin words (color patterns a squid can flash, each a short melody) with their notes and how to play them on a real piano.',
+  description: 'Return the eight skin words (color patterns a squid can flash, each a short melody: six on the way, two found on the side) with their notes and how to play them on a real piano.',
 
 
   sync: true,
@@ -154,6 +173,7 @@ module.exports = {
         inGame: word.inGame,
         teacher: word.teacher,
         learnedAt: word.learnedAt,
+        optional: !!word.optional,
         isPalindrome: palindrome,
         canBeUndone: !palindrome,
         undoColors: palindrome ? null : backwards,

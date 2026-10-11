@@ -26,8 +26,9 @@ octopus) teaches it to wake the volcano for five pearls.  The eruption's warm wa
 warm shallows, past Humboldt squid and the Shoal of sardines, to the Plunge.
 
 Squids talk with their skin: four colors that are also four notes (red D5, pale F#5, shimmer A5, gold
-B5), flashed in six patterns called skin words: glow, open, calm, passing cloud, call (the swans' song),
-and wake.  Each is a little melody anyone can play on a piano at home: see get-skin-words.
+B5), flashed in patterns called skin words: glow, open, calm, passing cloud, call (the swans' song),
+and wake, plus two that nobody teaches, found on the side: lift and still.  Each is a little melody
+anyone can play on a piano at home: see get-skin-words.
 
 Players never meet face to face, but they share one world: squids in the same place see each other
 swim, can smell each other, and can get each other dirty (see get-online).  Shared, permanent things: the
@@ -57,9 +58,11 @@ then hours, then minutes, hours, days, hours, days, and minutes (the first tide,
 glass rain, the bleaching, the settling, the swarm, the deep winter, the turning), and then the old sea
 for good.  Some changes last only while their stage does; some stay.  See get-world-age.
 
-West of the Bright, the surface goes on for 3600 made-up places that are the same for everyone (60
-crossings of 60, with a dozen landmarks always at the same distances, recalled in every crossing), and
-then wraps around to the east end of the map (see get-west-path).  Squids can talk out loud
+West of the Bright, the surface goes on forever: made-up places that are the same for everyone,
+crossing after crossing of 60, with a dozen landmarks always at the same distances, recalled in every
+crossing, and past west:120 it rises into highlands of streams, lakes, snow and waterfalls (see
+get-west-path).  The world is in fifteen levels, from the island tops down to the bottom of everything,
+each with its own rules (see get-levels).  Squids can talk out loud
 (see get-chat), and the sky at the surface follows each player's real local weather and time of day.
 
 All times are JS timestamps (milliseconds since the Unix epoch).  This is a good first call; use
@@ -90,13 +93,15 @@ How to answer common questions (which read-only tool to call):
   answers, chats, events, stats), get-interactions with \`squidName\`, get-chat with \`squidName\`.
 - "What do squids think about <question>?" get-answers (with \`questionKey\`).  Answers are opinions.
 - "Who has been to <thing>?" get-interactions with \`key\`, \`kind\` or \`room\`.
-- "What's at west:N?" get-west-path with \`n\`.  "What's at the end of the west?" get-west-path
-  (\`endLandmark\`, \`wrapsTo\`).  "How far west has anyone gone?" get-records (records.westFarthest).
+- "What's at west:N?" get-west-path with \`n\`.  "Does the west ever end?" No: get-west-path
+  (\`endless\` is true; it rises into highlands, see \`highlands\`).  "How far west has anyone gone?" get-records (records.westFarthest).
 - "How do I play <skin word> on a piano?" get-skin-words with \`name\` (notes, keys, fingering, pace).
-  "Which skin words can't be undone?" get-skin-words (palindromes: glow, open, calm).
+  "Which skin words can't be undone?" get-skin-words (palindromes: glow, open, calm, still).
   "How many squids know <word>?" get-skin-words (\`knownBy\`), or get-squids with \`knows\`.
 - "What stage is the world in, and what's next?" get-world-age (\`current\`, and the next stage in
   \`stages\`), or \`age\` here.
+- "What are the levels?" / "Which level is <room> in?" get-levels (with \`room\`).  "Which levels
+  has <squid> reached?" get-squid (\`levelsReached\`, its own experience).
 - "What's out at night?" get-world-facts with \`key\` "mechanic-night-life".
 - "What lives in <region>?" get-species with \`search\`, or get-world-facts with \`key\` "region-<key>".
   "What is <creature>?" get-species with \`search\`, or get-world-facts.

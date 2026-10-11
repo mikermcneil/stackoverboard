@@ -13,7 +13,7 @@ time?", "who has been caught by the whale the most?", or "what are squids like, 
 
 Each record is \`{ squidName, value }\` for the squid with the highest value (ties go to whoever was seen
 most recently), and \`top\` lists the best five.  Units: \`westFarthest\` = rooms west of the Bright (the
-room key is "west:"+value; see get-west-path, which goes up to 3600), \`bestAirTime\` = seconds out of the
+room key is "west:"+value; see get-west-path; the west never ends), \`bestAirTime\` = seconds out of the
 water in one leap, \`bestAirHeight\` = how high (game units), \`deepest\` = 0 (surface) to 1 (deepest),
 \`playSeconds\` = seconds played, and the rest are counts.  \`totals\` add them up over every squid.
 

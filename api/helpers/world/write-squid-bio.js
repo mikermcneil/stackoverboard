@@ -71,6 +71,20 @@ module.exports = {
     if (p.skinWords && p.skinWords.length) {
       sentences.push('It knows '+plural(p.skinWords.length, 'skin word', 'skin words')+': '+list(p.skinWords.map((w) => wordNames[w] || w))+'.');
     }
+    if (p.levelsReached && p.levelsReached.length) {
+      let levels = sails.helpers.world.getLevels().levels;
+      let reached = levels.filter((l) => p.levelsReached.some((r) => r.key === l.key));
+      if (reached.length) {
+        let surface = levels.find((l) => l.key === 'surface');
+        let mid = surface ? surface.index : 5;
+        let deepest = _.last(reached);
+        let highest = reached[0];
+        let lower = (l) => l.name.replace(/^The /, 'the ');
+        sentences.push('It has been to '+reached.length+' of the '+levels.length+' levels of the world'+
+          (deepest.index > mid ? ', as deep as '+lower(deepest) : '')+
+          (highest.index < mid ? (deepest.index > mid ? ' and' : ',')+' as high as '+lower(highest) : '')+'.');
+      }
+    }
     if (p.nativesMet && p.nativesMet.length) {
       let names = _.indexBy(sails.helpers.world.getNativeSpecies(), 'key');
       let met = p.nativesMet.map((k) => names[k] ? names[k].name : k);

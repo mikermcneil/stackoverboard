@@ -125,6 +125,9 @@ const HIGHLAND_TYPES = {
 const unquote = (s) => s.replace(/\\(['"\\])/g, '$1');
 
 function readFromClient() {
+  var out = {};
+  var str = (chunk, name) => { var m = chunk.match(new RegExp('\\b'+name+'\\s*:\\s*\'((?:[^\'\\\\]|\\\\.)*)\'')); return m ? unquote(m[1]) : null; };
+  var num = (chunk, name) => { var m = chunk.match(new RegExp('\\b'+name+'\\s*:\\s*(-?[0-9.]+)')); return m ? Number(m[1]) : null; };
   try {
     var src = fs.readFileSync(path.resolve(sails.config.appPath, 'assets/game/js/west.js'), 'utf8');
     var block = (name) => {
@@ -133,8 +136,6 @@ function readFromClient() {
       var end = src.indexOf('\n  ];', start);
       return end < 0 ? null : src.slice(start, end);
     };
-    var str = (chunk, name) => { var m = chunk.match(new RegExp('\\b'+name+'\\s*:\\s*\'((?:[^\'\\\\]|\\\\.)*)\'')); return m ? unquote(m[1]) : null; };
-    var num = (chunk, name) => { var m = chunk.match(new RegExp('\\b'+name+'\\s*:\\s*(-?[0-9.]+)')); return m ? Number(m[1]) : null; };
 
     var pathBlock = block('WEST_PATH');
     var westPath = pathBlock ? pathBlock.split('\n').filter((l) => /^\s*\{/.test(l)).map((l) => ({ n: num(l, 'n'), key: str(l, 'key'), name: str(l, 'name'), line: str(l, 'line') })) : [];
@@ -151,7 +152,7 @@ function readFromClient() {
     var highFrom = src.match(/\bHIGH_FROM\s*=\s*(\d+)/);
     var recallLine = src.match(/const RECALL = \[(.*)\];/);
     var recall = recallLine ? (recallLine[1].match(/'((?:[^'\\]|\\.)*)'/g) || []).map((q) => unquote(q.slice(1, -1))) : [];
-    var out = {
+    out = {
       westPath: westPath.length ? westPath : null,
       bands: bands.length ? bands : null,
       scaryBirdsFrom: scaryFrom ? Number(scaryFrom[1]) : null,
@@ -242,15 +243,18 @@ run in a sandbox so the answer is exactly the place the game makes.`,
   fn: function ({ n }) {
 
     var read = readFromClient();
+    var client = clientWest();
     var westPath = read.westPath || WEST_PATH_SNAPSHOT;
     var rawBands = read.bands || BANDS_SNAPSHOT;
     var scaryBirdsFrom = read.scaryBirdsFrom || SCARY_BIRDS_FROM;
     var perCrossing = read.crossing || CROSSING_SNAPSHOT;
     var crossings = read.crossings || CROSSINGS_SNAPSHOT;
+    var highFrom = read.highFrom || HIGH_FROM_SNAPSHOT;
     var recall = read.recall || RECALL_SNAPSHOT;
-    var endInfo = read.end || END_SNAPSHOT;
-    var wrapsTo = read.wrapsTo || WRAPS_TO_SNAPSHOT;
-    var end = perCrossing * crossings;
+    // It never ends, unless the game ever gives it an end again.
+    var end = read.westEnd ? read.westEnd : (read.westEnd === null || !isFinite(crossings) ? null : perCrossing * crossings);
+    var endless = end === null;
+    var nameOfCrossing = client && typeof client.WEST.crossingName === 'function' ? (c) => client.WEST.crossingName(c) : crossingName;
     var bands = _.sortBy(rawBands, 'from').map((b, i, all) => ({
       from: b.from,
       to: all[i + 1] ? all[i + 1].from - 1 : perCrossing,
@@ -260,48 +264,126 @@ run in a sandbox so the answer is exactly the place the game makes.`,
       birds: b.birds,
       scaryBirds: !!b.scary,
     }));
+    var lands = _.sortBy(read.lands || LANDS_SNAPSHOT, 'from').map((l, i, all) => ({
+      from: l.from,
+      to: all[i + 1] ? all[i + 1].from - 1 : perCrossing,
+      name: l.name,
+      about: LAND_NOTES[l.name] || '',
+      things: l.things,
+      birds: l.birds,
+    }));
     var byN = _.indexBy(westPath, 'n');
+    var interiorNames = read.interiors || INTERIORS_SNAPSHOT;
+    var hookbills = read.hookbills || { fromDistanceInCrossing: 40, everywherePast: 240 };
+    var spearnecks = read.spearnecks || { fromDistanceInCrossing: 50, everywherePast: 600 };
 
-    // The same rules as landmarkAt() in west.js.
+    // The same rules as landmarkAt() in west.js (used when west.js can't be run).
     var landmarkAt = (at) => {
-      if (at === end) { return { n: at, key: endInfo.key, name: endInfo.name, line: endInfo.line, crossing: crossings - 1, recalls: null }; }
       var c = Math.floor((at - 1) / perCrossing);
       var base = ((at - 1) % perCrossing) + 1;
       var lm = byN[base];
       if (!lm) { return null; }
       if (!c) { return { n: at, key: lm.key, name: lm.name, line: lm.line, crossing: 0, recalls: null }; }
       var how = recall[c % recall.length] || 'again';
-      return { n: at, key: lm.key, name: lm.name+', '+how, line: lm.line+' (The '+crossingName(c)+' west. It is '+how+'.)', crossing: c, recalls: lm.key };
+      return { n: at, key: lm.key, name: lm.name+', '+how, line: lm.line+' (The '+nameOfCrossing(c)+' west. It is '+how+'.)', crossing: c, recalls: lm.key };
     };
 
     var result = {
       path: _.sortBy(westPath, 'n').map((p) => _.pick(p, ['n', 'key', 'name', 'line'])),
       bands,
+      lands,
+      laterCrossings: {
+        about: 'Every crossing after the first brings the same landmarks back at the same distances, recalled and changed (see recallWords), with everything a little more washed out and a little stranger. In about half the places at sea level, one of these features turns up too.',
+        features: (read.features || Object.keys(FEATURE_NOTES)).map((key) => ({ key, about: FEATURE_NOTES[key] || '' })),
+      },
+      highlands: {
+        from: highFrom,
+        about: 'Past west:'+(highFrom - 1)+' the land rises out of the sea. More and more places are highland: about one in ten just past west:'+(highFrom - 1)+', more the farther you go, until every place is (around west:'+(highFrom + 7080)+'). Highland places are fresh water between rock, with mountains behind, higher and whiter the higher you have come. Out of the water, on ridges and snowfields, the breath runs down (see the breath limit). Some climbs go up a waterfall (the way on is up), some go down a sinkhole and through an aquifer in the rock ("aq:N", then "aq2:N"), which is an ice cave higher up (above about 1,200 m). Above about 1,400 m it is cold, with snow everywhere. It gets harder the farther you go, and it never ends.',
+        types: _.map(HIGHLAND_TYPES, (about, type) => ({ type, about })),
+        elevation: 'Measured in meters climbed since west:'+(highFrom - 1)+' (0 before it): each climb (a waterfall or a sinkhole) is about 140 m, each other highland place about 6 m, each place at sea level 1 m. Highland rooms have it in their names, e.g. "A high lake (1,106 m up)".',
+        aquifers: 'Under a sinkhole lake at west:N: "aq:N" (east, then west), "aq2:N" (going up), coming out at the spring at west:N+1.',
+      },
+      interiors: _.map(interiorNames, (names, key) => {
+        var lm = westPath.find((p) => p.key === key);
+        return {
+          landmark: key,
+          name: lm ? lm.name : key,
+          n: lm ? lm.n : null,
+          about: INTERIOR_NOTES[key] || '',
+          rooms: names.map((name, i) => ({ k: i + 1, room: 'west-in:'+(lm ? lm.n : 'N')+':'+(i + 1), name })),
+        };
+      }),
+      birds: {
+        gulls: 'Harmless, loud, over the near west.',
+        darkBirds: 'Big dark birds that dive at squids near the surface, in the wet desert from distance '+scaryBirdsFrom+' on.',
+        hookbills: 'Black birds with hooked beaks that grab a squid, carry it up and drop it: from distance '+hookbills.fromDistanceInCrossing+' in every crossing, and everywhere past west:'+hookbills.everywherePast+'.',
+        spearnecks: 'Things on stilts that stab down through the water with necks as long as the sea is deep: from distance '+spearnecks.fromDistanceInCrossing+' in every crossing, and everywhere past west:'+spearnecks.everywherePast+'.',
+      },
       scaryBirdsFrom,
       placesPerCrossing: perCrossing,
-      crossings,
+      crossings: isFinite(crossings) ? crossings : null,
+      endless,
       end,
-      endLandmark: { n: end, key: endInfo.key, name: endInfo.name, line: endInfo.line },
-      wrapsTo,
+      endLandmark: endless ? null : { n: end, key: 'west-end', name: 'The end of the west', line: '' },
+      wrapsTo: endless ? null : 'spray-zone',
       recallWords: recall,
       source: read.westPath ? 'assets/game/js/west.js' : 'snapshot',
+      sandboxed: !!client,
     };
 
     if (n !== undefined) {
       let at = Math.floor(n);
-      let exists = at >= 1 && at <= end;
+      let exists = at >= 1 && (endless || at <= end);
       let c = exists ? Math.floor((at - 1) / perCrossing) : null;
       let base = exists ? ((at - 1) % perCrossing) + 1 : null;
       let band = exists ? _.findLast(bands, (b) => base >= b.from) : null;
+      let land = exists ? _.findLast(lands, (l) => base >= l.from) : null;
+      // Ask the game itself (only out to 100,000: working out the height means walking every place).
+      let made = null;
+      let type = null;
+      let elevation = null;
+      let lm = null;
+      if (exists && client && at <= 100000) {
+        try {
+          type = client.WEST.typeOf(at) || null;
+          elevation = Math.round(client.WEST.elevation(at));
+          let raw = client.WEST.landmarkAt(at);
+          lm = raw ? { n: at, key: raw.key, name: raw.name, line: raw.line, crossing: raw.crossing || 0, recalls: raw.recalls || null } : null;
+          made = client.make(at);
+        } catch (err) {
+          sails.log.verbose('world/get-west-path: west.js could not make west:'+at+':', err.message);
+          made = null;
+        }
+      }
+      let highland = made ? made.region === 'highland' : (exists && at < highFrom ? false : null);
+      if (!made && exists) { lm = landmarkAt(at); }
+      let landmarkKey = lm ? (lm.recalls || lm.key) : null;
+      let exits = made && made.exits ? Object.assign({}, made.exits) : null;
+      let name = made ? made.name : null;
+      if (made && land && !highland && !made.landmark && base >= land.from) {
+        // westlands.js renames places past the wet desert after their land.
+        name = land.name+(c ? ' ('+nameOfCrossing(c)+')' : '');
+      }
       result.at = {
         n: at, room: 'west:'+at, exists,
+        name: name ? String(name).replace(/[‘’]/g, '\'') : null,
         crossing: exists ? c + 1 : null,
-        crossingName: exists ? crossingName(c) : null,
+        crossingName: exists ? nameOfCrossing(c) : null,
         distanceInCrossing: base,
         band: band ? band.name : null,
-        scaryBirds: !!(band && band.scaryBirds && at >= scaryBirdsFrom),
-        landmark: exists ? landmarkAt(at) : null,
-        leadsWestTo: !exists ? null : at === end ? wrapsTo : 'west:'+(at + 1),
+        land: land && !highland ? land.name : null,
+        highland,
+        type: highland ? type : null,
+        typeAbout: highland && type ? HIGHLAND_TYPES[type] || '' : null,
+        elevation: exists ? (elevation !== null ? elevation : (at < highFrom ? 0 : null)) : null,
+        scaryBirds: !!(band && band.scaryBirds && base >= scaryBirdsFrom),
+        hookbills: exists && (base >= hookbills.fromDistanceInCrossing || at > hookbills.everywherePast),
+        spearnecks: exists && (base >= spearnecks.fromDistanceInCrossing || at > spearnecks.everywherePast),
+        landmark: exists ? lm : null,
+        interiors: landmarkKey && interiorNames[landmarkKey] ? interiorNames[landmarkKey].map((nm, i) => ({ room: 'west-in:'+at+':'+(i + 1), name: nm })) : [],
+        exits,
+        leadsWestTo: !exists ? null : exits ? (exits.left || exits.up || exits.down || null) : 'west:'+(at + 1),
+        note: !exists ? 'There\'s no place there: places west start at west:1.' : !made && at >= highFrom ? 'Past west:'+(highFrom - 1)+' a place may be highland; this one is too far out to work out here.' : '',
       };
     }
 

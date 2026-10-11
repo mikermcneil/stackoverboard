@@ -18,7 +18,7 @@ module.exports = {
     success: {
       outputType: 'ref',
       outputDescription:
-        '`{ squids, skinWords: { [key]: { knownBy, everLearnedBy, squidNames } }, nativesMet: { [key]: count } }`.  '+
+        '`{ squids, skinWords: { [key]: { knownBy, everLearnedBy, squidNames } }, nativesMet: { [key]: count }, levelsReached: { [levelKey]: count } }`.  '+
         '`squidNames` lists the squids who know that skin word in their current playthrough, most recently seen first.'
     },
 
@@ -28,9 +28,9 @@ module.exports = {
   fn: async function () {
 
     var PAGE = 500;
-    var tally = { squids: 0, skinWords: {}, nativesMet: {} };
+    var tally = { squids: 0, skinWords: {}, nativesMet: {}, levelsReached: {} };
     var knowers = {};
-    for (let key of ['glow', 'open', 'calm', 'cloud', 'call', 'wake']) {
+    for (let key of ['glow', 'open', 'calm', 'cloud', 'call', 'wake', 'lift', 'still']) {
       tally.skinWords[key] = { knownBy: 0, everLearnedBy: 0, squidNames: [] };
       knowers[key] = [];
     }
@@ -54,6 +54,9 @@ module.exports = {
         }
         for (let key of knowledge.nativesMet) {
           tally.nativesMet[key] = (tally.nativesMet[key] || 0) + 1;
+        }
+        for (let level of knowledge.levelsReached) {
+          tally.levelsReached[level.key] = (tally.levelsReached[level.key] || 0) + 1;
         }
       }//∞
       if (saves.length < PAGE) {

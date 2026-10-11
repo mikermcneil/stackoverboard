@@ -30,6 +30,12 @@ played backwards), \`spins\`, \`beadCloseness\` (0 to 1), \`nightSeconds\` / \`d
 night or by day where the player is), and \`deepest\` (0 surface .. 1 deepest).  Missing stats mean the
 game hasn't recorded them yet.
 
+Levels: \`levelsReached\` lists the levels of the world (see get-levels) this squid has been to, oldest
+first, as \`{ key, firstAt }\` (\`firstAt\` = when it first got there, epoch ms).  This is the squid's own
+experience, not lore: get-levels says what each level is.  (Every squid also knows of the island tops,
+the cloud sea, the rain and the surface from the start: it hatched up there and fell through them. Those
+only appear here once it has actually been back.)
+
 \`buddy\` is about Bead, the little glass squid it befriends in chapter 2.  It may say what happened to
 Bead (e.g. \`fate\`), which is a story-ending spoiler (\`buddySpoiler\` is true): warn before revealing it.
 
@@ -54,7 +60,7 @@ says how it was worked out (see get-squids).  Exact locations are never stored.`
       outputDescription:
         '`{ squidName, bio, playthrough, chapter, chapterTitle, endings, arrivedAt, lastSeenAt, place, placeSource, timeZone, device, os, browser, language, online, room, onlineSeenAt, '+
         'personality: { seed, traits: { curious, brave, gentle, playful, wistful, social, wanderer }, summary, evolvedAt, strongest } | null, stats, '+
-        'skinWords, skinWordsEverLearned, nativesMet, placesVisited, location, pearls, memories, buddy, buddySpoiler, '+
+        'skinWords, skinWordsEverLearned, nativesMet, placesVisited, levelsReached: [{ key, firstAt }], location, pearls, memories, buddy, buddySpoiler, '+
         'chats: [{ room, text, at }], interactions: [{ key, room, kind, at, localHour, isNight, questionKey, answer }], answers: [{ key, questionKey, answer, at }], events: [{ kind, subject, startsAt }] }`.  '+
         '`chats` (up to 20), `interactions` (up to 30), and `events` (world history, up to 20) are newest first.'
     },
