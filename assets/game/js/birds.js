@@ -57,6 +57,7 @@
       bead: [['sad', 'You’re on your own now, aren’t you. I can tell. I’m on my own too. By choice. Mostly.']],
       home: [['neutral', 'Going up, are you? Good luck with the swans. Tell them Mags says nothing.']],
       night: [['tired', 'It’s night. I’m asleep. This is me asleep.']],
+      early: [['sly', 'You’ve still got that fresh-fallen look. Wide eyes. Everything’s a surprise. It wears off.']],
     },
     reply: ['A gull. A rude one.', 'She talks more than the whole reef.'],
   });
@@ -76,6 +77,7 @@
       dirty: [['tender', 'You’ve got a bit of something. There. And there. Never mind. It suits you.']],
       bloody: [['afraid', 'Oh, you’re hurt. I’m no good with hurt. I’ll just float here and worry.']],
       bead: [['sad', 'You used to have a little see-through friend. I saw it once. I won’t ask.']],
+      early: [['afraid', 'You fell from up there? From the islands? Nobody falls from the islands. Not and lives.']],
     },
     reply: ['A gull with a brown head. It keeps checking its reflection.'],
   });
@@ -115,6 +117,7 @@
       dirty: [['tired', 'A bit of mud never hurt. I’ve had worse in my pouch.']],
       glowing: [['surprised', 'Huh. A lamp with arms.']],
       night: [['tired', 'Mm. Sleeping. Floating. Sleeping.']],
+      early: [['neutral', 'New to the sea. I can tell. You swim like you’re still falling.']],
     },
     reply: ['A huge bill with a bird on the end of it.'],
   });
@@ -769,8 +772,8 @@
   const NORM = [
     [/trench|ice ?cave|aquifer|crystal|cave|deep/, null],
     [/snow|glacier|ice field|tundra/, 'snow'],
-    [/mountain|ridge|peak|scree|alpine/, 'mountains'],
     [/conifer|pine|stream|brook|creek/, 'streams'],
+    [/mountain|ridge|peak|scree|alpine/, 'mountains'],
     [/taiga|lake|tarn|loch|boreal/, 'taiga'],
     [/plain|well|prairie|grass|steppe/, 'plains'],
     [/rain ?forest|jungle|mangrove|swamp/, 'rainforest'],
@@ -804,8 +807,10 @@
     if (b !== undefined) { return b; }
     if (d.region === 'aquifer' || d.region === 'westin') { return null; }
     if (d.region === 'highland') {
-      if (d.snowy || (d.elev || 0) > 2600) { return /snow/i.test(d.name || '') || (d.elev || 0) > 2600 ? 'snow' : 'mountains'; }
-      return norm(d.name) || 'streams';
+      const type = W && W.typeOf && n ? W.typeOf(+n) : null;
+      if (type === 'snowfield' || (d.elev || 0) > 2600) { return 'snow'; }
+      const T = { stream: 'streams', lake: 'taiga', ridge: 'mountains', falls: 'rivers', pooltop: 'rivers', sinkhole: 'rivers', spring: 'rivers' };
+      return (type && T[type]) || (d.snowy ? 'mountains' : 'streams');
     }
     if (d.region === 'west' && n) {
       const base = ((+n - 1) % 60) + 1;
@@ -819,14 +824,19 @@
   }
   const BY_BIOME = {};
   Object.keys(B).forEach((k) => { (B[k].biomes || []).forEach((b) => { (BY_BIOME[b] = BY_BIOME[b] || []).push(k); }); });
+  const FIRST_WEST = { 2: 'piper', 3: 'dot', 4: 'pip', 5: 'edge', 6: 'huddle', 7: 'quill', 8: 'skim', 10: 'wander', 13: 'stillwater', 14: 'hale' };
   // One bird (sometimes none) per western place, the same one for everyone.
   function westBird(room) {
     const b = biomeOf(room);
     const list = b && BY_BIOME[b];
     if (!list || !list.length) { return null; }
+    const n = +((/^west:(\d+)$/.exec(room.key || '') || [])[1] || 0);
+    // the first coast has one of each of its birds, in order (if it's still coast)
+    const first = FIRST_WEST[n] && 'bird-' + FIRST_WEST[n];
+    if (first && list.indexOf(first) !== -1) { return [FIRST_WEST[n], 0.3 + (n % 3) * 0.15, B[first].under ? 'under' : 'auto']; }
     const h = U.hash('birds:' + room.key);
-    if ((h % 100) >= 55) { return null; }
-    const k = list[Math.floor(h / 100) % list.length];
+    if ((h % 100) >= 65) { return null; }
+    const k = list[(n ? n + Math.floor(n / list.length) : Math.floor(h / 100)) % list.length];// (neighbors differ)
     return [k.replace('bird-', ''), 0.25 + ((h >> 4) % 50) / 100, B[k].under ? 'under' : 'auto'];
   }
 
@@ -858,7 +868,7 @@
       if (pose === 'auto') {// out west: whatever suits the bird and the ground
         const land = landNear(room, x), shallow = shallowAt(room, x);
         const sp = L.species;
-        if (['heron', 'egret', 'flamingo'].includes(sp)) { if (shallow) { p = 'wade'; y = shallow; } else if (land) { p = 'land'; x = land[0]; y = land[1]; } else { p = 'post'; } }
+        if (['heron', 'egret', 'flamingo'].includes(sp)) { if (shallow) { p = 'wade'; y = shallow; } else if (land) { p = 'land'; x = land[0]; y = land[1]; } else { p = sp === 'flamingo' ? 'float' : 'post'; } }
         else if (['oystercatcher', 'sandpiper', 'raven', 'ptarmigan', 'owl', 'jackdaw', 'magpie', 'puffin', 'razorbill', 'guillemot', 'shag'].includes(sp)) { if (land) { p = 'land'; x = land[0]; y = land[1]; } else if (shallow && ['oystercatcher', 'sandpiper'].includes(sp)) { p = 'wade'; y = shallow; } else { p = ['raven', 'owl', 'ptarmigan', 'magpie', 'jackdaw', 'oystercatcher', 'sandpiper'].includes(sp) ? 'post' : 'float'; } }
         else if (['kingfisher', 'osprey'].includes(sp)) { p = 'post'; }
         else if (['albatross', 'shearwater'].includes(sp)) { p = 'fly'; }
@@ -871,7 +881,7 @@
       if (p === 'float' || p === 'patter') { y = sy !== null ? sy : room.h * 0.5; }
       if (p === 'fly') { y = (sy !== null ? sy : room.h * 0.5) - 110; }
       if (p === 'chain') { y = (sy || 0) - 70; }
-      if (p === 'bank') { p = 'land'; y = (sy || 0) - 34 - U.noise1(x / 300, 7) * 30; }
+      if (p === 'bank') { p = 'land'; y = (sy || 0) - 16 - U.noise1(x / 300, 7) * 12; }
       if (p === 'sky' || p === 'root') { y = (fy || 0.4) * room.h; if (p === 'root' && room.ceilY) { const c = room.ceilY(x); if (isFinite(c)) { y = c + 130; } } }
       E.addActor(room, { id: 'bird:' + k, type: 'talkingBird', key, pose: p, post, x, y, seed: (U.hash(key) % 1000) / 100, dir: x > room.w / 2 ? -1 : 1 });
     });
@@ -893,6 +903,7 @@
       glowing: !!s.glowOn,
       bead: !!(d.buddy && d.buddy.dead),
       home: (d.chapter || 0) >= 7 || !!(room && (room.def.sky === true || room.def.region === 'home')),
+      early: (d.chapter || 0) <= 2,
       night,
     };
   };
@@ -968,7 +979,7 @@
         const i = (flags()['bird:' + a.key + ':after'] || 0);
         if (i < R.after.lines.length) { line = R.after.lines[i]; save.flag('bird:' + a.key + ':after', i + 1); }
       }
-      for (const k of ['bloody', 'dirty', 'glowing', 'bead', 'home', 'night']) {
+      for (const k of ['bloody', 'dirty', 'glowing', 'bead', 'home', 'early', 'night']) {
         if (line) { break; }
         const W = R.when[k];
         const tag = a.key + ':' + k;
@@ -1006,7 +1017,7 @@
     meet(a);
     const n = (flags()['bird:' + a.key + ':off'] || 0) + 1;
     save.flag('bird:' + a.key + ':off', n);
-    if (n === 1 && how !== 'ash') { setTimeout(() => UI.aside(how === 'spin' ? 'It didn’t like that at all.' : how === 'glow' ? 'It flinched from the light and went.' : 'Off it goes.'), 2200); }
+    if (n === 1 && how !== 'ash' && how !== 'rings') { setTimeout(() => UI.aside(how === 'spin' ? 'It didn’t like that at all.' : how === 'glow' ? 'It flinched from the light and went.' : 'Off it goes.'), 2200); }
   }
   function calm(a) {
     const R = B[a.key];
@@ -1086,6 +1097,7 @@
         if (a.fleeT > 4) { a.hidden = true; }
         return;
       }
+      if (a.key === 'bird-gorge' && SO.save.has('ringsDone')) { drive(a, 'rings'); return; }// (it goes when the rest of them go)
       if (R.kind === 'hostile') { hostile(a, dt, room); }
       else {
         const want = E.inspected === a || a._pending;

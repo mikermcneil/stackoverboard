@@ -1022,7 +1022,13 @@
         room.actors.forEach((a) => { if (a.personal && save.data.items[a.id]) { a.hidden = true; } });
         SO.world.refreshState(true);
       },
-      async touch(o) { if (o.id === 'keeper') { await grandmotherTalk.call(this); } },
+      async touch(o) {
+        if (o.id !== 'keeper') { return; }
+        const met = this.has('metGrandmother');
+        await grandmotherTalk.call(this);
+        // The second time you talk (or right away, if you're about to ride up): the toll in blood, for the mothers. (purse.js)
+        if (SO.purse && (met || this.riserOpen())) { await SO.purse.toll(o, speak, me); }
+      },
     },
 
     forge: {

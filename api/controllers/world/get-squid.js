@@ -22,7 +22,7 @@ chatting makes it more social).  \`personality.summary\` is the game's own few w
 
 Stats: \`playSeconds\` (time played), \`roomsEntered\`, \`westFarthest\` (how many rooms west of the Bright
 it has been; see get-west-path), \`bestAirTime\` (seconds out of the water in one leap) and
-\`bestAirHeight\`, \`splashes\` and \`bellyFlops\`, \`eaten\` (krill, shrimp, minnow), \`whaleCatches\` (times
+\`bestAirHeight\`, \`airRecords\` (each time it beat its own best air time: \`{ t, h, at, room }\`, seconds, meters up, epoch ms), \`splashes\` and \`bellyFlops\`, \`eaten\` (krill, shrimp, minnow), \`whaleCatches\` (times
 the sperm whale caught it), \`elementalGrabs\` (times water elementals grabbed it), \`stalkerEscapes\` and
 \`stalkerCatches\` (the slow hunter), \`bloodSpilled\`, \`chats\`, \`interactions\` (things clicked),
 \`answers\` (questions answered), \`patterns\` (how often it has said each skin word), \`undone\` (skin words
@@ -35,6 +35,15 @@ first, as \`{ key, firstAt }\` (\`firstAt\` = when it first got there, epoch ms)
 experience, not lore: get-levels says what each level is.  (Every squid also knows of the island tops,
 the cloud sea, the rain and the surface from the start: it hatched up there and fell through them. Those
 only appear here once it has actually been back.)
+
+Blood: \`blood\` is the squid's kept blood, a currency it soaks up from other creatures' blood (lingering
+in red clouds, eating minnows) and spends: out of the water it burns a drop at a time for air (more is
+needed high in the west, where the air is thin), it turns the dark birds' dives in the wet desert, and
+Grandmother Seven takes half as a toll in the octopus garden.  Leeches, the slow hunter, and bites take
+some; blacking out, the whale, or the shoal take all of it.  \`blood.kept\` is how many drops it has now
+(0 to \`blood.cap\`), \`blood.mostKept\` the most it has ever held at once, \`blood.lost\` the total it has lost
+to being sent back, \`blood.known\` whether the player can see the amount yet (from chapter 5 on), and
+\`blood.tollPaid\` whether it has paid Grandmother Seven this playthrough.  It carries over into a new fall.
 
 \`buddy\` is about Bead, the little glass squid it befriends in chapter 2.  It may say what happened to
 Bead (e.g. \`fate\`), which is a story-ending spoiler (\`buddySpoiler\` is true): warn before revealing it.
@@ -68,7 +77,7 @@ moray eel?" -> \`nativesMet\` includes "moray".  "What did it do last?" -> \`eve
       outputDescription:
         '`{ squidName, bio, playthrough, chapter, chapterTitle, endings, arrivedAt, lastSeenAt, place, placeSource, timeZone, device, os, browser, language, online, room, onlineSeenAt, '+
         'personality: { seed, traits: { curious, brave, gentle, playful, wistful, social, wanderer }, summary, evolvedAt, strongest } | null, stats, '+
-        'skinWords, skinWordsEverLearned, nativesMet, placesVisited, levelsReached: [{ key, firstAt }], location, pearls, memories, buddy, buddySpoiler, '+
+        'skinWords, skinWordsEverLearned, nativesMet, placesVisited, levelsReached: [{ key, firstAt }], location, pearls, memories, blood: { kept, cap, mostKept, lost, known, tollPaid }, buddy, buddySpoiler, '+
         'chats: [{ room, text, at }], interactions: [{ key, room, kind, at, localHour, isNight, questionKey, answer }], answers: [{ key, questionKey, answer, at }], events: [{ kind, subject, startsAt, line }], names }`.  '+
         '`chats` (up to 20), `interactions` (up to 30), and `events` (world history, up to 20, without spoilers) are newest first.  `names` is every name the squid has gone by, oldest first.'
     },
@@ -130,6 +139,12 @@ moray eel?" -> \`nativesMet\` includes "moray".  "What did it do last?" -> \`eve
       personality: character.personality,
       stats: character.stats,
     }, knowledge, {
+      blood: (function () {// kept blood (see assets/game/js/purse.js); it lives in the save's data
+        var data = save.data || {};
+        var p = (data.carried && data.carried.purse) || {};
+        var num = (v) => Math.max(0, Math.round(Number(v) || 0));
+        return { kept: num(p.amount), cap: 60, mostKept: num(p.most), lost: num(p.lost), known: !!p.seen || (save.chapter || 0) >= 5, tollPaid: !!(data.flags && data.flags.bloodToll) };
+      })(),
       buddy: character.buddy,
       buddySpoiler: !!character.buddy,
       chats: chats.map((m) => ({ room: m.room, text: m.text, at: m.at })),

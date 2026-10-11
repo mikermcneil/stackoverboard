@@ -254,7 +254,7 @@
       eye: { r: 3.8, iris: '#1a120e', up0: 0.24 },
       bill: { len: 54, D: 15, lowerK: 0.45, droop: 4, hook: 6, upper: '#f0b6a6', lower: '#ecae9c', tip: '#f0d27a', tipK: 0.86, nostril: 'tube', grooves: true },
       marks: [{ g: [-12, 6, 10], c: '#f2b8b8', a: 0.3 }, { p: [[-8, -6], [-2, -9], [4, -8], [-2, -5]], c: '#8a8e96', a: 0.5 }],
-      sc: 1.5, hpos: [-6, -6], size: 2.6, legs: '#e6c8c0', span: 280, tex: 'fine',
+      sc: 1.5, hpos: [-6, -6], size: 2.4, legs: '#e6c8c0', span: 230, tex: 'fine',
     },
     petrel: {
       bg: FAR, head: '#25232b', shade: '#121116', back: '#2a2830', wing: '#25232b', wingTip: '#121116', breast: '#2a2830',
@@ -269,7 +269,7 @@
       eye: { r: 4.2, iris: '#140c0c', ring: '#2a2030', ringW: 1 },
       bill: { len: 50, D: 10, lowerK: 0.45, droop: 2, hook: 7, upper: '#83878e' },
       pouch: { col: '#e0202c', inflate: 0.4 }, sheen: ['#6a3a9a', '#2a7a5a'],
-      sc: 1.6, size: 2.2, legs: '#141014', span: 220, tail: 'fork',
+      sc: 1.6, size: 2.0, legs: '#141014', span: 150, tail: 'fork',
     },
     skua: {
       bg: KEEL, head: '#5e4838', shade: '#3c2c22', back: '#4e3a2c', wing: '#4a3628', wingTip: '#3a2a20', mirror: '#f2ece2', breast: '#6a5442',
@@ -337,7 +337,7 @@
       bill: { len: 24, D: 15, lowerK: 0.42, droop: 9, arch: 4, hook: 7, upper: '#1a1a1e', cere: { k: 0.32, c: '#6f7e8a' } },
       lidCol: '#4a3426', marks: [{ p: MK.mask, c: '#4a3426' }, { p: MK.crown, c: '#c8b8a0', a: 0.5 }],
       crest: { type: 'shaggy', col: '#e8e0d0', len: 7 }, brow: '#e6e0d2',
-      size: 1.9, legs: '#d8d8d0', span: 170,
+      size: 1.9, legs: '#d8d8d0', span: 170, upright: -0.5, legLen: 10,
     },
     eagle: {
       bg: ISLE, head: '#d8c9a2', shade: '#a8946c', neckCol: '#c9b48a', back: '#5a4330', wing: '#4e3a28', wingTip: '#2a2018', breast: '#5a4330',
@@ -345,7 +345,7 @@
       eye: { r: 4.4, iris: '#f2e28a', ring: '#e0b830', ringW: 1, pupil: 0.7, up0: 0.22 },
       bill: { len: 32, D: 22, lowerK: 0.38, droop: 13, arch: 6, hook: 10, upper: '#efc23a', lower: '#e6b630', cere: { k: 0.3, c: '#e8b92c' } },
       brow: '#b8a47e', browHeavy: true, tex: 'streak', texA: 0.5, sc: 2.05,
-      size: 2.5, legs: '#efc23a', span: 240,
+      size: 2.1, legs: '#efc23a', span: 200, upright: -0.55, legLen: 10,
     },
     raven: {
       sc: 2.0,
@@ -778,7 +778,7 @@
   function comb(c, look, f) {
     const s = 0.7 + 0.5 * f.angry + 0.3 * f.happy + 0.2 * f.surprised;
     c.fillStyle = look.crest.col; c.strokeStyle = 'rgba(90,10,10,0.5)'; c.lineWidth = 0.6;
-    c.beginPath(); c.moveTo(-7, -7); c.quadraticCurveTo(-4, -7 - 5 * s, 1, -8 - 4 * s); c.quadraticCurveTo(6, -7 - 3 * s, 6, -7); c.quadraticCurveTo(0, -5, -7, -7); c.fill(); c.stroke();
+    c.beginPath(); c.moveTo(-6, -7.5); c.quadraticCurveTo(-3.5, -7.5 - 3.4 * s, 0.5, -8 - 2.8 * s); c.quadraticCurveTo(5, -7.5 - 2 * s, 5.5, -7.5); c.quadraticCurveTo(0, -6.6, -6, -7.5); c.fill(); c.stroke();
   }
 
   // The grebe's ruff: around the face, chestnut fading to black at the edge.
@@ -877,7 +877,11 @@
     fishTail: { bill(c, look, t) { const L = look.bill.len; c.save(); c.translate(L * 0.55, look.bill.droop * 0.5 + 1); c.rotate(0.5 + Math.sin(t * 6) * 0.25); c.fillStyle = '#b8c4cc'; c.strokeStyle = INK; c.lineWidth = 0.8; c.beginPath(); c.moveTo(0, 0); c.lineTo(10, 4); c.lineTo(16, -1); c.lineTo(15, 8); c.lineTo(10, 5); c.lineTo(0, 3); c.closePath(); c.fill(); c.stroke(); c.restore(); } },
     eels: { bill(c, look, t, f) { const L = look.bill.len; for (let i = 0; i < 5; i++) { c.save(); c.translate(L * (0.3 + i * 0.1), look.bill.D * 0.1 + i); c.rotate(1.2 + Math.sin(t * 3 + i) * 0.12 + f.talk * 0.3 * Math.sin(t * 20 + i)); c.strokeStyle = '#dfe8ee'; c.lineWidth = 3; c.lineCap = 'round'; c.beginPath(); c.moveTo(-2, 0); c.quadraticCurveTo(5, 2, 13, 0); c.stroke(); c.strokeStyle = 'rgba(60,90,110,0.85)'; c.lineWidth = 0.9; c.beginPath(); c.moveTo(-2, -1); c.quadraticCurveTo(5, 1, 13, -1); c.stroke(); A.circle(c, 0.5, 0, 0.6, '#1a2a30', null); c.restore(); } } },
     bridle: { head(c) { c.strokeStyle = '#f4f2ee'; c.lineWidth = 1.5; c.beginPath(); c.arc(0, -2, 5.6, 0, TAU); c.stroke(); c.beginPath(); c.moveTo(-5, -1); c.quadraticCurveTo(-14, 0, -24, 3); c.stroke(); } },
-    torn: { head(c, look) { c.fillStyle = look.bg[0]; for (let i = 0; i < 3; i++) { c.beginPath(); c.moveTo(-26 + i * 6, -21 + i * 2); c.lineTo(-22 + i * 6, -14 + i * 2); c.lineTo(-19 + i * 6, -22 + i * 2); c.closePath(); c.fill(); } } },
+    torn: { head(c, look, t) {// ragged feathers sticking up off the crown, from old fights
+      c.fillStyle = look.head; c.strokeStyle = INK; c.lineWidth = 0.5;
+      [[-24, -19, -0.9], [-18, -23, -0.5], [-30, -12, -1.3]].forEach(([x, y, a], i) => { c.save(); c.translate(x, y); c.rotate(a + Math.sin(t * 2 + i) * 0.06); c.beginPath(); c.moveTo(-1.5, 2); c.lineTo(0, -7 - i); c.lineTo(1.5, 2); c.closePath(); c.fill(); c.stroke(); c.restore(); });
+      c.strokeStyle = 'rgba(230,200,190,0.7)'; c.lineWidth = 0.9; c.beginPath(); c.moveTo(-12, 4); c.lineTo(-6, 10); c.stroke();
+    } },
     drip: { bill(c, look, t) { const L = look.bill.len, k = (t * 0.6) % 1; c.fillStyle = 'rgba(200,230,250,0.85)'; c.beginPath(); c.ellipse(L - 1, look.bill.droop + 3 + k * k * 30, 1.6, 2.4, 0, 0, TAU); c.fill(); } },
     aigrettes: { back(c, look, t) { c.strokeStyle = 'rgba(255,255,255,0.75)'; c.lineWidth = 0.8; for (let i = 0; i < 18; i++) { c.beginPath(); c.moveTo(-60, 60); c.bezierCurveTo(-90, 40 + i * 2, -120 + Math.sin(t + i) * 4, 60 + i * 3, -100 + i * 2, 100 + i); c.stroke(); } } },
     sparkle: { front(c, look, t) { for (let i = 0; i < 4; i++) { const k = (t * 0.7 + i * 0.25) % 1; if (k > 0.3) { continue; } const x = -40 + i * 25, y = -20 + (i % 2) * 30, s = Math.sin(k / 0.3 * Math.PI) * 5; c.strokeStyle = 'rgba(255,255,255,0.9)'; c.lineWidth = 1; c.beginPath(); c.moveTo(x - s, y); c.lineTo(x + s, y); c.moveTo(x, y - s); c.lineTo(x, y + s); c.stroke(); } } },
@@ -1140,7 +1144,7 @@
     const lw = 1.6 / s;
     if (look.owl) { owlFigure(c, t, look, o, lw); c.restore(); return; }
     const flying = pose === 'fly' || pose === 'glide' || pose === 'patter';
-    const up = flying ? 0 : look.upright;
+    const up = pose === 'stand' || pose === 'perch' || pose === 'under' ? look.upright : 0;
     const legs = pose === 'stand' || pose === 'perch' || pose === 'under' || pose === 'patter';
     const legLen = pose === 'perch' ? look.legLen * 0.5 : look.legLen;
     const lift = legs && !flying ? legLen + 10 : pose === 'float' ? 5 : 0;

@@ -92,6 +92,10 @@ Anything malformed is dropped, numbers are clamped, and text is capped, so this 
       }
       if (Object.keys(out).length) { stats[group] = out; }
     }
+    // Air time records, each time it beat its own best: { t (seconds), h (meters up), at, room }.
+    if (Array.isArray(s.airRecords)) {
+      stats.airRecords = s.airRecords.slice(-20).filter((r) => r && typeof r === 'object').map((r) => ({ t: num(r.t) || 0, h: num(r.h) || 0, at: num(r.at) || 0, room: typeof r.room === 'string' ? r.room.slice(0, 80) : '' }));
+    }
 
     // The buddy (Bead).  Only plain values, a few of them.
     var buddy = null;

@@ -24,7 +24,7 @@
   const U = SO.util;
   const E = SO.E;
 
-  const ZERO = () => ({ playSeconds: 0, roomsEntered: 0, westFarthest: 0, bestAirTime: 0, bestAirHeight: 0, splashes: 0, bellyFlops: 0, eaten: { krill: 0, shrimp: 0, minnow: 0 }, whaleCatches: 0, elementalGrabs: 0, stalkerEscapes: 0, stalkerCatches: 0, bloodSpilled: 0, chats: 0, interactions: 0, answers: 0, patterns: { glow: 0, open: 0, calm: 0, cloud: 0, call: 0, wake: 0 }, undone: 0, spins: 0, beadCloseness: 0, nightSeconds: 0, daySeconds: 0, deepest: 0, nearOthersSeconds: 0, blackouts: 0 });
+  const ZERO = () => ({ playSeconds: 0, roomsEntered: 0, westFarthest: 0, bestAirTime: 0, bestAirHeight: 0, splashes: 0, bellyFlops: 0, eaten: { krill: 0, shrimp: 0, minnow: 0 }, whaleCatches: 0, elementalGrabs: 0, stalkerEscapes: 0, stalkerCatches: 0, bloodSpilled: 0, chats: 0, interactions: 0, answers: 0, patterns: { glow: 0, open: 0, calm: 0, cloud: 0, call: 0, wake: 0 }, undone: 0, spins: 0, beadCloseness: 0, nightSeconds: 0, daySeconds: 0, deepest: 0, nearOthersSeconds: 0, blackouts: 0, airRecords: [] });
 
   SO.self = {
     traits: {},
@@ -107,7 +107,6 @@
     s.playSeconds = Math.round(s.playSeconds + dt);
     if (SO.local && SO.local.isNight) { s.nightSeconds += dt; } else { s.daySeconds += dt; }
     if (E.room && E.room.actors.some((a) => a.type === 'otherSquid' && !a.gone && U.dist(a.x, a.y, E.squid.x, E.squid.y) < 600)) { s.nearOthersSeconds += dt; }
-    if (SO.air && SO.air.best) { s.bestAirTime = Math.max(s.bestAirTime, Math.round(SO.air.best.t * 100) / 100); s.bestAirHeight = Math.max(s.bestAirHeight, Math.round(SO.air.best.h)); }
     sinceEvolve += dt;
     if (sinceEvolve > 30 || !SO.self.traits.curious) { sinceEvolve = 0; SO.self.evolve(); SO.save.touch(2000); }
   }, 2000);

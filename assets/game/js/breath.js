@@ -8,7 +8,7 @@
  *
  * Run out and the squid panics: thrashing, flopping, spinning, arms going
  * everywhere. Then everything goes dark, and you come to back in the last
- * water you were in.
+ * water you were in, with none of the blood you kept (purse.js).
  */
 (function () {
 
@@ -49,7 +49,7 @@
         return;
       }
       this.out = (this.out || 0) + dt;
-      this.air = Math.max(0, this.air - dt * (SO.items ? SO.items.airDrain() : 1));
+      this.air = Math.max(0, this.air - dt * (SO.items ? SO.items.airDrain() : 1) * (SO.purse ? SO.purse.thinAir(room) : 1));// (thin air, high up)
       if (this.out < 1.2) { return; }// (a quick leap out of the water doesn't count)
       setupHud();
       hud.style.opacity = '1';
@@ -60,7 +60,7 @@
       }
       this.show();
       sq.fear = Math.max(sq.fear || 0, 1 - this.air / AIR);
-      if (this.air <= 0) { this.panic(); }
+      if (this.air <= 0 && !(SO.purse && SO.purse.breathe(this))) { this.panic(); }// (kept blood burns first: see purse.js)
     },
 
     show() {
@@ -92,6 +92,7 @@
     async passOut() {
       const sq = E.squid;
       if (SO.self) { SO.self.bump('blackouts'); }
+      if (SO.purse) { SO.purse.lose('air'); }// (every drop of kept blood, gone)
       this.air = AIR;
       if (hud) { hud.style.opacity = '0'; }
       E.lock();

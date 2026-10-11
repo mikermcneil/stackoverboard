@@ -41,7 +41,26 @@
   SO.air = {
     jump: null,
     frames: [],// a few seconds of the squid, for replays
-    best: { t: 0, h: 0 },
+    // Your personal best, kept in the save (so it lasts, and the MCP tools can see it): the stats'
+    // bestAirTime and bestAirHeight, and airRecords, each new record as { t, h, at, room }.
+    get best() {
+      const s = SO.self ? SO.self.stats : null;
+      return s ? { t: s.bestAirTime || 0, h: s.bestAirHeight || 0 } : (this._best || { t: 0, h: 0 });
+    },
+    set best(b) {
+      const s = SO.self ? SO.self.stats : null;
+      if (!s) { this._best = b; return; }
+      s.bestAirTime = Math.round(b.t * 100) / 100; s.bestAirHeight = Math.max(s.bestAirHeight || 0, Math.round(b.h));
+      s.airRecords = (Array.isArray(s.airRecords) ? s.airRecords : []).concat([{ t: Math.round(b.t * 100) / 100, h: Math.round(b.h / UNITS_PER_M * 10) / 10, at: SO.api.serverNow(), room: E.roomKey || '' }]).slice(-20);
+      if (SO.save.touch) { SO.save.touch(1000); }
+    },
+
+    // Out of the air for good (a new place, a respawn): no readout left hanging.
+    reset() {
+      this.jump = null; this.frames.length = 0;
+      clearTimeout(this._hideT);
+      if (hud && !E.replaying) { hud.style.opacity = '0'; }
+    },
 
     leave(sq, sY) {
       setupHud();
@@ -80,14 +99,14 @@
       const flop = sp > 0.55;
       const big = h > REPLAY_AT.h || air > REPLAY_AT.t;
       const words = flop ? (big ? 'Colossal belly flop' : 'Belly flop') : (big ? 'Perfect entry' : 'Clean entry');
-      const record = air > this.best.t;
+      const prev = this.best.t, record = air > prev;
       if (record) { this.best = { t: air, h }; }
-      $k().textContent = record && this.best.t > 1 ? 'NEW BEST' : 'AIR TIME';
+      $k().textContent = record && air > 1 ? 'NEW BEST' : 'AIR TIME';
       $v().textContent = air.toFixed(2) + 's';
       $s().textContent = `${(h / UNITS_PER_M).toFixed(1)} m · ${words}`;
       clearTimeout(this._hideT);
       this._hideT = setTimeout(() => { if (!this.jump && !E.replaying) { hud.style.opacity = '0'; } }, 3200);
-      if (record && air > 1) { setTimeout(() => this.replay(sY, power, sp), 1300); }// a replay only for a new record
+      if (record && air > 1 && air >= prev + 0.5) { setTimeout(() => this.replay(sY, power, sp), 1300); }// a replay only for a record, by half a second or more
       else if (Math.random() < 0.4 && SO.ui) { SO.ui.thought(flop ? 'Ow. Flat. Every arm.' : 'Whee.'); }
     },
 
@@ -164,5 +183,21 @@
       E.effects = E.effects.filter((fx) => { fx.t += dt * 0.35; return fx.t < fx.life; });
     },
   };
+
+  // Changing places, or coming to after a blackout, ends any jump and its readout.
+  const goto = E.goto;
+  E.goto = function () { SO.air.reset(); return goto.apply(this, arguments); };
+  const hookBreath = () => {
+    if (!SO.breath) { setTimeout(hookBreath, 100); return; }
+    const passOut = SO.breath.passOut;
+    SO.breath.passOut = function () { SO.air.reset(); return passOut.apply(this, arguments); };
+  };
+  hookBreath();
+  // And if it ever gets stuck showing (back in the water, no jump, no replay), it goes.
+  setInterval(() => {
+    if (!hud || E.replaying || SO.air.jump || hud.style.opacity !== '1') { SO.air._stuck = 0; return; }
+    SO.air._stuck = (SO.air._stuck || 0) + 1;
+    if (SO.air._stuck > 6) { hud.style.opacity = '0'; SO.air._stuck = 0; }
+  }, 1000);
 
 })();
