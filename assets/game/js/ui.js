@@ -23,6 +23,7 @@
     swan: '#ffffff',
     devils: '#ff7272',
     world: '#a8b0c4',
+    gold: '#ffd36a',
     other: '#e6ebf2',
   };
 
@@ -100,6 +101,23 @@
     },
 
     get talking() { return !!this.current || this.queue.length > 0; },
+
+    // A choice, shown in the ribbon once everything queued has been said.
+    async choose(options) {
+      while (this.talking) { await U.wait(150); }
+      return new Promise((resolve) => {
+        const box = document.createElement('div');
+        box.className = 'ribbon-choices';
+        options.forEach((label, i) => {
+          const b = document.createElement('button');
+          b.textContent = label;
+          b.addEventListener('pointerdown', (e) => { e.stopPropagation(); box.remove(); this.line$.style.display = ''; resolve(i); });
+          box.appendChild(b);
+        });
+        this.line$.style.display = 'none';
+        this.ribbon$.appendChild(box);
+      });
+    },
 
     clear() {
       this.queue.forEach((q) => q.resolve());

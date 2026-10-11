@@ -7,7 +7,7 @@ module.exports = {
   friendlyName: 'Get vent status',
 
 
-  description: 'Determine the phase of the Forge vent (the volcano) at a given time, from the eruption history.',
+  description: 'Determine the phase of the volcano (the vent, "forge" in the API) at a given time, from the eruption history.',
 
 
   extendedDescription:

@@ -8,15 +8,16 @@ module.exports = {
 
 
   extendedDescription:
-`"native" species are the world's permanent inhabitants: e.g. the Archivist (a vampire squid in the
-ruin of Hollowglass), Elder Shell (a nautilus in the Mouth), Sepia (a cuttlefish who talks with her
-skin), Old Drift (a turtle at the surface), the Hoard (dumbo octopuses who keep gems), the Keeper of
-Shine, the Shoal, the Dimmer, and more.  Each is \`{ key, kind, name, latin?, blurb }\`.
+`"native" species are the world's permanent inhabitants, all based on real sea creatures.  For
+example: the vampire squid (in a fallen glass dome), the nautilus and the moray eel (in the cliff
+cave), Sepia (a cuttlefish in the kelp who talks with her skin), Old Drift (a sea turtle at the
+surface), the dumbo octopuses of the octopus garden, Grandmother Seven (a seven-arm octopus who trades
+pearls), the Shoal (sardines), a sperm whale that hunts squid by clicking, and more.  Each is \`{ key, kind, name, latin?, blurb }\`.
 
 "generated" species are procedurally generated and shared: each was introduced to the world by the
 first squid to meet it.  Each has \`key\` (e.g. "creature:3"), \`kind\`, \`slot\`, \`name\`, \`traits\` (colours as
 hues 0-360, glow, size, body shape, appendages, eyes, pattern, behavior), \`lore\`, \`region\` (where it
-lives), \`discoveredBy\` (squid name) and \`discoveredAt\` (epoch ms).  At most 40 of each kind can exist.`,
+lives: "below", "kelp", or "undershine", which is the octopus garden), \`discoveredBy\` (squid name) and \`discoveredAt\` (epoch ms).  At most 40 of each kind can exist.`,
 
 
   sideEffects: 'cacheable',

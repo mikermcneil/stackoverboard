@@ -6,12 +6,12 @@ module.exports = {
   friendlyName: 'Claim gem',
 
 
-  description: 'Gather a glowing gem (a lumen) from a discovered tile of the Below.',
+  description: 'Gather a pearl (called a gem in the API) from a discovered tile of the Below.',
 
 
   extendedDescription:
-`Gems are shared: once any squid gathers a gem, it's gone for everyone until it regrows at the
-start of the next 15-minute regrow window.`,
+`Pearls are shared.  Octopuses collect them to decorate their dens.  Once any squid gathers a
+pearl, it's gone for everyone.  It regrows at the start of the next 15-minute regrow window.`,
 
 
   inputs: {
@@ -26,7 +26,7 @@ start of the next 15-minute regrow window.`,
       type: 'number',
       required: true,
       example: 0,
-      description: 'Which gem on the tile (0 or 1).'
+      description: 'Which pearl on the tile (0 or 1).'
     },
 
   },
@@ -40,7 +40,7 @@ start of the next 15-minute regrow window.`,
 
     invalid: {
       responseType: 'badRequest',
-      description: 'No such tile, or that tile has no gem with that index.'
+      description: 'No such tile, or that tile has no pearl with that index.'
     },
 
     notDiscovered: {
@@ -50,7 +50,7 @@ start of the next 15-minute regrow window.`,
 
     alreadyGathered: {
       statusCode: 409,
-      description: 'Someone already gathered that gem in this regrow window.  Output: `{ regrowsAt }`.'
+      description: 'Someone already gathered that pearl in this regrow window.  Output: `{ regrowsAt }`.'
     },
 
   },

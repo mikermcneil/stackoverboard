@@ -56,7 +56,7 @@
       AU.setMuted(save.data.settings.muted);
       E.overlay = null;
       E.mode = 'play';
-      $('hud').classList.add('show');
+      this.fixRibbon();
       E.squid.glowOn = false;
       E.lock();
       UI.fade(1, 0, '#000');
@@ -70,7 +70,6 @@
       await UI.say('Okay. Wet. Everything is wet now.', { who: 'squid' });
       E.unlock();
       await UI.say('Where am I? I was up there a minute ago.', { who: 'squid' });
-      this.tutorial();
     },
 
     async resume() {
@@ -79,7 +78,7 @@
       AU.setMuted(save.data.settings.muted);
       E.mode = 'play';
       document.body.classList.add('game-mode');
-      $('hud').classList.add('show');
+      this.fixRibbon();
       SO.story.syncHearts();
       if (save.data.flags.skinRevealed) { this.showSkin(true); }
       if (save.data.flags.goalKey) { SO.rooms.defs['undershine-gate'].exits.up = save.data.flags.goalKey; }
@@ -102,12 +101,10 @@
       if (!old || Math.abs(old[0] - p[0]) + Math.abs(old[1] - p[1]) > 60) { save.data.pos = p; save.touch(2000); }
     },
 
-    // Told in the squid's own voice, straight to you.
-    tutorial() {
-      if (save.data.flags.toldControls) { return; }
-      save.flag('toldControls');
-      UI.thought('Oh, hello. If you click somewhere, I\u2019ll swim there. Arrow keys work too.');
-      UI.thought('Click on me and I\u2019ll show you what I remember. M is for mute. I don\u2019t know how I know that.');
+    // In the game, the black band is always there (and the scene sits above it).
+    fixRibbon() {
+      document.body.classList.add('ribbon-fixed');
+      E.resize();
     },
 
     bindHud() {

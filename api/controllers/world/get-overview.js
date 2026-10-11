@@ -9,20 +9,24 @@ module.exports = {
 
   extendedDescription:
 `Stack Overboard is an underwater adventure.  Each player is a squid (with a public name like
-"Pale-Ember-Drift") who fell from the Upper Isles -- floating sky islands with glass domes, home of
-talking swans -- into the sea.  Players never meet, but they share one world: the map of the deep
-maze ("the Below") that squids have discovered, procedurally generated species introduced by
-whoever met them first, eruptions of the Forge (a volcanic vent near the Undershine), glowing
-gems gathered from the deep, and the endings squids have chosen.
+"Pale-Ember-Drift") who fell from a sky island into the sea.  Players never meet, but they share one
+world: the map of the deep maze ("the Below") that squids have discovered, procedurally generated
+species introduced by whoever met them first, eruptions of the volcano, pearls (called gems in the
+API) gathered from the deep, and the endings squids have chosen.
 
-Places in the sea: the surface ("the Bright"), Hollowglass (a fallen sky-city of glass on the
-seafloor), the cliff (with a cave called "the Mouth"), the kelp ("the Swaying"), the trench, the
-Below (a 7x5 procedurally generated maze), the Undershine (a luminous cavern where octopus
-hoarders keep gems), the Forge (the volcanic vent), and the Plunge (where a sky waterfall pours in).
+Places in the sea: the surface, a glass dome that fell from the sky (home of the vampire squid), the
+cliff (with a cave where the nautilus and the moray eel live), the kelp forest, the trench, the Below
+(a dark 7x5 procedurally generated maze), the octopus garden (a warm deep-sea spot where hundreds of
+octopuses brood their eggs), the volcano (an underwater volcano and hydrothermal vent next to the
+octopus garden, called "forge" in the API), and the waterfall that pours in from the sky.
 
-Endings: "return" (swam back up the waterfall to the sky), "lantern" (stayed below and became the
-light of the deep), "gift" (gave its light to the Dimmer, the vast blind thing in the dark), and
-"song" (secret: called the swans, and the islands came down to the sea).
+Creatures squids meet include a sperm whale that hunts squid by clicking, Grandmother Seven (a
+seven-arm octopus who trades pearls), and the dumbo octopuses of the octopus garden.
+
+Endings: "return" (home: leapt up the waterfall back to the sky island), "lantern" (stay: decided the
+sea is home and stayed with its friends), "gift" (the whale: calmed the sperm whale and swam off into
+the open ocean with her), and "song" (the swans: called the swans, and the sky islands came down to
+rest on the sea).
 
 All times are JS timestamps (milliseconds since the Unix epoch).  This is a good first call;
 use get-history, get-state, get-map, get-species, and get-squids for detail.`,

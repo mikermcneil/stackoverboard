@@ -8,7 +8,7 @@ module.exports = {
   friendlyName: 'Get world state',
 
 
-  description: 'Compute the state of the shared world (sea-day, Forge vent, the Shoal) at a given time.',
+  description: 'Compute the state of the shared world (sea-day, the volcano, the Shoal) at a given time.',
 
 
   inputs: {

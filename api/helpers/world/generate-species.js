@@ -16,18 +16,18 @@ const FIRST_SENTENCES = {
   dart: ['It darts away from anything that moves faster than a thought.', 'It darts between the rocks in sudden, silver stitches.'],
   hide: ['It hides in cracks and watches the dark.', 'It hides so well that most squids swim past it twice.'],
   circle: ['It circles the same stone for reasons of its own.', 'It circles slowly, as if it has lost something small.'],
-  plant: ['It grows where the current forgets to go.', 'It sways though the water around it is still.', 'It opens only when something warm passes by.', 'It roots itself in the broken glass of the old sky-city.'],
-  item: ['It was here before the glass city fell.', 'It hums faintly when held close.', 'Something lost it, and something else will want it.', 'It is warm, which is strange this far down.'],
+  plant: ['It grows where the current forgets to go.', 'It sways though the water around it is still.', 'It opens only when something warm passes by.', 'It roots itself in the broken glass of the fallen dome.'],
+  item: ['It was here before the glass dome fell.', 'It hums faintly when held close.', 'Something lost it, and something else will want it.', 'It is warm, which is strange this far down.'],
 };
 const SECOND_SENTENCES = [
   'It tastes of iron and old rain.',
-  'The Archivist has a page about it, half torn.',
+  'The vampire squid has seen one sink, long ago.',
   'Old Drift says the swans have a word for it.',
   'No one remembers who named it.',
-  'The Hoard would trade a lumen for one.',
+  'The dumbo octopuses would trade a pearl for one.',
   'It is older than it looks.',
   'Sepia turns a worried shade of green when it is near.',
-  'It goes quiet whenever the Forge rumbles.',
+  'It goes quiet whenever the volcano rumbles.',
 ];
 const GLOW_SENTENCES = [
   'Its glow is the colour of a held breath.',

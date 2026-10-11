@@ -60,17 +60,6 @@
     }
     ctx.restore();
   };
-  const crystalCluster = (ctx, x, y, s, hue, t, seed, dir = -1) => {
-    const r = U.rng(seed);
-    ctx.save(); ctx.translate(x, y); ctx.scale(s, s * dir * -1);
-    for (let i = 0; i < 5; i++) {
-      const a = -Math.PI / 2 + (r() - 0.5) * 1.2, len = 40 + r() * 60, w = 10 + r() * 8;
-      ctx.save(); ctx.rotate(a + Math.PI / 2);
-      A.shape(ctx, [[-w / 2, 0], [-w / 2, -len], [0, -len - w], [w / 2, -len], [w / 2, 0]], U.hsl(hue + r() * 30, 70, 70, 0.85), { sharp: true, lw: 2 });
-      ctx.restore();
-    }
-    ctx.restore();
-  };
 
   // ════════════════════════════════════════════════════════════════════════════
   // PREFACE: the surface and the long sink
@@ -122,7 +111,7 @@
     exits: { up: 'glow-below', right: 'cliff-foot' },
     terrain: { floor: [0.12, 0.14, 0.1, 0.12, 0.16, 0.15, 0.14, 0.12, 0.13, 0.18, 0.2], walls: { left: true, right: false } },
     sand: '#a9b7a6',
-    entries: { default: [700, 300], fromHall: [1180, 620] },
+    entries: { default: [700, 300], fromHall: [1000, 520] },
     props: [
       { layer: 'back', draw(ctx, t, room) {
         // the fallen tower, lying on its side
@@ -140,7 +129,7 @@
       { type: 'bone-fan', x: 960, s: 0.8, layer: 'mid' },
       { type: 'lantern-weed', x: 2300, s: 0.9, layer: 'mid', lit: () => SO.story.hollowLight ? Math.min(1, SO.story.hollowLight() * 1.4) : 0.4 },
     ],
-    hotspots: [{ id: 'hall-door', x: 1190, y: 690, r: 60, door: 'hollowglass-hall', at: 'fromRim' }],
+    hotspots: [{ id: 'hall-door', x: 1190, y: 660, r: 130, door: 'hollowglass-hall', at: 'fromRim' }],
     lights: [
       { x: 1560, y: 520, r: 700, color: '#bff8ea', level: () => SO.story.hollowLight ? SO.story.hollowLight() : 0.3, flicker: true },
       { x: 1190, y: 650, r: 220, color: '#bff8ea', level: () => SO.story.hollowLight ? SO.story.hollowLight() : 0.3 },
@@ -149,11 +138,11 @@
   });
 
   def('hollowglass-hall', {
-    name: 'Inside Hollowglass', region: 'hollowglass', map: [0, 4], w: 1.5, depth: 0.52, dark: 0.55, palette: 'glass',
-    exits: {},
-    terrain: { floor: [0.13, 0.12, 0.12, 0.12, 0.12, 0.13], ceiling: [0.4, 0.2, 0.1, 0.08, 0.1, 0.2, 0.42], walls: { left: true, right: true } },
+    name: 'Inside the dome', region: 'hollowglass', map: [0, 4], w: 1.5, depth: 0.52, dark: 0.5, palette: 'glass',
+    exits: { left: { key: 'hollowglass-rim', at: 'fromHall' }, right: { key: 'mural-room', at: 'fromHall' } },
+    terrain: { floor: [0.13, 0.12, 0.12, 0.12, 0.12, 0.13], ceiling: [0.3, 0.2, 0.1, 0.08, 0.1, 0.2, 0.3], walls: { left: false, right: false } },
     floorTop: '#c8d9d4', rock: '#3f5e66', rockHi: '#7fa3a6',
-    entries: { default: [380, 600], fromRim: [380, 620], fromMural: [2080, 620] },
+    entries: { default: [380, 600], fromRim: [300, 560], fromMural: [2080, 560] },
     bg(ctx, t, room) {
       // Looking up at the inside of a glass sky: curved panes.
       ctx.save();
@@ -185,31 +174,27 @@
     ],
     actors: [
       { id: 'archivist', type: 'archivist', x: 1000, y: 380, s: 1.15 },
-      { id: 'lumen', type: 'lumen', x: 1480, y: 640, level: 0.25 },
+      { id: 'jellies', type: 'jellies', x: 1480, y: 480, n: 7 },
     ],
     hotspots: [
-      { id: 'rim-door', x: 150, y: 640, r: 70, door: 'hollowglass-rim', at: 'fromHall' },
       { id: 'petal-door', x: 2240, y: 560, r: 110 },
     ],
-    lights: [{ x: 1480, y: 300, r: 900, color: '#bff8ea', level: () => SO.story.hollowLight ? SO.story.hollowLight() : 0.25 }],
+    lights: [{ x: 1480, y: 300, r: 900, color: '#9fd8ff', level: 0.5 }],
     snow: 0.2,
   });
 
   def('mural-room', {
-    name: 'The glass pictures', region: 'hollowglass', map: [1, 4], w: 1.3, depth: 0.52, dark: 0.5, palette: 'glass',
-    exits: {},
-    terrain: { floor: [0.12, 0.12, 0.13, 0.12, 0.12], ceiling: [0.12, 0.1, 0.1, 0.1, 0.12], walls: { left: true, right: true } },
+    name: 'A room full of glass', region: 'hollowglass', map: [1, 4], w: 1.2, depth: 0.52, dark: 0.45, palette: 'glass',
+    exits: { left: { key: 'hollowglass-hall', at: 'fromMural' } },
+    terrain: { floor: [0.12, 0.12, 0.13, 0.12, 0.12], ceiling: [0.25, 0.12, 0.1, 0.1, 0.12], walls: { left: false, right: true } },
     floorTop: '#c8d9d4', rock: '#3f5e66', rockHi: '#7fa3a6',
-    entries: { default: [260, 600], fromHall: [260, 600] },
+    entries: { default: [260, 560], fromHall: [240, 560] },
+    props: [{ type: 'glass-coral', x: 700, s: 1.2 }, { type: 'glass-coral', x: 1300, s: 0.9 }, { type: 'glass-coral', x: 1650, s: 1.1 }],
     actors: [
-      { id: 'panel-1', type: 'panel', x: 520, y: 430, panel: 1, tilt: -0.04 },
-      { id: 'panel-2', type: 'panel', x: 820, y: 410, panel: 2, tilt: 0.02 },
-      { id: 'panel-3', type: 'panel', x: 1120, y: 430, panel: 3, tilt: -0.02 },
-      { id: 'panel-4', type: 'panel', x: 1420, y: 410, panel: 4, tilt: 0.05 },
-      { id: 'panel-5', type: 'panel', x: 1720, y: 470, panel: 5, tilt: 0.28, broken: true },
+      { id: 'memory-1', type: 'memory', x: 1150, y: 470, memory: 1 },
+      { id: 'jellies-2', type: 'jellies', x: 1500, y: 360, n: 4 },
     ],
-    hotspots: [{ id: 'mural-back', x: 120, y: 620, r: 70, door: 'hollowglass-hall', at: 'fromMural' }],
-    lights: [{ x: 1100, y: 400, r: 800, color: '#bff8ea', level: 0.45 }],
+    onEnter(room) { if (SO.save.data && SO.save.data.memories.includes(1)) { SO.E.removeActor('memory-1'); } },
     snow: 0.15,
   });
 
@@ -244,14 +229,14 @@
     props: [
       { type: 'kelp', x: 120, y: RH + 60, h: 380, seed: 3, layer: 'back' },
     ],
-    hotspots: [{ id: 'mouth-door', x: 1950, y: 520, r: 80, door: 'mouth', at: 'fromCliff' }],
+    hotspots: [{ id: 'mouth-door', x: 1950, y: 520, r: 140, door: 'mouth', at: 'fromCliff' }],
     ambient: { fish: 8, jelly: 1 },
   });
 
   def('mouth', {
     name: 'The Mouth', region: 'cliff', map: [2, 1], w: 1.6, depth: 0.45, dark: 0.92,
-    exits: { right: 'mouth-deep' },
-    terrain: { floor: [0.2, 0.25, 0.18, 0.28, 0.22, 0.3, 0.2, 0.24], ceiling: [0.2, 0.28, 0.22, 0.3, 0.2, 0.26, 0.2, 0.22], walls: { left: true, right: false } },
+    exits: { right: 'mouth-deep', left: { key: 'cliff-face', at: 'fromMouth' } },
+    terrain: { floor: [0.2, 0.25, 0.18, 0.28, 0.22, 0.3, 0.2, 0.24], ceiling: [0.2, 0.28, 0.22, 0.3, 0.2, 0.26, 0.2, 0.22], walls: { left: false, right: false } },
     entries: { default: [260, 450], fromCliff: [260, 450] },
     solids: [
       { type: 'ellipse', x: 800, y: 230, rx: 40, ry: 120 },
@@ -263,7 +248,6 @@
       { type: 'lantern-weed', x: 1100, s: 0.7, lit: 0.35 },
       { type: 'lantern-weed', x: 2050, s: 0.6, lit: 0.3 },
     ],
-    hotspots: [{ id: 'mouth-out', x: 120, y: 450, r: 70, door: 'cliff-face', at: 'fromMouth' }],
     snow: 0.1,
     onEnter() { SO.ui.thought('It’s dripping in here. And something is breathing. Slowly.'); },
   });
@@ -276,7 +260,6 @@
     actors: [
       { id: 'nautilus', type: 'nautilus', x: 560, y: 420, s: 1.1 },
       { id: 'tongue', type: 'tongue', x: 1420, y: 600 },
-      { id: 'spark-cave', type: 'spark', x: 1420, y: 600, color: '#ffd9a0', hidden: false },
     ],
     props: [{ type: 'lantern-weed', x: 400, s: 0.8, lit: 0.6 }, { type: 'bone-fan', x: 900, s: 0.9 }],
     snow: 0.1,
@@ -350,7 +333,6 @@
     })(),
     actors: [
       { id: 'turtle', type: 'turtle', x: 1200, y: 360, s: 1.2 },
-      { id: 'raft', type: 'raft', x: 1800, y: 140 },
     ],
     ambient: { fish: 22 },
     snow: 0.15,
@@ -418,87 +400,107 @@
   // ════════════════════════════════════════════════════════════════════════════
   // CHAPTER 5: the Undershine
   // ════════════════════════════════════════════════════════════════════════════
+  // Brooding octopuses: pale mothers curled on warm rock, arms wrapped around their eggs.
+  const brooders = (ctx, x, y, n, t, seed) => {
+    const r = U.rng(seed);
+    A.rock(ctx, x, y, 70 + n * 8, seed, '#4a3a4e');
+    for (let i = 0; i < n; i++) {
+      const ox = x + (r() - 0.5) * (90 + n * 14), oy = y - 20 - r() * 40;
+      const k = 0.5 + 0.5 * Math.sin(t * 0.6 + i + seed);
+      const hue = 330 + r() * 30;
+      ctx.fillStyle = `hsla(${hue},45%,${70 + k * 6}%,0.95)`;
+      ctx.beginPath(); ctx.ellipse(ox, oy, 15, 11, 0, 0, U.TAU); ctx.fill();
+      ctx.strokeStyle = 'rgba(90,40,70,0.4)'; ctx.lineWidth = 1.2; ctx.stroke();
+      ctx.strokeStyle = `hsla(${hue},40%,62%,0.9)`; ctx.lineWidth = 3;
+      for (let a = 0; a < 4; a++) { ctx.beginPath(); ctx.arc(ox, oy + 6, 12 + a, Math.PI * (0.15 + a * 0.18), Math.PI * (0.45 + a * 0.18)); ctx.stroke(); }
+      A.circle(ctx, ox - 4, oy - 2, 1.6, '#2a1a24', null);
+    }
+  };
+  const warmHaze = (ctx, room, t) => {
+    const g = ctx.createLinearGradient(0, room.h, 0, 0);
+    g.addColorStop(0, 'rgba(255,170,120,0.18)'); g.addColorStop(1, 'rgba(255,170,120,0)');
+    ctx.fillStyle = g; ctx.fillRect(0, 0, room.w, room.h);
+    ctx.strokeStyle = 'rgba(255,220,200,0.06)'; ctx.lineWidth = 3;
+    for (let i = 0; i < 12; i++) {// a shimmer of warm water rising
+      const x = (i * 337) % room.w;
+      ctx.beginPath();
+      for (let y = room.h; y > 0; y -= 30) { ctx.lineTo(x + Math.sin(y * 0.02 + t * 1.5 + i) * 10, y); }
+      ctx.stroke();
+    }
+  };
+
   def('undershine-gate', {
-    name: 'A light below the dark', region: 'undershine', map: [0, 12], w: 1.2, depth: 0.9, dark: 0.55, palette: 'shine',
+    name: 'Warm water', region: 'undershine', map: [0, 12], w: 1.2, depth: 0.88, dark: 0.55, palette: 'shine',
     exits: { down: 'undershine' },// up is set from the maze goal
     terrain: { walls: { left: true, right: true } },
     bg(ctx, t, room) {
       const g = ctx.createRadialGradient(room.w / 2, room.h + 200, 0, room.w / 2, room.h + 200, 800);
-      g.addColorStop(0, 'rgba(255,200,240,0.6)'); g.addColorStop(1, 'rgba(255,200,240,0)');
+      g.addColorStop(0, 'rgba(255,190,150,0.45)'); g.addColorStop(1, 'rgba(255,190,150,0)');
       ctx.fillStyle = g; ctx.fillRect(0, 0, room.w, room.h + 200);
-      for (let i = 0; i < 10; i++) { crystalCluster(ctx, i % 2 ? room.w - 80 : 80, 120 + i * 80, 0.6 + (i % 3) * 0.2, [280, 190, 40][i % 3], t, i, i % 2 ? 1 : -1); }
+      warmHaze(ctx, room, t);
     },
-    lights: [{ x: 960, y: 1000, r: 900, color: '#ffc8f0', level: 0.9 }],
+    lights: [{ x: 960, y: 1000, r: 900, color: '#ffd0b0', level: 0.8 }],
     snow: 0.3,
   });
 
   def('undershine', {
-    name: 'The Undershine', region: 'undershine', map: [0, 13], w: 2.4, h: 1.2, depth: 0.86, dark: 0.12, palette: 'shine',
+    name: 'The octopus garden', region: 'undershine', map: [0, 13], w: 2.4, h: 1.2, depth: 0.86, dark: 0.2, palette: 'shine',
     exits: { up: 'undershine-gate', left: 'forge', right: 'keeper-hall' },
-    terrain: { floor: [0.1, 0.14, 0.12, 0.1, 0.12, 0.15, 0.12, 0.1, 0.14, 0.12], ceiling: [0.12, 0.1, 0.06, 0.04, 0.04, 0.06, 0.1, 0.12], ceilGap: [0.44, 0.56] },
-    rock: '#2c2550', rockHi: '#5a4a8a', floorTop: '#7a62b0',
-    bg(ctx, t, room) {
-      // A cavern sky of gems: the opposite of the sky you fell from.
-      const r = U.rng(5);
-      for (let i = 0; i < 90; i++) {
-        const x = r() * room.w, y = r() * room.h * 0.55;
-        const hue = [280, 190, 40, 330][i % 4];
-        ctx.save(); ctx.globalCompositeOperation = 'lighter';
-        A.glow(ctx, x, y, 18 + r() * 30, ['#c79bff', '#7fe8ff', '#ffcf7a', '#ff9bb8'][i % 4], 0.35 + 0.25 * Math.sin(t * (0.5 + r()) + i));
-        ctx.restore();
-        if (i % 6 === 0) { crystalCluster(ctx, x, y, 0.5, hue, t, i, 1); }
-      }
-    },
+    terrain: { floor: [0.1, 0.14, 0.12, 0.1, 0.12, 0.15, 0.12, 0.1, 0.14, 0.12], ceiling: [0.12, 0.1, 0.06, 0.04, 0.04, 0.06, 0.1, 0.12], ceilGap: [0.4, 0.6] },
+    rock: '#3a2c3e', rockHi: '#6a5060', floorTop: '#7a5a64',
+    bg(ctx, t, room) { warmHaze(ctx, room, t); },
     props: (() => {
       const p = [];
-      for (let i = 0; i < 9; i++) {
-        const x = 200 + i * 400;
-        p.push({ layer: 'mid', draw(ctx, t, room) { crystalCluster(ctx, x, room.floorY(x) + 10, 0.9 + (i % 3) * 0.3, [280, 190, 40, 330][i % 4], t, i + 30); } });
+      for (let i = 0; i < 8; i++) {
+        const x = 260 + i * 460;
+        p.push({ layer: 'mid', draw(ctx, t, room) { brooders(ctx, x, room.floorY(x) + 6, 5 + (i % 3) * 3, t, 40 + i); } });
       }
       p.push({ type: 'lantern-weed', x: 900, s: 1.2 }, { type: 'lantern-weed', x: 2900, s: 1.1 }, { type: 'glass-coral', x: 1900, s: 1.3 });
       return p;
     })(),
     actors: [
-      { id: 'dumbo-1', type: 'dumbo', x: 700, y: 520, seed: 1, holding: '#ffcf7a' },
+      { id: 'dumbo-1', type: 'dumbo', x: 700, y: 520, seed: 1 },
       { id: 'dumbo-2', type: 'dumbo', x: 1300, y: 420, seed: 2, hue: 340 },
-      { id: 'dumbo-3', type: 'dumbo', x: 2100, y: 560, seed: 3, holding: '#7fe8ff', hue: 30 },
+      { id: 'dumbo-3', type: 'dumbo', x: 2100, y: 560, seed: 3, hue: 30 },
       { id: 'dumbo-4', type: 'dumbo', x: 2800, y: 460, seed: 4, hue: 10 },
-      { id: 'gem-u-0', type: 'gem', x: 520, y: 780, color: '#ffcf7a', personal: true },
-      { id: 'gem-u-1', type: 'gem', x: 3500, y: 300, color: '#c79bff', personal: true },
+      { id: 'gem-u-0', type: 'gem', x: 520, y: 760, personal: true },
+      { id: 'gem-u-1', type: 'gem', x: 3500, y: 320, personal: true },
       { id: 'sp-under-0', type: 'species', x: 1700, y: 600, spawnKey: 'undershine:0', spKind: 'creature' },
     ],
-    lights: [{ x: 1900, y: 400, r: 1400, color: '#e0c8ff', level: 0.8 }],
-    ambient: { glass: 3, fish: 4 },
+    lights: [{ x: 1900, y: 600, r: 1400, color: '#ffd8c0', level: 0.7 }],
+    ambient: { glass: 2, fish: 3 },
     snow: 0.3,
   });
 
   def('keeper-hall', {
-    name: 'The Hoard', region: 'undershine', map: [1, 13], w: 1.4, depth: 0.88, dark: 0.25, palette: 'shine',
+    name: 'Grandmother Seven’s den', region: 'undershine', map: [1, 13], w: 1.4, depth: 0.88, dark: 0.3, palette: 'shine',
     exits: { left: 'undershine', up: 'riser' },
-    terrain: { floor: [0.14, 0.12, 0.1, 0.1, 0.12, 0.14], ceiling: [0.1, 0.1, 0.1, 0.08, 0.06, 0.04], ceilGap: [0.78, 0.92], walls: { left: false, right: true } },
-    rock: '#2c2550', rockHi: '#5a4a8a', floorTop: '#7a62b0',
+    terrain: { floor: [0.14, 0.12, 0.1, 0.1, 0.12, 0.14], ceiling: [0.1, 0.1, 0.1, 0.08, 0.06, 0.04], ceilGap: [0.74, 0.94], walls: { left: false, right: true } },
+    rock: '#3a2c3e', rockHi: '#6a5060', floorTop: '#7a5a64',
     actors: [
       { id: 'keeper', type: 'keeper', x: 1100, y: 460, s: 1.15 },
-      { id: 'dumbo-5', type: 'dumbo', x: 600, y: 300, seed: 5, holding: '#ff9bb8', roam: 60 },
+      { id: 'dumbo-5', type: 'dumbo', x: 600, y: 300, seed: 5, roam: 60 },
       { id: 'dumbo-6', type: 'dumbo', x: 1700, y: 360, seed: 6, hue: 300, roam: 60 },
-      { id: 'gem-k-0', type: 'gem', x: 300, y: 720, color: '#7fe8ff', personal: true },
+      { id: 'gem-k-0', type: 'gem', x: 300, y: 700, personal: true },
     ],
     props: [
       { layer: 'back', draw(ctx, t, room) {
-        // the Riser: a column of warm water rushing up through the roof
-        const x = room.w * 0.85;
+        // The crack in the roof. When the volcano is awake, warm water rushes up through it.
+        const x = room.w * 0.84;
+        const on = SO.story.riserOpen && SO.story.riserOpen();
         ctx.save(); ctx.globalCompositeOperation = 'lighter';
-        const g = ctx.createLinearGradient(x - 120, 0, x + 120, 0);
-        g.addColorStop(0, 'rgba(255,240,200,0)'); g.addColorStop(0.5, `rgba(255,240,200,${SO.story.riserOpen && SO.story.riserOpen() ? 0.25 : 0.05})`); g.addColorStop(1, 'rgba(255,240,200,0)');
-        ctx.fillStyle = g; ctx.fillRect(x - 120, -100, 240, room.h);
+        const g = ctx.createLinearGradient(x - 140, 0, x + 140, 0);
+        g.addColorStop(0, 'rgba(255,220,190,0)'); g.addColorStop(0.5, `rgba(255,220,190,${on ? 0.3 : 0.04})`); g.addColorStop(1, 'rgba(255,220,190,0)');
+        ctx.fillStyle = g; ctx.fillRect(x - 140, -100, 280, room.h);
         ctx.restore();
+        if (on && Math.random() < 0.5) { SO.E.particles.push({ kind: 'bubble', x: x + (Math.random() - 0.5) * 200, y: room.h * 0.8, vx: 0, vy: -320, life: 3, t: 0, r: 2 + Math.random() * 4 }); }
       } },
     ],
     snow: 0.2,
   });
 
   def('forge', {
-    name: 'The Forge', region: 'forge', map: [-1, 13], w: 1.5, depth: 0.9, dark: 0.55, palette: 'forge',
+    name: 'The volcano', region: 'forge', map: [-1, 13], w: 1.5, depth: 0.9, dark: 0.55, palette: 'forge',
     exits: { right: 'undershine' },
     terrain: { floor: [0.14, 0.16, 0.18, 0.12, 0.12, 0.16, 0.2], ceiling: [0.1, 0.06, 0.04, 0.04, 0.04, 0.08, 0.12], ceilGap: [0.36, 0.6], walls: { left: true, right: false } },
     rock: '#2a2422', rockHi: '#4a3a34', floorTop: '#5a3a2a',
@@ -595,7 +597,6 @@
       if (Math.random() < dt * 40) { SO.E.particles.push({ kind: 'bubble', x: 1110 + Math.random() * 160, y: room.surfaceY + 20 + Math.random() * 200, vx: (Math.random() - 0.5) * 200, vy: 40 + Math.random() * 120, life: 1.6, t: 0, r: 2 + Math.random() * 6 }); }
       if (Math.random() < dt * 12) { SO.E.particles.push({ kind: 'drop', x: 1110 + Math.random() * 160, y: room.surfaceY - 10, vx: (Math.random() - 0.5) * 400, vy: -100 - Math.random() * 300, t: 0, life: 2, r: 2 + Math.random() * 3 }); }
     },
-    actors: [{ id: 'clam', type: 'clam', x: 1900, y: 720, holding: '#bfe9ff' }],
     hotspots: [{ id: 'thread', x: 1190, y: 220, r: 100, hidden: true }],
     ambient: { fish: 6 },
   });

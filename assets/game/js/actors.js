@@ -70,13 +70,15 @@
     r: 130, touch: true,
     draw(ctx, a, room, t) {
       // bed of gems
-      for (let i = 0; i < 16; i++) {
-        const gx = a.x - 220 + (i * 61) % 440, gy = a.y + 150 + ((i * 37) % 40);
-        A.gem(ctx, gx, gy, 0.7 + (i % 3) * 0.2, ['#ffcf7a', '#c79bff', '#7fe8ff', '#ff9bb8'][i % 4], t + i, { glow: i % 2 === 0, rot: i });
+      // her den, decorated with shells and pearls
+      for (let i = 0; i < 18; i++) {
+        const gx = a.x - 240 + (i * 61) % 480, gy = a.y + 160 + ((i * 37) % 40);
+        if (i % 3 === 0) { A.circle(ctx, gx, gy, 9, '#f2eef8', 'rgba(60,50,80,0.4)', 1); }
+        else { A.species(ctx, 'item', { hue: (i * 47) % 360, hue2: 30, glowHue: 0, glow: false, size: 0.7, body: 'shell', appendages: 0, eyes: 0, pattern: 'stripes', behavior: 'still' }, gx, gy, 0.9, 0, {}); }
       }
       A.keeper(ctx, a.x, a.y + bob(a, 8, 0.5), a.s || 1, t, { flash: a.flash });
     },
-    light(a) { return { x: a.x, y: a.y + 80, r: 520, a: 0.9, color: '#ffcf9a', add: 0.25 }; },
+    light(a) { return { x: a.x, y: a.y + 80, r: 520, a: 0.8, color: '#ffd9c0', add: 0.15 }; },
     update(a, dt) { if (a.flashT > 0) { a.flashT -= dt; } else { a.flash = null; } },
   };
 
@@ -139,18 +141,28 @@
     light(a) { return { x: a.x, y: a.y, r: 260, a: 0.8, color: a.color || '#ffe3a0', add: 0.3 }; },
   };
 
+  // Pearls (called gems in the API). Shiny, round, and wanted by octopuses.
   T.gem = {
     r: 36, touch: true,
     draw(ctx, a, room, t) {
-      if (a.dust) {// someone else got here first
-        const k = a.dust;
-        for (let i = 0; i < 10; i++) { A.circle(ctx, a.x + Math.cos(i) * 40 * k, a.y + Math.sin(i * 2) * 30 * k - k * 40, 2.5 * (1 - k), a.color, null); }
+      if (a.dust) {// someone else got here first: it was just a reflection
+        ctx.save(); ctx.globalAlpha = Math.max(0, 1 - a.dust); A.circle(ctx, a.x, a.y - a.dust * 30, 12 * (1 - a.dust), 'rgba(240,240,250,0.6)', null); ctx.restore();
         return;
       }
-      A.gem(ctx, a.x, a.y + bob(a, 5, 1.1), a.s || 0.8, a.color || '#c79bff', t);
+      const y = a.y + bob(a, 5, 1.1);
+      const r = 13 * (a.s || 1);
+      ctx.save(); ctx.globalCompositeOperation = 'lighter'; A.glow(ctx, a.x, y, r * 5, '#e8f0ff', 0.35 + 0.15 * Math.sin(t * 2 + a.x)); ctx.restore();
+      const g = ctx.createRadialGradient(a.x - r * 0.4, y - r * 0.4, 1, a.x, y, r);
+      g.addColorStop(0, '#ffffff'); g.addColorStop(0.5, '#f1ecf6'); g.addColorStop(0.85, '#cfc6dd'); g.addColorStop(1, '#a99fbd');
+      A.circle(ctx, a.x, y, r, g, 'rgba(60,50,80,0.35)', 1.2);
+      ctx.save(); ctx.globalCompositeOperation = 'lighter';
+      const sh = ctx.createLinearGradient(a.x - r, y, a.x + r, y);
+      sh.addColorStop(0, 'rgba(255,180,220,0)'); sh.addColorStop(0.5, 'rgba(160,220,255,0.25)'); sh.addColorStop(1, 'rgba(255,180,220,0)');
+      ctx.fillStyle = sh; ctx.beginPath(); ctx.arc(a.x, y, r, 0, U.TAU); ctx.fill();
+      ctx.restore();
     },
-    update(a, dt, room) { if (a.dust) { a.dust += dt * 0.6; if (a.dust > 1) { a.hidden = true; } } },
-    light(a) { return a.dust ? null : { x: a.x, y: a.y, r: 180, a: 0.7, color: a.color || '#c79bff', add: 0.25 }; },
+    update(a, dt, room) { if (a.dust) { a.dust += dt * 0.8; if (a.dust > 1) { a.hidden = true; } } },
+    light(a) { return a.dust ? null : { x: a.x, y: a.y, r: 150, a: 0.6, color: '#e8f0ff', add: 0.15 }; },
   };
 
   // A procedurally generated species (creature, plant or item).
@@ -385,6 +397,103 @@
       ctx.restore();
       A.dimmerEye(ctx, a.x + (st.eyeX || 0), a.y + (st.eyeY || -60), 90 * (st.size || 1), st.eye || 0, t, { healed: st.healed });
     },
+  };
+
+
+  // A sperm whale: a huge square head, a narrow jaw, wrinkled skin. It hunts squid by clicking.
+  T.whale = {
+    r: 500, touch: false,
+    // It doesn't glow, but the stirred-up water around it is a little lighter, so you can see its shape.
+    light(a) { const al = a.alpha === undefined ? 1 : a.alpha; return al > 0.05 ? { x: a.x, y: a.y, r: 900 * (a.scale || 1), a: 0.4 * al, color: '#6f8fa8', add: 0 } : null; },
+    draw(ctx, a, room, t) {
+      const al = a.alpha === undefined ? 1 : a.alpha;
+      if (al <= 0.01) { return; }
+      ctx.save();
+      ctx.globalAlpha *= al;
+      ctx.translate(a.x, a.y);
+      if (a.vertical) { ctx.rotate(-Math.PI / 2); }
+      const s = a.scale || 1;
+      ctx.scale(s * (a.dir || 1), s);
+      const sway = Math.sin(t * 0.8) * 30;
+      // body: head at +x, tail at -x
+      const g = ctx.createLinearGradient(0, -260, 0, 260);
+      g.addColorStop(0, '#3b3f47'); g.addColorStop(0.6, '#2a2d33'); g.addColorStop(1, '#4a4c52');
+      ctx.fillStyle = g;
+      ctx.beginPath();
+      ctx.moveTo(760, -170);
+      ctx.quadraticCurveTo(830, -160, 830, -40);
+      ctx.lineTo(830, 60);
+      ctx.quadraticCurveTo(820, 160, 700, 170);
+      ctx.lineTo(150, 200);
+      ctx.quadraticCurveTo(-300, 190, -620, 70 + sway * 0.3);
+      ctx.lineTo(-760, 30 + sway * 0.6);
+      ctx.lineTo(-760, -10 + sway * 0.6);
+      ctx.quadraticCurveTo(-300, -170, 150, -230);
+      ctx.quadraticCurveTo(600, -230, 760, -170);
+      ctx.closePath();
+      ctx.fill();
+      ctx.strokeStyle = 'rgba(0,0,0,0.35)'; ctx.lineWidth = 3; ctx.stroke();
+      // tail flukes
+      ctx.beginPath();
+      ctx.moveTo(-740, 10 + sway * 0.6);
+      ctx.quadraticCurveTo(-860, -120 + sway, -960, -150 + sway * 1.2);
+      ctx.quadraticCurveTo(-880, 10 + sway, -960, 170 + sway * 1.2);
+      ctx.quadraticCurveTo(-860, 140 + sway, -740, 20 + sway * 0.6);
+      ctx.fill(); ctx.stroke();
+      // the narrow lower jaw
+      ctx.fillStyle = '#5a5c62';
+      ctx.beginPath(); ctx.moveTo(760, 150); ctx.lineTo(420, 190); ctx.lineTo(420, 205); ctx.lineTo(740, 175); ctx.closePath(); ctx.fill();
+      // wrinkles
+      ctx.strokeStyle = 'rgba(255,255,255,0.05)'; ctx.lineWidth = 6;
+      for (let i = 0; i < 14; i++) { const x = -500 + i * 60; ctx.beginPath(); ctx.moveTo(x, -150 + Math.abs(i - 7) * 6); ctx.lineTo(x - 30, 150 - Math.abs(i - 7) * 6); ctx.stroke(); }
+      // small eye, far back near the jaw
+      ctx.fillStyle = '#0c0d10'; ctx.beginPath(); ctx.ellipse(380, 120, 14, 9, 0, 0, U.TAU); ctx.fill();
+      ctx.fillStyle = 'rgba(255,255,255,0.35)'; ctx.beginPath(); ctx.arc(384, 116, 3, 0, U.TAU); ctx.fill();
+      // flipper
+      ctx.fillStyle = '#2f3238';
+      ctx.beginPath(); ctx.moveTo(300, 170); ctx.quadraticCurveTo(250, 280 + sway * 0.4, 180, 300 + sway * 0.4); ctx.quadraticCurveTo(220, 220, 220, 180); ctx.closePath(); ctx.fill();
+      ctx.restore();
+    },
+  };
+
+  // Crown jellies: deep-sea jellies that flash blue. They light the dome.
+  T.jellies = {
+    r: 110, touch: true,
+    draw(ctx, a, room, t) {
+      for (let i = 0; i < (a.n || 6); i++) {
+        const x = a.x + Math.sin(i * 2.3 + t * 0.3) * 90, y = a.y + Math.cos(i * 1.7 + t * 0.4) * 50 - i * 8;
+        const flash = 0.5 + 0.5 * Math.sin(t * 2.2 + i * 1.3);
+        ctx.save(); ctx.globalCompositeOperation = 'lighter';
+        A.glow(ctx, x, y, 50, '#5fb8ff', 0.25 + flash * 0.45);
+        ctx.restore();
+        ctx.save(); ctx.translate(x, y); ctx.scale(0.8, 0.8);
+        ctx.fillStyle = 'rgba(160,40,60,0.75)';
+        ctx.beginPath(); ctx.ellipse(0, 0, 22, 14, 0, Math.PI, 0); ctx.closePath(); ctx.fill();
+        ctx.strokeStyle = `rgba(140,210,255,${0.4 + flash * 0.5})`; ctx.lineWidth = 2;
+        for (let k = 0; k < 8; k++) { ctx.beginPath(); ctx.moveTo(-20 + k * 5.5, 0); ctx.lineTo(-22 + k * 6 + Math.sin(t * 2 + k) * 3, 18); ctx.stroke(); }
+        ctx.restore();
+      }
+    },
+    light(a) { return { x: a.x, y: a.y, r: 520, a: 0.75, color: '#7fc8ff', add: 0.25 }; },
+  };
+
+  // Bubbles drifting up. Pop them by swimming through them. Golden ones are special.
+  T.bubble = {
+    r: 34, touch: true,
+    update(a, dt, room) {
+      a.y -= (55 + (a.seed % 3) * 10) * dt;
+      a.x += Math.sin(a.t * 1.3 + a.seed) * 20 * dt;
+      if (a.y < (room.surfaceY !== null ? room.surfaceY + 20 : -100)) { a.hidden = true; }
+    },
+    draw(ctx, a, room, t) {
+      const r = a.golden ? 22 : 16 + (a.seed % 3) * 4;
+      if (a.golden) { ctx.save(); ctx.globalCompositeOperation = 'lighter'; A.glow(ctx, a.x, a.y, r * 3, '#ffd36a', 0.5 + 0.2 * Math.sin(t * 4)); ctx.restore(); }
+      ctx.strokeStyle = a.golden ? 'rgba(255,220,120,0.95)' : 'rgba(230,250,250,0.7)'; ctx.lineWidth = 2;
+      ctx.fillStyle = a.golden ? 'rgba(255,210,100,0.25)' : 'rgba(220,245,245,0.08)';
+      ctx.beginPath(); ctx.arc(a.x, a.y, r, 0, U.TAU); ctx.fill(); ctx.stroke();
+      ctx.fillStyle = 'rgba(255,255,255,0.7)'; ctx.beginPath(); ctx.ellipse(a.x - r * 0.35, a.y - r * 0.4, r * 0.25, r * 0.15, -0.6, 0, U.TAU); ctx.fill();
+    },
+    light(a) { return a.golden ? { x: a.x, y: a.y, r: 160, a: 0.7, color: '#ffd36a', add: 0.2 } : null; },
   };
 
 })();

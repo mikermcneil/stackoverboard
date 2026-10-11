@@ -4,12 +4,13 @@ module.exports = {
   friendlyName: 'Wake vent',
 
 
-  description: 'Wake the Forge (the volcanic vent near the Undershine), if it is dormant.',
+  description: 'Wake the volcano (the underwater volcano next to the octopus garden), if it is dormant.',
 
 
   extendedDescription:
-`An eruption lasts 20 minutes, then the vent cools for 40 minutes before it can be woken again.
-Every squid in the world experiences the same eruption.  If the vent is already erupting or cooling,
+`Anyone can wake the volcano when it is dormant.  While it erupts, its warm plume (the Riser) carries
+squids up toward the surface.  An eruption lasts 20 minutes.  Then the vent cools for 40 minutes before
+it can be woken again.  Every squid in the world experiences the same eruption.  If the vent is already erupting or cooling,
 or another squid woke it at the same moment, \`woke\` is false and the current eruption is returned.`,
 
 

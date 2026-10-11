@@ -35,7 +35,7 @@ generated deterministically from the world seed, so every squid sees the same ti
   exits: {
 
     success: {
-      outputDescription: '`{ tile, firstDiscovery }` where `tile` is the generated tile plus `discoveredBy`, `discoveredAt`, and `gemsGathered`.'
+      outputDescription: '`{ tile, firstDiscovery }` where `tile` is the generated tile plus `discoveredBy`, `discoveredAt`, and `gemsGathered` (the pearls gathered in the current regrow window).'
     },
 
     invalid: {

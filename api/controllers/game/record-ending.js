@@ -11,6 +11,10 @@ module.exports = {
 
   extendedDescription:
 `Only one ending can be recorded per playthrough (the first one wins).  Requires reaching chapter 7.
+Endings: "return" (home: leapt up the waterfall back to the sky island), "lantern" (stay: decided the
+sea is home and stayed with its friends), "gift" (the whale: calmed the sperm whale and swam off into
+the open ocean with her), and "song" (the swans: called the swans, and the sky islands came down to
+rest on the sea).
 Note: if the ending is newly recorded, it's appended to \`save.endings\` and the save's \`revision\`
 increases, so clients should adopt the returned save.`,
 

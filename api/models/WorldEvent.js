@@ -34,7 +34,7 @@ module.exports = {
 
     subject: {
       type: 'string',
-      description: 'What the event is about: a tile key, species key, "forge", an ending key, a chapter number, etc.'
+      description: 'What the event is about: a tile key, species key, "forge" (the volcano), an ending key, a chapter number, etc.'
     },
 
     startsAt: {

@@ -19,10 +19,10 @@ Kinds of events:
 - "chapter-reached": a squid reached a chapter (1-8) of the story.  subject is the chapter number as a string; details.location.
 - "tile-discovered": a squid was first to reach a tile of the Below (the deep maze).  subject is the tile key, e.g. "below:2,9".
 - "species-introduced": a squid met a procedurally generated species no one had seen before.  subject is the species key, e.g. "creature:3"; details.name.
-- "eruption": a squid woke the Forge, the volcanic vent.  subject "forge"; startsAt = when it was woken, endsAt = when the eruption
+- "eruption": a squid woke the volcano (the underwater volcano next to the octopus garden).  subject "forge"; startsAt = when it was woken, endsAt = when the eruption
   ended (20 minutes later); details.coolsAt = when it finished cooling (40 more minutes) and could be woken again; details.seq = 1 for the first eruption ever, etc.
-- "gem-gathered": a squid gathered a glowing gem (lumen) from a tile.  subject is the tile key; details.index, details.regrowsAt.
-- "ending": a squid finished a playthrough.  subject is the ending: "return", "lantern", "gift", or "song".
+- "gem-gathered": a squid gathered a pearl (called a gem in the API) from a tile.  subject is the tile key; details.index, details.regrowsAt.
+- "ending": a squid finished a playthrough.  subject is the ending: "return" (home), "lantern" (stay), "gift" (the whale), or "song" (the swans).
 
 Examples: "Has the volcano ever erupted, and who woke it?" -> kind=eruption.  "Who first reached
 chapter 8?" -> kind=chapter-reached, subject=8, order=oldest, limit=1.  "What has Pale-Ember-Drift done?" -> squidName.`,
@@ -43,7 +43,7 @@ chapter 8?" -> kind=chapter-reached, subject=8, order=oldest, limit=1.  "What ha
     subject: {
       type: 'string',
       example: 'below:2,9',
-      description: 'Only return events with exactly this subject (a tile key, species key, "forge", an ending key, or a chapter number as a string).'
+      description: 'Only return events with exactly this subject (a tile key, species key, "forge" (the volcano), an ending key, or a chapter number as a string).'
     },
 
     squidName: {

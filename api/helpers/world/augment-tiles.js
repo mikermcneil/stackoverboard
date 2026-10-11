@@ -6,7 +6,7 @@ module.exports = {
   friendlyName: 'Augment tiles',
 
 
-  description: 'Regenerate the content of discovered WorldTile records, adding discovery info and which gems are currently gathered.',
+  description: 'Regenerate the content of discovered WorldTile records, adding discovery info and which pearls (called gems in the API) are currently gathered.',
 
 
   inputs: {
@@ -20,7 +20,7 @@ module.exports = {
     at: {
       type: 'number',
       required: true,
-      description: 'JS timestamp (epoch ms) used to determine the current gem regrow window.'
+      description: 'JS timestamp (epoch ms) used to determine the current pearl regrow window.'
     },
 
   },

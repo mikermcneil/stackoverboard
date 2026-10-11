@@ -681,41 +681,42 @@
     ctx.restore();
   };
 
+  // Glowing sea pen: a feathery quill on a stalk, lit by its polyps. (Called lantern-weed in the data.)
   A.lanternWeed = function (ctx, x, y, s, t, seed = 0, lit = 1) {
     ctx.save(); ctx.translate(x, y); ctx.scale(s, s);
-    const sway = Math.sin(t * 0.8 + seed) * 8;
-    const pts = [{ x: 0, y: 0 }, { x: sway * 0.3, y: -30 }, { x: sway * 0.7, y: -60 }, { x: sway, y: -88 }];
-    A.taper(ctx, pts, 4, 2, '#2f5a5a');
-    for (let i = 1; i < 4; i++) {
-      const p = pts[i];
-      const r = 7 - i;
-      if (lit > 0) {
-        ctx.save(); ctx.globalCompositeOperation = 'lighter';
-        A.glow(ctx, p.x + 8, p.y, 34 * lit, '#8ff7ff', 0.6 * lit);
-        ctx.restore();
-      }
-      A.circle(ctx, p.x + 8, p.y, r + 2, lit > 0 ? '#c9fbff' : '#5a8486', C.ink, 1.8);
+    ctx.rotate(Math.sin(t * 0.7 + seed) * 0.08);
+    ctx.strokeStyle = '#6a3f4a'; ctx.lineWidth = 4; ctx.lineCap = 'round';
+    ctx.beginPath(); ctx.moveTo(0, 0); ctx.lineTo(0, -95); ctx.stroke();
+    for (let i = 0; i < 12; i++) {
+      const yy = -30 - i * 6, len = 22 - Math.abs(i - 5) * 2.2;
+      [-1, 1].forEach((side) => {
+        const tip = { x: side * len, y: yy - 8 };
+        ctx.strokeStyle = '#b8707e'; ctx.lineWidth = 2.6;
+        ctx.beginPath(); ctx.moveTo(0, yy); ctx.quadraticCurveTo(side * len * 0.5, yy - 2, tip.x, tip.y); ctx.stroke();
+        if (lit > 0) {
+          const k = 0.5 + 0.5 * Math.sin(t * 2.5 - i * 0.5 + seed);
+          ctx.save(); ctx.globalCompositeOperation = 'lighter';
+          A.glow(ctx, tip.x, tip.y, 9, '#8ff7d8', lit * (0.3 + 0.6 * k));
+          ctx.restore();
+        }
+      });
     }
     ctx.restore();
   };
 
+  // Glass sponge: a vase of woven glass. (Called glass-coral in the data.)
   A.glassCoral = function (ctx, x, y, s, t, seed = 0) {
-    const r = U.rng(seed + 5);
     ctx.save(); ctx.translate(x, y); ctx.scale(s, s);
-    const branch = (bx, by, ang, len, depth) => {
-      const ex = bx + Math.cos(ang) * len, ey = by + Math.sin(ang) * len;
-      ctx.strokeStyle = C.ink; ctx.lineWidth = 7 - depth * 1.5 + 2.6; ctx.lineCap = 'round';
-      ctx.beginPath(); ctx.moveTo(bx, by); ctx.lineTo(ex, ey); ctx.stroke();
-      ctx.strokeStyle = 'rgba(190,245,250,0.9)'; ctx.lineWidth = 7 - depth * 1.5;
-      ctx.beginPath(); ctx.moveTo(bx, by); ctx.lineTo(ex, ey); ctx.stroke();
-      if (depth < 3) {
-        branch(ex, ey, ang - 0.4 - r() * 0.3, len * 0.72, depth + 1);
-        branch(ex, ey, ang + 0.4 + r() * 0.3, len * 0.72, depth + 1);
-      } else {
-        A.circle(ctx, ex, ey, 3, '#effeff', C.ink, 1.4);
-      }
-    };
-    branch(0, 0, -Math.PI / 2 + Math.sin(t * 0.4 + seed) * 0.05, 34, 0);
+    const h = 80 + (seed % 3) * 14;
+    const w0 = 12, w1 = 26;
+    ctx.beginPath();
+    ctx.moveTo(-w0, 0); ctx.quadraticCurveTo(-w1 * 1.2, -h * 0.5, -w1, -h); ctx.lineTo(w1, -h); ctx.quadraticCurveTo(w1 * 1.2, -h * 0.5, w0, 0); ctx.closePath();
+    ctx.fillStyle = 'rgba(220,245,240,0.35)'; ctx.fill();
+    ctx.strokeStyle = 'rgba(235,255,250,0.75)'; ctx.lineWidth = 1.6; ctx.stroke();
+    ctx.save(); ctx.clip();
+    ctx.strokeStyle = 'rgba(235,255,250,0.45)'; ctx.lineWidth = 1;
+    for (let i = -6; i < 8; i++) { ctx.beginPath(); ctx.moveTo(i * 8 - 40, 0); ctx.lineTo(i * 8 + 40, -h); ctx.stroke(); ctx.beginPath(); ctx.moveTo(i * 8 + 40, 0); ctx.lineTo(i * 8 - 40, -h); ctx.stroke(); }
+    ctx.restore();
     ctx.restore();
   };
 
@@ -730,8 +731,8 @@
       ctx.lineTo(Math.cos(a) * rr, Math.sin(a) * rr);
     }
     ctx.closePath();
-    ctx.fillStyle = '#e7dccb'; ctx.fill(); ctx.strokeStyle = C.ink; ctx.lineWidth = 2.2; ctx.stroke();
-    ctx.strokeStyle = 'rgba(120,100,80,0.6)'; ctx.lineWidth = 1.4;
+    ctx.fillStyle = '#d9785a'; ctx.fill(); ctx.strokeStyle = C.ink; ctx.lineWidth = 1.6; ctx.stroke();
+    ctx.strokeStyle = 'rgba(120,50,30,0.6)'; ctx.lineWidth = 1.4;
     for (let i = 0; i <= 6; i++) {
       const a = -Math.PI * 0.85 + i * Math.PI * 0.7 / 6;
       ctx.beginPath(); ctx.moveTo(0, 0); ctx.lineTo(Math.cos(a) * 46, Math.sin(a) * 46); ctx.stroke();

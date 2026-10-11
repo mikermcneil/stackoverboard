@@ -24,7 +24,7 @@ module.exports = {
   extendedDescription:
 `Grid: x in [-3..3], y in [7..11] (y grows deeper; "up" is y-1).  A seeded randomized DFS
 spanning tree from the entrance (0,7), plus a few extra loops.  The entrance opens up to
-the trench floor; the goal cell (somewhere on y=11) opens down to the Undershine gate.`,
+the trench floor; the goal cell (somewhere on y=11) opens down to the octopus garden.`,
 
 
   sync: true,

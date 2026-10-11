@@ -161,6 +161,11 @@
     pickup() {
       this.bell(NOTE(88), { gain: 0.06, dur: 1.6 }); this.bell(NOTE(95), { gain: 0.04, dur: 2, when: 0.1 });
     },
+    // A sperm whale's echolocation click: a sharp, deep knock.
+    click(near = 0.5) {
+      this.noise({ dur: 0.06, freq: 1800, q: 4, gain: 0.04 + near * 0.18, attack: 0.001, verb: 0.8 });
+      this.tone(140, { dur: 0.08, gain: 0.03 + near * 0.12, attack: 0.001, verb: 0.6 });
+    },
     heartbeat() {
       this.tone(55, { dur: 0.25, gain: 0.25, attack: 0.01, verb: 0.2, type: 'sine' });
       this.tone(50, { dur: 0.3, gain: 0.2, attack: 0.01, verb: 0.2, when: 0.22, type: 'sine' });

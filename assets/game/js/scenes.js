@@ -196,9 +196,9 @@
     let sq = null;
     const dur = { 1: 15, 2: 16, 3: 17 }[n];
     const lines = {
-      1: [[1.5, 'Grow, little Carrier.'], [6, 'You’ll be big enough soon.'], [10.5, 'Big enough to carry it.']],
-      2: [[1.5, 'Not yet.'], [5.5, 'When you go, you’ll bring the light back up. Like the others did.'], [11.5, 'Like the last one didn’t.']],
-      3: [[1.5, 'It’s sinking. There’s no time.'], [5, 'It isn’t ready.'], [8.5, 'It has to be. We’re sorry.'], [12, 'Now.']],
+      1: [[1.5, 'Look how big you’re getting.'], [6, 'Not too close to the edge, little one.'], [10.5, 'Good squid.']],
+      2: [[1.5, 'Stay away from the edge!'], [5.5, 'It’s a long way down.'], [10.5, 'Come back to the middle.']],
+      3: [[1.5, 'The island’s shaking!'], [5, 'Hold on!'], [9, 'No!'], [12, 'Catch it!']],
     }[n];
     script(lines);
     const p = play((ctx, k, el, t) => {
@@ -255,9 +255,9 @@
     await UI.fade(1, 200, '#fffaf0');
     await UI.fade(0, 900);
     UI.fade$.style.background = '#02060b';
-    if (n === 3) { UI.thought('They dropped me. On purpose.'); }
-    else if (n === 1) { UI.thought('The pool. I remember the pool.'); }
-    else { UI.thought('Bring the light back up. Bring what light?'); }
+    if (n === 3) { UI.thought('The island shook, and I slipped. That’s how I fell.'); }
+    else if (n === 1) { UI.thought('The pool. That’s home.'); }
+    else { UI.thought('They always said to stay away from the edge.'); }
   };
 
   // ── Endings ────────────────────────────────────────────────────────────────
@@ -278,20 +278,13 @@
   async function endingReturn() {
     // 1. Up the thread.
     let sq = smallSquid(0, VW / 2, 700, 0.75, -Math.PI / 2);
-    script([[2, 'Up. Up, up, up.', 'squid'], [8, 'It’s reaching for me. It can’t follow me into the light.', 'squid']]);
+    script([[2, 'Up. Up, up, up.', 'squid'], [8, 'Almost there. Don’t look down.', 'squid']]);
     await play((ctx, k, el, t) => {
-      const climb = el * 220;
       const g = ctx.createLinearGradient(0, 0, 0, VH);
       g.addColorStop(0, U.mixHex('#2f7890', '#f2fbf6', k)); g.addColorStop(1, U.mixHex('#0b2034', '#bfeee8', k));
       ctx.fillStyle = g; ctx.fillRect(-900, -900, VW + 1800, VH + 1800);
       A.waterfall(ctx, VW / 2 - 110, -200, 220, VH + 400, t, { speed: 700, c1: '#bff8ff', c2: '#fffbe6' });
       ctx.save(); ctx.globalCompositeOperation = 'lighter'; A.glow(ctx, VW / 2, VH / 2, 700, '#fff2c8', 0.35); ctx.restore();
-      // arms below, falling behind
-      for (let i = 0; i < 5; i++) {
-        const pts = []; const base = (i - 2) * 0.3;
-        for (let j = 0; j < 14; j++) { pts.push({ x: VW / 2 + Math.sin(base) * j * 50 + Math.sin(t + i + j * 0.3) * j * 4, y: VH + 600 - j * 60 + climb * 0.5 * (1 - k) + k * 900 }); }
-        A.dimmerArm(ctx, pts, 60, 1 - k);
-      }
       sq.t = t; sq.fin = t * 8; sq.jet = 0.5 + 0.5 * Math.sin(t * 6);
       sq.x = VW / 2 + Math.sin(t * 2) * 20; sq.y = 520 + Math.sin(t * 3) * 10; sq.angle = -Math.PI / 2 + Math.sin(t * 2) * 0.1;
       sq.hearts = Object.values(SO.story.HEART);
@@ -302,7 +295,7 @@
       if (Math.random() < 0.15) { AU.bubble((Math.random() - 0.5), 1); }
     }, 16, { fade: true });
     // 2. Home. The isles lift.
-    script([[2.5, 'Welcome home, Carrier.', 'swan'], [8, 'You brought it back. All of it.', 'swan']]);
+    script([[2.5, 'You’re back!', 'swan'], [7, 'We looked everywhere for you.', 'swan']]);
     const musicMs = AU.music('return');
     sq = smallSquid(0, 1060, 470, 0.8, Math.PI);
     await play((ctx, k, el, t) => {
@@ -323,117 +316,77 @@
       A.squid(ctx, sq);
       if (k > 0.75) { ctx.fillStyle = `rgba(250,252,246,${(k - 0.75) * 4 * 0.6})`; ctx.fillRect(-900, -900, VW + 1800, VH + 1800); }
     }, Math.max(22, musicMs / 1000 - 6), { vignette: 0.25, holdEnd: true });
-    UI.say('The sea’s still down there. I’ll visit.', { who: 'squid' });
+    UI.say('I’m home. I miss the sea already.', { who: 'squid' });
     await wait(5000);
   }
 
   async function endingLantern() {
-    script([[1.5, 'Come on, then. Follow the light. This way.', 'squid'], [8, 'It’s following me. Slowly, like it’s very tired.', 'squid']]);
-    let sq = smallSquid(0, 700, 300, 0.7, Math.PI / 2);
-    await play((ctx, k, el, t) => {
-      const g = ctx.createLinearGradient(0, 0, 0, VH);
-      g.addColorStop(0, U.mixHex('#0e2538', '#1b1240', k)); g.addColorStop(1, U.mixHex('#020509', '#3a2c6a', k));
-      ctx.fillStyle = g; ctx.fillRect(-900, -900, VW + 1800, VH + 1800);
-      // the dark big thing, following
-      for (let i = 0; i < 7; i++) {
-        const pts = []; const base = (i - 3) * 0.25;
-        for (let j = 0; j < 16; j++) { pts.push({ x: 1000 + Math.sin(base) * j * 40 + Math.sin(t * 0.6 + i + j * 0.3) * j * 3, y: 100 - j * 40 + Math.sin(t) * 20 }); }
-        A.dimmerArm(ctx, pts, 70, 0.9);
-      }
-      A.dimmerEye(ctx, 1000, 150, 70, 0.2 + 0.2 * Math.sin(t * 0.5), t);
-      sq.t = t; sq.fin = t * 4; sq.x = 700 + Math.sin(t * 0.7) * 20; sq.y = 520 + Math.sin(t) * 10; sq.angle = Math.PI / 2 + 0.3;
-      sq.hearts = Object.values(SO.story.HEART); sq.glow = 1;
-      E.updateArms(sq, 1 / 60); E.updateSquidSkin(sq, 1 / 60);
-      ctx.save(); ctx.globalCompositeOperation = 'lighter'; A.glow(ctx, sq.x, sq.y, 400, '#ffe7a8', 0.5); ctx.restore();
-      A.squid(ctx, sq);
-    }, 14);
+    // Staying: the friends you made, at the dome, with the crown jellies blinking.
     const musicMs = AU.music('lantern');
-    script([[3, 'Somebody has to stay where it’s dark. Might as well be me.', 'squid'], [12, 'Up there, the islands have stopped sinking.', 'squid']]);
-    sq = smallSquid(0, VW / 2, 560, 0.9, 0);
+    script([[1.5, 'You stayed!', 'archivist'], [5, 'Somebody has to keep you company.', 'squid'], [9.5, 'Hide and seek tomorrow. Be ready.', 'sepia'], [14, 'Mm. Good choice.', 'turtle'], [18, 'Home. The wet one.', 'squid']]);
+    const sq = smallSquid(0, 800, 560, 0.85, 0);
     await play((ctx, k, el, t) => {
       const g = ctx.createLinearGradient(0, 0, 0, VH);
-      g.addColorStop(0, '#2a1f56'); g.addColorStop(1, '#120b2a');
+      g.addColorStop(0, '#2f7890'); g.addColorStop(1, '#0d3048');
       ctx.fillStyle = g; ctx.fillRect(-900, -900, VW + 1800, VH + 1800);
-      // the cavern lights up, in rings, from you outward
-      const r = U.easeOut(Math.min(1, el / 14)) * 1400;
-      const rr = U.rng(3);
-      for (let i = 0; i < 120; i++) {
-        const x = rr() * VW, y = rr() * VH;
-        const d = U.dist(x, y, VW / 2, 560);
-        if (d < r) {
-          ctx.save(); ctx.globalCompositeOperation = 'lighter';
-          A.glow(ctx, x, y, 14 + rr() * 26, ['#c79bff', '#7fe8ff', '#ffcf7a', '#ff9bb8'][i % 4], 0.5 + 0.3 * Math.sin(t + i));
-          ctx.restore();
-        }
+      A.lightRays(ctx, 0, VW, 0, VH, t, 0.12);
+      A.dome(ctx, 1150, VH + 150, 560, { cracked: true, seed: 7, glowing: true });
+      for (let i = 0; i < 7; i++) {
+        const x = 1100 + Math.sin(i * 2.3 + t * 0.3) * 160, y = 520 + Math.cos(i * 1.7 + t * 0.4) * 80;
+        ctx.save(); ctx.globalCompositeOperation = 'lighter'; A.glow(ctx, x, y, 50, '#5fb8ff', 0.3 + 0.3 * Math.sin(t * 2 + i)); ctx.restore();
       }
-      // the Dimmer curls around the edge and sleeps
-      const coil = [];
-      for (let j = 0; j < 40; j++) { const a = Math.PI * 0.9 + j / 40 * Math.PI * 1.25; coil.push({ x: VW / 2 + Math.cos(a) * 640, y: 640 + Math.sin(a) * 300 }); }
-      A.dimmerArm(ctx, coil, 110, 0.95);
-      A.dimmerEye(ctx, VW / 2 - 640, 640, 60, Math.max(0, 0.5 - el / 20), t);
-      sq.t = t; sq.fin = t * 2; sq.x = VW / 2; sq.y = 560 + Math.sin(t * 0.8) * 8; sq.angle = Math.sin(t * 0.2) * 0.1;
-      sq.hearts = Object.values(SO.story.HEART); sq.glow = 1;
+      for (let i = 0; i < 6; i++) { A.kelp(ctx, 80 + i * 70, VH + 40, 380 + i * 50, t, i * 3); }
+      A.archivist(ctx, 560, 470 + Math.sin(t) * 8, 0.9, t, { dir: 1 });
+      A.cuttlefish(ctx, 1000, 620 + Math.sin(t * 1.3) * 6, 0.8, t, { dir: -1 });
+      A.turtle(ctx, 1250 + Math.sin(t * 0.2) * 40, 300, 0.9, t, { dir: -1 });
+      sq.t = t; sq.fin = t * 2; sq.x = 800; sq.y = 560 + Math.sin(t * 0.7) * 8;
+      sq.yaw = 0.02; sq.pitch = 0;
       E.updateArms(sq, 1 / 60); E.updateSquidSkin(sq, 1 / 60);
-      ctx.save(); ctx.globalCompositeOperation = 'lighter'; A.glow(ctx, sq.x, sq.y, 500, '#ffe7a8', 0.6); ctx.restore();
       A.squid(ctx, sq);
-      for (let i = 0; i < 6; i++) { A.dumbo(ctx, VW / 2 + Math.cos(t * 0.3 + i) * (220 + i * 20), 520 + Math.sin(t * 0.5 + i) * 120, 0.8, t + i, { seed: i, hue: [22, 340, 30, 10, 300, 20][i] }); }
-      if (k > 0.8) { ctx.fillStyle = `rgba(20,12,40,${(k - 0.8) * 5 * 0.5})`; ctx.fillRect(-900, -900, VW + 1800, VH + 1800); }
-    }, Math.max(24, musicMs / 1000 - 6), { vignette: 0.5, holdEnd: true });
+      if (k > 0.85) { ctx.fillStyle = `rgba(5,20,30,${(k - 0.85) / 0.15 * 0.6})`; ctx.fillRect(-900, -900, VW + 1800, VH + 1800); }
+    }, Math.max(26, musicMs / 1000 - 4), { vignette: 0.45, holdEnd: true });
   }
 
   async function endingGift() {
-    script([[1.5, 'Here. Have all of it. Every light I’ve got.', 'squid'], [8, 'My hearts are going quiet. One, two, three.', 'squid']]);
-    let sq = smallSquid(0, 800, 640, 0.75, -Math.PI / 2);
+    // The whale: calmed, curious, and going somewhere. You go with her.
+    script([[1.5, 'Pale, shimmer, pale.', 'squid'], [5, 'She isn’t hungry. She’s just curious.', 'squid'], [10, 'Where are we going?', 'squid']]);
     await play((ctx, k, el, t) => {
-      ctx.fillStyle = '#03070c'; ctx.fillRect(-900, -900, VW + 1800, VH + 1800);
-      const heal = U.smoothstep(0.35, 0.9, k);
-      A.dimmerEye(ctx, 800, 300, 220, 1, t, { healed: heal > 0.5 });
-      for (let i = 0; i < 40; i++) {
-        const f = ((t * 0.5 + i / 40) % 1);
-        const x = U.lerp(800, 800 + Math.sin(i) * 40, f), y = U.lerp(620, 320, f);
-        ctx.save(); ctx.globalCompositeOperation = 'lighter'; A.glow(ctx, x, y, 16, ['#9a8cff', '#ff8a4a', '#bfe9ff'][i % 3], (1 - f) * (1 - k * 0.8)); ctx.restore();
-      }
-      if (heal > 0) { ctx.save(); ctx.globalCompositeOperation = 'lighter'; A.glow(ctx, 800, 300, 900 * heal, '#fff2d0', 0.4 * heal); ctx.restore(); }
-      sq.t = t; sq.fin = t * 3; sq.x = 800; sq.y = 680 + Math.sin(t) * 6; sq.angle = -Math.PI / 2;
-      const dimHearts = Object.values(SO.story.HEART).map((c, i) => (k < 0.3 + i * 0.2 ? c : null));
-      sq.hearts = dimHearts; sq.color = A.mixHsl(A.SKIN.base, [215, 15, 45], k);
-      E.updateArms(sq, 1 / 60);
+      ctx.fillStyle = '#071723'; ctx.fillRect(-900, -900, VW + 1800, VH + 1800);
+      const near = U.easeOut(Math.min(1, el / 6));
+      ctx.save(); ctx.translate(VW / 2 + 260, VH / 2 + 60); ctx.scale(1.4 + near * 0.4, 1.4 + near * 0.4);
+      // her eye, close up, softening
+      ctx.fillStyle = '#2a2d33'; ctx.beginPath(); ctx.ellipse(0, 0, 420, 260, 0, 0, U.TAU); ctx.fill();
+      ctx.fillStyle = '#0c0d10'; ctx.beginPath(); ctx.ellipse(-60, 20, 26, 16 * (0.6 + 0.4 * Math.abs(Math.sin(el * 0.4))), 0, 0, U.TAU); ctx.fill();
+      ctx.fillStyle = 'rgba(255,255,255,0.4)'; ctx.beginPath(); ctx.arc(-54, 14, 5, 0, U.TAU); ctx.fill();
+      ctx.restore();
+      const sq = smallSquid(t, 420, 520, 0.8, 0);
+      sq.yaw = 1; sq.pitch = Math.sin(t) * 0.1;
+      sq.flash = ['W', 'B', 'W'][Math.floor(el / 0.8) % 3]; sq.flashAmt = el < 3 ? 0.8 : 0;
+      E.updateSquidSkin(sq, 1 / 60);
       A.squid(ctx, sq);
-    }, 15);
-    script([[2, 'Oh. You were one of us.', 'squid'], [10, 'It’s climbing the waterfall. The islands are rising to meet it.', 'squid']]);
-    await play((ctx, k, el, t) => {
-      const g = ctx.createLinearGradient(0, 0, 0, VH);
-      g.addColorStop(0, U.mixHex('#0e2538', '#e3f3f2', k)); g.addColorStop(1, U.mixHex('#020509', '#5cbcc0', k));
-      ctx.fillStyle = g; ctx.fillRect(-900, -900, VW + 1800, VH + 1800);
-      A.waterfall(ctx, VW / 2 - 90, -200, 180, VH + 400, t, { speed: 600, c1: '#bff8ff', c2: '#fffbe6', alpha: 0.8 });
-      // a pale, enormous squid, climbing
-      const giant = smallSquid(t, VW / 2, U.lerp(VH + 300, -400, U.easeInOut(k)), 3.2, -Math.PI / 2);
-      giant.color = [200, 30, 92]; giant.glow = 1;
-      giant.arms.forEach((arm) => arm.forEach((p, j) => { p.x = giant.x + Math.sin(t * 2 + j * 0.4) * j * 3; p.y = giant.y + 60 + j * 40; }));
-      ctx.save(); ctx.globalAlpha = 0.9; A.squid(ctx, giant); ctx.restore();
-      ctx.save(); ctx.globalCompositeOperation = 'lighter'; A.glow(ctx, giant.x, giant.y, 600, '#fff2d0', 0.5); ctx.restore();
-    }, 14);
+    }, 13);
     const musicMs = AU.music('gift');
-    script([[3, 'There you are.', 'archivist'], [7, 'Rest now. You were bright.', 'archivist'], [13, 'Nobody gets long. You spent yours on something.', 'archivist']]);
-    sq = smallSquid(0, 600, 200, 0.8, Math.PI / 2 + 0.4);
+    script([[1, '(click, click)', 'world'], [4, 'Okay. Anywhere.', 'squid']]);
+    const sq = smallSquid(0, 700, 500, 0.6, 0);
     await play((ctx, k, el, t) => {
       const g = ctx.createLinearGradient(0, 0, 0, VH);
-      g.addColorStop(0, '#2f7890'); g.addColorStop(1, '#17435f');
+      g.addColorStop(0, '#5cb2c0'); g.addColorStop(1, '#0f3c55');
       ctx.fillStyle = g; ctx.fillRect(-900, -900, VW + 1800, VH + 1800);
-      A.dome(ctx, 1000, VH + 120, 640, { glowing: true, cracked: true, seed: 7 });
-      ctx.save(); ctx.globalCompositeOperation = 'lighter'; A.glow(ctx, 1000, 700, 600, '#bff8ea', 0.4); ctx.restore();
-      A.archivist(ctx, 1050, 520 + Math.sin(t) * 8, 1, t, { dir: -1 });
-      sq.t = t; sq.fin = t * 1.5; sq.x = U.lerp(500, 850, U.easeOut(Math.min(1, el / 14))); sq.y = U.lerp(200, 560, U.easeOut(Math.min(1, el / 14))); sq.angle = Math.PI / 2 * (1 - Math.min(1, el / 14)) + 0.2;
-      sq.color = [215, 15, 55]; sq.hearts = [];
-      E.updateArms(sq, 1 / 60); E.updateSquidSkin(sq, 1 / 60); sq.color = [215, 15, 55];
+      A.lightRays(ctx, 0, VW, 0, VH, t, 0.18);
+      // the open ocean scrolls past
+      ctx.fillStyle = 'rgba(230,245,240,0.5)';
+      for (let i = 0; i < 80; i++) { ctx.fillRect(((i * 211) - el * 120 * (1 + i % 3)) % VW + (i * 211 < el * 120 ? VW : 0), (i * 97) % VH, 2, 2); }
+      SO.actorTypes.whale.draw(ctx, { x: 800, y: 470 + Math.sin(t * 0.5) * 20, dir: 1, alpha: 1, scale: 0.75 }, null, t);
+      sq.t = t; sq.fin = t * 4; sq.x = 1300 + Math.sin(t * 0.8) * 30; sq.y = 330 + Math.sin(t) * 12;
+      sq.yaw = 1; sq.pitch = Math.sin(t * 0.7) * 0.1; sq.vx = 300; sq.vy = 0;
+      E.updateArms(sq, 1 / 60); E.updateSquidSkin(sq, 1 / 60);
       A.squid(ctx, sq);
-      A.lightRays(ctx, 0, VW, 0, VH, t, 0.12);
-      if (k > 0.8) { ctx.fillStyle = `rgba(10,30,40,${(k - 0.8) * 5 * 0.5})`; ctx.fillRect(-900, -900, VW + 1800, VH + 1800); }
-    }, Math.max(24, musicMs / 1000 - 6), { vignette: 0.5, holdEnd: true });
+      if (k > 0.85) { ctx.fillStyle = `rgba(10,40,60,${(k - 0.85) / 0.15 * 0.6})`; ctx.fillRect(-900, -900, VW + 1800, VH + 1800); }
+    }, Math.max(26, musicMs / 1000 - 4), { vignette: 0.4, holdEnd: true });
   }
 
   async function endingSong() {
-    script([[1, 'Blue, gold, blue, pale. Please work.', 'squid'], [4.5, 'We’re here.', 'swan'], [8, 'We hear you. We’re coming down.', 'swan']]);
+    script([[1, 'Blue, gold, blue, pale. Please work.', 'squid'], [4.5, 'We hear you!', 'swan'], [8, 'Hold on. We’re coming down.', 'swan']]);
     [0, 1, 2, 3].forEach((i) => setTimeout(() => AU.skin(['B', 'G', 'B', 'W'][i]), 400 + i * 550));
     setTimeout(() => AU.voice('swans', 3), 4200);
     const musicMs = AU.music('song');
@@ -460,15 +413,6 @@
         const syy = U.lerp(80 + i * 40, sy - 18, U.clamp((el - 14 - i) / 14, 0, 1));
         A.swan(ctx, sx, syy, 0.45, t * (el < 28 + i ? 3 : 0.4) + i, 1, {});
       }
-      // the dark thing, rising into daylight, closing its eye, sinking to sleep
-      const rise = U.clamp((el - 20) / 10, 0, 1);
-      if (rise > 0 && rise < 1) {
-        for (let i = 0; i < 6; i++) {
-          const pts = [];
-          for (let j = 0; j < 12; j++) { pts.push({ x: 1200 + (i - 3) * 30 + Math.sin(t + i + j * 0.4) * j * 3, y: VH + 200 - j * 30 * Math.sin(rise * Math.PI) }); }
-          A.dimmerArm(ctx, pts, 50, 0.7 * Math.sin(rise * Math.PI));
-        }
-      }
       sq.t = t; sq.fin = t * 3; sq.x = 1000 + Math.sin(t * 0.3) * 40; sq.y = U.lerp(760, sy + 70, U.easeOut(U.clamp(el / 30, 0, 1))); sq.angle = -0.4 + Math.sin(t * 0.5) * 0.1;
       sq.hearts = Object.values(SO.story.HEART);
       E.updateArms(sq, 1 / 60); E.updateSquidSkin(sq, 1 / 60);
@@ -484,11 +428,11 @@
     return new Promise((resolve) => {
       E.overlay = (ctx, W, H) => { ctx.fillStyle = '#04080e'; ctx.fillRect(0, 0, W, H); };
       const el = document.getElementById('credits');
-      const names = { return: 'You went home.', lantern: 'You stayed, and became the light.', gift: 'You gave your light away.', song: 'You sang, and the sky came down.' };
+      const names = { return: 'You went home.', lantern: 'You stayed.', gift: 'You swam off with a whale.', song: 'You called the swans, and home came down to you.' };
       const total = (tally.return || 0) + (tally.lantern || 0) + (tally.gift || 0) + (tally.song || 0);
       el.querySelector('[data-ending]').textContent = names[kind] || '';
       el.querySelector('[data-tally]').textContent = total
-        ? `Of every squid who has fallen so far: ${tally.return || 0} went home, ${tally.lantern || 0} stayed below, ${tally.gift || 0} gave their light away, ${tally.song || 0} sang.`
+        ? `Of every squid who has fallen so far: ${tally.return || 0} went home, ${tally.lantern || 0} stayed, ${tally.gift || 0} swam off with a whale, and ${tally.song || 0} called the swans.`
         : '';
       el.querySelector('[data-mcp]').textContent = location.origin + '/mcp/safe';
       el.classList.add('show');

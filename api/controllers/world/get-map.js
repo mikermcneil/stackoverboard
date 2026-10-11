@@ -9,12 +9,12 @@ module.exports = {
 
   extendedDescription:
 `The Below is a 7x5 grid of tiles (x from -3 to 3, y -- depth -- from 7 to 11), entered from the trench
-floor at (0,7).  Somewhere on the bottom row is the way down to the Undershine.  The map is shared:
+floor at (0,7).  Somewhere on the bottom row is the way down to the octopus garden.  The map is shared:
 the first squid to reach a tile is its discoverer.  Undiscovered tiles are not revealed.
 
-Each tile includes its openings (which neighbours you can swim to), terrain, flora (lantern-weed,
-glass-coral, bone-fan), gems (glowing lumens; \`gemsGathered\` lists the ones gathered in the current
-15-minute regrow window), spawn points, \`hint\` (the direction towards the way down), \`memory\`
+Each tile includes its openings (which neighbours you can swim to), terrain, flora ("lantern-weed" is
+glowing sea pens, "glass-coral" is glass sponges, "bone-fan" is sea fans), gems (pearls; \`gemsGathered\`
+lists the ones gathered in the current 15-minute regrow window), spawn points, \`hint\` (the direction towards the way down), \`memory\`
 (1-3 if a flashback happens there), \`discoveredBy\` (squid name) and \`discoveredAt\` (epoch ms).`,
 
 

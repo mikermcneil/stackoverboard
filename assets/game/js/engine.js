@@ -90,7 +90,8 @@
 
   E.resize = function () {
     this.dpr = Math.min(window.devicePixelRatio || 1, 1.75);
-    this.W = window.innerWidth; this.H = window.innerHeight;
+    this.W = window.innerWidth;
+    this.H = window.innerHeight - (document.body.classList.contains('ribbon-fixed') ? (parseFloat(getComputedStyle(document.documentElement).getPropertyValue('--ribbon-h')) || 0) : 0);
     this.canvas.width = Math.round(this.W * this.dpr);
     this.canvas.height = Math.round(this.H * this.dpr);
     this.canvas.style.width = this.W + 'px'; this.canvas.style.height = this.H + 'px';
@@ -125,13 +126,15 @@
     };
     c.addEventListener('pointerdown', (e) => {
       AU.start();
+      // During a scene, a click anywhere moves the conversation along.
+      if (SO.ui.talking && (this.locked || this.mode !== 'play')) { SO.ui.advance(); return; }
       if (this.mode !== 'play') { return; }
       if (this.locked) { return; }
       toWorld(e);
-      // Clicking on the squid itself opens what it remembers.
-      if (this.squidHit(this.pointer.wx, this.pointer.wy)) { SO.journal && SO.journal.show(); return; }
       this.pointer.down = true;
       this.pointer.downAt = U.now();
+      // Pressing on the squid itself might be the start of a long press (to open its memories).
+      if (this.squidHit(this.pointer.wx, this.pointer.wy)) { this.holding = { x: e.clientX, y: e.clientY, t: U.now() }; return; }
       // Clicking something interesting: swim to it.
       const hit = this.pick(this.pointer.wx, this.pointer.wy);
       this.target = hit ? { x: hit.x, y: hit.y, hit } : this.exitAware(this.pointer.wx, this.pointer.wy);
@@ -141,9 +144,10 @@
     window.addEventListener('pointermove', (e) => {
       if (this.mode !== 'play') { return; }
       toWorld(e);
+      if (this.holding && Math.hypot(e.clientX - this.holding.x, e.clientY - this.holding.y) > 24) { this.holding = null; this.holdK = 0; }
       if (this.pointer.down && !this.locked && this.target && !this.target.hit) { this.target.x = this.pointer.wx; this.target.y = this.pointer.wy; }
     });
-    window.addEventListener('pointerup', () => { this.pointer.down = false; });
+    window.addEventListener('pointerup', () => { this.pointer.down = false; this.holding = null; this.holdK = 0; });
     window.addEventListener('keydown', (e) => {
       AU.start();
       if (e.target && (e.target.tagName === 'INPUT' || e.target.tagName === 'TEXTAREA')) { return; }
@@ -585,6 +589,11 @@
     if (this.mode !== 'play' || !this.room) { return; }
     const sq = this.squid, room = this.room;
     sq.t += dt;
+    // Long press on the squid: open what it remembers.
+    if (this.holding) {
+      this.holdK = (U.now() - this.holding.t) / 650;
+      if (this.holdK >= 1) { this.holding = null; this.holdK = 0; this.pointer.down = false; SO.journal && SO.journal.show(); }
+    }
 
     // Desire to move.
     let dx = 0, dy = 0, strength = 0, deliberate = false;
