@@ -85,8 +85,11 @@
       });
     },
 
-    // The squid talking to itself (or to you). Doesn't block.
-    thought(text) { this.say(text, { who: 'squid' }); },
+    // The squid talking to itself (or to you). Doesn't block. (opts.key: a line that matters,
+    // like learning a skin-word or naming someone: it can't be clicked past before it's read.)
+    thought(text, opts) { return this.say(text, Object.assign({ who: 'squid' }, opts || {})); },
+    // Lines that matter: anything a creature says (it's usually teaching), and lines marked key.
+    isKey(item) { return !!(item && ((item.opts && item.opts.key) || !['squid', 'world', 'gold', 'other'].includes(item.who))); },
     // Something important is going on: a scene, or a creature talking (teaching a skin-word, say).
     get important() {
       const E = SO.E;
@@ -186,8 +189,11 @@
         if (now - item.shownAt > 350) { item.fast = true; }
         return false;
       }
-      // (If you hurried it, a moment to actually read it first; if it played out, one click is enough.)
-      if (now - item.revealedAt < (item.fast ? 900 : 150)) { return false; }
+      // (If you hurried it, a moment to actually read it first; if it played out, one click is enough.
+      // Lines that matter stay up long enough to read, however fast you click.)
+      const words = item.text.split(/\s+/).length;
+      const hold = this.isKey(item) ? Math.max(1400, words * 230) - (item.fast ? 0 : (item.revealedAt - item.shownAt) * 0.5) : (item.fast ? 900 : 150);
+      if (now - item.revealedAt < Math.max(item.fast ? 900 : 150, hold)) { return false; }
       this._finish();
       return true;
     },

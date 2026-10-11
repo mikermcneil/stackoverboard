@@ -6,7 +6,15 @@
  * Every event has a unique `key` which doubles as an idempotency key / lock:
  * concurrent attempts to cause "the same" event collide on E_UNIQUE, and the
  * loser simply re-reads the winner's record.  Events are never updated.
+ *
+ * Most events are logged by the action that causes them (start-game, discover-tile, wake-vent...).  Many
+ * more are worked out by save-game from what changed between a squid's previous save and its new one
+ * (levels reached, skin words learned, natives met, quests, records...), so the world keeps a rich history
+ * without the game having to report each thing separately.  No new columns: anything kind-specific lives
+ * in `details`.
  */
+
+const EVENT_KINDS = require('../../config/event-kinds').eventKinds;
 
 module.exports = {
 
@@ -22,9 +30,9 @@ module.exports = {
 
     kind: {
       type: 'string',
-      isIn: ['arrival', 'chapter-reached', 'tile-discovered', 'species-introduced', 'eruption', 'gem-gathered', 'ending'],
+      isIn: Object.keys(EVENT_KINDS.kinds),
       required: true,
-      description: 'What sort of thing happened.'
+      description: 'What sort of thing happened (see config/event-kinds.js for every kind, and what its subject and details hold).'
     },
 
     squidName: {

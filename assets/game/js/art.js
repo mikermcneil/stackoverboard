@@ -1115,6 +1115,8 @@
     } else if (kind === 'glass') {
       A.circle(ctx, -10, -1, 5, 'rgba(255,255,255,0.3)', 'rgba(200,240,255,0.9)', 1.4); A.circle(ctx, -10, -1, 2.6, '#1d2733', null);
       A.ellipse(ctx, 22, 0, 10, 3, 0, 'rgba(255,180,120,0.5)', null);
+      // Bead: its heart shows through, a little red bead, beating.
+      if (opts.heart) { const beat = 1 + 0.3 * Math.max(0, Math.sin(t * 7)); A.circle(ctx, 8, 1, 3.4 * beat, 'rgba(225,70,90,0.95)', 'rgba(120,20,40,0.6)', 0.8); }
     } else if (kind === 'firefly') {
       ctx.save(); ctx.globalCompositeOperation = 'lighter';
       for (let i = 0; i < 5; i++) { A.glow(ctx, -6 + i * 12, (i % 2 ? 4 : -4), 8, '#4cb6ff', 0.9 * (0.5 + 0.5 * Math.sin(t * 4 + i + (opts.seed || 0)))); }

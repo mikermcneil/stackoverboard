@@ -38,6 +38,8 @@
     "sails": true,
     "_": true,
     "Map": true,
+    "Set": true,
+    "Proxy": true,
     "fetch": true,
     "AbortSignal": true,
 

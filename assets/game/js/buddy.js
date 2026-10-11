@@ -67,7 +67,7 @@
       ctx.save();
       ctx.globalAlpha *= al;
       const ang = a.cooking || a.dead ? Math.PI / 2 * Math.min(1, a.white) : (a.dir || 1) > 0 ? Math.atan2(a.vy || 0, Math.abs(a.vx || 1)) * 0.5 : Math.PI - Math.atan2(a.vy || 0, Math.abs(a.vx || 1)) * 0.5;
-      A.smallSquid(ctx, a.x, a.y, 1.15, ang, t, 'glass', { seed: 3 });
+      A.smallSquid(ctx, a.x, a.y, 1.15, ang, t, 'glass', { seed: 3, heart: !a.white || a.white < 0.5 });
       // Going white: the clear flesh turning milky, all the way through.
       if (a.white > 0.02) {
         ctx.save(); ctx.translate(a.x, a.y); ctx.rotate(ang);
@@ -111,16 +111,27 @@
       SO.save.touch();
     },
 
+    // Freeing it, and naming it. These lines matter (they're who Bead is), so they wait to be
+    // read, one after another, around the close-up of it, and it goes in the journal by name.
     free(a) {
+      if (!a.tangled) { return; }
       a.tangled = false;
       const b = st();
       b.met = true;
+      SO.save.touch();
       AU().bubbles && AU().bubbles(8, 0.6);
-      me('Hold still. There. You’re out.');
-      if (SO.fp && SO.fp.SCENES['bead-meet']) { setTimeout(() => SO.fp.play('bead-meet'), 1200); }
-      setTimeout(() => me('A glass squid. I can see right through it. Its heart, its little stomach. I’ll call you Bead.'), 2500);
       this.closer(1.5);
-      a.stay = 90;
+      a.stay = 150;
+      const UI = SO.ui;
+      (async () => {
+        await UI.thought('Hold still. There. You’re out.', { key: true });
+        if (SO.fp && SO.fp.SCENES['bead-meet']) { await SO.fp.play('bead-meet'); }
+        await UI.thought('A glass squid. I can see right through it. Its little stomach. Its heart, beating, like a red bead.', { key: true });
+        await UI.thought('I’ll call you Bead.', { key: true });
+        SO.story.remember('bead');
+        if (UI.notice) { UI.notice('bead', { kicker: 'I named it', name: 'Bead', line: 'A little glass squid' }); }
+        a.flashT = 1; a.flashC = '#ffd36a';
+      })();
     },
 
     // You ate something; if Bead's around, it gets some too.
@@ -177,6 +188,7 @@
       const sq = E.squid, dir = Math.random() < 0.5 ? 1 : -1;
       const f = E.findFree(sq.x + dir * 500, sq.y - 100);
       const a = E.addActor(room, { id: 'buddy', type: 'buddy', x: f[0], y: f[1], dir: -dir, home: {}, doomed: !!opts.doomed });
+      SO.story.remember('bead');// (in the journal by name, even on an old save)
       if (!opts.doomed && Math.random() < 0.2) { setTimeout(() => aside(['Bead! There you are.', 'Hi, Bead.', 'Oh, it’s Bead.'][Math.floor(Math.random() * 3)]), 800); }
       if (opts.doomed) { a.stay = 9999; setTimeout(() => { if (E.actor('buddy') === a && !a.dead) { this.startCooking(a); } }, 22000); }
       return a;
@@ -200,6 +212,8 @@
         if (a.y < floor) { a.y += 55 * dt; a.x += Math.sin(a.ck * 0.7) * 8 * dt; } else if (!a.dead) {
           a.dead = true; a.cooking = false;
           const b = st(); b.dead = true; b.where = room.key; b.restX = a.x; b.restY = a.y;
+          const R = SO.save.data && SO.save.data.carried.remembered;
+          if (R && R.bead) { R.bead.line = 'A little glass squid I pulled out of the kelp, and named for its heart. It followed me up into the warm water. Glass squid can’t take warm water.'; }
           SO.save.touch();
           setTimeout(() => me('Glass squid can’t take warm water. I knew that. Bead knew that.'), 4000);
         }
@@ -214,7 +228,7 @@
   E.castPattern = function (name) { cast(name); SO.buddy.onPattern(name); };
   const describe = SO.story.describe;
   SO.story.describe = function (o) {
-    if (o.type === 'buddy') { return o.tangled ? 'Something tangled' : (o.dead || o.white > 0.5) ? 'Bead' : 'Bead, a glass squid'; }
+    if (o.type === 'buddy') { return o.tangled ? 'Something caught in the kelp' : (o.dead || o.white > 0.5) ? 'Bead' : 'Bead, a glass squid'; }
     return describe.call(this, o);
   };
 
