@@ -151,10 +151,21 @@
       if (this.mode !== 'play') { return; }
       toWorld(e);
       if (this.holding && Math.hypot(e.clientX - this.holding.x, e.clientY - this.holding.y) > 24) { this.holding = null; this.holdK = 0; }
-      if (this.pointer.down && !this.locked && this.target && !this.target.hit) { this.target.x = this.pointer.wx; this.target.y = this.pointer.wy; }
+      if (this.pointer.down && !this.locked && this.target && !this.target.hit) { const t = this.exitAware(this.pointer.wx, this.pointer.wy); this.target.x = t.x; this.target.y = t.y; this.target.exit = t.exit; }
     });
-    window.addEventListener('pointerup', () => { this.pointer.down = false; this.holding = null; this.holdK = 0; });
+    // (iOS cancels a touch when it decides it's a system gesture: treat that like letting go.)
+    const release = () => { this.pointer.down = false; this.holding = null; this.holdK = 0; };
+    window.addEventListener('pointerup', release);
+    window.addEventListener('pointercancel', release);
     window.addEventListener('contextmenu', (e) => { e.preventDefault(); });
+    // iOS: no magnifying loupe or zoom on a long press, no double-tap zoom, no pinch zoom.
+    // (Pointer events still arrive; only the browser's own gestures are cancelled. The journal
+    // and anything else that scrolls is left alone.)
+    const playing = () => document.body.classList.contains('game-mode');// (the intro is a page you scroll)
+    const scrolls = (e) => e.target.closest && e.target.closest('.j-body');
+    document.addEventListener('touchstart', (e) => { if (playing() && !scrolls(e) && (e.touches.length > 1 || e.target === c || (e.target.closest && e.target.closest('#ribbon')))) { e.preventDefault(); } }, { passive: false });
+    document.addEventListener('touchend', (e) => { if (playing() && e.target === c) { e.preventDefault(); } }, { passive: false });
+    ['gesturestart', 'gesturechange', 'gestureend'].forEach((ev) => document.addEventListener(ev, (e) => e.preventDefault()));
     window.addEventListener('keydown', (e) => {
       AU.start();
       if (e.target && (e.target.tagName === 'INPUT' || e.target.tagName === 'TEXTAREA')) { return; }
@@ -162,7 +173,8 @@
       this.keys[k] = true;
       if (this.mode !== 'play') { return; }
       if ((k === ' ' || k === 'enter') && SO.ui.talking) { SO.ui.advance(); e.preventDefault(); return; }
-      const skin = { '1': 'W', '2': 'R', '3': 'B', '4': 'G' }[k];
+      // The four skin colors, in the order of the buttons: A B C D, or 1 2 3 4.
+      const skin = { '1': 'W', '2': 'R', '3': 'B', '4': 'G', a: 'W', b: 'R', c: 'B', d: 'G' }[k];
       if (skin) { this.skinPress(skin); }
       if (k === 'j' || k === 'tab') { e.preventDefault(); SO.journal && SO.journal.toggle(); }
       if (k === 'm') { SO.main && SO.main.toggleMute(); }
@@ -183,6 +195,17 @@
     if (ex.up && y < M && room.surfaceY === null) { return { x: mid(room.ceilGap, x), y: -300, exit: 'up' }; }
     if (ex.down && y > room.h - M) { return { x: mid(room.floorGap, x), y: room.h + 300, exit: 'down' }; }
     return { x, y };
+  };
+
+  // The nearest open water to (x, y) that the squid could actually get to: straight up from
+  // a point inside the floor or a ledge, and never past the edges of the room.
+  E.reachable = function (x, y) {
+    const room = this.room, R = 46 * this.squid.scale;
+    x = U.clamp(x, R, room.w - R); y = U.clamp(y, R, room.h - R);
+    const fits = (px, py) => !room.solidAt(px, py) && !room.solidAt(px, py + R) && !room.solidAt(px - R, py) && !room.solidAt(px + R, py);
+    if (fits(x, y)) { return [x, y]; }
+    for (let d = 20; d < 900; d += 20) { if (y - d > R && fits(x, y - d)) { return [x, y - d]; } }
+    return this.findFreeBody(x, y);
   };
 
   // A crazy spin and a shudder, just because you asked.
@@ -278,12 +301,18 @@
       arm[0].x = ax; arm[0].y = ay;
       const seg = (tent ? 17 : 13) * s;
       // While turning nose-on, the arms bunch together (they're pointing at you).
-      const spread = (tent ? (i === 8 ? -0.6 : 0.6) : (i - 3.5) * 0.55) * (0.35 + 0.65 * Math.abs(o.yaw));
+      const spread = (tent ? (i === 8 ? -0.6 : 0.6) : (i - 3.5) * 0.55) * (0.35 + 0.65 * Math.abs(o.yaw)) * (opts.fan || 1);
+      // Curling: each arm bends a little more along its length, outward from the middle (a flower opening).
+      const curl = (opts.curl || 0) * (tent ? (i === 8 ? -1 : 1) : (i < 4 ? -1 : 1));
+      let cx = ax, cy = ay, dbx = bx, dby = by;
       for (let k = 1; k < arm.length; k++) {
         const p = arm[k], prev = arm[k - 1];
-        const wave = Math.sin(sq.t * (opts.flutter || 2.4) + i * 0.9 - k * 0.5) * k * (opts.wiggle || 1.1) * s;
-        const tx = ax + bx * seg * k + px * (spread * k * 1.7 * s + wave);
-        const ty = ay + by * seg * k + py * (spread * k * 1.7 * s + wave);
+        let wave = Math.sin(sq.t * (opts.flutter || 2.4) + i * 0.9 - k * 0.5) * k * (opts.wiggle || 1.1) * s;
+        if (opts.twist) { wave += Math.cos(sq.t * 9 + i * 0.63 - k * 0.8) * k * opts.twist * s; }// a corkscrew running down the arms
+        if (curl) { const a = curl * 0.16, ca = Math.cos(a), sa = Math.sin(a); const nbx = dbx * ca - dby * sa; dby = dbx * sa + dby * ca; dbx = nbx; }
+        cx += dbx * seg; cy += dby * seg;
+        const tx = cx + px * (spread * k * 1.7 * s + wave);
+        const ty = cy + py * (spread * k * 1.7 * s + wave);
         p.x += (tx - p.x) * pull; p.y += (ty - p.y) * pull;
         const dx = p.x - prev.x, dy = p.y - prev.y, d = Math.hypot(dx, dy) || 1;
         p.x = prev.x + dx / d * seg; p.y = prev.y + dy / d * seg;
@@ -647,16 +676,21 @@
     const K = this.keys;
     this.updateGait(dt);
     if (!this.locked && !sq.auto) {
-      if (K.a || K.arrowleft) { dx -= 1; }
-      if (K.d || K.arrowright) { dx += 1; }
-      if (K.w || K.arrowup) { dy -= 1; }
-      if (K.s || K.arrowdown) { dy += 1; }
+      // (Arrow keys only: A-D play the skin colors.)
+      if (K.arrowleft) { dx -= 1; }
+      if (K.arrowright) { dx += 1; }
+      if (K.arrowup) { dy -= 1; }
+      if (K.arrowdown) { dy += 1; }
       if (dx || dy) { const m = Math.hypot(dx, dy); dx /= m; dy /= m; strength = 1; deliberate = true; this.target = null; }
       else if (this.target) {
         let ty = this.target.y;
         // Right after a leap, aim for just under the surface instead of leaping again.
         if (room.surfaceY !== null && this.t - (this.lastBreachAt || -99) < 3.5) { ty = Math.max(ty, room.surfaceY + 90); }
-        const ox = this.target.x - sq.x, oy = ty - sq.y, d = Math.hypot(ox, oy);
+        let tx = this.target.x;
+        // Pointing into rock (like holding a finger below the sea floor)? Aim for the open
+        // water just above it instead, so the squid glides along the floor, not into it.
+        if (!this.target.hit && !this.target.exit) { [tx, ty] = this.reachable(tx, ty); }
+        const ox = tx - sq.x, oy = ty - sq.y, d = Math.hypot(ox, oy);
         const arrive = this.target.hit ? (this.target.hit.r || 60) + 30 : 60;
         if (d < arrive && !this.pointer.down) { this.target = null; }
         else if (d > 20) { dx = ox / d; dy = oy / d; strength = U.clamp(U.smoothstep(10, 380, d), 0.15, 1); deliberate = Math.abs(ox) > 90; }
@@ -666,6 +700,22 @@
       if (d < (sq.auto.near || 30)) { const done = sq.auto.done; sq.auto = null; if (done) { setTimeout(done, 0); } }
       else { dx = ox / d; dy = oy / d; strength = U.clamp(d / 220, 0.3, 1) * (sq.auto.speed || 1); deliberate = Math.abs(ox) > 90; }
     }
+
+    // Pushing straight into rock (like up into the underside of a ledge)? Slide along it toward
+    // whichever way opens up, instead of pressing there forever.
+    // (Contact counts for a moment after it ends: pushed clear one frame, back against it the next.)
+    if (strength > 0.05 && sq._rockLast && this.t - sq._rockAt < 0.3) {
+      // (The rock we're pushing into most directly, of everything we're touching.)
+      let nx = 0, ny = 0, worst = 1;
+      sq._rockLast.forEach(([ax, ay]) => { const m = Math.hypot(ax, ay) || 1, d = (dx * ax + dy * ay) / m; if (d < worst) { worst = d; nx = ax / m; ny = ay / m; } });
+      if (worst < -0.6) {
+        const open = (sgn) => { let n = 0; for (let k = 60; k <= 300; k += 60) { if (!room.solidAt(sq.x - ny * sgn * k + dx * 80, sq.y + nx * sgn * k + dy * 80)) { n++; } } return n; };
+        const sgn = sq._slideSgn && open(sq._slideSgn) > 0 ? sq._slideSgn : (open(1) >= open(-1) ? 1 : -1);
+        sq._slideSgn = sgn;
+        dx += -ny * sgn * 1.4; dy += nx * sgn * 1.4;
+        const m = Math.hypot(dx, dy) || 1; dx /= m; dy /= m;
+      }
+    } else { sq._slideSgn = 0; }
 
     // Point the tip of the mantle at where you're going before really pushing.
     if (sq.yaw === undefined) { const o = this.orient(sq); sq.yaw = o.yaw; sq.pitch = o.pitch; sq.facing = o.yaw >= 0 ? 1 : -1; }
@@ -807,10 +857,13 @@
     }
     const style = sq.style.name;
     if (style === 'bob' && !sq.turn) { sq.pitch += Math.sin(sq.t * 2.3) * 0.12 * dt * 6; }
+    // Every so often, something you didn't expect: a little flourish, then back to normal.
+    const fl = this.updateFlourish(sq, dt, speedNow, inAir, strength);
     const armOpts = sq.spin ? { flutter: 14, wiggle: 4, pull: 6 }
-      : sq.frenzy ? { flutter: 9 + Math.sin(sq.t * 3) * 3, wiggle: 3.4, pull: 4.5 }
-        : style === 'glide' ? { flutter: 1.6, wiggle: 0.5, pull: 4.5 }
-          : style === 'bob' ? { flutter: 2.8, wiggle: 1.5 } : {};
+      : fl ? fl
+        : sq.frenzy ? { flutter: 9 + Math.sin(sq.t * 3) * 3, wiggle: 3.4, pull: 4.5 }
+          : style === 'glide' ? { flutter: 1.6, wiggle: 0.5, pull: 4.5 }
+            : style === 'bob' ? { flutter: 2.8, wiggle: 1.5 } : {};
     this.updateArms(sq, dt, armOpts);
 
     // Edges and exits.
@@ -836,6 +889,70 @@
       this._ambT = this.t;
       AU.ambience({ depth: room.def.depth || 0.3, air: inAir ? 1 : 0, dread: this.dread, roar: room.def.roar || 0 });
     }
+  };
+
+  // ── Flourishes: short, surprising bits of squid business, all eased in and out ──
+  //   dart:      a sudden jet forward, arms clamped into a spear, then a long glide
+  //   flower:    stopped, the arms curl open like a flower, hold, and close again
+  //   corkscrew: swimming, a spiral ripples down all the arms
+  //   peek:      stopped, it tips its nose down to look below, then up, then settles
+  //   shiver:    the fins flutter fast and the mantle ripples, like a shake-off
+  //   sink:      stopped, it goes limp and drifts down a little, arms floating up, then catches itself
+  const FLOURISHES = {
+    dart: { when: (sp) => sp > 140, dur: 1.6 },
+    flower: { when: (sp) => sp < 70, dur: 2.6 },
+    corkscrew: { when: (sp) => sp > 90, dur: 1.8 },
+    peek: { when: (sp) => sp < 60, dur: 2.4 },
+    shiver: { when: () => true, dur: 1.1 },
+    sink: { when: (sp) => sp < 50, dur: 2.8 },
+  };
+  E.updateFlourish = function (sq, dt, sp, inAir, strength) {
+    if (inAir || sq.turn || sq.spin || sq.talking || this.locked) { sq.flourish = null; return null; }
+    if (!sq.flourish) {
+      sq.nextFlourishAt = sq.nextFlourishAt || this.t + 6 + Math.random() * 8;
+      if (this.t < sq.nextFlourishAt) { return null; }
+      const kinds = Object.keys(FLOURISHES).filter((k) => FLOURISHES[k].when(sp, strength) && k !== sq.lastFlourish);
+      sq.nextFlourishAt = this.t + 7 + Math.random() * 12;
+      if (!kinds.length) { return null; }
+      const kind = kinds[Math.floor(Math.random() * kinds.length)];
+      sq.flourish = { kind, t: 0, dur: FLOURISHES[kind].dur };
+      sq.lastFlourish = kind;
+    }
+    const f = sq.flourish;
+    f.t += dt;
+    const k = Math.min(1, f.t / f.dur);
+    const env = U.smoothstep(0, 0.18, k) * (1 - U.smoothstep(0.7, 1, k));// ease in, hold, ease out
+    let opts = null;
+    if (f.kind === 'dart') {
+      if (!f.kicked) {
+        f.kicked = true; sq.jetKick = 1; AU.jet(0.7);
+        const fx = sq.facing * Math.cos(sq.pitch), fy = Math.sin(sq.pitch);
+        sq.vx += fx * 260; sq.vy += fy * 260; sq.dvx = sq.vx; sq.dvy = sq.vy;
+        const [hx, hy] = this.toWorld(sq, -10, 18);
+        for (let i = 0; i < 6; i++) { this.particles.push({ kind: 'bubble', x: hx, y: hy, vx: -fx * 80 + (Math.random() - 0.5) * 50, vy: -fy * 80 - 20, life: 1.5 + Math.random(), t: 0, r: 1.5 + Math.random() * 3 }); }
+      }
+      opts = { fan: U.lerp(1, 0.15, env), flutter: 1.2, wiggle: 0.3, pull: 7 };
+    } else if (f.kind === 'flower') {
+      opts = { fan: 1 + env * 1.6, curl: env * 1.7, flutter: 1.4, wiggle: 0.6, pull: 2.4 };
+      sq.jet = Math.max(sq.jet, env * 0.4);
+    } else if (f.kind === 'corkscrew') {
+      opts = { twist: env * 5.5, flutter: 3, wiggle: 0.6, pull: 4 };
+    } else if (f.kind === 'peek') {
+      sq.pitch += (Math.sin(k * Math.PI * 2) * 0.55 * env - sq.pitch * 0.02) * dt * 3;
+      opts = { fan: 1 + env * 0.3, wiggle: 0.8 };
+    } else if (f.kind === 'shiver') {
+      sq.fin += dt * 18 * env;
+      sq.jet = Math.max(sq.jet, (0.5 + 0.5 * Math.sin(f.t * 40)) * 0.35 * env);
+      opts = { flutter: 12, wiggle: 1.8 * env + 0.6, pull: 4.5 };
+    } else if (f.kind === 'sink') {
+      if (k < 0.75) { sq.vy += 40 * env * dt; }
+      opts = { trail: [-(sq.facing || 1) * 0.3, -0.95], fan: 1 + env * 0.9, flutter: 0.8, wiggle: 1.4, pull: 1.4 };
+      if (env < 0.3) { opts = null; }
+    }
+    // Any real swimming request cuts a resting flourish short.
+    if ((f.kind === 'flower' || f.kind === 'peek' || f.kind === 'sink') && strength > 0.3 && sp > 90 && k < 0.7) { f.t = Math.max(f.t, f.dur * 0.7); }
+    if (k >= 1) { sq.flourish = null; }
+    return opts;
   };
 
   // ── Gait: each click is a spur. Click again quickly to go faster, like a
@@ -886,6 +1003,7 @@
   E.moveSquid = function (sq, mx, my) {
     const room = this.room;
     sq._touchingRock = false;
+    sq._rockNs = [];
     const steps = Math.max(1, Math.ceil(Math.hypot(mx, my) / 10));
     const o = this.orient(sq);
     for (let st = 0; st < steps; st++) {
@@ -902,6 +1020,7 @@
           const inside = room.solidAt(cx, cy);
           if (!hits && !inside) { continue; }
           sq._touchingRock = true;
+          if (sq._rockNs.length < 12) { sq._rockNs.push([nx, ny]); sq._rockAt = this.t; sq._rockLast = sq._rockNs; }
           let m = Math.hypot(nx, ny);
           if (m < 0.01) {// surrounded or symmetric: head for the nearest open water
             const f = this.findFree(cx, cy);

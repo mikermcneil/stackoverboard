@@ -17,6 +17,8 @@
 
 * { box-sizing: border-box; }
 html, body { -webkit-user-select: none; user-select: none; -webkit-touch-callout: none; -webkit-tap-highlight-color: transparent; }
+#stage, #ribbon, #ribbon canvas, #skin button { touch-action: none; -webkit-touch-callout: none; -webkit-user-select: none; user-select: none; }
+img, canvas { -webkit-user-drag: none; }
 html, body { margin: 0; padding: 0; background: var(--pale); color: var(--ink); font-family: var(--sans); -webkit-font-smoothing: antialiased; }
 body { overflow-x: hidden; }
 body.game-mode { overflow: hidden; background: #02060b; touch-action: none; overscroll-behavior: none; }

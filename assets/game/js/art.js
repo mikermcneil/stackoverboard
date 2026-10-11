@@ -141,8 +141,9 @@
     }
     return 2;
   };
-  function squid3D(ctx, sq, col, c, squeeze, tt) {
+  function squid3D(ctx, sq, col, c, squeeze, tt, side = 1) {
     const sn = Math.sqrt(Math.max(0, 1 - c * c));
+    const ss = sn * side;// sideways offsets: which way the near side has swung, so nothing jumps mid-turn
     const L = 182;
     // Fins at the far end of the mantle (furthest from you, so drawn first).
     const flap = 0.72 + 0.28 * Math.sin(sq.fin || 0);
@@ -173,7 +174,7 @@
     for (const [px, py, sz, ph] of CHROMA) {
       const open = 0.5 + 0.5 * Math.sin(tt * 1.7 + ph);
       ctx.fillStyle = hslStr([col[0] - 4, Math.min(90, col[1] + 18), col[2]], -34, 0.2 + 0.25 * open);
-      ctx.beginPath(); ctx.ellipse(px * c + (py / 24) * 18 * sn, py * squeeze, sz * (0.6 + open), sz * (0.6 + open), 0, 0, U.TAU); ctx.fill();
+      ctx.beginPath(); ctx.ellipse(px * c + (py / 24) * 18 * ss, py * squeeze, sz * (0.6 + open), sz * (0.6 + open), 0, 0, U.TAU); ctx.fill();
     }
     ctx.save(); ctx.globalCompositeOperation = 'lighter';// iridescent sheen along the back
     const shk = (tt * 0.15) % 1;
@@ -187,7 +188,7 @@
         ctx.fillStyle = `rgba(15,22,32,${0.45 * sq.hidden})`; ctx.fillRect(bx - 8, -40, 16, 80);
       }
     }
-    const hl = ctx.createRadialGradient(L * 0.4 * c - 6 * sn, -10, 2, L * 0.4 * c, -8, 90);
+    const hl = ctx.createRadialGradient(L * 0.4 * c - 6 * ss, -10, 2, L * 0.4 * c, -8, 90);
     hl.addColorStop(0, 'rgba(255,240,235,0.2)'); hl.addColorStop(1, 'rgba(255,240,235,0)');
     ctx.fillStyle = hl; ctx.fillRect(-60, -40, L + 60, 80);
     ctx.restore();
@@ -200,10 +201,10 @@
     const hrx = Math.sqrt((30 * c) * (30 * c) + (25 * sn) * (25 * sn));
     const hg = ctx.createLinearGradient(0, -25, 0, 25);
     hg.addColorStop(0, hslStr(col, -18)); hg.addColorStop(0.6, hslStr(col, 0)); hg.addColorStop(1, hslStr(col, 12, 0.9));
-    A.ellipse(ctx, -2 * sn, 0, hrx, 24, 0, hg, SKIN_LINE, 1.3);
+    A.ellipse(ctx, -2 * ss, 0, hrx, 24, 0, hg, SKIN_LINE, 1.3);
     // One eye. It slides around the head and narrows a little as the squid turns.
     const look = sq.look || 0;
-    const ex = -3 * c + 14 * sn, ey = -4;
+    const ex = -3 * c + 14 * ss, ey = -4;
     const face = 0.55 + 0.45 * c;
     ctx.save();
     ctx.translate(ex, ey);
@@ -248,9 +249,14 @@
     ctx.translate(sq.x, sq.y);
     // One continuous 3D body for every angle: side-on, nose-on, and everything between.
     ctx.translate(sq.shakeX || 0, sq.shakeY || 0);
-    ctx.scale(s * (o.yaw >= 0 ? 1 : -1), s);
-    ctx.rotate(o.pitch + (sq.spinRot || 0));
-    squid3D(ctx, sq, col, ay, squeeze, tt);
+    const sgn = o.yaw >= 0 ? 1 : -1;
+    // Turning toward you, the side that was facing you swings around one way and stays that way
+    // until the turn is done, so the eye glides across the head instead of hopping sides.
+    if (ay > 0.9 || !sq.eyeSide) { sq.eyeSide = sgn; }
+    ctx.scale(s * sgn, s);
+    // Nose up/down eases out as the squid comes nose-on (where its mirror image takes over).
+    ctx.rotate(o.pitch * U.smoothstep(0, 0.32, ay) + (sq.spinRot || 0));
+    squid3D(ctx, sq, col, ay, squeeze, tt, sq.eyeSide * sgn);
     ctx.restore();
   };
 

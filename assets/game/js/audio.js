@@ -147,10 +147,11 @@
       const n = SKIN_NOTES[color];
       if (n) { this.bell(NOTE(n), Object.assign({ gain: 0.07, dur: 1.8 }, opts)); }
     },
-    // Someone else's skin-speech: a little lower, a little further away.
+    // Someone else's skin-speech: exactly the same notes as yours (so you can play it back and
+    // hear that it matches), just a little further away. Each voice only changes how far off it sounds.
     skinOther(color, voice = 0) {
       const n = SKIN_NOTES[color];
-      if (n) { this.bell(NOTE(n - 12 + voice), { gain: 0.06, dur: 2.2, verb: 1, dry: 0.5 }); }
+      if (n) { this.bell(NOTE(n), { gain: 0.06 - Math.min(0.02, Math.abs(voice) / 600), dur: 2.2, verb: 1, dry: 0.5 }); }
     },
     learned() {
       [69, 74, 78, 81, 86].forEach((n, i) => this.bell(NOTE(n), { when: i * 0.12, gain: 0.05, dur: 3 }));
