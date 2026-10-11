@@ -850,7 +850,7 @@
 
   // ── 3: the glass buoy. Rings with the waves, and with your colors. ──
   KINDS.buoy = {
-    desc: 'A piece of sky dome, ringing', r: 170, hear: 900,
+    desc: 'A piece of sky dome, floating', r: 170, hear: 900,
     update(a, dt, room) {
       a.y = top(room) + 40 + Math.sin(a.t * 0.9) * 10;
       a.ringT = Math.min(1, (a.ringT === undefined ? 1 : a.ringT) + dt * 0.5);
@@ -959,10 +959,12 @@
     // The highest step is the second plateau, by convention: put the cocoon on top of whichever is tallest.
     const plats = d.solids.filter((s) => s.type === 'rect');
     const hi = plats.reduce((m, s) => (!m || s.y < m.y ? s : m), null);
-    const x = hi ? hi.x + hi.w / 2 : 1300, y = hi ? hi.y : 140;
+    const x = hi ? hi.x + hi.w / 2 : 1300, y = hi ? hi.y : 140, W = d.w * RW;
+    // The burrow opens in the water beside the step (never inside the rock).
+    const right = hi ? hi.x + hi.w + 80 : x + 300, doorX = right < W - 150 ? right : (hi ? hi.x - 80 : x - 300), doorY = y + 230;
     const awake = SO.save.data && SO.save.data.flags['woke:' + n];
-    d.actors.push(lmThing('cocoon', x, y, { awake, wokeAt: -99 }));
-    if (awake) { d.hotspots = (d.hotspots || []).concat(door(n, 1, x + 40, y + 160, 'A burrow in the mud', 110)); d.entries.fromIn = [x + 260, y + 220]; }
+    d.actors.push(lmThing('cocoon', x, y, { awake, wokeAt: -99, doorX, doorY }));
+    if (awake) { d.hotspots = (d.hotspots || []).concat(door(n, 1, doorX, doorY, 'A burrow in the mud', 110)); d.entries.fromIn = [doorX + (doorX > W / 2 ? -160 : 160), doorY]; }
   };
 
   // ── 19: the sand cuts. Someone took the sand. Glass is made from sand. ──
@@ -1146,7 +1148,7 @@
         a.show.t -= dt;
         if (a.show.t < 0) {
           const c = a.show.seq[a.show.i++];
-          if (!c) { a.show = null; a.listening = 12; if (!a._said) { a._said = true; say('It played the swans’ song, and took it back. Then it played wake. And it stopped. It’s waiting.'); } return; }
+          if (!c) { a.show = null; a.listening = 12; SO.save.flag('q:sphinx'); if (!a._said) { a._said = true; say('It played the swans’ song, and took it back. Then it played wake. And it stopped. It’s waiting.'); } return; }
           a.color = c; a.show.t = a.show.i % 4 === 0 ? 1.3 : 0.65;
           if (AU().skinOther) { AU().skinOther(c, -14); }
           E.effects.push({ kind: 'dot', x: a.x + ((a.show.i - 1) % 4 - 1.5) * 50, y: a.y - 420, color: NOTE_HEX[c], t: 0, life: 2.4 });
@@ -1207,7 +1209,7 @@
       a.sing = 1;
       if (AU().bell) { AU().bell(AU().NOTE({ W: 74, R: 69, B: 78, G: 81 }[c] - 24), { gain: 0.06, dur: 5 }); }
     },
-    lines: ['Pipes of glass, rows of them, each a different length. Like the reeds. Like the bells in the tower.', 'When I flash at them, the sand inside them lifts. All of it. Up toward the islands. Then it falls back.', 'Someone built this to lift something. It isn’t lifting anything now.'],
+    lines: ['Pipes of glass, rows of them, each a different length. Like the reeds, but made.', 'When I flash at them, the sand inside them lifts. All of it. Up toward the islands. Then it falls back.', 'Someone built this to lift something. It isn’t lifting anything now.'],
   };
   B['sand-engine'] = (d, n) => {
     const x = 1280;

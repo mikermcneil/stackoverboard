@@ -561,7 +561,7 @@
     'brine-lake': [{ kind: 'pickled', x: 1400, y: 786 }],
     'cold-seep': [{ kind: 'bubble-rings', x: 2380 }],
     'mud-volcanoes': [{ kind: 'bubble-rings', x: 640 }, { kind: 'bubble-rings', x: 1480 }],
-    'fallen-spire': [{ kind: 'glass-bell', x: 1240, y: 420 }, { kind: 'hermit', x: 560 }],
+    'fallen-spire': [{ kind: 'hermit', x: 560 }],
     'lantern-ledges': [{ kind: 'ledge-eyes', x: 2030, y: 520 }],
     'tether-twilight': [{ kind: 'chain-link', x: 960, y: 720 }],
     'tether-curtain': [{ kind: 'far-lights', x: 1560, y: 320 }],

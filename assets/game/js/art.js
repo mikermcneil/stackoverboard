@@ -739,11 +739,14 @@
   // Glowing sea pen: a feathery quill on a stalk, lit by its polyps. (Called lantern-weed in the data.)
   A.lanternWeed = function (ctx, x, y, s, t, seed = 0, lit = 1) {
     ctx.save(); ctx.translate(x, y); ctx.scale(s, s);
-    ctx.rotate(Math.sin(t * 0.7 + seed) * 0.08);
-    ctx.strokeStyle = '#6a3f4a'; ctx.lineWidth = 4; ctx.lineCap = 'round';
-    ctx.beginPath(); ctx.moveTo(0, 0); ctx.lineTo(0, -95); ctx.stroke();
+    ctx.rotate(Math.sin(t * 0.7 + seed) * 0.08 + ((seed % 7) - 3) * 0.05);
+    // a short fleshy stem, curving, buried at the base: a sea pen, not a pole
+    ctx.strokeStyle = '#7a4652'; ctx.lineWidth = 6; ctx.lineCap = 'round';
+    ctx.beginPath(); ctx.moveTo(0, 4); ctx.quadraticCurveTo(4, -14, 0, -26); ctx.stroke();
+    ctx.strokeStyle = '#9a5866'; ctx.lineWidth = 3.4;
+    ctx.beginPath(); ctx.moveTo(0, -26); ctx.quadraticCurveTo(-4, -60, 2, -96); ctx.stroke();
     for (let i = 0; i < 12; i++) {
-      const yy = -30 - i * 6, len = 22 - Math.abs(i - 5) * 2.2;
+      const yy = -30 - i * 5.6, len = 22 - Math.abs(i - 5) * 2.2;
       [-1, 1].forEach((side) => {
         const tip = { x: side * len, y: yy - 8 };
         ctx.strokeStyle = '#b8707e'; ctx.lineWidth = 2.6;

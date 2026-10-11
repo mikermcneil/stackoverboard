@@ -951,7 +951,7 @@
   });
 
   def('lantern-ledges', {
-    name: 'The lantern ledges', region: 'cliff', map: [2, 2], w: 1.4, depth: 0.58, dark: 0.62,
+    name: 'The glowing ledges', region: 'cliff', map: [2, 2], w: 1.4, depth: 0.58, dark: 0.62,
     exits: { left: 'cliff-foot' },
     terrain: { floor: [0.14, 0.12, 0.14, 0.15, 0.16, 0.18], walls: { right: true } },
     solids: [
@@ -1242,16 +1242,16 @@
   defs['fallen-spire'].hotspots = (defs['fallen-spire'].hotspots || []).concat({ id: 'spire-door', x: 980, y: 660, r: 120, door: 'spire-inside', at: 'fromOut', label: 'The snapped end of the tower' });
   defs['fallen-spire'].entries = Object.assign({}, defs['fallen-spire'].entries, { fromSpire: [1250, 600] });
 
-  // Behind the lamps: a cave at the back of the lantern ledges. It opens when all the ledge
-  // lamps are lit at once.
-  def('lamp-cave', {
-    name: 'Behind the lamps', region: 'cliff', map: [3, 2], w: 1.3, depth: 0.6, dark: 0.9,
+  // Behind the ledges: a cave at the back of the glowing ledges. It opens when all the sea pens
+  // on the ledges are lit at once.
+  def('ledge-cave', {
+    name: 'Behind the ledges', region: 'cliff', map: [3, 2], w: 1.3, depth: 0.6, dark: 0.9,
     exits: { left: 'lantern-ledges' },
     terrain: { floor: [0.16, 0.14, 0.18, 0.2, 0.16], ceiling: [0.2, 0.14, 0.16, 0.12, 0.18], walls: { left: false, right: true } },
     props: [{ type: 'lantern-weed', x: 300, s: 0.6, lit: 0.5 }, { type: 'bone-fan', x: 1600, s: 0.8 }],
     snow: 0.2,
   });
-  link('lantern-ledges', 'right', 'lamp-cave');
+  link('lantern-ledges', 'right', 'ledge-cave');
 
   // The warm room: under the holdfasts, a hollow of warm gold water, and something huge and
   // kind that wants you to stay. You could. Forever.
@@ -1261,6 +1261,12 @@
     terrain: { floor: [0.16, 0.12, 0.1, 0.1, 0.1, 0.12, 0.16], ceiling: [0.14, 0.1, 0.06, 0.04, 0.06, 0.1, 0.14], ceilGap: [0.37, 0.53], walls: { left: true, right: true } },
     rock: '#5a4030', rockHi: '#8a6a4a', floorTop: '#c8a070',
     whale: false,
+    bg(ctx, t, room) {
+      // Gold water, warm from a spring somewhere under the floor. It feels like being held.
+      const g = ctx.createRadialGradient(room.w * 0.66, room.h * 0.7, 50, room.w * 0.66, room.h * 0.7, room.w * 0.8);
+      g.addColorStop(0, 'rgba(255,200,120,0.55)'); g.addColorStop(0.5, 'rgba(230,150,80,0.3)'); g.addColorStop(1, 'rgba(120,60,20,0.15)');
+      ctx.fillStyle = g; ctx.fillRect(-200, -200, room.w + 400, room.h + 400);
+    },
     lights: [{ x: 1700, y: 700, r: 1400, color: '#ffd8a0', level: 0.8 }],
     ambient: { fish: 10 },
     snow: 0.15,

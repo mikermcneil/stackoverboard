@@ -99,6 +99,22 @@ body.game-mode #sound-hint { display: none; }
 }
 #ribbon-line.in { opacity: 1; }
 #ribbon-line .unsaid { opacity: 0; }
+/* In scenes: a bigger close-up of whoever is talking, above the ribbon on the left. */
+#portrait-big {
+  --speaker: #fff; --pb: clamp(200px, 24vw, 340px);
+  position: fixed; left: 24px; bottom: calc(var(--ribbon-h) + 20px); z-index: 6;
+  width: min(var(--pb), calc((100vh - var(--ribbon-h)) * 0.6)); aspect-ratio: 1 / 1;
+  border-radius: 18px; overflow: hidden; background: #02060b;
+  border: 1.5px solid color-mix(in srgb, var(--speaker) 55%, transparent);
+  box-shadow: 0 14px 50px rgba(0, 0, 0, 0.6), 0 0 0 1px rgba(0, 0, 0, 0.5), 0 0 34px color-mix(in srgb, var(--speaker) 16%, transparent);
+  opacity: 0; transform: translateY(14px) scale(0.96); transition: opacity 0.45s ease, transform 0.5s cubic-bezier(.2, .7, .2, 1), border-color 0.4s;
+  pointer-events: none;
+}
+#portrait-big.show { opacity: 1; transform: none; pointer-events: auto; cursor: pointer; }
+#portrait-big canvas { width: 100%; height: 100%; display: block; }
+@media (max-width: 900px) {
+  #portrait-big { --pb: clamp(140px, 40vw, 220px); left: 12px; bottom: calc(var(--ribbon-h) + 12px); border-radius: 14px; }
+}
 #inspect { position: absolute; left: 24px; top: 50%; transform: translateY(-50%); width: 200px; display: flex; flex-direction: column; align-items: flex-start; gap: 8px; opacity: 0; pointer-events: none; transition: opacity 0.4s; }
 #inspect.show { opacity: 1; pointer-events: auto; }
 #inspect-canvas { width: 104px; height: 104px; border-radius: 12px; border: 1px solid rgba(255, 255, 255, 0.22); background: #050b12; cursor: pointer; transition: border-color 0.2s; }

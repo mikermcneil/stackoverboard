@@ -58,7 +58,7 @@
     'yeti-crab': { kind: 'creature', name: 'Yeti crab', line: 'A blind white crab with hairy arms. It grows food in the hair, and waves it around.' },
     'stone-hummer': { kind: 'creature', name: 'Stone hummer', line: 'Hums one low chord all day, and the stones over it float. When it stops, they fall.' },
     'hushmouth': { kind: 'creature', name: 'Hushmouth', line: 'It eats sound. Near it, the water is so quiet I can hear all three of my hearts.' },
-    'bell-whelk': { kind: 'creature', name: 'Bell whelk', line: 'A snail with a shell like a bell. It rings my notes back, hard enough to push me.' },
+    'bell-whelk': { kind: 'creature', name: 'Humming whelk', line: 'A sea snail with a wide, flared shell. Flash a note at it and it hums the note back, hard enough to push me.' },
     'sargassum': { kind: 'plant', name: 'Sargassum', line: 'Gold weed that floats in mats, held up by little berries full of air. Things hide under it.' },
     'seagrass': { kind: 'plant', name: 'Seagrass', line: 'Real grass, under the sea. It even flowers. Turtles graze it.' },
     'bacterial-mat': { kind: 'plant', name: 'Bacterial mats', line: 'White fuzz on the rock. It eats what leaks out of the ground, not light.' },
@@ -73,7 +73,7 @@
     'cormorant': { kind: 'creature', name: 'The strangers', line: 'Big dark diving birds. They moved into our pool while I was gone and ate everything in it.' },
     'holder': { kind: 'creature', name: 'The Holder', line: 'Huge, soft, warm, kind. It lives in the warm room and wants nothing except for me to stay. Forever.' },
     'waiting-swan': { kind: 'creature', name: 'The swan who waited', line: 'She wove all day and pulled it out again at night, and sang the old song backwards, and waited.' },
-    'spire-bell': { kind: 'item', name: 'The spire’s bells', line: 'Four glass bells from the tower at home, one for each of my colors. Rung together, going up, they lift.' },
+    'singing-shard': { kind: 'item', name: 'Singing shards', line: 'Four tuned slivers of dome glass from the fallen spire, each humming one of my colors. Hummed together, going up, they lift.' },
     'reed-stalk': { kind: 'item', name: 'A pale reed stalk', line: 'A node reed tuned to pale. It broke off and drifted. Planted back, it hums.' },
     'egg-case': { kind: 'item', name: 'An egg case', line: 'A leathery bag with a little shark inside, wriggling. Mermaid’s purse, some call it.' },
     'rain-float': { kind: 'item', name: 'A float full of rain', line: 'A ball of glass from the islands, full of fresh rain. It woke a lungfish that had slept for years.' },
@@ -109,7 +109,7 @@
     wake: { name: 'Wake', colors: 'G R G R', line: 'Gold, red, gold, red. Wakes up the volcano. It doesn’t like it.', learn: 'Gold, red, gold, red. Got it.' },
     call: { name: 'Call', colors: 'B G B W', line: 'Blue, gold, blue, pale. The swans’ song from home.', learn: 'Blue, gold, blue, pale. That’s the swans’ song.' },
     // Optional ones, from side places (quests.js).
-    lift: { name: 'Lift', colors: 'B B G', line: 'Blue, blue, gold. The water under me pushes up. Backwards, it pushes down.', learn: 'Blue, blue, gold. That’s what the bells sounded like, going up.' },
+    lift: { name: 'Lift', colors: 'B B G', line: 'Blue, blue, gold. The water under me pushes up. Backwards, it pushes down.', learn: 'Blue, blue, gold. That’s what the shards sounded like, going up.' },
     still: { name: 'Still', colors: 'W G W', line: 'Pale, gold, pale. The water stops moving for a while. Currents too. It can’t be taken back.', learn: 'Pale, gold, pale. That’s the sound the stillness made.' },
   };
   const MEMORIES = {
@@ -130,7 +130,7 @@
     'yeti-crab': { label: 'A yeti crab', first: 'A crab with fur. Is it dancing? No. It’s waving its arms at the water.', wake: 'Faster, faster. They like that one.' },
     'stone-hummer': { label: 'A stone hummer', first: 'It’s humming. And the rocks over it are floating.', calm: 'It stopped humming. And down came the rocks.', wake: 'Louder! The rocks went right up. So did I, a bit.' },
     'hushmouth': { label: 'A hushmouth', first: 'Everything went quiet. Even my hearts sound far away.', ate: 'It ate my colors. Right out of the water. Now it’s coming closer.' },
-    'bell-whelk': { label: 'A bell whelk', first: 'A shell, shaped like a bell. I wonder if it rings.', ring: 'It rang my note back! Hard enough to push me.' },
+    'bell-whelk': { label: 'A humming whelk', first: 'A big flared shell. Something lives in it.', ring: 'It hummed my note back! Hard enough to push me.' },
     'sargassum': { label: 'Sargassum', first: 'Gold weed, floating. Little air berries hold it up.' },
     'seagrass': { label: 'Seagrass', first: 'Grass! Under the sea!' },
     'bacterial-mat': { label: 'A bacterial mat', first: 'White fuzz on the rocks. It smells like rotten eggs.' },
@@ -151,7 +151,7 @@
     'brine-lake': 'A lake. At the bottom of the sea. It has a shore, and little waves.',
     'cold-seep': 'The ground is breathing out bubbles. Everything here lives on that.',
     'mud-volcanoes': 'The mounds burp, all together, like a slow heart.',
-    'fallen-spire': 'A tower from home, snapped off at the top. The bell’s still in it.',
+    'fallen-spire': 'A tower from home, snapped off at the top. Something inside it is humming.',
     'lantern-ledges': 'Ledges, all lit up. Like shelves of little lamps.',
     'tether-twilight': 'The chain goes down and down. I’m going to follow it.',
     'tether-breathless': 'The water’s thin here. It’s hard to breathe. Everything’s hanging so still.',
@@ -858,7 +858,7 @@
       async touch(o) { if (o.id === 'nautilus') { await nautilusTalk.call(this); } },
       pattern(name) {
         const moray = E.actor('tongue');
-        if (name === 'calm' && moray && !moray.calmed && U.dist(E.squid.x, E.squid.y, moray.x, moray.y) < 700) {
+        if (name === 'calm' && moray && !moray.calmed && E.reaches(moray, 700)) {
           moray.calmed = true;
           this.flag('morayCalmed');
           this.remember('moray');
@@ -1005,7 +1005,7 @@
       pattern(name, room) {
         if (name !== 'wake') { return false; }
         const vent = E.actor('vent');
-        if (!vent || U.dist(E.squid.x, E.squid.y, vent.x, vent.y) > 900) { return false; }
+        if (!vent || !E.reaches(vent, 900)) { return false; }
         if (!save.knows('wake')) { this.learnSkin('wake', true); }
         SO.api.post('/api/v1/game/wake-vent', {}).then((r) => {
           if (!r.ok || !r.body) { return; }
@@ -1079,7 +1079,7 @@
       },
       pattern(name) {
         const hum = E.actor('humboldts');
-        if (name === 'calm' && hum && !hum.leaving && U.dist(E.squid.x, E.squid.y, hum.x, hum.y) < 800) {
+        if (name === 'calm' && hum && !hum.leaving && E.reaches(hum, 800)) {
           hum.leaving = true; hum.dir = hum.x > E.squid.x ? 1 : -1;
           this.flag('humboldtsGone');
           UI.say('Fine. FINE.', { who: 'devils' });

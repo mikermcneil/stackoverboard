@@ -668,11 +668,20 @@
     let handled = false;
     if (this.room && this.room.def.onPattern) { handled = this.room.def.onPattern(this.room, name) || false; }
     if (!handled) { handled = SO.story.onPattern(name, this.room) || false; }
+    // The thing you have selected (in the corner) hears it from much farther away, and the notes go to it.
+    const target = this.inspected && !this.inspected.hidden ? this.inspected : null;
+    if (target && U.dist(target.x, target.y, sq.x, sq.y) < 1500) {
+      for (let i = 0; i < 6; i++) { this.effects.push({ kind: 'dot', x: U.lerp(sq.x, target.x, i / 6), y: U.lerp(sq.y, target.y, i / 6) - 20, color: hex || '#ffffff', t: -i * 0.06, life: 1.1 }); }
+      this.ring(target.x, target.y, hex || '#ffffff', 160, 1);
+    }
     this.room && this.room.actors.forEach((a) => {
       const T = SO.actorTypes[a.type];
-      if (T && T.onPattern && U.dist(a.x, a.y, sq.x, sq.y) < (a.hearRange || 650)) { T.onPattern(a, name, this.room); }
+      const range = a === target ? 1500 : (a.hearRange || 650);
+      if (T && T.onPattern && U.dist(a.x, a.y, sq.x, sq.y) < range) { T.onPattern(a, name, this.room); }
     });
   };
+  // How far a skin-word reaches something: much farther if it's the thing you have selected.
+  E.reaches = function (o, base) { return !!o && U.dist(o.x, o.y, this.squid.x, this.squid.y) < (o === this.inspected ? 1500 : base); };
 
   // An NPC (or an object) says a pattern: you see and hear it.
   E.showPattern = async function (x, y, pattern, opts = {}) {
@@ -954,8 +963,12 @@
     if (!sq.flourish) {
       sq.nextFlourishAt = sq.nextFlourishAt || this.t + 6 + Math.random() * 8;
       if (this.t < sq.nextFlourishAt) { return null; }
-      const kinds = Object.keys(FLOURISHES).filter((k) => FLOURISHES[k].when(sp, strength) && k !== sq.lastFlourish);
-      sq.nextFlourishAt = this.t + 7 + Math.random() * 12;
+      let kinds = Object.keys(FLOURISHES).filter((k) => FLOURISHES[k].when(sp, strength) && k !== sq.lastFlourish);
+      // Personality: playful squids show off more often; each leans to its own kinds of flourish.
+      const P = (SO.self && SO.self.traits) || {};
+      sq.nextFlourishAt = this.t + (7 + Math.random() * 12) * (1.2 - 0.6 * (P.playful || 0));
+      const likes = { dart: P.brave, flower: P.gentle, corkscrew: P.playful, peek: P.curious, shiver: P.playful, sink: P.wistful };
+      kinds = kinds.concat(kinds.filter((k) => Math.random() < (likes[k] || 0)));
       if (!kinds.length) { return null; }
       const kind = kinds[Math.floor(Math.random() * kinds.length)];
       sq.flourish = { kind, t: 0, dur: FLOURISHES[kind].dur };
@@ -1014,7 +1027,11 @@
     if (this.gait > 0) {
       AU.jet(0.5 + this.gait * 0.15);
       const [hx, hy] = this.toWorld(sq, -10, 18);
-      for (let i = 0; i < 2 + this.gait; i++) { this.particles.push({ kind: 'bubble', x: hx, y: hy, vx: -sq.vx * 0.3 + (Math.random() - 0.5) * 40, vy: -30, life: 2 + Math.random(), t: 0, r: 1.5 + Math.random() * 3 }); }
+      // Bubbles to match the squid: playful ones fizz in lots of small bubbles, bold ones blast big ones,
+      // gentle ones barely leave a trace.
+      const P = (SO.self && SO.self.traits) || {};
+      const nb = Math.round((2 + this.gait) * (1 + (P.playful || 0) - 0.5 * (P.gentle || 0))), big = 1 + (P.brave || 0) * 1.4 - (P.playful || 0) * 0.4;
+      for (let i = 0; i < nb; i++) { this.particles.push({ kind: 'bubble', x: hx, y: hy, vx: -sq.vx * 0.3 + (Math.random() - 0.5) * 40 * (1 + (P.playful || 0)), vy: -30, life: 2 + Math.random(), t: 0, r: (1.5 + Math.random() * 3) * big }); }
     }
   };
   E.updateGait = function (dt) {
@@ -1040,7 +1057,9 @@
   };
   E.startTurn = function (sq, to) {
     sq.facing = to;
-    sq.turn = { from: sq.yaw >= 0 ? 1 : -1, to, t: 0, dur: 0.85 };
+    // (A playful or bold squid whips around; a wistful one takes its time.)
+    const P = (SO.self && SO.self.traits) || {};
+    sq.turn = { from: sq.yaw >= 0 ? 1 : -1, to, t: 0, dur: 0.85 * (1 + 0.35 * (P.wistful || 0) - 0.3 * (P.playful || 0) - 0.15 * (P.brave || 0)) };
   };
 
   // Three soft circles along the body. Anything that overlaps rock gets
@@ -1544,7 +1563,7 @@
         ctx.lineWidth = 6 * (1 - k) + 1;
         ctx.beginPath(); ctx.arc(f.x, f.y, f.r * U.easeOut(k), 0, TAU); ctx.stroke();
       } else if (f.kind === 'dot') {
-        const a = Math.min(1, f.t * 4) * (1 - U.smoothstep(0.7, 1, k));
+        const a = Math.max(0, Math.min(1, f.t * 4)) * (1 - U.smoothstep(0.7, 1, k));
         ctx.save(); ctx.globalAlpha = a;
         ctx.globalCompositeOperation = 'lighter';
         A.glow(ctx, f.x, f.y, 34, f.color, 0.8);
@@ -1582,10 +1601,68 @@
     };
     ctx.save();
     ctx.scale(this.scale, this.scale); ctx.translate(-this.cam.x, -this.cam.y);
-    if (ex.left) { band(0, 0, 220, 0); }
-    if (ex.right) { band(room.w, 0, room.w - 220, 0); }
-    if (ex.down) { const g0 = room.floorGap ? room.floorGap[0] * room.w : 0, g1 = room.floorGap ? room.floorGap[1] * room.w : room.w; ctx.save(); ctx.beginPath(); ctx.rect(g0, 0, g1 - g0, room.h + 10); ctx.clip(); band(0, room.h, 0, room.h - 220); ctx.restore(); }
-    if (ex.up && room.surfaceY === null) { const g0 = room.ceilGap ? room.ceilGap[0] * room.w : 0, g1 = room.ceilGap ? room.ceilGap[1] * room.w : room.w; ctx.save(); ctx.beginPath(); ctx.rect(g0, -10, g1 - g0, room.h); ctx.clip(); band(0, 0, 0, 220); ctx.restore(); }
+    // Only exits you can actually take get the soft glow. Closed ones get a visible current pushing
+    // back, and sides with no way through at all get rock, so nothing looks open that isn't.
+    const blocked = (d) => !!(ex[d] && SO.story.exitBlocked && SO.story.exitBlocked(room, d, ex[d]));
+    const open = (d) => !!ex[d] && !blocked(d);
+    if (open('left')) { band(0, 0, 220, 0); }
+    if (open('right')) { band(room.w, 0, room.w - 220, 0); }
+    if (open('down')) { const g0 = room.floorGap ? room.floorGap[0] * room.w : 0, g1 = room.floorGap ? room.floorGap[1] * room.w : room.w; ctx.save(); ctx.beginPath(); ctx.rect(g0, 0, g1 - g0, room.h + 10); ctx.clip(); band(0, room.h, 0, room.h - 220); ctx.restore(); }
+    if (open('up') && room.surfaceY === null) { const g0 = room.ceilGap ? room.ceilGap[0] * room.w : 0, g1 = room.ceilGap ? room.ceilGap[1] * room.w : room.w; ctx.save(); ctx.beginPath(); ctx.rect(g0, -10, g1 - g0, room.h); ctx.clip(); band(0, 0, 0, 220); ctx.restore(); }
+    ['left', 'right', 'up', 'down'].forEach((d) => {
+      if (d === 'up' && room.surfaceY !== null) { return; }
+      if (blocked(d)) { this.drawCurrent(ctx, d); return; }
+      if (ex[d]) { return; }
+      const covered = d === 'left' ? room.wallL : d === 'right' ? room.wallR : d === 'up' ? !!room.ceiling : !!room.floor;
+      if (!covered) { this.drawEdgeRock(ctx, d); }
+    });
+    ctx.restore();
+  };
+
+  // A closed way: water streaming back at you, so it's clear you can't get through (yet).
+  E.drawCurrent = function (ctx, d) {
+    const room = this.room, t = this.t, W = 170;
+    const vert = d === 'up' || d === 'down';
+    const g0 = d === 'down' && room.floorGap ? room.floorGap[0] * room.w : d === 'up' && room.ceilGap ? room.ceilGap[0] * room.w : 0;
+    const g1 = d === 'down' && room.floorGap ? room.floorGap[1] * room.w : d === 'up' && room.ceilGap ? room.ceilGap[1] * room.w : (vert ? room.w : room.h);
+    ctx.save();
+    const edge = d === 'left' ? 0 : d === 'right' ? room.w : d === 'up' ? 0 : room.h, inward = d === 'left' || d === 'up' ? 1 : -1;
+    const g = vert ? ctx.createLinearGradient(0, edge, 0, edge + inward * W) : ctx.createLinearGradient(edge, 0, edge + inward * W, 0);
+    g.addColorStop(0, 'rgba(6,14,22,0.55)'); g.addColorStop(1, 'rgba(6,14,22,0)');
+    ctx.fillStyle = g;
+    if (vert) { ctx.fillRect(g0, Math.min(edge, edge + inward * W), g1 - g0, W); } else { ctx.fillRect(Math.min(edge, edge + inward * W), 0, W, room.h); }
+    ctx.strokeStyle = 'rgba(190,215,230,0.22)'; ctx.lineWidth = 1.5;
+    for (let i = 0; i < 26; i++) {
+      const along = g0 + (i / 26) * (g1 - g0), k = ((t * 0.7 + i * 0.37) % 1), dep = k * W, len = 26;
+      ctx.globalAlpha = 1 - k;
+      ctx.beginPath();
+      if (vert) { ctx.moveTo(along, edge + inward * dep); ctx.lineTo(along, edge + inward * (dep + len)); } else { ctx.moveTo(edge + inward * dep, along); ctx.lineTo(edge + inward * (dep + len), along); }
+      ctx.stroke();
+    }
+    ctx.restore();
+  };
+
+  // A side with no way through: show the rock that's stopping you.
+  E.drawEdgeRock = function (ctx, d) {
+    const room = this.room, T = 44;
+    const r = U.rng(room.key + ':edge:' + d);
+    ctx.save();
+    ctx.beginPath();
+    const n = 18;
+    if (d === 'left' || d === 'right') {
+      const x0 = d === 'left' ? -20 : room.w + 20, dir = d === 'left' ? 1 : -1, top = room.surfaceY !== null ? room.surfaceY - 260 : -20;
+      ctx.moveTo(x0, top);
+      for (let i = 0; i <= n; i++) { const y = top + (room.h + 40 - top) * i / n; ctx.lineTo(x0 + dir * (20 + T * (0.7 + r() * 0.6)), y); }
+      ctx.lineTo(x0, room.h + 20);
+    } else {
+      const y0 = d === 'up' ? -20 : room.h + 20, dir = d === 'up' ? 1 : -1;
+      ctx.moveTo(-20, y0);
+      for (let i = 0; i <= n; i++) { const x = -20 + (room.w + 40) * i / n; ctx.lineTo(x, y0 + dir * (20 + T * (0.7 + r() * 0.6))); }
+      ctx.lineTo(room.w + 20, y0);
+    }
+    ctx.closePath();
+    ctx.fillStyle = room.def.rockColor || '#26323b'; ctx.fill();
+    ctx.strokeStyle = 'rgba(160,190,200,0.18)'; ctx.lineWidth = 2; ctx.stroke();
     ctx.restore();
   };
 

@@ -70,6 +70,8 @@
     },
 
     // A spoken line. Resolves when it has been on screen long enough (or the player skips it).
+    // opts.mood picks the speaker's face (happy, sad, afraid, angry, surprised, tender, tired,
+    // sly, or shades like stern, worried, curious); without one it's guessed from the words.
     say(text, opts = {}) {
       return new Promise((resolve) => {
         const who = opts.who || 'other';
@@ -195,7 +197,12 @@
     // Called every frame after the scene is drawn: the speaker's portrait, and
     // the thing you last clicked on (a live close-up of it, cut from the scene).
     renderPanels(t) {
-      if (this.speaker && this.portrait$.classList.contains('show')) {
+      // Close-up faces with moods (portraits.js), and the big one in scenes.
+      const faces = SO.portraits;
+      if (faces) { try { faces.frame(t); } catch (err) { /* never stop the talking */ } }
+      if (this.speaker && this.portrait$.classList.contains('show') && faces && faces.has(this.speaker)) {
+        faces.draw(this.portrait$.getContext('2d'), this.speaker, 200, t);
+      } else if (this.speaker && this.portrait$.classList.contains('show')) {
         const c = this.portrait$.getContext('2d');
         c.setTransform(1, 0, 0, 1, 0, 0);
         c.clearRect(0, 0, 200, 200);

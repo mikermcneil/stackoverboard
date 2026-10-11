@@ -185,6 +185,8 @@
       if (save.squidName) { facts.push(`Your colors: ${save.squidName.split('-').join(', ')}`); }
       if (save.playthrough > 1) { facts.push(`Fall number ${save.playthrough}`); }
       facts.forEach((f) => wrap.appendChild(p('j-fact', f)));
+      const doing = SO.quests && SO.quests.list ? SO.quests.list() : [];
+      if (doing.length) { wrap.appendChild(p('j-kicker', 'On the side')); doing.forEach((q) => wrap.appendChild(p('j-fact', q))); }
       wrap.appendChild(p('j-small', 'Click where you want me to go, or use the arrow keys. Hold down on me to open this.' + (d.flags.skinRevealed ? ' A, B, C and D (or 1 to 4) change my skin.' : '') + ' M mutes the sound.'));
       if (d.chapter >= 8) {
         const b = document.createElement('button'); b.className = 'j-btn'; b.textContent = 'Fall again';
