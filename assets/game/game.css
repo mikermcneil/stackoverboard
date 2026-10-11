@@ -237,3 +237,7 @@ body.game-mode #cheat { display: none; }
 
 .name-pick input.saved { border-color: var(--fleet-green, #009A7D); background: rgba(232, 255, 248, 0.85); }
 .name-ok { display: block; min-height: 1.3em; margin-top: 2px; font: 500 12px var(--sans); letter-spacing: 0; text-transform: none; color: var(--fleet-green, #009A7D); }
+
+.j-mapscroll { max-width: min(900px, 100%); overflow-x: auto; overflow-y: hidden; cursor: grab; -webkit-overflow-scrolling: touch; touch-action: pan-x; scrollbar-width: thin; }
+.j-mapscroll:active { cursor: grabbing; }
+.j-mapscroll .j-mapcanvas { width: auto; max-width: none; display: block; margin: 0 0 10px; }

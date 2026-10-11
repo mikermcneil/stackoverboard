@@ -216,7 +216,15 @@
     async renderMap() {
       const wrap = div('j-map');
       const cv = document.createElement('canvas'); cv.width = 760; cv.height = 620; cv.className = 'j-mapcanvas';
-      wrap.appendChild(cv);
+      // The map scrolls sideways (drag it, or swipe): the west goes on and on.
+      const scroller = div('j-mapscroll');
+      scroller.appendChild(cv);
+      wrap.appendChild(scroller);
+      let drag = null;
+      scroller.addEventListener('pointerdown', (e) => { drag = { x: e.clientX, s: scroller.scrollLeft }; scroller.setPointerCapture && scroller.setPointerCapture(e.pointerId); });
+      scroller.addEventListener('pointermove', (e) => { if (drag) { scroller.scrollLeft = drag.s - (e.clientX - drag.x); } });
+      scroller.addEventListener('pointerup', () => { drag = null; });
+      scroller.addEventListener('pointercancel', () => { drag = null; });
       wrap.appendChild(p('j-small', 'Each band is a level of the world, from the sky down. I only know the names of the ones I’ve seen. Flashing: where I am. Bright: places I’ve been. Small lights: insides I’ve been in. Faint: dark places other squids found first. Dots: other squids, right now.'));
       const who = p('j-small', '');
       wrap.appendChild(who);
@@ -232,7 +240,13 @@
       const defs = SO.rooms.defs, W = SO.rooms.WEST;
       const gate = defs[SO.rooms.westGate || 'bright-reef'];
       const LABEL = 150, cellX = 38, rowH = 15, boxW = 28, boxH = 11;
-      const px = (x) => 400 + x * cellX;
+      // Room to the left for the west: as far as I've been, and a good way beyond.
+      const visitedW = Object.keys(save.data.visited).filter((k) => /^west:\d+$/.test(k)).map((k) => +k.slice(5));
+      const farW = visitedW.reduce((a, b) => Math.max(a, b), 0);
+      const roomLeft = gate && gate.map ? Math.floor((400 + gate.map[0] * cellX - 16) / cellX) : 8;
+      const extra = Math.max(0, farW + 25 - roomLeft);
+      cv.width = 760 + extra * cellX;
+      const px = (x) => 400 + extra * cellX + x * cellX;
       const levelOf = (d) => (L ? L.of(d) : null);
       const built = (k) => !/:/.test(k);
       const rowsBy = {};
@@ -250,7 +264,7 @@
       });
       cv.height = Math.max(200, yy + 8);
       const posIn = (lk, row, x) => { const b = band[lk]; if (!b) { return null; } const i = Math.max(0, b.rows.indexOf(row)); return [x, b.top + 4 + i * rowH + rowH / 2]; };
-      const westX = (n) => Math.max(LABEL + 16, px(gate.map[0] - n));
+      const westX = (n) => Math.max(16, px(gate.map[0] - n));
       const highland = (n) => !!(W && W.typeOf && n >= (W.HIGH_FROM || 121) && W.typeOf(n));
       // Where any place is on this map.
       const tileAt = {};
@@ -281,9 +295,6 @@
           const b = band[l.key];
           ctx.fillStyle = i % 2 ? 'rgba(255,255,255,0.02)' : 'rgba(255,255,255,0.045)';
           ctx.fillRect(0, b.top, cv.width, b.h);
-          const known = L.reached ? L.reached(l.key) : true, been = L.been ? L.been(l.key) : known;
-          ctx.fillStyle = been ? 'rgba(255,255,255,0.78)' : known ? 'rgba(255,255,255,0.42)' : 'rgba(255,255,255,0.16)';
-          ctx.fillText(known ? l.name : '· · ·', 10, b.top + b.h / 2 + 4);
         });
         Object.values(defs).forEach((d) => {
           if (!built(d.key)) { return; }
@@ -310,15 +321,18 @@
           if (o.down) { ctx.moveTo(pos[0], pos[1] + boxH / 2); ctx.lineTo(pos[0], pos[1] + rowH - boxH / 2); }
           ctx.stroke();
         });
-        // The made-up west: dotted squares on along the surface, as far as the map goes (and on).
+        // The made-up west: dotted squares on along the surface (or up in the high waters, where the
+        // land has risen), as far as the map goes, and on.
         if (gate && gate.map && band.surface) {
-          const y = where(gate.key)[1];
+          const y0 = where(gate.key)[1];
+          const yHigh = band.highwater ? band.highwater.top + 4 + rowH / 2 : y0;
           ctx.save(); ctx.setLineDash([3, 3]);
-          let lastX = px(gate.map[0]);
+          let lastX = px(gate.map[0]), y = y0;
           for (let n = 1; ; n++) {
             const cx = px(gate.map[0] - n);
-            if (cx < LABEL + 16) { break; }
+            if (cx < 16) { break; }
             lastX = cx;
+            y = highland(n) ? yHigh : y0;
             const been = visited['west:' + n];
             ctx.strokeStyle = been ? 'rgba(191,248,234,0.9)' : 'rgba(191,248,234,0.3)';
             ctx.fillStyle = been ? 'rgba(191,248,234,0.35)' : 'rgba(0,0,0,0)';
@@ -330,8 +344,19 @@
           // (In the high waters' band, how far west I've been, or how high I've climbed.)
           const hy = band.highwater ? band.highwater.top + band.highwater.h / 2 + 4 : y + 20;
           ctx.fillStyle = 'rgba(255,255,255,0.35)';
-          ctx.fillText(climbed ? 'out west, I climbed ' + Math.round(climbed).toLocaleString() + ' m up' : far ? 'the west goes on (I’ve been ' + far + ' out)' : 'the west goes on', LABEL + 16, hy);
+          ctx.fillText(climbed ? 'out west, I climbed ' + Math.round(climbed).toLocaleString() + ' m up' : far ? 'the west goes on (I’ve been ' + far + ' out)' : 'the west goes on', scroller.scrollLeft + LABEL + 16, hy);
         }
+        // The band names stay put at the left as the map scrolls (named only if I know them).
+        const sl = scroller.scrollLeft;
+        LV.forEach((l) => {
+          const b = band[l.key];
+          const known = L.reached ? L.reached(l.key) : true, been = L.been ? L.been(l.key) : known;
+          const g = ctx.createLinearGradient(sl, 0, sl + LABEL, 0);
+          g.addColorStop(0, 'rgba(6,12,18,0.85)'); g.addColorStop(0.8, 'rgba(6,12,18,0.6)'); g.addColorStop(1, 'rgba(6,12,18,0)');
+          ctx.fillStyle = g; ctx.fillRect(sl, b.top, LABEL, b.h);
+          ctx.fillStyle = been ? 'rgba(255,255,255,0.78)' : known ? 'rgba(255,255,255,0.42)' : 'rgba(255,255,255,0.16)';
+          ctx.fillText(known ? l.name : '· · ·', sl + 10, b.top + b.h / 2 + 4);
+        });
         // Other squids: small pale dots in the places they are (a few to a place, side by side).
         const per = {};
         online.forEach((o) => {
@@ -358,6 +383,9 @@
         draw(U.now() / 1000);
         requestAnimationFrame(loop);
       };
+      // Start with where I am in view.
+      const meAt = where(SO.E.roomKey);
+      requestAnimationFrame(() => { scroller.scrollLeft = meAt ? Math.max(0, meAt[0] - scroller.clientWidth / 2) : cv.width; });
       loop();
       if (top.length) {
         wrap.appendChild(p('j-small', 'Most of the dark was found by: ' + top.slice(0, 3).map((x) => `${x.squidName} (${x.count})`).join(', ')));
