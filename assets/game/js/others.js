@@ -25,7 +25,25 @@
   }
 
   SO.actorTypes.otherSquid = {
-    r: 90, touch: true,
+    r: 90, touch: true, talk: true,
+    // Click another squid: your squid thinks something about them (a different thing each time).
+    onTouch(a) {
+      const info = (SO.others.info && SO.others.info[a.name]) || {};
+      if (!SO.others.info[a.name]) { SO.api.get('/api/v1/world/get-online').then((r) => { if (r.ok && r.body && r.body.online) { r.body.online.forEach((o) => { SO.others.info[o.squidName] = o; }); } }); }
+      const city = info.place && info.place !== 'unknown' ? info.place.split(',')[0] : null;
+      const lines = [];
+      if (city) { lines.push(`Hmm. They seem to be from ${city}.`); }
+      lines.push('I guess I could try saying something to them.');
+      if (info.device === 'phone') { lines.push('They move like they’re on something small. A phone, maybe.'); }
+      if (a.goal && a.goal.grime && (a.goal.dirt || 0) > 0.25) { lines.push({ sand: 'They’re all sandy.', silt: 'They’ve been rolling in silt.', mud: 'Covered in mud. Where have they been?', muck: 'They’re slimy. Kelp, probably.', soot: 'Sooty. They’ve been near the volcano.', glass: 'They glitter. Glass dust.' }[a.goal.grime] || 'They’re filthy.'); }
+      if (a.goal && a.goal.glow) { lines.push('Their lights are on. Show-off.'); }
+      lines.push(`${a.name}. That’s what they call themselves.`);
+      lines.push('Another squid. Down here. I’m not the only one.');
+      lines.push('They’re looking at me, I think. Or past me.');
+      a._said = ((a._said === undefined ? -1 : a._said) + 1) % lines.length;
+      SO.ui.thought(lines[a._said]);
+      if (lines[a._said].startsWith('I guess I could') && !SO.save.data.flags.chatHint) { SO.save.flag('chatHint'); setTimeout(() => SO.ui.say('(Press Enter, or tap Say, to talk to other squids.)', { who: 'world' }), 1500); }
+    },
     init(a) {
       a.sq = E.makeSquid();
       a.sq.x = a.x; a.sq.y = a.y; a.sq.yaw = a.goal.yaw; a.sq.pitch = a.goal.pitch;
@@ -86,8 +104,14 @@
   SO.others = {
     busy: false,
 
+    info: {},
     start() {
       setInterval(() => this.tick(), 600);
+      setInterval(async () => {// now and then, where the squids around you are from
+        if (!E.room || !E.room.actors.some((a) => a.type === 'otherSquid')) { return; }
+        const r = await SO.api.get('/api/v1/world/get-online');
+        if (r.ok && r.body && r.body.online) { r.body.online.forEach((o) => { this.info[o.squidName] = o; }); }
+      }, 20000);
     },
 
     async tick() {

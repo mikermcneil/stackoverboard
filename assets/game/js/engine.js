@@ -127,6 +127,7 @@
     };
     c.addEventListener('pointerdown', (e) => {
       AU.start();
+      if (this.replaying && SO.air) { SO.air.skipReplay(); return; }// a click skips an action replay
       // During a scene, a click anywhere moves the conversation along.
       if (SO.ui.talking && (this.locked || this.mode !== 'play')) { SO.ui.advance(); return; }
       if (this.mode !== 'play') { return; }
@@ -171,6 +172,7 @@
       AU.start();
       if (e.target && (e.target.tagName === 'INPUT' || e.target.tagName === 'TEXTAREA')) { return; }
       const k = e.key.toLowerCase();
+      if (this.replaying && SO.air) { SO.air.skipReplay(); return; }// so does any key
       this.keys[k] = true;
       if (this.mode !== 'play') { return; }
       if ((k === ' ' || k === 'enter') && SO.ui.talking) { SO.ui.advance(); e.preventDefault(); return; }
@@ -1190,7 +1192,7 @@
     // and a little longer before the same thing again.
     if (T && T.talk) {
       const now = U.now();
-      if (now - (this._lastTalkAt || 0) < 2200 || now - (o._lastTalkAt || 0) < 4000) { return; }
+      if (now - (this._lastTalkAt || 0) < 2200 || now - (o._lastTalkAt || 0) < 2500) { return; }
       this._lastTalkAt = now; o._lastTalkAt = now;
     }
     if (T && T.onTouch) { T.onTouch(o, room); }

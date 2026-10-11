@@ -338,11 +338,7 @@
     describe(o) {
       const id = o.id || '', t = o.type;
       if (t === 'oddity') { return SO.oddities.KINDS[o.kind].desc; }
-      if (t === 'otherSquid') {
-        const lvl = o.sq && SO.dirt ? SO.dirt.level(o.sq) : 0;
-        const grime = { sand: 'Sandy', silt: 'Silty', mud: 'Muddy', muck: 'Slimy', soot: 'Sooty', glass: 'Glittery' }[o.goal && o.goal.grime];
-        return lvl > 0.25 && grime ? grime + ' ' + o.name.split('-')[0] + ' squid' : 'Squid ' + o.name;
-      }
+      if (t === 'otherSquid') { return o.name; }// just their name, as they chose it
       if (id.startsWith('friend-')) { return 'A friend'; }
       if (t === 'archivist') { return o.idle && o.idle.name === 'feed' ? 'A vampire squid, feeding' : 'A vampire squid'; }
       if (t === 'nautilus') { return 'An old nautilus'; }

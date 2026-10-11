@@ -187,7 +187,7 @@
       const facts = [];
       if (d.gems) { facts.push(`Shine carried: ${d.gems}`); }
       if (d.hearts.length) { facts.push(`Hearts lit: ${d.hearts.length} of 3`); }
-      if (save.squidName) { facts.push(`Your colors: ${save.squidName.split('-').join(', ')}`); }
+      if (save.squidName) { facts.push(`My name: ${save.squidName}`); }
       if (save.playthrough > 1) { facts.push(`Fall number ${save.playthrough}`); }
       facts.forEach((f) => wrap.appendChild(p('j-fact', f)));
       const doing = SO.quests && SO.quests.list ? SO.quests.list() : [];

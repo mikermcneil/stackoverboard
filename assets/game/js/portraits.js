@@ -1365,7 +1365,8 @@
     _bigFrame(t, dt, now) {
       const ui = SO.ui;
       const who = ui.current ? ui.current.who : this._who;
-      const want = !!(who && FACES[who] && this.inScene(who) && (ui.current || ui.queue.length || now - (this._lineAt || -1e9) < 900) && !(SO.journal && SO.journal.open));
+      const covered = SO.closeups && now - (SO.closeups.coverAt || -1e9) < 200;// a close-up already fills the screen
+      const want = !!(who && FACES[who] && !covered && this.inScene(who) && (ui.current || ui.queue.length || now - (this._lineAt || -1e9) < 900) && !(SO.journal && SO.journal.open));
       if (want) { this._ensureBig(); }
       if (!this.big$) { return; }
       if (want !== !!this._bigOn) {

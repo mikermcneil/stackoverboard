@@ -114,6 +114,9 @@
     },
 
     // The action replay: the last jump again, in slow motion, then back to now.
+    // Skip to the end of a replay (back to now, as it was).
+    skipReplay() { if (this.rp) { this.rp.k = 1e9; this.replayStep(0); } },
+
     replay(sY, power, sp) {
       if (E.replaying || E.locked || !this.frames.length) { return; }
       // from just before leaving the water to just after landing
@@ -125,7 +128,7 @@
       this.live = { x: sq.x, y: sq.y, yaw: sq.yaw, pitch: sq.pitch, vx: sq.vx, vy: sq.vy, arms: sq.arms.map((a) => a.map((p) => ({ x: p.x, y: p.y }))), inAir: sq.inAir, cam: { x: E.cam.x, y: E.cam.y } };
       this.rp = { clip, k: 0, sY, power, sp, splashed: false };
       E.replaying = true;
-      $k().textContent = '● REPLAY'; $k().style.color = '#ff6b6b';
+      $k().textContent = '● REPLAY · click to skip'; $k().style.color = '#ff6b6b';
       hud.style.opacity = '1';
       AU().tone && AU().tone(220, { dur: 0.4, gain: 0.03, glide: 0.5 });
     },

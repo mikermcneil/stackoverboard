@@ -100,7 +100,7 @@
       c.fillStyle = wg; c.fillRect(-900, WL, VW + 1800, VH + 900 - WL);
       const s = 3.5 * (1 + 0.1 * U.easeInOut(k));
       const bow = U.easeInOut(Math.min(1, lt / 3));// bending lower as it looks
-      const hx = 760 + Math.sin(lt * 0.3) * 8, hy = 330 + bow * 40;
+      const hx = 740 + Math.sin(lt * 0.3) * 8, hy = 280 + bow * 36;
       const pose = { speaker: true, dir: 1, rot: 0.45 + bow * 0.3, seed: 3 };
       // the reflection, upside down in the water, broken up by ripples
       const W2 = 800, H2 = 450;
@@ -123,7 +123,7 @@
       for (let r = 0; r < 3; r++) {
         const q = ((lt * 0.35 + r / 3) % 1);
         c.globalAlpha = (1 - q) * 0.8;
-        c.beginPath(); c.ellipse(hx + 200, WL + 8, 30 + q * 260, 6 + q * 40, 0, 0, TAU); c.stroke();
+        c.beginPath(); c.ellipse(hx + 170, WL + 8, 30 + q * 260, 6 + q * 40, 0, 0, TAU); c.stroke();
       }
       c.globalAlpha = 1;
       swanAt(c, hx, hy, s, t, pose);
@@ -184,33 +184,38 @@
     },
   };
 
-  // ── Which close-ups each scene has, and when (seconds into the scene) ──────
+  // ── Which close-ups each scene has ──────────────────────────────────────────
+  // Each close-up belongs to a line: it cuts in when that line appears in the
+  // ribbon, and holds a moment after it's gone (so it follows the words even
+  // when the lines run late).
   const LISTS = {
     flashback1: [
-      [1.1, 5.5, 'pool', {}],
-      [5.7, 10.1, 'close', { bg: 'day', rot: 0.42, x: 700, y: 400, size: 4.8 }],
-      [10.3, 14.0, 'pair', { bg: 'home', other: 'happy' }],
+      ['Look how big you’re getting.', 'pool', {}],
+      ['Not too close to the edge, little one.', 'close', { bg: 'day', rot: 0.42, x: 700, y: 400, size: 4.8 }],
+      ['Good squid.', 'pair', { bg: 'home', other: 'happy' }],
     ],
     flashback2: [
-      [1.1, 5.2, 'close', { bg: 'edge', size: 4.6, x: 820, rot: 0.15 }],
-      [5.4, 10.1, 'edge', {}],
-      [10.3, 14.6, 'away', { bg: 'day' }],
+      ['Stay away from the edge!', 'close', { bg: 'edge', size: 4.6, x: 820, rot: 0.15 }],
+      ['It’s a long way down.', 'edge', {}],
+      ['Come back to the middle.', 'away', { bg: 'day' }],
     ],
     flashback3: [
-      [1.2, 4.7, 'alarm', { shake: 0.8 }],
-      [4.9, 8.6, 'alarm', { other: 'afraid', size: 3.6, x: 560, shake: 1 }],
-      [8.8, 11.6, 'alarm', { size: 6.6, x: 640, y: 420, rot: -0.3, shake: 1.4 }],
-      [11.8, 12.9, 'alarm', { dir: -1, x: 900, size: 5, shake: 1.6 }],
+      ['The island’s shaking!', 'alarm', { shake: 0.8 }],
+      ['Hold on!', 'alarm', { other: 'afraid', size: 3.6, x: 560, shake: 1 }],
+      ['No!', 'alarm', { size: 6.6, x: 640, y: 420, rot: -0.3, shake: 1.4, before: 13 }],
+      ['Catch it!', 'alarm', { dir: -1, x: 900, size: 5, shake: 1.6, max: 1.4, before: 13 }],
     ],
     returnHome: [
-      [2.2, 6.6, 'close', { bg: 'home', size: 4.4 }],
-      [6.8, 12.6, 'pair', { bg: 'home' }],
+      ['You’re back!', 'close', { bg: 'home', size: 4.4 }],
+      ['We looked everywhere for you.', 'pair', { bg: 'home' }],
     ],
     song: [
-      [4.2, 7.8, 'close', { bg: 'sky', flying: true, size: 4 }],
-      [8.0, 12.6, 'pair', { bg: 'sky', size: 3.1 }],
+      ['We hear you!', 'close', { bg: 'sky', flying: true, size: 4 }],
+      ['Hold on. We’re coming down.', 'pair', { bg: 'sky', size: 3.1 }],
     ],
   };
+  const SHOT_LEN = 5;// seconds a push-in is paced for
+  const HOLD = 0.7;// seconds a close-up stays after its line
 
   // A swan sitting on the water: body and folded wing, neck and head.
   function sitting(c, bx, by, s, t, o = {}) {
@@ -238,21 +243,29 @@
     layer(c, name, el, t) {
       const list = LISTS[name];
       if (!list || !SO.portraits) { return 0; }
-      for (let i = 0; i < list.length; i++) {
-        const [from, to, kind, o] = list[i];
-        if (el < from || el > to) { continue; }
-        const lt = el - from, len = to - from;
-        const a = Math.min(1, lt / 0.28, (to - el) / 0.28);// a quick dissolve at each cut
-        c.save();
-        c.globalAlpha *= U.clamp(a, 0, 1);
-        try { SHOTS[kind](c, lt / len, lt, t === undefined ? el : t, o); } catch (err) { if (!this._warned) { this._warned = true; console.warn('closeup', kind, err); } }
-        // letterbox
-        c.fillStyle = '#000';
-        c.fillRect(-900, -900, VW + 1800, 900 + 60); c.fillRect(-900, VH - 60, VW + 1800, 900 + 60);
-        c.restore();
-        return a;
-      }
-      return 0;
+      const now = U.now();
+      const cur = SO.ui.current;
+      const hit = cur ? list.find((e) => e[0] === cur.text) : null;
+      const on = this._on;
+      if (hit && (!on || on.entry !== hit || on.name !== name)) { this._on = { name, entry: hit, since: now, end: 0 }; }
+      else if (!hit && on && !on.end) { on.end = now; }
+      const shot = this._on;
+      if (!shot || shot.name !== name) { return 0; }
+      const lt = (now - shot.since) / 1000;
+      const max = shot.entry[2].max || 1e9;
+      let out = shot.end ? HOLD - (now - shot.end) / 1000 : max - lt;
+      if (shot.entry[2].before) { out = Math.min(out, shot.entry[2].before - el); }// keep clear of the wide shot's big moment
+      if (out <= 0) { if (shot.end) { this._on = null; } return 0; }
+      const a = U.clamp(Math.min(lt / 0.28, out / 0.28), 0, 1);// a quick dissolve at each cut
+      c.save();
+      c.globalAlpha *= a;
+      try { SHOTS[shot.entry[1]](c, Math.min(1, lt / SHOT_LEN), lt, t === undefined ? el : t, shot.entry[2]); } catch (err) { if (!this._warned) { this._warned = true; console.warn('closeup', shot.entry[1], err); } }
+      // letterbox
+      c.fillStyle = '#000';
+      c.fillRect(-900, -900, VW + 1800, 900 + 60); c.fillRect(-900, VH - 60, VW + 1800, 900 + 60);
+      c.restore();
+      if (a > 0.5) { this.coverAt = now; }// (the big portrait panel steps aside)
+      return a;
     },
   };
 

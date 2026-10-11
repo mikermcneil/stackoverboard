@@ -45,20 +45,24 @@
 
     async note(o) {
       if (!o || this.busy) { return; }
+      const clickAt = SO.util.now();
+      const silent = () => !SO.ui.talking && (SO.ui._lastAt || 0) < clickAt;// the thing itself said nothing
       const kind = kindOf(o), key = keyOf(o), info = NOTES[kind] || NOTES[o.type];
       this.busy = true;
       const night = !!(SO.local && SO.local.isNight);
       const r = await SO.api.post('/api/v1/game/note-interaction', { key, room: E.roomKey || 'sea', kind: kind.slice(0, 60), localHour: SO.local ? Math.round(SO.local.hour() * 10) / 10 : undefined, isNight: night });
       this.busy = false;
-      if (!r.ok || !r.body) { return; }
+      if (!r.ok || !r.body) { if (silent()) { this.remark(o); } return; }
       const t = r.body, now = SO.api.serverNow();
       // Wait for the thing's own words first, then (maybe) one more.
       await this.afterTalk();
+      const quiet = silent();
       // Another squid was here (and recently).
       if (t.lastOtherBy && t.lastOtherAt && now - t.lastOtherAt < 3 * 86400000 && Math.random() < 0.6) { SO.ui.say(`${t.lastOtherBy} was here ${ago(now - t.lastOtherAt)}.`, { who: 'world' }); return; }
-      if (!info) { return; }
+      if (!info) { if (quiet) { this.remark(o); } return; }
       if (night && info.night && Math.random() < 0.8) { SO.ui.say(info.night, { who: 'world' }); return; }
       if (t.mine >= 2 && info.more && info.more[t.mine - 2]) { SO.ui.say(info.more[t.mine - 2], { who: 'world' }); }
+      else if (quiet && !(info.ask && t.mine >= 2)) { this.remark(o); }
       // A question, the second time you look (once; you can see the tally after).
       if (info.ask && t.mine >= 2) {
         const mine = t.myAnswers && t.myAnswers[info.ask.key];
@@ -81,6 +85,20 @@
         const total = Object.values(tally).reduce((a, b) => a + b, 0);
         SO.ui.say(total > 1 ? this.summary(tally, answer) : 'Nobody else has answered that yet.', { who: 'world' });
       }
+    },
+
+    // The squid says something to itself about a thing it's looked at (again).
+    remark(o) {
+      if (o.type === 'otherSquid') { return; }// (other squids have their own remarks)
+      const NATIVE_OF = { combJelly: 'comb-jelly', lanternfish: 'lanternfish', moonReeds: 'moon-reeds', polyps: 'coral-polyps', lightDrinker: 'light-drinker', seaSpider: null, lungfish: 'lungfish' };
+      const key = o.lifeKind || NATIVE_OF[o.type] || o.type;
+      const native = SO.story.NATIVE && SO.story.NATIVE[key];
+      const label = (SO.story.describe(o) || 'it').replace(/^(a|an|the) /i, '');
+      const lines = [];
+      if (native && native.line) { lines.push(native.line); }
+      lines.push(`Still a ${label.toLowerCase()}. Still here.`, 'It doesn’t seem to mind me looking.', 'I could watch it all day. I won’t.', `Hello again, ${label.toLowerCase()}.`, 'I wonder what it thinks I am.', 'Nothing new. I like that, sometimes.');
+      o._remarkN = ((o._remarkN === undefined ? -1 : o._remarkN) + 1) % lines.length;
+      SO.ui.thought(lines[o._remarkN]);
     },
 
     summary(tally, mine) {

@@ -1,6 +1,12 @@
-// The way west: read from the client's own list (WEST_PATH and BANDS in assets/game/js/west.js)
-// every time this runs, so the MCP tools always match the game.  If that file can't be read or
-// parsed, the snapshots below are used instead.
+// The way west: read from the client's own lists (WEST_PATH, BANDS and the crossings in
+// assets/game/js/west.js, and the lands, later-crossing features and landmark interiors in
+// assets/game/js/westlands.js) every time this runs, so the MCP tools always match the game.  For one
+// place (`n`), west.js itself is run in a sandbox, so what it says about that place (highland or not,
+// what kind, how high, its name and ways out) is exactly what the game makes.  If any of that can't
+// be read, the snapshots below are used instead.
+//
+// The west never ends now (CROSSINGS = Infinity, WEST_END = null in west.js), and past west:120 it
+// rises into the highlands.
 //
 // A deliberate mystery: how the glass city flies is an open question.  Never state an answer here,
 // and don't say more about the sand engine than its own line.
@@ -41,16 +47,80 @@ const BAND_NOTES = {
 };
 const SCARY_BIRDS_FROM = 22;
 const CROSSING_SNAPSHOT = 60;
-const CROSSINGS_SNAPSHOT = 60;
+const CROSSINGS_SNAPSHOT = Infinity;// it never ends
+const HIGH_FROM_SNAPSHOT = 121;
 const RECALL_SNAPSHOT = ['', 'again', 'older', 'grown over', 'half buried', 'in the dark', 'smaller than I remember', 'upside down', 'still there', 'remembered wrong', 'crowded', 'empty', 'singing', 'bleached', 'broken', 'mended', 'very old', 'new again', 'far away', 'close up'];
-const END_SNAPSHOT = { key: 'west-end', name: 'The end of the west', line: 'The sand stops, and the sky comes down to the water, and past it there is only east. The sea goes all the way around.' };
-const WRAPS_TO_SNAPSHOT = 'spray-zone';
 const ORD = ['first', 'second', 'third', 'fourth', 'fifth', 'sixth', 'seventh', 'eighth', 'ninth', 'tenth'];
-const crossingName = (c) => (c < ORD.length ? ORD[c] : (c + 1) + 'th') + ' crossing';
+const ordinal = (k) => { var m = k % 100; return k + (m >= 11 && m <= 13 ? 'th' : ({ 1: 'st', 2: 'nd', 3: 'rd' }[k % 10] || 'th')); };
+const crossingName = (c) => (c < ORD.length ? ORD[c] : ordinal(c + 1)) + ' crossing';
+
+// Snapshot of LANDS in assets/game/js/westlands.js: past the wet desert, the land changes every few
+// places (keyed by distance within a crossing, like the bands).
+const LANDS_SNAPSHOT = [
+  { from: 22, name: 'The dune sea', things: ['ghost-crab'], birds: ['tern', 'frigate'] },
+  { from: 26, name: 'The cactus shallows', things: ['spine-sponge'], birds: ['frigate'] },
+  { from: 30, name: 'The humming flats', things: ['sea-skaters', 'booming-dune'], birds: ['tern'] },
+  { from: 34, name: 'The ribbon shallows', things: ['ribbonfish'], birds: ['pelican'] },
+  { from: 39, name: 'The bone coast', things: ['shell-heap'], birds: ['frigate'] },
+  { from: 45, name: 'The dog plains', things: ['cucumberbananadog'], birds: ['tern'] },
+  { from: 49, name: 'The schooling sands', things: [], birds: ['frigate'] },
+  { from: 54, name: 'The glass flats', things: ['fulgurite'], birds: ['tern'] },
+  { from: 58, name: 'The lifting ground', things: ['booming-dune'], birds: [] },
+];
+const LAND_NOTES = {
+  'The dune sea': 'Dunes standing up out of the water behind everything. Pale ghost crabs run sideways on the sand.',
+  'The cactus shallows': 'Spine sponges that look like cactus, spines pointing in.',
+  'The humming flats': 'Sea skaters walking on the water, and a dune that hums when you flash at it.',
+  'The ribbon shallows': 'Water too shallow for the ribbonfish stranded in it, eyes gone, still trying to swim. Dead fish. Pelicans.',
+  'The bone coast': 'Bones in the sand, and heaps of empty shells, each drilled in the same place.',
+  'The dog plains': 'Cucumberbananadogs: long, yellow, bendy, bumpy, with dogs\' faces. They follow you, slowly.',
+  'The schooling sands': 'Stone heads half buried in the sand, and schools of fish moving through the water like one thing.',
+  'The glass flats': 'A glassy floor, and lightning glass (fulgurites): sand that lightning melted.',
+  'The lifting ground': 'Columns standing in the water, and a dune that hums.',
+};
+// Later crossings: now and then, one of these, anywhere (FEATURES in westlands.js).
+const FEATURE_NOTES = {
+  salt: 'Salt pans: towers of salt, water too salty to sink in, and brine shrimp.',
+  mirror: 'Mirror water: so still the islands show in it, upside down, under the surface.',
+  jellies: 'The jelly lake: golden jellies following the light across the water.',
+  tar: 'Tar seeps: something black oozing up out of the ground. Something got stuck in it and stayed.',
+  mangrove: 'Drowned trees.',
+  midden: 'Shell heaps: empty shells, all opened the same way.',
+};
+// Rooms inside the landmarks ('west-in:N:K', K counting from 1), from IN in westlands.js.
+const INTERIORS_SNAPSHOT = {
+  'first-lungfish': ['The lungfish burrow'],
+  'cenote': ['Down the cenote'],
+  'cactus-caves': ['Inside the cactus cave'],
+  'bug-walls': ['Inside the bug walls'],
+  'beached-fish': ['Inside the fish\'s mouth', 'Inside the fish\'s gut', 'The fish\'s swim bladder'],
+  'whale-carcass': ['Inside the whale\'s jaw', 'The whale\'s ribs', 'The whale\'s heart', 'The whale\'s stomach', 'The whale\'s head'],
+  'sphinx': ['Inside the sphinx'],
+  'sand-engine': ['The heart of the sand engine'],
+};
+const INTERIOR_NOTES = {
+  'first-lungfish': 'Only open once the lungfish has woken (rain from home wakes it): a burrow under the mud, with rings in the wall, one for each dry season.',
+  'cenote': 'Straight down: fresh water, a shimmering layer halfway where the water changes, pale fish with no eyes, and a pane of dome glass at the bottom, humming.',
+  'cactus-caves': 'Spines on the floor and the roof. Stay in the middle. Something caught on the spines, and a flower.',
+  'bug-walls': 'A cave whose walls are insects holding on to each other. The walls breathe.',
+  'beached-fish': 'Its mouth (where a tongue louse holds on where the tongue was), its gut (things it swallowed), and its swim bladder, the empty silver room that held it up.',
+  'whale-carcass': 'Its jaw (hagfish tied in knots), its ribs, its heart (as big as a room), its stomach (hundreds of squid beaks), and the great room of wax in its head.',
+  'sphinx': 'Carvings on the stone, and fish swimming through.',
+  'sand-engine': 'Rows of glass pipes, each a different length, and a bowl in the middle of it all, just big enough for a squid, with four stains around the rim. The squid doesn\'t want to get in it.',
+};
+const HIGHLAND_TYPES = {
+  stream: 'A mountain stream.',
+  lake: 'A high lake.',
+  ridge: 'A ridge between waters: the ground rises out of the water in the middle, and you flop across it in the air, or don\'t.',
+  snowfield: 'A snowfield: like a ridge, higher and colder.',
+  falls: 'The foot of a waterfall: a cliff to the west, and water coming down it. Swim up the falling water (the way out is up).',
+  pooltop: 'The pool above the falls, spilling over the lip.',
+  sinkhole: 'A sinkhole lake, with a hole in its floor going down into the mountain (to the aquifer, "aq:N").',
+  spring: 'A spring in the rock, where the aquifer comes back up ("aq2:N" below it).',
+};
 
 // Later crossings bring the same landmarks back at the same distances, "recalled" with a word
-// from RECALL (e.g. "The glass buoy, older"), and the last place (west:3600) is the end of the
-// west, which leads on to the spray zone: the sea goes all the way around.
+// from RECALL (e.g. "The glass buoy, older"), crossing after crossing, forever.
 
 const unquote = (s) => s.replace(/\\(['"\\])/g, '$1');
 
