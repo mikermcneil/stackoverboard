@@ -2,7 +2,6 @@
 
 _a [Sails v1](https://sailsjs.com) application built for [Sailsconf 2026](http://sailsconf.com/)_
 
-<img width="919" height="707" alt="image" src="https://github.com/user-attachments/assets/2fdc1e59-5bc1-44a6-83ea-e274184270eb" />
 <img width="939" height="848" alt="image" src="https://github.com/user-attachments/assets/e5877e55-9719-467c-beff-c393c1e06730" />
 <img width="935" height="704" alt="image" src="https://github.com/user-attachments/assets/160940ad-1500-41cb-96e5-e9ffd39b8da2" />
 <img width="3840" height="2160" alt="image" src="https://github.com/user-attachments/assets/b9bdcbea-440b-4745-abc0-9a99b30c49e6" />
@@ -23,6 +22,8 @@ _a [Sails v1](https://sailsjs.com) application built for [Sailsconf 2026](http:/
 This was built on top of the conventions of sails.js using Claude in about 2 hours.
 
 <img width="676" height="125" alt="image" src="https://github.com/user-attachments/assets/ca60e0ea-ffcd-4d1f-99a4-57ea5b74aa84" />
+<img width="726" height="565" alt="image" src="https://github.com/user-attachments/assets/f37f6e74-740a-4647-894a-9ccda4929a39" />
+
 
 
 
