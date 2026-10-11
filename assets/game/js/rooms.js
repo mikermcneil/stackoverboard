@@ -617,6 +617,596 @@
   });
 
   // ════════════════════════════════════════════════════════════════════════════
+  // THE WIDER SEA: more places on every level, from the rain under the islands to
+  // the bottom of everything. None of it is needed to get home. All of it is there.
+  // ════════════════════════════════════════════════════════════════════════════
+  const life = (kind, x, y, o) => Object.assign({ id: kind + '-' + x, type: 'life', kind, x, y }, o || {});
+  // Open a wall of an existing room and point it somewhere new.
+  const link = (key, dir, to) => {
+    const d = defs[key];
+    d.exits[dir] = to;
+    if ((dir === 'left' || dir === 'right') && d.terrain && d.terrain.walls) { d.terrain.walls[dir] = false; }
+  };
+  // The great glass chain that hangs from the anchored isle, all the way to the bottom.
+  const chain = (ctx, x, y0, y1, t, alpha = 1) => {
+    const L = 96;
+    ctx.save(); ctx.globalAlpha *= alpha; ctx.lineCap = 'round';
+    for (let y = Math.floor(y0 / L) * L, i = Math.floor(y0 / L); y < y1; y += L, i++) {
+      const sx = x + Math.sin(t * 0.25 + y * 0.002) * 8;
+      ctx.strokeStyle = 'rgba(20,40,48,0.55)'; ctx.lineWidth = 13;
+      ctx.beginPath(); ctx.ellipse(sx, y, i % 2 ? 7 : 28, 58, 0, 0, U.TAU); ctx.stroke();
+      ctx.strokeStyle = i % 2 ? 'rgba(170,225,228,0.75)' : 'rgba(190,240,240,0.8)'; ctx.lineWidth = 8;
+      ctx.stroke();
+      ctx.strokeStyle = 'rgba(255,255,255,0.35)'; ctx.lineWidth = 2;
+      ctx.beginPath(); ctx.ellipse(sx - 3, y - 4, i % 2 ? 4 : 24, 52, 0, Math.PI * 0.9, Math.PI * 1.4); ctx.stroke();
+    }
+    ctx.restore();
+  };
+  // Haze: thin, still water with nothing in it to breathe.
+  const haze = (ctx, room, col, a) => {
+    const g = ctx.createLinearGradient(0, 0, 0, room.h);
+    g.addColorStop(0, U.rgba(col, 0)); g.addColorStop(0.5, U.rgba(col, a)); g.addColorStop(1, U.rgba(col, a * 0.4));
+    ctx.fillStyle = g; ctx.fillRect(-200, 0, room.w + 400, room.h);
+  };
+  // Little lights going off in the dark, now and then: whatever's out there, talking.
+  const flickers = (ctx, room, t, n, seed) => {
+    ctx.save(); ctx.globalCompositeOperation = 'lighter';
+    for (let i = 0; i < n; i++) {
+      const k = (t * 0.35 + i * 0.37 + seed) % 1;
+      if (k > 0.12) { continue; }
+      const x = (U.hash(seed + ':' + i + ':' + Math.floor(t * 0.35 + i * 0.37 + seed)) % 1000) / 1000 * room.w;
+      const y = (U.hash(seed + '/' + i + ':' + Math.floor(t * 0.35 + i * 0.37 + seed)) % 1000) / 1000 * room.h;
+      A.glow(ctx, x, y, 26, i % 3 ? '#6fd8ff' : '#9fffd0', Math.sin(k / 0.12 * Math.PI) * 0.7);
+    }
+    ctx.restore();
+  };
+
+  // ── The top: under the islands ──────────────────────────────────────────────
+  def('sargasso', {
+    name: 'The golden mat', region: 'surface', map: [-2, 0], w: 1.6, depth: 0.05, surface: true, palette: 'warm',
+    exits: { left: 'rain-sea', right: 'bright-reef', down: 'kelp-deep' },
+    rayColor: '#fff2c8',
+    isles: [[400, 0.7], [1500, 0.5], [2300, 0.9]],
+    bg(ctx, t, room) {
+      // the tops of the kelp, far below
+      for (let i = 0; i < 6; i++) { A.kelp(ctx, 200 + i * 420, room.h + 300, 380 + (i % 3) * 60, t, i * 5, { dark: true }); }
+      // the shade under the mats
+      ctx.fillStyle = 'rgba(40,30,10,0.12)';
+      [[300, 360], [1300, 520], [2100, 380]].forEach(([x, w]) => { ctx.beginPath(); ctx.ellipse(x, room.surfaceY + 80, w, 120, 0, 0, U.TAU); ctx.fill(); });
+    },
+    actors: [
+      life('sargassum', 260, 152, { s: 1.2 }), life('sargassum', 420, 152, { s: 0.9 }),
+      life('sargassum', 1180, 152, { s: 1.3 }), life('sargassum', 1420, 152, { s: 1 }), life('sargassum', 1640, 152, { s: 1.2 }),
+      life('sargassum', 2050, 152, { s: 1.1 }), life('sargassum', 2200, 152, { s: 0.9 }),
+    ],
+    ambient: { fish: 16, jelly: 2 },
+    entries: { default: [1280, 420] },
+    snow: 0.1,
+  });
+
+  def('rain-sea', {
+    name: 'Where it rains', region: 'surface', map: [-3, 0], w: 1.4, depth: 0.04, surface: true,
+    exits: { right: 'sargasso', down: 'meadow' },
+    terrain: { walls: { left: true } },
+    rayColor: '#e8f6ff',
+    isles: [[300, 0.6], [1800, 0.8]],
+    bg(ctx, t, room) {
+      // An island hanging low over the sea, dripping. Its keel almost touches the water.
+      A.island(ctx, 1150, -170, 1100, { seed: 21, keel: 0.26, trees: 12, domes: [[0.18, 0.08]], cracked: true, t });
+      // Rain from it: fresh water, falling into salt.
+      ctx.strokeStyle = 'rgba(220,240,255,0.35)'; ctx.lineWidth = 1.5;
+      ctx.beginPath();
+      for (let i = 0; i < 60; i++) {
+        const x = (i * 197) % room.w, y = ((t * 520 + i * 83) % 420) - 270;
+        if (y > room.surfaceY - 6) { continue; }
+        ctx.moveTo(x, y); ctx.lineTo(x - 4, y + 22);
+      }
+      ctx.stroke();
+      ctx.strokeStyle = 'rgba(230,248,255,0.4)'; ctx.lineWidth = 1.2;
+      for (let i = 0; i < 10; i++) {
+        const k = (t * 0.8 + i * 0.31) % 1, x = (i * 331 + Math.floor(t * 0.8 + i * 0.31) * 577) % room.w;
+        ctx.beginPath(); ctx.ellipse(x, room.surfaceY + 2, 8 + k * 40, 2 + k * 6, 0, 0, U.TAU); ctx.globalAlpha = 1 - k; ctx.stroke(); ctx.globalAlpha = 1;
+      }
+      // Where the fresh water floats on the salt: a wobbling, mirror-bright line.
+      ctx.strokeStyle = 'rgba(210,240,250,0.18)'; ctx.lineWidth = 6;
+      ctx.beginPath();
+      for (let x = 0; x <= room.w; x += 40) { ctx.lineTo(x, 400 + Math.sin(x * 0.006 + t * 0.7) * 14 + Math.sin(x * 0.017 - t) * 5); }
+      ctx.stroke();
+    },
+    ambient: { fish: 5, jelly: 6 },
+    entries: { default: [1300, 420] },
+    snow: 0.05,
+  });
+
+  def('anchored-isle', {
+    name: 'Under the anchored isle', region: 'surface', map: [5, 0], w: 1.6, depth: 0.08, surface: true, roar: 0.5,
+    exits: { left: 'plunge', right: 'spray-zone', down: 'tether-twilight' },
+    isles: [[300, 1.0], [2300, 0.7]],
+    bg(ctx, t, room) {
+      A.island(ctx, 1340, -230, 1200, { seed: 33, keel: 0.27, trees: 14, domes: [[-0.2, 0.1], [0.25, 0.06]], t });
+      chain(ctx, 1340, 80, room.h + 120, t);
+      // the iron-dark ring it hangs from, set into the keel
+      A.ellipse(ctx, 1340, 70, 50, 24, 0, '#3a4a50', 'rgba(20,30,36,0.6)', 3);
+    },
+    ambient: { fish: 6, jelly: 3 },
+    entries: { default: [900, 440] },
+    snow: 0.1,
+  });
+
+  def('spray-zone', {
+    name: 'The spray zone', region: 'surface', map: [6, 0], w: 1.3, depth: 0.05, surface: true, palette: 'warm', roar: 0.3,
+    exits: { left: 'anchored-isle' },
+    terrain: { floor: [0.3, 0.32, 0.28, 0.33, 0.37, 0.42], walls: { right: true } },
+    sand: '#e2d6a8', rayColor: '#fffbe8',
+    bg(ctx, t, room) {
+      // Mist off the far waterfall, and rainbows standing in it.
+      const sy = room.surfaceY;
+      const g = ctx.createLinearGradient(0, sy - 500, 0, sy);
+      g.addColorStop(0, 'rgba(255,255,255,0)'); g.addColorStop(1, 'rgba(255,255,255,0.35)');
+      ctx.fillStyle = g; ctx.fillRect(-200, sy - 500, room.w + 400, 500);
+      ['#ff8a8a', '#ffd38a', '#fff59a', '#9aff9a', '#8ad8ff', '#b08aff'].forEach((c, i) => {
+        ctx.strokeStyle = U.rgba(c, 0.12 + 0.04 * Math.sin(t * 0.4)); ctx.lineWidth = 9;
+        ctx.beginPath(); ctx.arc(room.w * 0.45, sy + 40, 620 - i * 9, Math.PI * 1.08, Math.PI * 1.92); ctx.stroke();
+      });
+    },
+    onUpdate(room, dt) {
+      if (Math.random() < dt * 10) { SO.E.particles.push({ kind: 'drop', x: Math.random() * room.w, y: room.surfaceY - 200 - Math.random() * 200, vx: 30, vy: 40, t: 0, life: 2, r: 1.5 + Math.random() * 2 }); }
+    },
+    actors: [
+      life('bell-whelk', 1220, 600, { s: 1.1 }),
+      life('seagrass', 520, 640, { s: 1 }), life('seagrass', 1580, 600, { s: 0.9 }),
+      life('sargassum', 860, 152, { s: 1 }),
+    ],
+    ambient: { fish: 8 },
+    entries: { default: [400, 400] },
+    snow: 0.05,
+  });
+
+  // ── West: the meadow, the drop-off, and down into the dark ──────────────────
+  def('meadow', {
+    name: 'The meadow', region: 'kelp', map: [-3, 1], w: 1.8, depth: 0.2, dark: 0.08, palette: 'kelp',
+    exits: { right: 'kelp-deep', left: 'drop-off', up: 'rain-sea' },
+    terrain: { floor: [0.14, 0.12, 0.13, 0.11, 0.12, 0.13, 0.12, 0.14] },
+    sand: '#cbbf8e',
+    props: [
+      { layer: 'back', draw(ctx, t, room) { for (let i = 0; i < 18; i++) { const x = 60 + i * 160 + (i % 3) * 30; A.seagrass(ctx, x, room.floorY(x) + 8, 0.8 + (i % 4) * 0.12, t, i); } } },
+      { layer: 'front', draw(ctx, t, room) { for (let i = 0; i < 5; i++) { const x = 300 + i * 600; A.seagrass(ctx, x, room.floorY(x) + 12, 1.3, t, i + 40); } } },
+    ],
+    actors: [life('seagrass', 700, 760, { s: 1.2 }), life('seagrass', 1250, 760, { s: 1 }), life('seagrass', 2350, 760, { s: 1.1 })],
+    ambient: { fish: 12 },
+    snow: 0.1,
+  });
+
+  def('drop-off', {
+    name: 'The drop-off', region: 'kelp', map: [-4, 1], w: 1.6, depth: 0.3, dark: 0.2,
+    exits: { right: 'meadow', down: 'blue-dusk' },
+    terrain: { floor: [0.2, 0.2, 0.2, 0.2, 0.2, 0.22, 0.2, 0.18], floorGap: [0, 0.52], walls: { left: true } },
+    sand: '#bfb388',
+    bg(ctx, t, room) {
+      // The shelf just stops. Under the edge, the wall goes down out of sight.
+      const ex = room.w * 0.52;
+      ctx.fillStyle = 'rgba(40,60,70,0.55)';
+      ctx.beginPath(); ctx.moveTo(ex + 40, room.floorY(ex + 60) + 40);
+      for (let y = 760; y <= room.h + 200; y += 40) { ctx.lineTo(ex + 30 - U.noise1(y / 80, 4) * 50, y); }
+      ctx.lineTo(room.w + 200, room.h + 200); ctx.lineTo(room.w + 200, 760); ctx.closePath(); ctx.fill();
+      const g = ctx.createLinearGradient(0, room.h - 300, 0, room.h);
+      g.addColorStop(0, 'rgba(4,14,24,0)'); g.addColorStop(1, 'rgba(4,14,24,0.6)');
+      ctx.fillStyle = g; ctx.fillRect(0, room.h - 300, ex + 40, 300);
+    },
+    props: [{ type: 'bone-fan', x: 1700, s: 0.9 }, { type: 'bone-fan', x: 2300, s: 1.1 }],
+    ambient: { fish: 6, jelly: 3 },
+    snow: 0.3,
+  });
+
+  def('blue-dusk', {
+    name: 'The blue dusk', region: 'twilight', map: [-4, 2], w: 1.4, h: 1.4, depth: 0.42, dark: 0.45,
+    exits: { up: 'drop-off', down: 'midnight', right: 'holdfasts' },
+    terrain: { walls: { left: true } },
+    actors: [life('barreleye', 900, 520, { s: 1.4 }), life('barreleye', 1650, 880, { s: 1.2 })],
+    ambient: { jelly: 4, firefly: 6 },
+    snow: 0.5,
+  });
+
+  def('holdfasts', {
+    name: 'Under the holdfasts', region: 'kelp', map: [-3, 2], w: 1.4, depth: 0.4, dark: 0.42, palette: 'kelp',
+    exits: { left: 'blue-dusk', right: 'kelp-heart' },
+    terrain: { floor: [0.14, 0.16, 0.12, 0.14, 0.15, 0.13], ceiling: [0.12, 0.15, 0.1, 0.13, 0.12, 0.1], walls: { left: false, right: false } },
+    sand: '#a99f7a',
+    solids: [
+      { type: 'ellipse', x: 700, y: 120, rx: 120, ry: 150, color: '#4f5a34' },
+      { type: 'ellipse', x: 1500, y: 130, rx: 130, ry: 170, color: '#4f5a34' },
+    ],
+    props: [
+      { layer: 'back', draw(ctx, t, room) {
+        // Roots of the kelp above, gripping the rock: holdfasts, tangled like hands.
+        [[700, 260], [1500, 290]].forEach(([x, y], j) => {
+          for (let i = 0; i < 7; i++) {
+            const a = 0.4 + i / 6 * 2.3, pts = [];
+            for (let k = 0; k < 6; k++) { pts.push({ x: x + Math.cos(a) * k * 26 + Math.sin(t * 0.5 + i + k) * 2, y: y - 40 + Math.sin(a) * k * 22 }); }
+            A.taper(ctx, pts, 12, 4, j ? '#5c6a3a' : '#556234');
+          }
+        });
+      } },
+      { type: 'kelp', x: 260, h: 520, seed: 9, layer: 'front', dark: true },
+    ],
+    ambient: { fish: 4 },
+    snow: 0.3,
+  });
+
+  def('midnight', {
+    name: 'Midnight water', region: 'twilight', map: [-4, 3], w: 1.3, h: 1.2, depth: 0.6, dark: 0.9,
+    exits: { up: 'blue-dusk', down: 'brine-lake' },
+    terrain: { walls: { left: true, right: true } },
+    bg(ctx, t, room) { flickers(ctx, room, t, 8, 3.1); },
+    actors: [life('gulper-eel', 1250, 600, { s: 1 })],
+    ambient: { jelly: 3 },
+    snow: 0.5,
+  });
+
+  def('brine-lake', {
+    name: 'The brine lake', region: 'seep', map: [-4, 4], w: 1.8, depth: 0.7, dark: 0.78,
+    exits: { up: 'midnight', right: 'cold-seep' },
+    terrain: { floor: [0.2, 0.22, 0.12, 0.04, 0.04, 0.04, 0.12, 0.22, 0.2], walls: { left: true } },
+    // The lake is heavy water: too salty to swim into. It fills the hollow to the brim.
+    solids: [{ type: 'rect', x: 750, y: 796, w: 1380, h: 300, invisible: true }],
+    props: [
+      { layer: 'mid', draw(ctx, t, room) {
+        const x0 = 750, x1 = 2130, y0 = 796;
+        const g = ctx.createLinearGradient(0, y0, 0, y0 + 110);
+        g.addColorStop(0, 'rgba(70,110,130,0.95)'); g.addColorStop(1, 'rgba(8,16,24,1)');
+        ctx.fillStyle = g;
+        ctx.beginPath(); ctx.moveTo(x0, y0);
+        for (let x = x0; x <= x1; x += 30) { ctx.lineTo(x, y0 + Math.sin(x * 0.02 + t * 1.2) * 2.5); }
+        ctx.lineTo(x1, y0 + 200); ctx.lineTo(x0, y0 + 200); ctx.closePath(); ctx.fill();
+        ctx.strokeStyle = 'rgba(200,235,245,0.6)'; ctx.lineWidth = 2;
+        ctx.beginPath();
+        for (let x = x0; x <= x1; x += 30) { ctx.lineTo(x, y0 + Math.sin(x * 0.02 + t * 1.2) * 2.5); }
+        ctx.stroke();
+        // a shore of mussels, crowding the edge, where the seep water feeds them
+        for (let i = 0; i < 46; i++) {
+          const side = i % 2, x = side ? x1 - 10 - (i * 13) % 160 : x0 + 10 + (i * 13) % 160;
+          A.ellipse(ctx, x, room.floorY(x) - 4 + (i % 3) * 2, 9, 5, (i % 5) * 0.3, '#2a2c36', 'rgba(150,160,180,0.35)', 1);
+        }
+      } },
+    ],
+    ambient: { glass: 1 },
+    snow: 0.4,
+  });
+
+  def('cold-seep', {
+    name: 'The cold seep', region: 'seep', map: [-3, 4], w: 1.6, depth: 0.72, dark: 0.75,
+    exits: { left: 'brine-lake', down: 'mud-volcanoes' },
+    terrain: { floor: [0.16, 0.14, 0.18, 0.12, 0.12, 0.14, 0.18, 0.2], floorGap: [0.66, 0.84], walls: { right: true } },
+    solids: [
+      { type: 'rect', x: 520, y: 560, w: 120, h: 420, color: '#6e6a5e' },
+      { type: 'rect', x: 1130, y: 610, w: 100, h: 380, color: '#6e6a5e' },
+    ],
+    props: [
+      { layer: 'back', draw(ctx, t, room) {
+        // Gas seeping out of the ground in threads of bubbles.
+        [[700, 0], [1000, 1], [1500, 2], [2400, 3]].forEach(([x, i]) => {
+          const base = room.floorY(x);
+          for (let k = 0; k < 7; k++) { const f = ((t * 0.3 + k / 7 + i * 0.2) % 1); A.circle(ctx, x + Math.sin(f * 9 + i) * 8, base - f * 500, 3 + (1 - f) * 2, 'rgba(230,245,250,0.35)', null); }
+        });
+      } },
+      { layer: 'mid', draw(ctx, t, room) {
+        // Tube worms: white tubes with red plumes, in clumps around the cracks.
+        [[420, 7], [880, 9], [1350, 8], [2380, 6]].forEach(([x, n], j) => {
+          for (let i = 0; i < n; i++) {
+            const bx = x + (i - n / 2) * 10, base = room.floorY(bx) + 6, h = 60 + ((i * 29 + j * 13) % 70), lean = Math.sin(i + j) * 12;
+            ctx.strokeStyle = '#e4dccb'; ctx.lineWidth = 5; ctx.lineCap = 'round';
+            ctx.beginPath(); ctx.moveTo(bx, base); ctx.quadraticCurveTo(bx + lean * 0.4, base - h * 0.6, bx + lean, base - h); ctx.stroke();
+            A.circle(ctx, bx + lean, base - h - 4, 6 + Math.sin(t * 2 + i) * 1.2, '#c8353f', 'rgba(60,10,10,0.4)', 1);
+          }
+        });
+      } },
+    ],
+    actors: [
+      life('yeti-crab', 820, 760, { s: 1 }), life('yeti-crab', 1400, 760, { s: 0.85, dir: -1 }),
+      life('bacterial-mat', 300, 760, { w: 200 }), life('bacterial-mat', 1000, 780, { w: 160 }), life('bacterial-mat', 2400, 760, { w: 220 }),
+    ],
+    lights: [{ x: 900, y: 700, r: 500, color: '#b8d0c8', level: 0.25 }],
+    snow: 0.4,
+  });
+
+  def('mud-volcanoes', {
+    name: 'The mud volcanoes', region: 'seep', map: [-3, 5], w: 1.4, depth: 0.82, dark: 0.85,
+    exits: { up: 'cold-seep' },
+    terrain: { floor: [0.16, 0.22, 0.14, 0.26, 0.16, 0.24, 0.18], walls: { left: true, right: true } },
+    onUpdate(room, dt) {
+      // The mounds burp mud, all together, about once every four seconds.
+      const beat = Math.floor(SO.E.t / 4);
+      if (beat !== room.state.beat) {
+        room.state.beat = beat;
+        [373, 1120, 1867].forEach((x) => {
+          for (let i = 0; i < 6; i++) { SO.E.particles.push({ kind: 'bubble', x: x + (Math.random() - 0.5) * 40, y: room.floorY(x) - 10, vx: (Math.random() - 0.5) * 60, vy: -60 - Math.random() * 80, life: 3, t: 0, r: 2 + Math.random() * 4 }); }
+        });
+        if (SO.audio && SO.E.room === room) { SO.audio.noise({ dur: 0.9, freq: 90, q: 0.7, gain: 0.08, sweep: 0.6 }); }
+      }
+    },
+    actors: [life('node-reeds', 750, 780, { s: 1, seed: 1 }), life('node-reeds', 1500, 780, { s: 1.1, seed: 2 })],
+    snow: 0.5,
+  });
+
+  // ── Middle: by the fallen dome and the cliff ────────────────────────────────
+  def('fallen-spire', {
+    name: 'The fallen spire', region: 'hollowglass', map: [-1, 3], w: 1.4, depth: 0.5, dark: 0.5, palette: 'glass',
+    exits: { right: 'hollowglass-rim' },
+    terrain: { floor: [0.12, 0.14, 0.16, 0.13, 0.12, 0.14], walls: { left: true } },
+    sand: '#a9b7a6',
+    bg(ctx, t, room) {
+      // The top of a tower from home, snapped off and lying across the floor.
+      A.tower(ctx, 900, room.floorY(900) - 10, 150, 1300, { tilt: -1.05 });
+    },
+    props: [{ type: 'glass-coral', x: 400, s: 1 }, { type: 'glass-coral', x: 1750, s: 1.2 }, { type: 'glass-coral', x: 2000, s: 0.8 }],
+    ambient: { glass: 2, fish: 2 },
+    snow: 0.2,
+  });
+
+  def('lantern-ledges', {
+    name: 'The lantern ledges', region: 'cliff', map: [2, 2], w: 1.4, depth: 0.58, dark: 0.62,
+    exits: { left: 'cliff-foot' },
+    terrain: { floor: [0.14, 0.12, 0.14, 0.15, 0.16, 0.18], walls: { right: true } },
+    solids: [
+      { type: 'rect', x: 600, y: 400, w: 380, h: 52 },
+      { type: 'rect', x: 1380, y: 300, w: 400, h: 52 },
+    ],
+    shelters: [[600, 452, 380, 280], [1380, 352, 400, 380]],
+    props: [
+      { type: 'lantern-weed', x: 660, y: 402, s: 0.8 }, { type: 'lantern-weed', x: 800, y: 402, s: 0.7 }, { type: 'lantern-weed', x: 920, y: 402, s: 0.9 },
+      { type: 'lantern-weed', x: 1450, y: 302, s: 0.8 }, { type: 'lantern-weed', x: 1600, y: 302, s: 1 }, { type: 'lantern-weed', x: 1730, y: 302, s: 0.7 },
+      { type: 'lantern-weed', x: 300, s: 1 }, { type: 'lantern-weed', x: 1150, s: 0.9 }, { type: 'bone-fan', x: 450, s: 0.9 }, { type: 'bone-fan', x: 1900, s: 1 },
+    ],
+    actors: [life('bell-whelk', 1700, 740, { s: 1, dir: -1 })],
+    lights: [{ x: 1100, y: 400, r: 800, color: '#8ff7d8', level: 0.35 }],
+    snow: 0.3,
+  });
+
+  // ── East: down the chain ────────────────────────────────────────────────────
+  def('tether-twilight', {
+    name: 'The twilight', region: 'tether', map: [5, 1], w: 1.2, h: 1.4, depth: 0.4, dark: 0.45,
+    exits: { up: 'anchored-isle', down: 'tether-breathless' },
+    terrain: { walls: { left: true, right: true } },
+    bg(ctx, t, room) { chain(ctx, 960, -120, room.h + 120, t); },
+    actors: [life('barreleye', 560, 480, { s: 1.3 }), life('barreleye', 1380, 920, { s: 1.5, seed: 4 })],
+    ambient: { jelly: 4, firefly: 4 },
+    snow: 0.5,
+  });
+
+  def('tether-breathless', {
+    name: 'The breathless layer', region: 'tether', map: [5, 2], w: 1.2, h: 1.2, depth: 0.55, dark: 0.62,
+    exits: { up: 'tether-twilight', down: 'tether-curtain' },
+    terrain: { walls: { left: true, right: true } },
+    bg(ctx, t, room) {
+      chain(ctx, 960, -120, room.h + 120, t, 0.85);
+      haze(ctx, room, '#3a3428', 0.22);
+      // Fish that swam in here and stopped. They hang in the water, not sinking, not rotting.
+      [[320, 300, 0.3], [600, 820, -0.4], [1300, 260, 2.8], [1500, 700, 3.4], [820, 520, 0.1]].forEach(([x, y, a], i) => {
+        A.fish(ctx, x + Math.sin(t * 0.05 + i) * 4, y, 1.1, a, 40 + i * 30, 0, { dead: true });
+      });
+    },
+    onUpdate(room, dt) {
+      // There's so little in this water that swimming is hard work.
+      const sq = SO.E.squid, k = Math.exp(-dt * 0.5);
+      sq.vx *= k; sq.vy *= k;
+    },
+    actors: [life('hushmouth', 1300, 520, { s: 1 })],
+    snow: 0.7, drift: [0, 4],
+  });
+
+  def('tether-curtain', {
+    name: 'The living curtain', region: 'tether', map: [5, 3], w: 1.3, h: 1.6, depth: 0.66, dark: 0.82,
+    exits: { up: 'tether-breathless', down: 'tether-anchor' },
+    terrain: { walls: { left: true, right: true } },
+    bg(ctx, t, room) { chain(ctx, 1040, -120, room.h + 120, t, 0.6); flickers(ctx, room, t, 6, 7.7); },
+    actors: [
+      life('siphonophore', 560, 420, { s: 1, n: 30, dir: 1 }),
+      life('siphonophore', 1800, 1050, { s: 0.8, n: 26, dir: 1, seed: 3 }),
+    ],
+    ambient: { jelly: 2 },
+    snow: 0.6,
+  });
+
+  def('tether-anchor', {
+    name: 'The anchor', region: 'tether', map: [5, 5], w: 1.6, depth: 0.85, dark: 0.82,
+    exits: { up: 'tether-curtain', left: 'stone-choir', down: 'hadal' },
+    terrain: { floor: [0.16, 0.14, 0.12, 0.12, 0.12, 0.14, 0.18], floorGap: [0.7, 0.88], walls: { right: true } },
+    bg(ctx, t, room) {
+      const fy = room.floorY(1100);
+      chain(ctx, 1100, -120, fy - 260, t);
+      // The anchor: a ring of glass as big as a dome, half sunk in the mud.
+      ctx.save();
+      ctx.lineWidth = 46; ctx.strokeStyle = 'rgba(20,40,48,0.6)';
+      ctx.beginPath(); ctx.ellipse(1100, fy - 20, 260, 200, 0, Math.PI, 0); ctx.stroke();
+      ctx.lineWidth = 36; ctx.strokeStyle = 'rgba(160,215,220,0.55)'; ctx.stroke();
+      ctx.lineWidth = 6; ctx.strokeStyle = 'rgba(255,255,255,0.25)';
+      ctx.beginPath(); ctx.ellipse(1100, fy - 26, 250, 190, 0, Math.PI * 1.1, Math.PI * 1.5); ctx.stroke();
+      ctx.restore();
+    },
+    actors: [life('stone-hummer', 500, 760, { s: 0.9, seed: 7 })],
+    lights: [{ x: 1100, y: 600, r: 600, color: '#bff8ea', level: 0.25, flicker: true }],
+    snow: 0.5,
+  });
+
+  def('stone-choir', {
+    name: 'The stone choir', region: 'abyss', map: [4, 5], w: 1.6, depth: 0.88, dark: 0.8,
+    exits: { left: 'abyssal-plain', right: 'tether-anchor' },
+    terrain: { floor: [0.14, 0.12, 0.13, 0.12, 0.14, 0.12, 0.13] },
+    actors: [
+      life('stone-hummer', 600, 780, { s: 1, seed: 1 }),
+      life('stone-hummer', 1550, 780, { s: 1.2, seed: 2 }),
+      life('stone-hummer', 2150, 780, { s: 0.8, seed: 3 }),
+    ],
+    snow: 0.4,
+  });
+
+  // ── The bottom ──────────────────────────────────────────────────────────────
+  def('whale-fall', {
+    name: 'The whale fall', region: 'abyss', map: [2, 5], w: 1.6, depth: 0.86, dark: 0.8,
+    exits: { left: 'trench-floor', right: 'abyssal-plain' },
+    terrain: { floor: [0.14, 0.12, 0.12, 0.12, 0.13, 0.14] },
+    props: [
+      { layer: 'back', draw(ctx, t, room) {
+        // A whale, years dead. First the sharks came, then the worms, then the bugs.
+        const fy = room.floorY(1300);
+        ctx.save(); ctx.translate(1300, fy + 10); ctx.strokeStyle = '#d6cfba'; ctx.lineCap = 'round';
+        ctx.lineWidth = 22; ctx.beginPath(); ctx.moveTo(-900, -10); ctx.quadraticCurveTo(-100, -50, 700, -20); ctx.stroke();
+        for (let i = 0; i < 16; i++) {
+          const x = -760 + i * 80, hh = 300 - Math.abs(i - 7) * 18;
+          ctx.lineWidth = 13; ctx.beginPath(); ctx.moveTo(x, -30); ctx.quadraticCurveTo(x + 60, -hh * 0.7, x + 20, -hh); ctx.stroke();
+        }
+        ctx.fillStyle = '#e2dbc6'; ctx.beginPath(); ctx.ellipse(860, -70, 230, 110, 0.15, 0, U.TAU); ctx.fill();
+        ctx.fillStyle = '#121a1e'; ctx.beginPath(); ctx.ellipse(950, -90, 40, 26, 0, 0, U.TAU); ctx.fill();
+        ctx.strokeStyle = '#d24a5a'; ctx.lineWidth = 3;
+        for (let i = 0; i < 40; i++) { const x = -860 + i * 40; ctx.beginPath(); ctx.moveTo(x, -16); ctx.lineTo(x + Math.sin(t * 3 + i) * 5, -36); ctx.stroke(); }
+        ctx.restore();
+      } },
+    ],
+    actors: [
+      life('giant-isopod', 600, 780, { s: 1.3 }), life('giant-isopod', 1750, 780, { s: 1.1, seed: 5, roam: 120 }),
+      life('bacterial-mat', 1050, 780, { w: 240 }), life('bacterial-mat', 1500, 780, { w: 180 }),
+    ],
+    snow: 0.5,
+  });
+
+  def('abyssal-plain', {
+    name: 'The abyssal plain', region: 'abyss', map: [3, 5], w: 2.4, depth: 0.88, dark: 0.82,
+    exits: { left: 'whale-fall', right: 'stone-choir' },
+    terrain: { floor: [0.12, 0.12, 0.13, 0.12, 0.12, 0.12, 0.13, 0.12, 0.12, 0.12] },
+    props: [
+      { layer: 'mid', draw(ctx, t, room) {
+        // Xenophyophores: lumpy single cells the size of a fist, all over the mud.
+        for (let i = 0; i < 22; i++) {
+          const x = 90 + i * 170 + (i % 4) * 20, y = room.floorY(x) + 2;
+          A.shape(ctx, [[x - 14, y], [x - 12, y - 10], [x - 2, y - 16], [x + 10, y - 12], [x + 14, y]], '#7a7062', { lw: 1.2 });
+        }
+      } },
+    ],
+    actors: [
+      life('sea-pig', 1000, 780, { n: 5, roam: 300 }), life('sea-pig', 3000, 780, { n: 3, roam: 200, s: 0.9 }),
+      life('giant-isopod', 2000, 780, { s: 1.2, seed: 9 }),
+    ],
+    snow: 0.5,
+  });
+
+  def('hadal', {
+    name: 'The hadal deep', region: 'abyss', map: [5, 6], w: 1.2, h: 2, depth: 0.95, dark: 0.9,
+    exits: { up: 'tether-anchor', down: 'hadal-floor' },
+    terrain: { walls: { left: true, right: true } },
+    solids: [{ type: 'rect', x: 60, y: 620, w: 400, h: 52 }, { type: 'rect', x: 1440, y: 1180, w: 420, h: 52 }],
+    bg(ctx, t, room) {
+      // The walls lean in as you go down. (They don't really. It just looks that way.)
+      ctx.fillStyle = 'rgba(0,0,0,0.35)';
+      ctx.beginPath(); ctx.moveTo(-100, -100); ctx.lineTo(260, -100); ctx.lineTo(420, room.h + 100); ctx.lineTo(-100, room.h + 100); ctx.fill();
+      ctx.beginPath(); ctx.moveTo(room.w + 100, -100); ctx.lineTo(room.w - 260, -100); ctx.lineTo(room.w - 420, room.h + 100); ctx.lineTo(room.w + 100, room.h + 100); ctx.fill();
+    },
+    snow: 0.8,
+  });
+
+  def('hadal-floor', {
+    name: 'The bottom of everything', region: 'abyss', map: [5, 8], w: 1.3, depth: 0.99, dark: 0.95,
+    exits: { up: 'hadal' },
+    terrain: { floor: [0.16, 0.14, 0.12, 0.12, 0.14, 0.18], walls: { left: true, right: true } },
+    actors: [life('hushmouth', 1500, 420, { s: 1.2, seed: 2 })],
+    snow: 0.9,
+  });
+
+  // ── Below the garden ────────────────────────────────────────────────────────
+  def('smokers', {
+    name: 'The black smokers', region: 'forge', map: [-2, 13], w: 1.5, depth: 0.92, dark: 0.6, palette: 'forge',
+    exits: { right: 'forge', down: 'glass-caves' },
+    terrain: { floor: [0.14, 0.16, 0.12, 0.14, 0.18, 0.14], floorGap: [0.18, 0.36], ceiling: [0.08, 0.1, 0.06, 0.08, 0.1, 0.06] },
+    rock: '#2a2422', rockHi: '#4a3a34', floorTop: '#5a3a2a',
+    solids: [
+      { type: 'rect', x: 1100, y: 380, w: 120, h: 640, color: '#1f1b1a' },
+      { type: 'rect', x: 1720, y: 460, w: 100, h: 560, color: '#1f1b1a' },
+    ],
+    props: [
+      { layer: 'back', draw(ctx, t) {
+        // Black smoke out of the chimneys: hot water full of metal.
+        [[1160, 380], [1770, 460]].forEach(([x, y], j) => {
+          for (let i = 0; i < 6; i++) {
+            const k = ((t * 0.25 + i / 6 + j * 0.3) % 1);
+            ctx.fillStyle = `rgba(12,10,10,${0.5 * (1 - k)})`;
+            ctx.beginPath(); ctx.arc(x + Math.sin(t + i) * 20 * k, y - k * 380, 24 + k * 70, 0, U.TAU); ctx.fill();
+          }
+        });
+      } },
+      { layer: 'mid', draw(ctx, t, room) {
+        // Giant tube worms around the chimney feet, plumes out.
+        [[1060, 6], [1260, 5], [1680, 6], [1860, 4]].forEach(([x, n], j) => {
+          for (let i = 0; i < n; i++) {
+            const bx = x + (i - n / 2) * 12, base = room.floorY(bx) + 6, h = 80 + ((i * 31 + j * 7) % 60);
+            ctx.strokeStyle = '#ece6da'; ctx.lineWidth = 7; ctx.lineCap = 'round';
+            ctx.beginPath(); ctx.moveTo(bx, base); ctx.lineTo(bx + Math.sin(i + j) * 6, base - h); ctx.stroke();
+            A.ellipse(ctx, bx + Math.sin(i + j) * 6, base - h - 8, 7, 12 + Math.sin(t * 2 + i) * 1.5, 0, '#d0303a', 'rgba(60,10,10,0.4)', 1);
+          }
+        });
+      } },
+    ],
+    actors: [life('yeti-crab', 1450, 760, { s: 1.1 }), life('yeti-crab', 2050, 760, { s: 0.9, dir: -1 }), life('bacterial-mat', 2200, 770, { w: 200 })],
+    lights: [{ x: 1160, y: 380, r: 500, color: '#ff8a4a', level: 0.4 }, { x: 1770, y: 460, r: 420, color: '#ff8a4a', level: 0.35 }],
+    snow: 0.2,
+  });
+
+  def('glass-caves', {
+    name: 'The singing glass', region: 'forge', map: [-2, 14], w: 1.4, depth: 0.97, dark: 0.72, palette: 'shine',
+    exits: { up: 'smokers' },
+    terrain: { floor: [0.14, 0.2, 0.12, 0.16, 0.12, 0.18], ceiling: [0.2, 0.12, 0.18, 0.1, 0.16, 0.14], ceilGap: [0.2, 0.4], walls: { left: true, right: true } },
+    rock: '#15121c', rockHi: '#3a3050', floorTop: '#4a3e62',
+    bg(ctx, t, room) {
+      // Volcanic glass, black and shining. Every flash comes back off it.
+      ctx.strokeStyle = 'rgba(200,180,255,0.12)'; ctx.lineWidth = 2;
+      for (let i = 0; i < 16; i++) {
+        const x = 80 + i * 140, y = 200 + (i * 97) % 400;
+        ctx.beginPath(); ctx.moveTo(x, y); ctx.lineTo(x + 40, y - 70); ctx.lineTo(x + 70, y + 10); ctx.stroke();
+      }
+      const sq = SO.E.squid;
+      if (sq.flashAmt > 0.05 && sq.flash) {
+        ctx.save(); ctx.globalCompositeOperation = 'lighter';
+        ctx.fillStyle = U.rgba(SO.E.SKIN_HEX[sq.flash], 0.06 * sq.flashAmt); ctx.fillRect(0, 0, room.w, room.h);
+        ctx.restore();
+      }
+    },
+    actors: [life('node-reeds', 900, 760, { s: 1.1, seed: 3 }), life('node-reeds', 1500, 760, { s: 0.9, seed: 0 }), life('node-reeds', 1900, 760, { s: 1, seed: 2 })],
+    lights: [{ x: 1200, y: 500, r: 700, color: '#b7a0ff', level: 0.25 }],
+    snow: 0.2,
+  });
+
+  def('hatchery', {
+    name: 'Where the eggs hatch', region: 'undershine', map: [2, 13], w: 1.4, depth: 0.88, dark: 0.32, palette: 'shine',
+    exits: { left: 'keeper-hall' },
+    terrain: { floor: [0.12, 0.14, 0.12, 0.1, 0.12, 0.14], ceiling: [0.1, 0.12, 0.08, 0.1, 0.12, 0.1], walls: { right: true } },
+    rock: '#3a2c3e', rockHi: '#6a5060', floorTop: '#7a5a64',
+    bg(ctx, t, room) { warmHaze(ctx, room, t); },
+    props: [
+      { layer: 'mid', draw(ctx, t, room) {
+        for (let i = 0; i < 4; i++) { const x = 300 + i * 500; brooders(ctx, x, room.floorY(x) + 6, 3 + (i % 2) * 3, t, 80 + i); }
+        // One mother has stopped moving. After the eggs hatch, they don't eat again.
+        const x = 1700, y = room.floorY(1700) - 16;
+        ctx.fillStyle = 'rgba(232,226,230,0.85)'; ctx.beginPath(); ctx.ellipse(x, y, 22, 13, 0.2, 0, U.TAU); ctx.fill();
+        ctx.strokeStyle = 'rgba(232,226,230,0.7)'; ctx.lineWidth = 3;
+        for (let a = 0; a < 5; a++) { ctx.beginPath(); ctx.moveTo(x - 10 + a * 5, y + 8); ctx.quadraticCurveTo(x - 30 + a * 14, y + 18, x - 50 + a * 24, y + 14); ctx.stroke(); }
+      } },
+    ],
+    actors: [{ id: 'dumbo-h', type: 'dumbo', x: 1400, y: 380, seed: 8, hue: 320, roam: 90 }],
+    lights: [{ x: 1100, y: 600, r: 900, color: '#ffd8c0', level: 0.6 }],
+    snow: 0.3,
+  });
+
+  // ── Wiring the new places into the old ones (both ways) ─────────────────────
+  link('bright-reef', 'left', 'sargasso');
+  link('kelp-deep', 'up', 'sargasso');
+  link('kelp-deep', 'left', 'meadow');
+  link('kelp-heart', 'left', 'holdfasts');
+  link('hollowglass-rim', 'left', 'fallen-spire');
+  link('cliff-foot', 'right', 'lantern-ledges');
+  link('trench-floor', 'right', 'whale-fall');
+  link('plunge', 'right', 'anchored-isle');
+  link('forge', 'left', 'smokers');
+  link('keeper-hall', 'right', 'hatchery');
+
+  // ════════════════════════════════════════════════════════════════════════════
   // The Below: built from shared tiles
   // ════════════════════════════════════════════════════════════════════════════
   const GEM_COLORS = ['#c79bff', '#7fe8ff', '#ffcf7a', '#ff9bb8'];

@@ -318,6 +318,29 @@
       },
     },
 
+    // Chapter 6: Bead, gone white, sinking past your eye into the dark.
+    bead: {
+      dur: 7,
+      start() { const a = AU(); a.dread && a.dread(0); [62, 61, 57].forEach((n, i) => a.bell && a.bell(a.NOTE(n), { when: i * 1.6, gain: 0.035, dur: 5 })); },
+      draw(c, W, H, t) {
+        water(c, W, H, '#5a3a2a', '#1a0c08');
+        rays(c, W, H, t, 0.08, '255,200,150');
+        // a small white shape, turning slowly, going down and away
+        const k = t / 7, x = W * 0.5 + Math.sin(t * 0.5) * 30, y = U.lerp(H * 0.25, H * 1.05, k * k);
+        const s = U.lerp(2.4, 0.8, k);
+        c.save(); c.translate(x, y); c.rotate(Math.PI / 2 + Math.sin(t * 0.4) * 0.3); c.scale(s, s);
+        c.fillStyle = 'rgba(245,242,236,0.92)';
+        c.beginPath(); c.ellipse(20, 0, 34, 9, 0, 0, TAU); c.fill();
+        c.beginPath(); c.moveTo(48, 0); c.lineTo(60, -10); c.lineTo(64, 0); c.lineTo(60, 10); c.closePath(); c.fill();
+        c.strokeStyle = 'rgba(245,242,236,0.85)'; c.lineWidth = 2;
+        for (let i = 0; i < 6; i++) { c.beginPath(); c.moveTo(-12, (i - 2.5) * 2); c.quadraticCurveTo(-24, (i - 2.5) * 3 + Math.sin(t + i) * 2, -36, (i - 2.5) * 4); c.stroke(); }
+        c.fillStyle = 'rgba(30,20,20,0.7)'; c.beginPath(); c.arc(-8, -1, 3, 0, TAU); c.fill();
+        c.restore();
+        specks(c, W, H, t, 40, [0, -0.3], '255,220,190');
+        eye(c, W, H, t, { rim: 0.8, blink: blinkAt(t, 3.3, 0.5) + (t > 6.4 ? (t - 6.4) / 0.6 : 0) });
+      },
+    },
+
     // Chapter 7, Home: under the waterfall, looking up the falling water to the light, and wings.
     ch7: {
       dur: 8,

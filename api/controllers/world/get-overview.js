@@ -51,6 +51,9 @@ the open ocean with her), and "song" (the swans: called the swans, and the sky i
 rest on the sea).
 
 All times are JS timestamps (milliseconds since the Unix epoch).  This is a good first call; use
+get-world-facts (a searchable encyclopedia of the whole world: every place and its exits, each
+chapter and how to get through it, endings, mechanics, creatures, oddities, cutscenes, trivia, and
+planned systems, each marked with a spoiler level and whether it's built or only planned),
 get-lore (story, places, smells, dirt), get-skin-words (the melodies), get-species (creatures and
 plants), get-squids (players, and what each knows), get-online (who's swimming right now), get-history,
 get-state, and get-map for detail.`,
@@ -68,8 +71,8 @@ get-state, and get-map for detail.`,
       outputFriendlyName: 'World overview',
       outputDescription:
         '`{ serverNow, worldSeed, bornAt, squids, finishedSquids, endingsTally: {return,lantern,gift,song}, tilesDiscovered, tilesTotal, '+
-        'speciesCount: {creature,plant,item}, nativeSpeciesCount, eruptionsTotal, state, recent }`.  `bornAt` is when the first world event happened (epoch ms, or null). '+
-        '`devices` = how many squids were last played on each kind of device; `speciesCount` counts procedurally generated species; `nativeSpeciesCount` counts the native (real) ones.  `squids` = squids ever hatched; `finishedSquids` = distinct squids who reached at least one ending.  `state` is the live world state '+
+        'speciesCount: {creature,plant,item}, nativeSpeciesCount, worldFactsCount, eruptionsTotal, state, recent }`.  `bornAt` is when the first world event happened (epoch ms, or null). '+
+        '`devices` = how many squids were last played on each kind of device; `speciesCount` counts procedurally generated species; `nativeSpeciesCount` counts the native (real) ones; `worldFactsCount` counts the facts get-world-facts can search.  `squids` = squids ever hatched; `finishedSquids` = distinct squids who reached at least one ending.  `state` is the live world state '+
         '(same as get-state).  `recent` is the 10 most recent world events, newest first.'
     },
 
@@ -105,6 +108,7 @@ get-state, and get-map for detail.`,
         item: await Species.count({ kind: 'item' }),
       },
       nativeSpeciesCount: await NativeSpecies.count().tolerate(() => sails.helpers.world.getNativeSpecies().length),
+      worldFactsCount: await WorldFact.count().tolerate(() => sails.helpers.world.getWorldFacts().facts.length),
       eruptionsTotal: await WorldEvent.count({ kind: 'eruption' }),
       state: await sails.helpers.world.getWorldState(now),
       recent: await WorldEvent.find().sort([{ startsAt: 'DESC' }, { id: 'DESC' }]).limit(10),

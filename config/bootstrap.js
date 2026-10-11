@@ -26,6 +26,18 @@ module.exports.bootstrap = async function() {
     sails.log.warn('Could not seed native species (has the `nativespecies` table been created?):', err.message);
   }
 
+  // The world's knowledge (places, chapters, mechanics, oddities, trivia, planned systems...) lives in
+  // the database too, so agents can search it (world/get-world-facts, also over MCP).  Same deal:
+  // idempotent, race-safe, every lift.  If the production table hasn't been created yet
+  // (`sails run create-world-fact-table`), the app still lifts and world/get-world-facts falls back
+  // to the built-in facts.
+  try {
+    let seeded = await sails.helpers.world.seedWorldFacts();
+    sails.log.verbose('World facts seeded:', seeded);
+  } catch (err) {
+    sails.log.warn('Could not seed world facts (has the `worldfact` table been created?):', err.message);
+  }
+
 };
 
 async function seedFakeData() {

@@ -226,6 +226,305 @@
         ctx.restore();
       },
     },
+
+    // ── The wider sea ──────────────────────────────────────────────────────────
+
+    // A sargassum frogfish, gold and frilly like the weed, clambering through it on fins
+    // that work like hands.
+    frogfish: {
+      desc: 'A fish with hands?', r: 50,
+      update(a, dt, room) {
+        a.hide = Math.max(0, (a.hide || 0) - dt);
+        if (!a.hide) { a.x = a.home.x + Math.sin(a.t * 0.12) * 90; }
+        a.y = (room.surfaceY !== null ? room.surfaceY : a.home.y) + 46 + Math.sin(a.t * 0.9) * 4;
+      },
+      draw(ctx, a, room, t) {
+        const dir = Math.cos(a.t * 0.12) > 0 ? 1 : -1, step = Math.sin(t * 3) * (a.hide ? 0 : 1);
+        ctx.save(); ctx.translate(a.x, a.y); ctx.scale(dir, 1);
+        ctx.globalAlpha *= a.hide ? 0.45 : 1;
+        A.ellipse(ctx, 0, 0, 22, 16, 0, '#b58f3c', 'rgba(60,40,10,0.45)', 1.4);
+        ctx.strokeStyle = '#a3812f'; ctx.lineWidth = 2;
+        for (let i = 0; i < 7; i++) { const ang = -2.6 + i * 0.45; ctx.beginPath(); ctx.moveTo(Math.cos(ang) * 18, Math.sin(ang) * 13); ctx.lineTo(Math.cos(ang) * 26, Math.sin(ang) * 20 + Math.sin(t * 2 + i) * 2); ctx.stroke(); }
+        ctx.strokeStyle = '#9a7a32'; ctx.lineWidth = 4; ctx.lineCap = 'round';
+        ctx.beginPath(); ctx.moveTo(8, 10); ctx.lineTo(16 + step * 3, 20); ctx.moveTo(-6, 12); ctx.lineTo(-10 - step * 3, 21); ctx.stroke();
+        ctx.beginPath(); ctx.moveTo(-20, 0); ctx.lineTo(-30, -6 + step * 2); ctx.lineTo(-30, 6 + step * 2); ctx.closePath(); ctx.fillStyle = '#a3812f'; ctx.fill();
+        A.circle(ctx, 12, -5, 3, '#f2e6b0', null); A.circle(ctx, 12.6, -5, 1.4, '#1a1408', null);
+        ctx.restore();
+      },
+      touch(a) { a.hide = 4; AU.tock(AU.NOTE(70), { gain: 0.04 }); },
+    },
+
+    // A root of the floating island above, hanging down into the sea, dripping fresh water.
+    'isle-root': {
+      desc: 'A root, from the sky', r: 70,
+      draw(ctx, a, room, t) {
+        const top = (room.surfaceY || 0) - 420;
+        ctx.save();
+        ctx.lineCap = 'round';
+        for (let i = 0; i < 4; i++) {
+          const pts = [];
+          for (let k = 0; k <= 8; k++) { const f = k / 8; pts.push({ x: a.x + (i - 1.5) * 18 * (1 - f) + Math.sin(f * 4 + i + t * 0.3) * 10 * f, y: U.lerp(top, a.y + i * 14, f) }); }
+          A.taper(ctx, pts, 9 - i, 2, i % 2 ? '#6a5a44' : '#7a684e');
+        }
+        for (let i = 0; i < 3; i++) {// fresh water, dripping off it
+          const k = ((t * 0.6 + i / 3) % 1);
+          A.circle(ctx, a.x + (i - 1) * 8, a.y + 30 + k * 260, 3 * (1 - k), 'rgba(220,250,255,0.6)', null);
+        }
+        ctx.globalCompositeOperation = 'lighter';
+        A.glow(ctx, a.x, a.y + 20, 60, '#dff8ff', 0.15 + 0.08 * Math.sin(t));
+        ctx.restore();
+      },
+      touch(a) { if (!a._said) { a._said = true; SO.ui.thought('It tastes like the pool at home. Fresh water, not salt.'); } AU.bell(AU.NOTE(88), { gain: 0.03, dur: 2 }); },
+    },
+
+    // What's left of a swan, caught in the links of the chain.
+    'swan-bones': {
+      desc: 'A swan, what’s left', r: 90,
+      draw(ctx, a, room, t) {
+        ctx.save(); ctx.translate(a.x, a.y); ctx.rotate(Math.sin(t * 0.3) * 0.08);
+        ctx.strokeStyle = '#e6e0d0'; ctx.lineCap = 'round';
+        ctx.lineWidth = 4; ctx.beginPath(); ctx.moveTo(-60, 10); ctx.quadraticCurveTo(0, 0, 30, -10); ctx.quadraticCurveTo(60, -30, 50, -70); ctx.quadraticCurveTo(46, -90, 66, -96); ctx.stroke();
+        ctx.lineWidth = 2.5;
+        for (let i = 0; i < 6; i++) { const x = -40 + i * 12; ctx.beginPath(); ctx.moveTo(x, 6); ctx.quadraticCurveTo(x + 6, 30, x - 2, 40 - Math.abs(i - 2.5) * 4); ctx.stroke(); }
+        ctx.beginPath(); ctx.moveTo(-20, 0); ctx.lineTo(-70, -40 + Math.sin(t * 0.5) * 4); ctx.lineTo(-110, -30); ctx.moveTo(-70, -40); ctx.lineTo(-96, -60); ctx.stroke();
+        A.ellipse(ctx, 70, -98, 9, 6, 0.2, '#ece6d6', 'rgba(60,60,60,0.35)', 1);
+        A.shape(ctx, [[78, -100], [96, -96], [78, -94]], '#c9a070', { sharp: true, lw: 1 });
+        A.circle(ctx, 70, -100, 2, '#151820', null);
+        ctx.restore();
+      },
+      touch(a) { if (!a._said) { a._said = true; SO.ui.thought('Its feathers are gone. Something picked it clean and left it hanging here.'); } },
+    },
+
+    // Garden eels: a field of thin eels standing out of the sand. They sink away as you come.
+    'garden-eels': {
+      desc: 'Garden eels', r: 160,
+      draw(ctx, a, room, t) {
+        const sq = E.squid;
+        for (let i = 0; i < 11; i++) {
+          const x = a.x - 220 + i * 44 + Math.sin(i * 3.3) * 10, base = room.floorY(x) + 4;
+          const d = U.dist(sq.x, sq.y, x, base - 60);
+          a['o' + i] = U.lerp(a['o' + i] === undefined ? 1 : a['o' + i], d < 340 ? 0 : 1, 0.04);
+          const h = (50 + (i * 17) % 30) * a['o' + i];
+          if (h < 3) { continue; }
+          const sway = Math.sin(t * 1.2 + i) * 8;
+          ctx.strokeStyle = i % 3 ? '#d8cfa8' : '#8a8a8a'; ctx.lineWidth = 5; ctx.lineCap = 'round';
+          ctx.beginPath(); ctx.moveTo(x, base); ctx.quadraticCurveTo(x + sway * 0.3, base - h * 0.6, x + sway, base - h); ctx.stroke();
+          A.circle(ctx, x + sway + 1.5, base - h - 1, 1.3, '#111', null);
+        }
+      },
+    },
+
+    // Shark egg cases, caught in the holdfasts. Against the light you can see them wriggle.
+    'egg-cases': {
+      desc: 'Egg cases, wriggling', r: 80,
+      draw(ctx, a, room, t) {
+        for (let i = 0; i < 3; i++) {
+          const x = a.x + (i - 1) * 46, y = a.y + (i % 2) * 24;
+          ctx.save(); ctx.translate(x, y); ctx.rotate(0.3 * (i - 1) + Math.sin(t * 0.5 + i) * 0.05);
+          ctx.fillStyle = 'rgba(150,120,60,0.55)'; ctx.strokeStyle = 'rgba(70,50,20,0.6)'; ctx.lineWidth = 1.5;
+          ctx.beginPath(); ctx.rect(-12, -30, 24, 60); ctx.fill(); ctx.stroke();
+          ctx.beginPath(); ctx.moveTo(-12, -30); ctx.quadraticCurveTo(-20, -48, -8, -60); ctx.moveTo(12, -30); ctx.quadraticCurveTo(20, -48, 8, -60); ctx.moveTo(-12, 30); ctx.quadraticCurveTo(-20, 48, -6, 56); ctx.moveTo(12, 30); ctx.quadraticCurveTo(20, 48, 6, 56); ctx.stroke();
+          const w = Math.sin(t * (2 + i) + i) * 6;// the little shark inside
+          ctx.strokeStyle = 'rgba(40,30,20,0.5)'; ctx.lineWidth = 4;
+          ctx.beginPath(); ctx.moveTo(0, -16); ctx.quadraticCurveTo(w, 0, -w * 0.6, 18); ctx.stroke();
+          ctx.restore();
+        }
+      },
+      touch(a) { if (!a._said) { a._said = true; SO.ui.thought('Little sharks, inside bags. Waiting to be born.'); } },
+    },
+
+    // The nightly climb: a column of tiny animals rising toward the dark surface, then sinking.
+    migration: {
+      desc: 'Tiny lights, rising', r: 180,
+      draw(ctx, a, room, t) {
+        const up = Math.sin(t * 0.05) * 0.5 + 0.5;
+        ctx.save(); ctx.globalCompositeOperation = 'lighter';
+        for (let i = 0; i < 40; i++) {
+          const k = ((i * 0.618) % 1), y = a.y + 300 - ((k * 600 + t * (8 + (i % 5) * 3) * (up > 0.5 ? 1 : -1)) % 600 + 600) % 600;
+          const x = a.x + Math.sin(i * 7.1 + t * 0.4) * 120;
+          ctx.fillStyle = `rgba(160,230,255,${0.25 + 0.25 * Math.sin(t * 3 + i)})`;
+          ctx.fillRect(x, y, 2.5, 2.5);
+        }
+        ctx.restore();
+      },
+    },
+
+    // Things that fell into the brine lake and never rotted.
+    pickled: {
+      desc: 'A fish, kept in salt', r: 80,
+      draw(ctx, a, room, t) {
+        const bob = Math.sin(t * 0.8) * 2;
+        A.fish(ctx, a.x, a.y + bob, 1.3, Math.PI + 0.1, 210, 0, { dead: true });
+        A.fish(ctx, a.x + 160, a.y + 2 - bob, 0.9, 0.2, 30, 0, { dead: true });
+        ctx.strokeStyle = 'rgba(220,210,190,0.7)'; ctx.lineWidth = 2;
+        ctx.beginPath(); ctx.moveTo(a.x - 140, a.y + 4); ctx.lineTo(a.x - 100, a.y - 2); ctx.lineTo(a.x - 70, a.y + 4); ctx.stroke();
+      },
+      touch(a) { if (!a._said) { a._said = true; SO.ui.thought('It fell in and never rotted. The salt keeps it. Forever, maybe.'); } },
+    },
+
+    // Eyes in the cracks of the rock. They close when you look at them.
+    'ledge-eyes': {
+      desc: 'Eyes, in the cracks', r: 120,
+      draw(ctx, a, room, t) {
+        const sq = E.squid, close = U.dist(sq.x, sq.y, a.x, a.y) < 420;
+        a.shut = U.lerp(a.shut || 0, close ? 1 : 0, 0.08);
+        for (let i = 0; i < 5; i++) {
+          const x = a.x + Math.sin(i * 2.7) * 40, y = a.y - 160 + i * 80;
+          const open = (1 - a.shut) * (Math.sin(t * 0.3 + i * 1.9) > -0.85 ? 1 : 0.1);
+          ctx.fillStyle = '#05080b'; ctx.beginPath(); ctx.ellipse(x, y, 30, 12, 0, 0, TAU); ctx.fill();
+          if (open > 0.05) {
+            [-9, 9].forEach((dx) => {
+              ctx.fillStyle = `rgba(210,200,120,${0.8 * open})`; ctx.beginPath(); ctx.ellipse(x + dx, y, 4.5, 4.5 * open, 0, 0, TAU); ctx.fill();
+              A.circle(ctx, x + dx + (sq.x > x ? 1.5 : -1.5), y, 1.6 * open, '#000', null);
+            });
+          }
+        }
+      },
+      touch(a) { if (!a._said) { a._said = true; SO.ui.thought('They closed. They’re still in there.'); } },
+    },
+
+    // A link of the great glass chain. It hums: the island is pulling on it.
+    'chain-link': {
+      desc: 'A glass link, humming', r: 110,
+      update(a, dt) { a.ring = Math.max(0, (a.ring || 0) - dt * 0.5); },
+      draw(ctx, a, room, t) {
+        ctx.save(); ctx.translate(a.x, a.y);
+        ctx.strokeStyle = `rgba(200,250,250,${0.5 + a.ring * 0.4})`; ctx.lineWidth = 2;
+        for (let i = 0; i < 6; i++) { ctx.beginPath(); ctx.moveTo(-60 + i * 4, -110 + i * 20); ctx.lineTo(-40 + i * 4, -100 + i * 20); ctx.stroke(); }
+        if (a.ring > 0.02) { ctx.globalCompositeOperation = 'lighter'; A.glow(ctx, 0, 0, 200, '#bff8ea', a.ring * 0.5); }
+        ctx.restore();
+      },
+      touch(a) {
+        a.ring = 1;
+        AU.bell(AU.NOTE(38), { gain: 0.12, dur: 5 }); AU.bell(AU.NOTE(45), { gain: 0.05, dur: 4 });
+        if (!a._said) { a._said = true; SO.ui.thought('It hums. The whole chain is humming. Something up there is pulling on it.'); }
+      },
+    },
+
+    // Colors cut into the glass of the anchor, all the way around.
+    'anchor-marks': {
+      desc: 'Colors, cut in glass', r: 110,
+      update(a, dt) { a.lit = Math.max(0, (a.lit || 0) - dt * 0.2); },
+      draw(ctx, a, room, t) {
+        const seq = ['B', 'G', 'B', 'W'];
+        for (let i = 0; i < 12; i++) {
+          const ang = -Math.PI * 0.95 + i / 11 * Math.PI * 0.9;
+          const x = a.x + Math.cos(ang) * 150, y = a.y + Math.sin(ang) * 90;
+          const on = a.lit > 0 && Math.floor((1 - a.lit) * 24) % 12 === i;
+          A.circle(ctx, x, y, 8, on ? SKIN_HEX[seq[i % 4]] : U.mixHex('#2a3a40', SKIN_HEX[seq[i % 4]], 0.35), 'rgba(0,0,0,0.4)', 1);
+        }
+      },
+      touch(a) {
+        if (a.lit > 0.5) { return; }
+        a.lit = 1;
+        E.showPattern(a.x, a.y - 30, 'call', { voice: -14, gap: 800 });
+        if (!a._said) { a._said = true; SO.ui.thought('Blue, gold, blue, pale. Over and over, all the way around.'); }
+      },
+    },
+
+    // Hagfish, tied in knots inside the skull. They scrape it clean.
+    hagfish: {
+      desc: 'Hagfish, in a knot', r: 90,
+      init(a, room) { a.y = room.floorY(a.x) - 30; },
+      draw(ctx, a, room, t) {
+        for (let i = 0; i < 4; i++) {
+          const pts = [];
+          for (let k = 0; k < 12; k++) { const ang = k * 0.7 + t * (0.6 + i * 0.2) + i * 1.7; pts.push({ x: a.x + Math.cos(ang) * (16 + k * 2.5) + (i - 1.5) * 22, y: a.y + Math.sin(ang * 1.3) * (10 + k) }); }
+          A.taper(ctx, pts, 8, 3, i % 2 ? '#a88a8c' : '#b89a96', 'rgba(60,40,40,0.4)');
+        }
+      },
+      touch(a) {
+        if (SO.dirt) { for (let i = 0; i < 3; i++) { SO.dirt.puff(a.x + (Math.random() - 0.5) * 60, a.y, 'muck', 'creature', 140); } }
+        if (!a._said) { a._said = true; SO.ui.thought('Slime. So much slime. They tie themselves in knots to scrape it off.'); }
+      },
+    },
+
+    // Tracks in the mud. Lots of legs, and they go off into the dark.
+    tracks: {
+      desc: 'Tracks. Big ones.', r: 200,
+      draw(ctx, a, room, t) {
+        ctx.fillStyle = 'rgba(10,14,18,0.55)';
+        for (let i = 0; i < 16; i++) {
+          const x = a.x - 400 + i * 60, y = room.floorY(x) + 2;
+          ctx.beginPath(); ctx.ellipse(x, y - 4, 10, 3, 0, 0, TAU); ctx.fill();
+          ctx.beginPath(); ctx.ellipse(x + 26, y + 3, 9, 3, 0, 0, TAU); ctx.fill();
+        }
+      },
+      touch(a) { if (!a._said) { a._said = true; SO.ui.thought('Lots of legs. Bigger than me. They go off into the dark, and they don’t come back.'); } },
+    },
+
+    // Pale scavengers that gather when you hold still. They're tasting you.
+    amphipods: {
+      desc: 'Pale things, swarming', r: 200,
+      init(a) { a.pts = Array.from({ length: 36 }, (_, i) => ({ x: a.x + Math.cos(i) * 200, y: a.y + Math.sin(i * 1.7) * 200, p: i })); },
+      update(a, dt) {
+        const sq = E.squid, still = Math.hypot(sq.vx, sq.vy) < 60 && U.dist(sq.x, sq.y, a.x, a.y) < 700;
+        a.gather = U.lerp(a.gather || 0, still ? 1 : 0, Math.min(1, dt * (still ? 0.3 : 2)));
+        a.pts.forEach((p) => {
+          const tx = U.lerp(a.x + Math.cos(p.p + a.t * 0.5) * 220, sq.x + Math.cos(p.p * 2.3 + a.t * 3) * 50, a.gather);
+          const ty = U.lerp(a.y + Math.sin(p.p * 1.7 + a.t * 0.4) * 220, sq.y + Math.sin(p.p * 1.9 + a.t * 3) * 30, a.gather);
+          p.x += (tx - p.x) * Math.min(1, dt * 1.5); p.y += (ty - p.y) * Math.min(1, dt * 1.5);
+        });
+        if (a.gather > 0.7 && !a._said) { a._said = true; SO.ui.thought('They’re tasting me. I should keep moving.'); }
+      },
+      draw(ctx, a, room, t) {
+        ctx.strokeStyle = 'rgba(230,220,200,0.75)'; ctx.lineWidth = 3; ctx.lineCap = 'round';
+        a.pts.forEach((p, i) => { const w = Math.sin(t * 9 + i) * 2; ctx.beginPath(); ctx.moveTo(p.x - 5, p.y + w); ctx.quadraticCurveTo(p.x, p.y - 3, p.x + 5, p.y - w); ctx.stroke(); });
+      },
+    },
+
+    // A dent in the silt, the exact size and shape of the squid.
+    'squid-shape': {
+      desc: 'A hollow, shaped like me', r: 140,
+      init(a, room) { a.y = room.floorY(a.x) - 6; },
+      draw(ctx, a, room, t) {
+        ctx.save(); ctx.translate(a.x, a.y);
+        ctx.fillStyle = 'rgba(4,6,10,0.6)';
+        ctx.beginPath(); ctx.ellipse(-30, 0, 70, 12, 0, 0, TAU); ctx.fill();
+        for (let i = 0; i < 8; i++) { ctx.beginPath(); ctx.ellipse(46 + i * 2, (i - 3.5) * 2.5, 50 + (i % 3) * 8, 2.5, (i - 3.5) * 0.04, 0, TAU); ctx.fill(); }
+        ctx.beginPath(); ctx.ellipse(-80, 0, 18, 6, 0, 0, TAU); ctx.fill();
+        ctx.restore();
+      },
+      touch(a) { if (!a._said) { a._said = true; SO.ui.thought('It fits me exactly. Was I here before? Or was someone else, exactly like me?'); } },
+    },
+
+    // The bell of the fallen spire, still hanging. It rings when you bump it.
+    'glass-bell': {
+      desc: 'A glass bell', r: 80,
+      update(a, dt) { a.swing = (a.swing || 0) * Math.exp(-dt * 0.6); },
+      draw(ctx, a, room, t) {
+        const ang = Math.sin(t * 2.4) * (a.swing || 0) * 0.5;
+        ctx.save(); ctx.translate(a.x, a.y - 120);
+        ctx.strokeStyle = 'rgba(200,240,240,0.5)'; ctx.lineWidth = 2; ctx.beginPath(); ctx.moveTo(0, -200); ctx.lineTo(0, 0); ctx.stroke();
+        ctx.rotate(ang);
+        ctx.beginPath(); ctx.moveTo(-14, 10); ctx.quadraticCurveTo(-18, 80, -56, 120); ctx.lineTo(56, 120); ctx.quadraticCurveTo(18, 80, 14, 10); ctx.closePath();
+        ctx.fillStyle = 'rgba(190,240,240,0.4)'; ctx.fill(); ctx.strokeStyle = 'rgba(230,255,255,0.75)'; ctx.stroke();
+        A.circle(ctx, Math.sin(t * 2.4 + 0.5) * (a.swing || 0) * 20, 118, 8, 'rgba(230,255,255,0.7)', null);
+        ctx.restore();
+      },
+      touch(a) {
+        a.swing = 1;
+        AU.bell(AU.NOTE(62), { gain: 0.1, dur: 6 }); AU.bell(AU.NOTE(69), { gain: 0.05, dur: 5, when: 0.4 });
+        if (!a._said) { a._said = true; SO.ui.thought('That’s the bell from the tower at home. It rang every morning.'); }
+      },
+    },
+
+    // Baby octopuses, hatching and swimming up, the size of a pearl.
+    hatchlings: {
+      desc: 'Baby octopuses!', r: 160,
+      draw(ctx, a, room, t) {
+        for (let i = 0; i < 14; i++) {
+          const k = ((t * 0.04 + i / 14) % 1);
+          const x = a.x + Math.sin(i * 4.1 + t * 0.6) * 140 * k + (i - 7) * 14, y = a.y + 120 - k * 700;
+          ctx.save(); ctx.globalAlpha *= Math.sin(k * Math.PI) * 0.8;
+          A.ellipse(ctx, x, y, 5, 7, 0, 'rgba(250,210,225,0.6)', 'rgba(120,60,80,0.3)', 1);
+          ctx.strokeStyle = 'rgba(250,210,225,0.5)'; ctx.lineWidth = 1;
+          for (let j = 0; j < 4; j++) { ctx.beginPath(); ctx.moveTo(x - 3 + j * 2, y + 6); ctx.lineTo(x - 4 + j * 2.6 + Math.sin(t * 6 + j + i) * 2, y + 14); ctx.stroke(); }
+          ctx.restore();
+        }
+      },
+      touch(a) { if (!a._said) { a._said = true; SO.ui.thought('So small. They’re going up, toward the light. Like I am.'); } },
+    },
   };
 
   SO.actorTypes.oddity = {
@@ -249,13 +548,38 @@
     'undershine-gate': [{ kind: 'cucumbers', x: 200 }],
     'undershine': [{ kind: 'juggler', x: 2620 }],
     'splash': [{ kind: 'drift-feather', x: 900, y: -200 }],
+    // the wider sea
+    'sargasso': [{ kind: 'frogfish', x: 1450 }],
+    'rain-sea': [{ kind: 'isle-root', x: 1150, y: 230 }, { kind: 'drift-feather', x: 600, y: -200 }],
+    'anchored-isle': [{ kind: 'swan-bones', x: 1360, y: 560 }],
+    'meadow': [{ kind: 'garden-eels', x: 1700 }],
+    'drop-off': [{ kind: 'far-lights', x: 620, y: 760 }],
+    'blue-dusk': [{ kind: 'migration', x: 1500, y: 620 }],
+    'holdfasts': [{ kind: 'egg-cases', x: 1500, y: 380 }],
+    'midnight': [{ kind: 'far-lights', x: 520, y: 300 }],
+    'brine-lake': [{ kind: 'pickled', x: 1400, y: 786 }],
+    'cold-seep': [{ kind: 'bubble-rings', x: 2380 }],
+    'mud-volcanoes': [{ kind: 'bubble-rings', x: 640 }, { kind: 'bubble-rings', x: 1480 }],
+    'fallen-spire': [{ kind: 'glass-bell', x: 1240, y: 420 }, { kind: 'hermit', x: 560 }],
+    'lantern-ledges': [{ kind: 'ledge-eyes', x: 2030, y: 520 }],
+    'tether-twilight': [{ kind: 'chain-link', x: 960, y: 720 }],
+    'tether-curtain': [{ kind: 'far-lights', x: 1560, y: 320 }],
+    'tether-anchor': [{ kind: 'anchor-marks', x: 1100, y: 560 }],
+    'stone-choir': [{ kind: 'spiral', x: 1250, y: 380, seq: ['W', 'B', 'W'] }],
+    'abyssal-plain': [{ kind: 'tracks', x: 2700 }, { kind: 'cucumbers', x: 600 }],
+    'whale-fall': [{ kind: 'hagfish', x: 2150 }],
+    'hadal': [{ kind: 'amphipods', x: 900, y: 1000 }],
+    'hadal-floor': [{ kind: 'squid-shape', x: 900 }],
+    'smokers': [{ kind: 'bubble-rings', x: 2150 }],
+    'glass-caves': [{ kind: 'spiral', x: 1250, y: 420, seq: ['B', 'G', 'B'] }],
+    'hatchery': [{ kind: 'hatchlings', x: 1100, y: 560 }],
   };
 
   SO.oddities = {
     KINDS,
     populate(room) {
       (PLACES[room.key] || []).forEach((o, i) => {
-        E.addActor(room, { id: 'odd-' + i, type: 'oddity', kind: o.kind, x: o.x, y: o.y === undefined ? room.h / 2 : o.y });
+        E.addActor(room, Object.assign({}, o, { id: 'odd-' + i, type: 'oddity', kind: o.kind, x: o.x, y: o.y === undefined ? room.h / 2 : o.y }));
       });
       // About one dark tile in six has spiral marks with its own color sequence.
       if (room.key.startsWith('below:') && U.hash(room.key + 'spiral') % 6 === 0) {
@@ -274,6 +598,11 @@
           a.lit = 1; this.buf = [];
           [76, 81, 86].forEach((n, i) => AU.bell(AU.NOTE(n), { when: i * 0.15, gain: 0.05, dur: 3 }));
         }
+      });
+      // Anything else that hears single notes (see the life in actors.js).
+      room.actors.forEach((a) => {
+        const T = SO.actorTypes[a.type];
+        if (T && T.onSkin && !a.hidden && U.dist(E.squid.x, E.squid.y, a.x, a.y) < (a.hearRange || 650)) { T.onSkin(a, c, room); }
       });
     },
   };

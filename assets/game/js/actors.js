@@ -534,4 +534,315 @@
     light(a) { return a.golden ? { x: a.x, y: a.y, r: 160, a: 0.7, color: '#ffd36a', add: 0.2 } : null; },
   };
 
+  // ════════════════════════════════════════════════════════════════════════════
+  // Life of the wider sea: one actor type, many kinds. Each kind is remembered the
+  // first time the squid gets a good look at it (SO.story.sight, NATIVE in story.js).
+  // Some of them answer the squid's skin, because down here a sound can push.
+  //   { type: 'life', kind: 'barreleye', x, y, s?, seed?, n? }
+  // ════════════════════════════════════════════════════════════════════════════
+  const NOTE_HEX = { W: '#eef6fa', R: '#c8353f', B: '#3fc6d8', G: '#ffd36a' };
+  const SQ = () => SO.E.squid;
+  const near = (a, d) => U.dist(a.x, a.y, SO.E.squid.x, SO.E.squid.y) < d;
+  const floorAt = (room, x, fallback) => room.floor ? room.floorY(x) : fallback;
+  const say = (kind, what) => { if (SO.story.lifeEvent) { SO.story.lifeEvent(kind, what); } };
+
+  const LIFE = {
+
+    barreleye: {
+      r: 50,
+      update(a, dt) {
+        const k = a.t * 0.12 + a.seed;
+        a.x = a.home.x + Math.sin(k) * 140; a.y = a.home.y + Math.sin(a.t * 0.4 + a.seed) * 18;
+        a.dir = Math.cos(k) >= 0 ? 1 : -1;
+        // It hangs still and its eyes turn, inside its head, to follow you.
+        const s = SQ(), want = U.clamp(Math.atan2(s.y - (a.y - 16), (s.x - a.x) * a.dir), -Math.PI * 0.95, 0.2);
+        a.look = U.angleLerp(a.look === undefined ? -Math.PI / 2 : a.look, near(a, 900) ? want : -Math.PI / 2, Math.min(1, dt * 2));
+      },
+      draw(ctx, a, room, t) { A.barreleye(ctx, a.x, a.y, a.s || 1.3, t, { dir: a.dir, look: a.look }); },
+    },
+
+    siphonophore: {
+      r: 110,
+      update(a, dt) {
+        a.x = a.home.x + Math.sin(a.t * 0.05 + a.seed) * 160; a.y = a.home.y + Math.sin(a.t * 0.11 + a.seed) * 40;
+        if (a.wave >= 0) { a.wave += dt * 0.35; if (a.wave > 1) { a.wave = -1; } }
+        if (a.wave < 0 && near(a, 260) && !a._stung) { a._stung = true; a.wave = 0; }
+        if (!near(a, 420)) { a._stung = false; }
+      },
+      draw(ctx, a, room, t) { A.siphonophore(ctx, a.x, a.y, a.s || 1, t, { n: a.n || 34, wave: a.wave === undefined ? -1 : a.wave, dir: a.dir || 1, seed: a.seed }); },
+      light(a) { return a.wave >= 0 ? { x: a.x - (a.dir || 1) * a.wave * (a.n || 34) * 29 * (a.s || 1), y: a.y + 30, r: 320, a: 0.6, color: '#7fd8ff', add: 0.25 } : { x: a.x, y: a.y, r: 160, a: 0.25, color: '#ff8a9a', add: 0.05 }; },
+      onPattern(a, name) { if (a.wave < 0 || a.wave === undefined) { a.wave = 0; } if (name === 'glow') { say('siphonophore', 'glow'); } },
+      onTouch(a) {
+        const s = SQ(), d = Math.max(1, U.dist(s.x, s.y, a.x, a.y));
+        s.vx += (s.x - a.x) / d * 380; s.vy += (s.y - a.y) / d * 380; s.fear = 1;
+        if (a.wave < 0 || a.wave === undefined) { a.wave = 0; }
+        if (SO.audio) { SO.audio.noise({ dur: 0.25, freq: 2600, q: 3, gain: 0.06, sweep: 0.5 }); }
+        say('siphonophore', 'sting');
+      },
+    },
+
+    'giant-isopod': {
+      r: 60,
+      update(a, dt, room) {
+        a.curl = U.lerp(a.curl || 0, near(a, 220) ? 1 : 0, Math.min(1, dt * 3));
+        if (a.curl < 0.3) { a.walkT = (a.walkT || 0) + dt; }
+        const k = a.walkT * 0.07 + a.seed;
+        a.x = a.home.x + Math.sin(k) * (a.roam || 160);
+        a.dir = Math.cos(k) >= 0 ? 1 : -1;
+        a.y = floorAt(room, a.x, a.home.y) - 16 * (a.s || 1.2);
+      },
+      draw(ctx, a, room, t) { A.isopod(ctx, a.x, a.y, a.s || 1.2, t, { dir: a.dir, walk: a.walkT || 0, curl: a.curl }); },
+    },
+
+    'sea-pig': {
+      r: 120,
+      update(a, dt, room) {
+        a.walkT = (a.walkT || 0) + dt;
+        if (near(a, 200) && !a._turned) { a._turned = true; a.dirFlip = -(a.dirFlip || 1); }
+        if (!near(a, 400)) { a._turned = false; }
+        a.x = U.clamp(a.x + (a.dirFlip || 1) * 6 * dt, a.home.x - (a.roam || 400), a.home.x + (a.roam || 400));
+        const R = a.roam || 400, df = a.dirFlip || 1;
+        if ((df > 0 && a.x >= a.home.x + R - 1) || (df < 0 && a.x <= a.home.x - R + 1)) { a.dirFlip = -df; }
+        a.y = floorAt(room, a.x, a.home.y) - 20;
+      },
+      draw(ctx, a, room, t) {
+        const n = a.n || 4, s = a.s || 1;
+        for (let i = 0; i < n; i++) {
+          const px = a.x + (i - (n - 1) / 2) * 62 * s + Math.sin(i * 2.1) * 14;
+          const py = floorAt(room, px, a.y + 20) - 14 * s * (0.8 + (i % 3) * 0.12);
+          A.seaPig(ctx, px, py, s * (0.8 + (i % 3) * 0.12), t + i, { dir: a.dirFlip || 1, walk: a.walkT + i * 0.7 });
+        }
+      },
+    },
+
+    'gulper-eel': {
+      r: 90,
+      update(a, dt) {
+        const s = SQ();
+        a.calmT = Math.max(0, (a.calmT || 0) - dt);
+        a.yawnT = (a.yawnT === undefined ? 6 + Math.random() * 6 : a.yawnT) - dt;
+        if (a.yawnT < 0) { a.yawnT = 9 + Math.random() * 8; a.yawn = 1.6; }
+        a.yawn = Math.max(0, (a.yawn || 0) - dt);
+        // Light draws it. Glow near it and it opens up and comes for you, slowly.
+        const lured = s.glowOn && near(a, 800) && !a.calmT;
+        a.open = U.lerp(a.open || 0, lured ? 1 : (a.yawn > 0 ? Math.sin(a.yawn / 1.6 * Math.PI) : 0.05), Math.min(1, dt * 2));
+        const tx = lured ? U.clamp(s.x - (a.dir || 1) * 110, a.home.x - 260, a.home.x + 260) : a.home.x + Math.sin(a.t * 0.1) * 120;
+        const ty = lured ? U.clamp(s.y - 10, a.home.y - 200, a.home.y + 200) : a.home.y + Math.sin(a.t * 0.23) * 40;
+        a.x += (tx - a.x) * Math.min(1, dt * (lured ? 0.5 : 0.25)); a.y += (ty - a.y) * Math.min(1, dt * 0.3);
+        a.dir = (lured ? s.x : tx) > a.x ? 1 : -1;
+        if (lured && !a._lureSaid) { a._lureSaid = true; say('gulper-eel', 'lured'); }
+      },
+      draw(ctx, a, room, t) { A.gulper(ctx, a.x, a.y, a.s || 1, t, { dir: a.dir || 1, open: a.open }); },
+      light(a) { const s = a.s || 1; return { x: a.x - (a.dir || 1) * 406 * s, y: a.y + Math.sin(SO.E.t * 1.6 - 6.75) * 28 * s, r: 180, a: 0.55, color: '#ff6aa8', add: 0.15 }; },
+      onPattern(a, name) { if (name === 'calm') { a.calmT = 15; } },
+      onTouch(a) {
+        if ((a.open || 0) < 0.55) { return; }
+        const s = SQ(), d = Math.max(1, U.dist(s.x, s.y, a.x, a.y));
+        s.vx += (s.x - a.x) / d * 520; s.vy += (s.y - a.y) / d * 520; s.fear = 1;
+        a.open = 0; a.calmT = 6;
+        if (SO.audio) { SO.audio.tock(SO.audio.NOTE(33), { gain: 0.25 }); }
+        say('gulper-eel', 'snap');
+      },
+    },
+
+    'yeti-crab': {
+      r: 50,
+      update(a, dt, room) {
+        a.fast = Math.max(0, (a.fast || 0) - dt);
+        a.waveT = (a.waveT || 0) + dt * (a.fast ? 3.2 : 1);
+        a.x = a.home.x + Math.sin(a.t * 0.05 + a.seed) * 30;
+        a.y = floorAt(room, a.x, a.home.y) - 6;
+      },
+      draw(ctx, a, room, t) { A.yetiCrab(ctx, a.x, a.y, a.s || 1, t, { dir: a.dir || 1, wave: a.waveT || 0 }); },
+      onPattern(a, name) { if (name === 'wake') { a.fast = 6; say('yeti-crab', 'wake'); } },
+    },
+
+    // Hums a chord to hold its stones up. Above it, the sound pushes everything up a little.
+    'stone-hummer': {
+      r: 120,
+      init(a) {
+        const r = U.rng((a.seed || 1) * 97 + 3);
+        a.stones = [];
+        const n = 2 + Math.floor(r() * 3);
+        for (let i = 0; i < n; i++) { a.stones.push({ dx: (i - (n - 1) / 2) * 70 + (r() - 0.5) * 24, h: 120 + r() * 180, r: 14 + r() * 20, seed: Math.floor(r() * 1000) }); }
+        a.hum = 1; a.lift = 1;
+      },
+      update(a, dt, room) {
+        a.quietT = Math.max(0, (a.quietT || 0) - dt);
+        a.boost = Math.max(0, (a.boost || 0) - dt);
+        a.hum = U.lerp(a.hum, a.quietT ? 0 : 1, Math.min(1, dt * 1.5));
+        const want = a.hum * (a.boost ? 1.5 : 1);
+        const was = a.lift;
+        a.lift = U.lerp(a.lift, want, Math.min(1, dt * (want < a.lift ? 4 : 0.5)));
+        a.y = floorAt(room, a.x, a.home.y) - 6;
+        if (was > 0.2 && a.lift <= 0.2 && near(a, 1200) && SO.audio) {// the stones land
+          SO.audio.tock(SO.audio.NOTE(31), { gain: 0.22 }); SO.audio.noise({ dur: 0.6, freq: 160, q: 0.8, gain: 0.1, sweep: 0.5 });
+          if (SO.dirt) { a.stones.forEach((st) => SO.dirt.puff(a.x + st.dx * (a.s || 1), a.y - 10, 'silt', 'creature', 160)); }
+        }
+        // The chord itself: low, soft, and always there when you're close.
+        a.chordT = (a.chordT || 0) - dt;
+        if (a.chordT < 0 && a.hum > 0.4 && near(a, 1000) && SO.audio) {
+          a.chordT = 3.2;
+          const k = 1 - U.dist(a.x, a.y, SQ().x, SQ().y) / 1000;
+          [38, 45, 50].forEach((nn, i) => SO.audio.tone(SO.audio.NOTE(nn + (a.seed % 3)), { dur: 3.6, gain: 0.03 * k * a.hum, attack: 1.2, when: i * 0.05, verb: 1 }));
+        }
+        // Music is physics here: in the column over it, the water pushes up.
+        const s = SQ(), sc = a.s || 1;
+        if (a.hum > 0.4 && Math.abs(s.x - a.x) < 120 * sc && s.y < a.y && a.y - s.y < 360 * sc) { s.vy -= 170 * dt * a.hum * (a.boost ? 1.8 : 1); }
+      },
+      draw(ctx, a, room, t) { A.stoneHummer(ctx, a.x, a.y, a.s || 1, t, { hum: a.hum, lift: a.lift, stones: a.stones }); },
+      onPattern(a, name) {
+        if (name === 'calm') { a.quietT = 14; say('stone-hummer', 'calm'); }
+        if (name === 'wake') { a.boost = 5; a.quietT = 0; say('stone-hummer', 'wake'); }
+      },
+      hearRange: 900,
+    },
+
+    // Drinks sound. Flash near it and it eats the notes, and drifts after you for more.
+    hushmouth: {
+      r: 80,
+      update(a, dt) {
+        const s = SQ();
+        a.full = Math.max(0, (a.full || 0) - dt * 0.4);
+        a.follow = Math.max(0, (a.follow || 0) - dt);
+        if (s.hidden > 0.6) { a.follow = 0; }
+        const tx = a.follow ? U.clamp(s.x, a.home.x - 600, a.home.x + 600) : a.home.x + Math.sin(a.t * 0.06) * 160;
+        const ty = a.follow ? U.clamp(s.y, a.home.y - 300, a.home.y + 300) : a.home.y + Math.sin(a.t * 0.17) * 50;
+        const d = U.dist(a.x, a.y, tx, ty);
+        if (d > 160) { a.x += (tx - a.x) / d * 40 * dt; a.y += (ty - a.y) / d * 40 * dt; }
+        const want = Math.atan2(s.y - a.y, s.x - a.x);
+        a.face = U.angleLerp(a.face === undefined ? want : a.face, a.follow || near(a, 500) ? want : a.face, Math.min(1, dt * 0.6));
+        (a.eaten || []).forEach((e) => { e.k += dt * 0.9; });
+        a.eaten = (a.eaten || []).filter((e) => e.k < 1);
+        if (near(a, 380)) { SO.E.dread = Math.max(SO.E.dread || 0, 0.28); }
+      },
+      draw(ctx, a, room, t) {
+        A.hushmouth(ctx, a.x, a.y, a.s || 1, t, { face: a.face, full: a.full });
+        const s = a.s || 1, mx = a.x + Math.cos(a.face || 0) * 50 * s, my = a.y + Math.sin(a.face || 0) * 50 * s;
+        (a.eaten || []).forEach((e) => {
+          const k = U.easeIn(e.k), sw = Math.sin(e.k * 9) * 30 * (1 - k);
+          A.circle(ctx, U.lerp(e.x, mx, k) + sw, U.lerp(e.y, my, k) - sw * 0.5, 7 * (1 - k * 0.8), NOTE_HEX[e.c], 'rgba(0,0,0,0.3)', 1);
+        });
+      },
+      onSkin(a, c) {
+        const s = SQ();
+        a.eaten = (a.eaten || []).concat({ c, k: 0, x: s.x, y: s.y - 60 });
+        a.full = 1; a.follow = 7;
+        say('hushmouth', 'ate');
+      },
+      onPattern(a, name) { if (name === 'cloud') { a.follow = 0; } },
+      hearRange: 900,
+    },
+
+    // Rings your note back at you, hard enough to shove you.
+    'bell-whelk': {
+      r: 60,
+      update(a, dt, room) {
+        a.ringT = Math.min(1, (a.ringT === undefined ? 1 : a.ringT) + dt * 0.8);
+        a.sleepT = Math.max(0, (a.sleepT || 0) - dt);
+        a.cool = Math.max(0, (a.cool || 0) - dt);
+        a.y = floorAt(room, a.x, a.home.y) - 4;
+      },
+      draw(ctx, a, room, t) { A.bellWhelk(ctx, a.x, a.y, a.s || 1, t, { ringT: a.ringT, color: a.color, dir: a.dir || 1 }); },
+      light(a) { return a.ringT < 1 ? { x: a.x + 46 * (a.dir || 1), y: a.y - 22, r: 260, a: 0.6 * (1 - a.ringT), color: a.color || '#eef6fa', add: 0.2 } : null; },
+      onSkin(a, c) {
+        if (a.sleepT || a.cool) { return; }
+        a.cool = 0.35; a.ringT = 0; a.color = NOTE_HEX[c];
+        const s = SQ(), sc = a.s || 1, mx = a.x + 46 * sc * (a.dir || 1), my = a.y - 22 * sc;
+        if (SO.audio) { SO.audio.skin(c, { gain: 0.11, dur: 3.2, when: 0.15 }); SO.audio.noise({ dur: 0.3, freq: 300, q: 1, gain: 0.05, sweep: 0.5, when: 0.15 }); }
+        SO.E.ring(mx, my, a.color, 380, 1);
+        const d = Math.max(1, U.dist(s.x, s.y, mx, my));
+        if (d < 560) { const f = 460 * (1 - d / 560) + 80; s.vx += (s.x - mx) / d * f; s.vy += (s.y - my) / d * f; }
+        say('bell-whelk', 'ring');
+      },
+      onPattern(a, name) { if (name === 'calm') { a.sleepT = 10; } },
+      hearRange: 700,
+    },
+
+    sargassum: {
+      r: 70, plant: true,
+      update(a, dt, room) { a.y = (room.surfaceY !== null ? room.surfaceY + 2 : a.home.y) + Math.sin(a.t * 1.1 + a.seed) * 3; a.x = a.home.x + Math.sin(a.t * 0.1 + a.seed) * 30; },
+      draw(ctx, a, room, t) { A.sargassum(ctx, a.x, a.y, a.s || 1, t, a.seed); },
+    },
+
+    seagrass: {
+      r: 60, plant: true,
+      update(a, dt, room) { a.y = floorAt(room, a.x, a.home.y) + 6; },
+      draw(ctx, a, room, t) { A.seagrass(ctx, a.x, a.y, a.s || 1, t, a.seed); },
+    },
+
+    'bacterial-mat': {
+      r: 70, plant: true,
+      update(a, dt, room) { a.y = floorAt(room, a.x, a.home.y) + 4; },
+      draw(ctx, a, room, t) { A.bacterialMat(ctx, a.x, a.y, (a.w || 160) * (a.s || 1), t, a.seed); },
+    },
+
+    // Each stalk is tuned to one skin color. Flash all four near them and the water between
+    // them stands still in lines.
+    'node-reeds': {
+      r: 80, plant: true,
+      init(a) { a.lit = { W: 0, R: 0, B: 0, G: 0 }; a.chord = 0; },
+      update(a, dt, room) {
+        a.y = floorAt(room, a.x, a.home.y) + 4;
+        Object.keys(a.lit).forEach((c) => { a.lit[c] = Math.max(0, a.lit[c] - dt * 0.18); });
+        a.chord = Math.max(0, a.chord - dt * 0.12);
+        if (a.chord > 0.2 && Math.random() < dt * 14) {
+          const col = Math.floor(Math.random() * 5) - 2;
+          SO.E.particles.push({ kind: 'bubble', x: a.x + col * 40 * (a.s || 1), y: a.y - 20, vx: 0, vy: -90, life: 3, t: 0, r: 2 + Math.random() * 2 });
+        }
+      },
+      draw(ctx, a, room, t) {
+        if (a.chord > 0.02) {// the water between the stalks, standing still in lines
+          const s = a.s || 1;
+          ctx.strokeStyle = `rgba(220,240,255,${0.22 * a.chord})`; ctx.lineWidth = 1.5;
+          for (let k = 0; k < 6; k++) {
+            const yy = a.y - 30 - k * 34 * s;
+            ctx.beginPath();
+            for (let x = -140; x <= 140; x += 14) { const px = a.x + x * s; ctx.lineTo(px, yy + Math.sin(x / 140 * Math.PI * 3) * 8 * Math.sin(t * 7) * a.chord); }
+            ctx.stroke();
+          }
+        }
+        A.nodeReeds(ctx, a.x, a.y, a.s || 1, t, a.seed, a.lit);
+      },
+      light(a) {
+        const c = Object.keys(a.lit).reduce((m, k) => (a.lit[k] > a.lit[m] ? k : m), 'W');
+        return a.lit[c] > 0.05 ? { x: a.x, y: a.y - 80, r: 240, a: 0.6 * a.lit[c], color: NOTE_HEX[c], add: 0.2 } : null;
+      },
+      onSkin(a, c) {
+        a.lit[c] = 1;
+        if (['W', 'R', 'B', 'G'].every((k) => a.lit[k] > 0.35) && a.chord < 0.5) {
+          a.chord = 1;
+          if (SO.audio) { [74, 78, 81, 83].forEach((n, i) => SO.audio.bell(SO.audio.NOTE(n - 12), { gain: 0.05, dur: 5, when: i * 0.03 })); }
+          say('node-reeds', 'chord');
+        }
+      },
+      hearRange: 800,
+    },
+  };
+
+  T.life = {
+    r: 60, touch: true,
+    init(a, room) {
+      const K = LIFE[a.kind] || {};
+      a.r = a.r || K.r || 60;
+      a.seed = a.seed === undefined ? (U.hash(a.id || a.kind) % 100) / 10 : a.seed;
+      a.plant = !!K.plant;
+      if (K.hearRange) { a.hearRange = K.hearRange; }
+      if (K.init) { K.init(a, room); }
+    },
+    update(a, dt, room) {
+      const K = LIFE[a.kind];
+      if (!K) { return; }
+      if (K.update) { K.update(a, dt, room); }
+      // Getting a good look at it is enough to remember it.
+      if (!a._seen && near(a, a.see || 420) && !SO.E.locked && SO.story.sight) { a._seen = true; SO.story.sight(a.kind); }
+    },
+    draw(ctx, a, room, t) { const K = LIFE[a.kind]; if (K) { K.draw(ctx, a, room, t); } },
+    light(a) { const K = LIFE[a.kind]; return K && K.light ? K.light(a) : null; },
+    onTouch(a, room) { const K = LIFE[a.kind]; if (K && K.onTouch) { K.onTouch(a, room); } },
+    onPattern(a, name, room) { const K = LIFE[a.kind]; if (K && K.onPattern) { K.onPattern(a, name, room); } },
+    onSkin(a, c, room) { const K = LIFE[a.kind]; if (K && K.onSkin) { K.onSkin(a, c, room); } },
+  };
+  T.life.KINDS = LIFE;
+
 })();

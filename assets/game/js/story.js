@@ -49,6 +49,20 @@
     'lantern-weed': { kind: 'plant', name: 'Glowing sea pens', line: 'Feathery things that light up when I swim past.' },
     'glass-coral': { kind: 'plant', name: 'Glass sponges', line: 'Made of glass, like the domes. Grew that way on purpose.' },
     'bone-fan': { kind: 'plant', name: 'Sea fans', line: 'They catch the snow as it drifts by.' },
+    // The wider sea. Real ones first, then the ones that only make sense here, where a sound can push.
+    'barreleye': { kind: 'creature', name: 'Barreleye', line: 'A fish with a see-through head. Its green eyes are tubes inside it, and they turn to look up.' },
+    'siphonophore': { kind: 'creature', name: 'Siphonophore', line: 'Looks like one long animal. It’s really thousands of small ones, holding on to each other.' },
+    'giant-isopod': { kind: 'creature', name: 'Giant isopod', line: 'A pill bug the size of my head. It can wait years for something to die.' },
+    'sea-pig': { kind: 'creature', name: 'Sea pigs', line: 'Soft, see-through, pink. They walk the mud on little legs and eat it.' },
+    'gulper-eel': { kind: 'creature', name: 'Gulper eel', line: 'Mostly mouth. The tip of its tail glows pink, so things come closer.' },
+    'yeti-crab': { kind: 'creature', name: 'Yeti crab', line: 'A blind white crab with hairy arms. It grows food in the hair, and waves it around.' },
+    'stone-hummer': { kind: 'creature', name: 'Stone hummer', line: 'Hums one low chord all day, and the stones over it float. When it stops, they fall.' },
+    'hushmouth': { kind: 'creature', name: 'Hushmouth', line: 'It eats sound. Near it, the water is so quiet I can hear all three of my hearts.' },
+    'bell-whelk': { kind: 'creature', name: 'Bell whelk', line: 'A snail with a shell like a bell. It rings my notes back, hard enough to push me.' },
+    'sargassum': { kind: 'plant', name: 'Sargassum', line: 'Gold weed that floats in mats, held up by little berries full of air. Things hide under it.' },
+    'seagrass': { kind: 'plant', name: 'Seagrass', line: 'Real grass, under the sea. It even flowers. Turtles graze it.' },
+    'bacterial-mat': { kind: 'plant', name: 'Bacterial mats', line: 'White fuzz on the rock. It eats what leaks out of the ground, not light.' },
+    'node-reeds': { kind: 'plant', name: 'Node reeds', line: 'They only grow where a sound bounces back and forth. Each one is tuned to one of my colors.' },
     'pearl': { kind: 'item', name: 'Pearl', line: 'Shiny and round. The octopuses use them to decorate their dens.' },
     'feather': { kind: 'item', name: 'Swan feather', line: 'It smells like the pool at home.' },
     'glass': { kind: 'item', name: 'Glass from home', line: 'A piece of the island. When I touch one, I remember things.' },
@@ -65,6 +79,55 @@
     1: { name: 'The pool', line: 'Home. Glass overhead, swans bending down to look at me.' },
     2: { name: 'The edge', line: 'Always told to stay away from the edge of the waterfall.' },
     3: { name: 'The shaking', line: 'The island shook, and I slipped over the edge.' },
+  };
+
+  // The life of the wider sea (the 'life' actors in actors.js): what it looks like from a
+  // little way off (label), the first thing I think when I get a good look (first), and what
+  // I think when it does its thing (the rest, each said once per visit).
+  const LIFE = {
+    'barreleye': { label: 'A barreleye fish', first: 'That fish has a clear head. I can see its eyes turning inside it. To look at me.' },
+    'siphonophore': { label: 'A siphonophore', first: 'Is that one animal? It just keeps going.', sting: 'Ow. Every one of those little threads stings.', glow: 'It lit up all the way down, one after another. Like it was passing on a message.' },
+    'giant-isopod': { label: 'A giant isopod', first: 'A bug. A huge bug. Eating something I don’t want to look at.' },
+    'sea-pig': { label: 'Sea pigs', first: 'Little pink things. Walking. On legs. In a row.' },
+    'gulper-eel': { label: 'A gulper eel', first: 'That’s a mouth. That whole thing is a mouth.', lured: 'It likes my light. It’s opening up. I should stop glowing.', snap: 'It tried to swallow me! It’s much too small. It tried anyway.' },
+    'yeti-crab': { label: 'A yeti crab', first: 'A crab with fur. Is it dancing? No. It’s waving its arms at the water.', wake: 'Faster, faster. They like that one.' },
+    'stone-hummer': { label: 'A stone hummer', first: 'It’s humming. And the rocks over it are floating.', calm: 'It stopped humming. And down came the rocks.', wake: 'Louder! The rocks went right up. So did I, a bit.' },
+    'hushmouth': { label: 'A hushmouth', first: 'Everything went quiet. Even my hearts sound far away.', ate: 'It ate my colors. Right out of the water. Now it’s coming closer.' },
+    'bell-whelk': { label: 'A bell whelk', first: 'A shell, shaped like a bell. I wonder if it rings.', ring: 'It rang my note back! Hard enough to push me.' },
+    'sargassum': { label: 'Sargassum', first: 'Gold weed, floating. Little air berries hold it up.' },
+    'seagrass': { label: 'Seagrass', first: 'Grass! Under the sea!' },
+    'bacterial-mat': { label: 'A bacterial mat', first: 'White fuzz on the rocks. It smells like rotten eggs.' },
+    'node-reeds': { label: 'Node reeds', first: 'Reeds in rows. Spaced out exactly. Like something measured them.', chord: 'All four colors at once. The water between them stood still, in lines.' },
+  };
+
+  // The first time I come into each new place, I think out loud.
+  const PLACE_THOUGHTS = {
+    'sargasso': 'A ceiling of gold weed. It’s dim and safe underneath.',
+    'rain-sea': 'It’s raining. Rain from the islands. The top of the water tastes like home.',
+    'anchored-isle': 'An island, sitting really low. And a chain going down from it. Who ties down an island?',
+    'spray-zone': 'Mist everywhere, and rainbows in it. I can hear the waterfall.',
+    'meadow': 'Grass, waving. It’s quiet here.',
+    'drop-off': 'The floor just stops. Below it, blue. Then dark.',
+    'blue-dusk': 'The light’s going blue. Then going.',
+    'holdfasts': 'This is under the kelp. All roots, holding on.',
+    'midnight': 'No light gets down this far. Only light things make themselves.',
+    'brine-lake': 'A lake. At the bottom of the sea. It has a shore, and little waves.',
+    'cold-seep': 'The ground is breathing out bubbles. Everything here lives on that.',
+    'mud-volcanoes': 'The mounds burp, all together, like a slow heart.',
+    'fallen-spire': 'A tower from home, snapped off at the top. The bell’s still in it.',
+    'lantern-ledges': 'Ledges, all lit up. Like shelves of little lamps.',
+    'tether-twilight': 'The chain goes down and down. I’m going to follow it.',
+    'tether-breathless': 'The water’s thin here. It’s hard to breathe. Everything’s hanging so still.',
+    'tether-curtain': 'Something long is hanging in the dark. Lots of long things.',
+    'tether-anchor': 'The chain ends here, in a glass ring as big as a dome. Someone tied the island to the bottom of the sea.',
+    'stone-choir': 'Hear that? A chord. The rocks here are floating on it.',
+    'abyssal-plain': 'Flat, forever. Soft mud, and things walking on it.',
+    'whale-fall': 'A whale. What’s left of one. Everything down here came to eat it.',
+    'hadal': 'Down again. The walls are closing in. They aren’t, really. It just feels like it.',
+    'hadal-floor': 'The bottom. The real bottom. I think.',
+    'smokers': 'Black chimneys, smoking. The water shakes with the heat.',
+    'glass-caves': 'Black glass everywhere. When I flash, the walls flash back.',
+    'hatchery': 'They’re hatching! Tiny see-through ones, swimming up. Their mothers aren’t moving.',
   };
 
   // Golden bubbles hold true (and silly) facts about Sailsconfs past.
@@ -103,7 +166,7 @@
 
   const S = SO.story = {
     rt: {},
-    NATIVE, SKIN_WORDS, MEMORIES, CARDS, TRIVIA,
+    NATIVE, SKIN_WORDS, MEMORIES, CARDS, TRIVIA, LIFE,
     HEART: {},
 
     get d() { return save.data; },
@@ -145,6 +208,22 @@
       const fresh = save.remember(key, Object.assign({}, base, extra || {}));
       if (fresh) { AU.page(); }
       return fresh;
+    },
+    // A good look at something from the wider sea: remember it, and say so the first time.
+    sight(kind) {
+      const fresh = this.remember(kind);
+      if (fresh && LIFE[kind] && LIFE[kind].first && !E.locked) { UI.thought(LIFE[kind].first); }
+      if (fresh) { this.rt.lastProgressAt = E.t; }
+      return fresh;
+    },
+    // Something from the wider sea did its thing (rang, ate a note, lit up...).
+    lifeEvent(kind, what) {
+      const line = LIFE[kind] && LIFE[kind][what];
+      this.remember(kind);
+      const said = this.rt.lifeSaid || (this.rt.lifeSaid = {});
+      if (!line || said[kind + ':' + what] === E.roomKey) { return; }
+      said[kind + ':' + what] = E.roomKey;
+      UI.thought(line);
     },
     learnSkin(name, quiet) {
       const fresh = save.learn(name);
@@ -237,6 +316,11 @@
       if (t === 'trace') { return 'Fading squid colors'; }
       if (t === 'vent') { return 'An undersea volcano'; }
       if (t === 'species') { return o.sp ? o.sp.name : 'Something new'; }
+      if (t === 'life') {
+        if (o.kind === 'gulper-eel' && o.open > 0.6) { return 'A gulper eel. Mouth open'; }
+        if (o.kind === 'stone-hummer' && o.lift < 0.3) { return 'A quiet stone hummer'; }
+        return (LIFE[o.kind] && LIFE[o.kind].label) || '';
+      }
       if (id === 'petal-door') { return this.petalOpen() >= 1 ? 'Open glass petals' : 'Closed glass petals'; }
       if (id === 'hall-door') { return 'A crack in the dome'; }
       if (id === 'mouth-door') { return 'A dark cave'; }
@@ -319,6 +403,9 @@
       if (room.key === 'trench-floor' && dir === 'down' && !this.has('fellThrough')) { return 'Solid rock.'; }
       if (room.key === 'warm-shallows' && dir === 'down' && ch < 7) { return 'The warm water pushes me back up.'; }
       if (room.key === 'hollowglass-hall' && dir === 'right' && this.petalOpen() < 1) { return 'The glass petals are closed.'; }
+      // The wider sea: side places, opened up so they don't skip the story.
+      if (room.key === 'tether-twilight' && dir === 'up' && ch < 6) { return 'The water up the chain tears along too fast. I can’t swim up into that. Not yet.'; }
+      if (room.key === 'trench-floor' && dir === 'right' && !this.has('fellThrough')) { return 'Something’s out there in the dark. Not now.'; }
       return null;
     },
 
@@ -335,6 +422,7 @@
       if (o.type === 'memory') { this.touchMemory(o); }
       if (o.type === 'trace') { UI.thought(`Someone else came through here. Their colors are still in the water: ${o.by.split('-').join(', ')}.`); }
       if (o.type === 'dumbo') { this.touchDumbo(o); }
+      if (o.type === 'life') { this.sight(o.kind); }
       if (o.type === 'bubble') { this.popBubble(o, room); }
     },
 
@@ -722,6 +810,7 @@
           sq.vx = (sq.x - moray.x) / d * 700; sq.vy = (sq.y - moray.y) / d * 500;
           AU.noise({ dur: 0.3, freq: 900, q: 2, gain: 0.3, sweep: 0.4 }); AU.tock(AU.NOTE(30), { gain: 0.35 });
           sq.fear = 1;
+          if (SO.blood) { SO.blood.wound(sq.x, sq.y, 0.7, { blue: true }); sq.bloodBlue = true; sq.blood = Math.min(1, (sq.blood || 0) + 0.3); }
           if (!E.locked) { const bg = UI.fade$.style.background; UI.fade(0.35, 60, '#3a0008').then(() => UI.fade(0, 500)).then(() => { UI.fade$.style.background = bg; }); }
           this.remember('moray');
           UI.thought(this.rt.snaps ? 'It went for me again. Those teeth point backwards, so nothing gets out.' : 'A moray eel! It has a second set of jaws in its throat.');
@@ -1035,6 +1124,18 @@
       },
     },
   };
+
+  // The wider sea: each new place gets a first thought (unless it already has a script).
+  Object.keys(PLACE_THOUGHTS).forEach((key) => {
+    if (ROOMS[key]) { return; }
+    ROOMS[key] = {
+      enter() {
+        if (this.has('saw:' + key)) { return; }
+        this.flag('saw:' + key);
+        setTimeout(() => { if (E.roomKey === key && !UI.talking) { UI.thought(PLACE_THOUGHTS[key]); } }, 900);
+      },
+    };
+  });
 
   // ════════════════════════════════════════════════════════════════════════════
   // Conversations

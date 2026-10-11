@@ -42,7 +42,9 @@ settle on any squid swimming through, including other players' squids, and a dir
 past another leaves some on it.  It comes off as they swim.  (get-online shows how dirty each squid is.)
 
 For the creatures and plants, see get-species.  For what's happening right now, see get-state,
-get-online, and get-overview.`,
+get-online, and get-overview.  For anything more specific (one room and its exits, how to get
+through a chapter, how a mechanic works, idle creature behaviors, cutscenes, the dead things on the
+seafloor, Sails.js trivia, or planned systems), search get-world-facts.`,
 
 
   sideEffects: 'cacheable',

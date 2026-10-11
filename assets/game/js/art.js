@@ -1255,4 +1255,334 @@
     ctx.restore();
   };
 
+  // ════════════════════════════════════════════════════════════════════════════
+  // The wider sea: more real life, and some that only makes sense in a sea
+  // where a sound can push. (Drawn about the size of the squid's eye at s = 1.)
+  // ════════════════════════════════════════════════════════════════════════════
+  const NOTE_HEX = { W: '#eef6fa', R: '#c8353f', B: '#3fc6d8', G: '#ffd36a' };
+  const addLight = (ctx, fn) => { ctx.save(); ctx.globalCompositeOperation = 'lighter'; fn(); ctx.restore(); };
+  // A cheap soft dot of light (no gradient).
+  const speck = (ctx, x, y, r, color, a) => { ctx.fillStyle = U.rgba(color, a); ctx.beginPath(); ctx.arc(x, y, r, 0, TAU); ctx.fill(); };
+
+  // Barreleye: a dark little fish under a clear dome. Its green eyes are tubes inside its head,
+  // and they turn to follow whatever's above it. (The two dots on its face are nostrils.)
+  // o.look: the eyes' angle in its own frame (-PI/2 is straight up).
+  A.barreleye = function (ctx, x, y, s, t, o = {}) {
+    const dir = o.dir || 1, look = o.look === undefined ? -Math.PI / 2 : o.look;
+    ctx.save(); ctx.translate(x, y); ctx.scale(s * dir, s);
+    const sw = Math.sin(t * 3.2) * 4;
+    A.shape(ctx, [[-44, 0], [-64, -13 + sw], [-58, 0], [-64, 13 + sw]], '#262b33', { sharp: true, lw: 1.4 });
+    ctx.fillStyle = 'rgba(120,130,150,0.35)';
+    ctx.beginPath(); ctx.moveTo(4, 6); ctx.quadraticCurveTo(-10, 26 + Math.sin(t * 1.5) * 4, -26, 18); ctx.closePath(); ctx.fill();
+    A.shape(ctx, [[-48, 0], [-22, -11], [14, -12], [30, -3], [28, 8], [8, 12], [-26, 9]], '#363b45', { lw: 1.6 });
+    ctx.strokeStyle = 'rgba(170,180,200,0.22)'; ctx.lineWidth = 1;
+    ctx.beginPath(); ctx.moveTo(-42, 1); ctx.quadraticCurveTo(0, -3, 26, 1); ctx.stroke();
+    A.circle(ctx, 30, -2, 1.8, '#0c0e12', null); A.circle(ctx, 26, -3, 1.6, '#0c0e12', null);
+    // the eyes, then the clear shield over them
+    for (let i = 0; i < 2; i++) {
+      ctx.save(); ctx.translate(12 + i * 7, -17 + i * 2); ctx.rotate(look);
+      ctx.fillStyle = i ? '#3fae78' : '#6fe0a2';
+      ctx.fillRect(-3, -4.5, 19, 9);
+      ctx.restore();
+    }
+    addLight(ctx, () => speck(ctx, 15 + Math.cos(look) * 16, -16 + Math.sin(look) * 16, 6, '#8fffc0', 0.45));
+    ctx.fillStyle = 'rgba(200,240,245,0.12)'; ctx.strokeStyle = 'rgba(220,250,255,0.45)'; ctx.lineWidth = 1.3;
+    ctx.beginPath(); ctx.moveTo(-6, -9); ctx.bezierCurveTo(-4, -46, 38, -48, 42, -6); ctx.lineTo(30, -3); ctx.closePath(); ctx.fill(); ctx.stroke();
+    ctx.restore();
+  };
+
+  // Siphonophore: one stem, and thousands of animals strung along it. Swimming bells at the
+  // front, then feeding polyps, and curtains of stinging lines with small red lures.
+  // o.n: segments; o.wave: a pulse of light running down the stem (0..1, or -1 for none).
+  A.siphonophore = function (ctx, x, y, s, t, o = {}) {
+    const n = o.n || 34, seg = 30 * s, dir = o.dir || 1, sd = o.seed || 0;
+    const pts = [];
+    for (let i = 0; i < n; i++) { pts.push([x - dir * i * seg * 0.96, y + Math.sin(i * 0.23 - t * 0.5 + sd) * 46 * s + i * 1.5 * s]); }
+    const wi = o.wave >= 0 ? o.wave * n : -99;
+    // the curtain
+    ctx.lineWidth = 1;
+    for (let i = 2; i < n; i += 2) {
+      const [px, py] = pts[i];
+      const len = (70 + ((i * 37) % 60)) * s, sway = Math.sin(t * 0.9 + i) * 10 * s;
+      ctx.strokeStyle = 'rgba(220,200,210,0.22)';
+      ctx.beginPath(); ctx.moveTo(px, py); ctx.quadraticCurveTo(px + sway, py + len * 0.6, px + sway * 1.6, py + len); ctx.stroke();
+      const near = Math.max(0, 1 - Math.abs(i - wi) / 3);
+      addLight(ctx, () => {
+        for (let k = 1; k < 4; k++) { speck(ctx, px + sway * 1.6 * k / 3, py + len * k / 3, 1.8 * s + near * 3, near > 0.1 ? '#7fd8ff' : '#ff5a6a', 0.35 + 0.25 * Math.sin(t * 3 + i + k) + near * 0.5); }
+      });
+    }
+    // the stem and its polyps
+    ctx.strokeStyle = 'rgba(235,225,230,0.5)'; ctx.lineWidth = 1.6 * s;
+    ctx.beginPath(); pts.forEach(([px, py], i) => { if (i) { ctx.lineTo(px, py); } else { ctx.moveTo(px, py); } }); ctx.stroke();
+    for (let i = 1; i < n; i += 2) { A.ellipse(ctx, pts[i][0], pts[i][1] + 5 * s, 4 * s, 7 * s, 0, 'rgba(240,170,130,0.55)', null); }
+    if (wi > -10) { addLight(ctx, () => { const i = Math.max(0, Math.min(n - 1, Math.round(wi))); A.glow(ctx, pts[i][0], pts[i][1], 70 * s, '#7fd8ff', 0.6); }); }
+    // the swimming bells, pulsing
+    const pulse = 0.85 + 0.15 * Math.sin(t * 4);
+    for (let k = 0; k < 4; k++) {
+      const bx = x + dir * (8 + (k % 2) * 12) * s, by = y + (k - 1.5) * 12 * s;
+      A.ellipse(ctx, bx, by, 13 * s * pulse, 9 * s, dir * 0.4, 'rgba(210,240,250,0.22)', 'rgba(230,250,255,0.55)', 1.2);
+    }
+  };
+
+  // Giant isopod: a pill bug as big as a squid's head, armored in plates. Walks the bottom,
+  // waiting years for something to die. o.walk: walk cycle; o.curl: 0..1 tucked up.
+  A.isopod = function (ctx, x, y, s, t, o = {}) {
+    const dir = o.dir || 1, walk = o.walk || 0, curl = o.curl || 0;
+    ctx.save(); ctx.translate(x, y); ctx.scale(s * dir, s);
+    ctx.strokeStyle = '#7e7484'; ctx.lineWidth = 2.2; ctx.lineCap = 'round';
+    for (let i = 0; i < 7; i++) {
+      const lx = -30 + i * 10, ph = Math.sin(walk * 6 + i * 0.9) * 4 * (1 - curl);
+      ctx.beginPath(); ctx.moveTo(lx, 4); ctx.lineTo(lx + ph - 3, 14 - curl * 8); ctx.stroke();
+    }
+    ctx.rotate(-curl * 0.25);
+    ctx.strokeStyle = '#a99fb0'; ctx.lineWidth = 1.4;
+    ctx.beginPath(); ctx.moveTo(40, -4); ctx.quadraticCurveTo(64, -18, 70 + Math.sin(t * 1.3) * 4, -2); ctx.stroke();
+    ctx.beginPath(); ctx.moveTo(40, -2); ctx.quadraticCurveTo(58, 4, 66, 12 + Math.sin(t * 1.1) * 3); ctx.stroke();
+    A.shape(ctx, [[-46, 6], [-48, -6], [-36, -14], [-10, -19 - curl * 6], [16, -19 - curl * 6], [36, -12], [44, 2], [38, 8]], '#c3b8c8', { lw: 2 });
+    ctx.strokeStyle = 'rgba(70,60,80,0.45)'; ctx.lineWidth = 1.3;
+    for (let i = 0; i < 7; i++) { const px = -32 + i * 10; ctx.beginPath(); ctx.moveTo(px, 7); ctx.quadraticCurveTo(px + 3, -8, px + 1, -18 - curl * 5 + Math.abs(i - 3) * 1.5); ctx.stroke(); }
+    A.ellipse(ctx, 34, -6, 6, 4.5, 0.3, '#1d1a22', null);
+    A.circle(ctx, 35.5, -7.5, 1.4, 'rgba(255,255,255,0.6)', null);
+    ctx.restore();
+  };
+
+  // Sea pigs: soft, see-through, pink. They walk the mud on stubby tube feet, in herds,
+  // eating it. o.walk: walk cycle.
+  A.seaPig = function (ctx, x, y, s, t, o = {}) {
+    const dir = o.dir || 1, walk = o.walk || 0;
+    ctx.save(); ctx.translate(x, y); ctx.scale(s * dir, s);
+    for (let i = 0; i < 5; i++) {
+      const lx = -22 + i * 11, lift = Math.max(0, Math.sin(walk * 4 + i * 1.3)) * 4;
+      A.ellipse(ctx, lx, 9 - lift, 4, 6, 0.15, 'rgba(225,150,165,0.85)', null);
+    }
+    A.shape(ctx, [[-30, 4], [-26, -9], [0, -13], [24, -10], [32, 2], [24, 9], [-24, 9]], 'rgba(236,170,186,0.72)', { lw: 1.4, stroke: 'rgba(120,60,80,0.4)' });
+    ctx.strokeStyle = 'rgba(130,80,60,0.35)'; ctx.lineWidth = 3;
+    ctx.beginPath(); ctx.moveTo(-22, 0); ctx.quadraticCurveTo(0, 4, 22, -1); ctx.stroke();
+    ctx.strokeStyle = 'rgba(236,170,186,0.9)'; ctx.lineWidth = 2.6; ctx.lineCap = 'round';
+    for (let i = 0; i < 3; i++) {
+      const bx = 10 + i * 6, sway = Math.sin(t * 1.4 + i) * 3;
+      ctx.beginPath(); ctx.moveTo(bx, -11); ctx.quadraticCurveTo(bx + 2, -20, bx + 4 + sway, -28 - i * 3); ctx.stroke();
+    }
+    for (let i = 0; i < 4; i++) { A.circle(ctx, 32 + Math.cos(i * 1.6) * 3, 4 + i * 2 - 3, 1.8, 'rgba(250,200,210,0.9)', null); }
+    ctx.restore();
+  };
+
+  // Gulper eel: a whip of a body, and a mouth that unhinges into a black bag bigger than
+  // the rest of it. The tip of its tail glows pink. o.open: 0..1.
+  A.gulper = function (ctx, x, y, s, t, o = {}) {
+    const dir = o.dir || 1, open = o.open || 0;
+    ctx.save(); ctx.translate(x, y); ctx.scale(s * dir, s);
+    const pts = [];
+    for (let k = 0; k < 16; k++) { pts.push({ x: -16 - k * 26, y: Math.sin(t * 1.6 - k * 0.45) * (4 + k * 1.6) }); }
+    A.taper(ctx, pts, 20, 2, '#1d1a21', 'rgba(0,0,0,0.5)');
+    const tip = pts[15];
+    addLight(ctx, () => { A.glow(ctx, tip.x, tip.y, 30, '#ff6aa8', 0.45 + 0.35 * Math.sin(t * 2.2)); });
+    A.circle(ctx, tip.x, tip.y, 3, '#ffc2dc', null);
+    const g = 0.12 + open * 0.88;
+    const ut = [104, -8 - g * 34], lt = [104, 8 + g * 46];
+    ctx.beginPath(); ctx.moveTo(-4, -4); ctx.lineTo(ut[0], ut[1]); ctx.lineTo(lt[0], lt[1]);
+    ctx.quadraticCurveTo(60, 40 + g * 90, 10, 18 + g * 20); ctx.quadraticCurveTo(-6, 10, -4, -4); ctx.closePath();
+    ctx.fillStyle = '#09080c'; ctx.fill(); ctx.strokeStyle = 'rgba(80,70,90,0.6)'; ctx.lineWidth = 1.4; ctx.stroke();
+    ctx.strokeStyle = '#2e2933'; ctx.lineWidth = 4; ctx.lineCap = 'round';
+    ctx.beginPath(); ctx.moveTo(-4, -6); ctx.lineTo(ut[0], ut[1]); ctx.stroke();
+    A.circle(ctx, 10, -8, 2.2, 'rgba(200,210,220,0.7)', null);
+    ctx.restore();
+  };
+
+  // Yeti crab: a blind white crab with arms covered in fine hair. It farms bacteria in the
+  // hair, and waves its arms over warm, leaking water to feed them. o.wave: the waving clock.
+  A.yetiCrab = function (ctx, x, y, s, t, o = {}) {
+    const dir = o.dir || 1, w = o.wave === undefined ? t : o.wave;
+    ctx.save(); ctx.translate(x, y); ctx.scale(s * dir, s);
+    ctx.strokeStyle = '#d8d0c2'; ctx.lineWidth = 2.6; ctx.lineCap = 'round';
+    for (let i = 0; i < 3; i++) {
+      [-1, 1].forEach((side) => { ctx.beginPath(); ctx.moveTo(side * 8, -6); ctx.lineTo(side * (22 + i * 6), -14 + i * 2); ctx.lineTo(side * (28 + i * 7), 2); ctx.stroke(); });
+    }
+    [-1, 1].forEach((side) => {
+      const a = -1.9 + side * 0.65 + Math.sin(w * 2.4 + side) * 0.45;
+      const sx = side * 12, sy = -16;
+      const ex = sx + Math.cos(a) * 26, ey = sy + Math.sin(a) * 26;
+      const a2 = a + side * 0.6 + Math.sin(w * 2.4 + 1 + side) * 0.3;
+      const hx = ex + Math.cos(a2) * 24, hy = ey + Math.sin(a2) * 24;
+      A.taper(ctx, [{ x: sx, y: sy }, { x: ex, y: ey }, { x: hx, y: hy }], 7, 5, '#ece6da', 'rgba(60,55,50,0.35)');
+      ctx.strokeStyle = 'rgba(232,222,180,0.75)'; ctx.lineWidth = 1;
+      for (let k = 1; k < 10; k++) {
+        const f = k / 10, px = f < 0.5 ? U.lerp(sx, ex, f * 2) : U.lerp(ex, hx, f * 2 - 1), py = f < 0.5 ? U.lerp(sy, ey, f * 2) : U.lerp(ey, hy, f * 2 - 1);
+        const hang = Math.sin(t * 3 + k) * 2;
+        ctx.beginPath(); ctx.moveTo(px, py); ctx.lineTo(px + hang, py + 8); ctx.stroke();
+      }
+      ctx.strokeStyle = '#cfc6b4'; ctx.lineWidth = 2.4;
+      ctx.beginPath(); ctx.moveTo(hx, hy); ctx.lineTo(hx + Math.cos(a2 - 0.4) * 9, hy + Math.sin(a2 - 0.4) * 9); ctx.moveTo(hx, hy); ctx.lineTo(hx + Math.cos(a2 + 0.4) * 9, hy + Math.sin(a2 + 0.4) * 9); ctx.stroke();
+    });
+    A.ellipse(ctx, 0, -10, 21, 13, 0, '#e8e2d6', 'rgba(60,55,50,0.4)', 1.6);
+    ctx.strokeStyle = 'rgba(160,150,130,0.4)'; ctx.lineWidth = 1;
+    ctx.beginPath(); ctx.moveTo(-12, -12); ctx.quadraticCurveTo(0, -18, 12, -12); ctx.stroke();
+    ctx.restore();
+  };
+
+  // Stone hummer (not from any sea above): a broad flat animal that lies on the bottom and
+  // hums one low chord through a drum of skin on its back. The stones it has chosen float
+  // over it, each sitting where the sound pushes up hardest. o.hum, o.lift: 0..1;
+  // o.stones: [{ dx, h, r, seed }].
+  A.stoneHummer = function (ctx, x, y, s, t, o = {}) {
+    const hum = o.hum === undefined ? 1 : o.hum, lift = o.lift === undefined ? 1 : o.lift;
+    ctx.save(); ctx.translate(x, y); ctx.scale(s, s);
+    if (hum > 0.02) {
+      ctx.lineWidth = 2;
+      for (let k = 0; k < 4; k++) {
+        const ry = 8 + k * 2, yy = -36 - k * 62 * Math.max(0.3, lift);
+        ctx.strokeStyle = `rgba(190,215,255,${(0.1 + 0.08 * Math.sin(t * 9 - k * 1.2)) * hum})`;
+        ctx.beginPath(); ctx.ellipse(0, yy, 96 - k * 12, ry, 0, 0, TAU); ctx.stroke();
+      }
+    }
+    (o.stones || []).forEach((st, i) => {
+      const yy = U.lerp(-st.r * 0.9, -st.h, lift) + Math.sin(t * 1.3 + i * 2) * 5 * lift;
+      const r = U.rng(st.seed || i + 1), pts = [];
+      for (let k = 0; k < 8; k++) { const a = k / 8 * TAU, d = st.r * (0.78 + r() * 0.3); pts.push([st.dx + Math.cos(a) * d * 1.15, yy + Math.sin(a) * d * 0.8]); }
+      if (lift > 0.25) { ctx.strokeStyle = `rgba(200,225,255,${0.15 * lift})`; ctx.lineWidth = 1.5; ctx.beginPath(); ctx.ellipse(st.dx, yy + st.r + 6, st.r * 0.9, 4, 0, 0, TAU); ctx.stroke(); }
+      A.shape(ctx, pts, '#575c62', { lw: 2 });
+      ctx.fillStyle = 'rgba(255,255,255,0.08)'; ctx.beginPath(); ctx.ellipse(st.dx - st.r * 0.3, yy - st.r * 0.35, st.r * 0.45, st.r * 0.2, -0.3, 0, TAU); ctx.fill();
+    });
+    A.shape(ctx, [[-112, 2], [-70, -15], [0, -21], [70, -15], [112, 2], [60, 9], [-60, 9]], '#454a50', { lw: 2 });
+    ctx.strokeStyle = '#3a3e44'; ctx.lineWidth = 3;
+    ctx.beginPath(); ctx.moveTo(-108, 2); ctx.quadraticCurveTo(-150, 0, -176, -6 + Math.sin(t) * 4); ctx.stroke();
+    ctx.fillStyle = 'rgba(30,34,38,0.35)';
+    for (let i = 0; i < 9; i++) { ctx.beginPath(); ctx.arc(-80 + i * 20, -6 + (i % 3) * 3, 3 + (i % 2), 0, TAU); ctx.fill(); }
+    const tr = Math.sin(t * 46) * hum * 1.6;
+    A.ellipse(ctx, 0, -17, 32, 7 + tr, 0, '#79858d', 'rgba(36,52,68,0.5)', 1.4);
+    A.circle(ctx, -40, -14, 2.6, '#d9d2a0', null); A.circle(ctx, 40, -14, 2.6, '#d9d2a0', null);
+    ctx.restore();
+  };
+
+  // Hushmouth (not from any sea above): a pale funnel that drifts mouth first and drinks the
+  // sound out of the water. Inside it isn't dark so much as nothing. o.face: the way its mouth
+  // points; o.full: 0..1, how much it has just eaten.
+  A.hushmouth = function (ctx, x, y, s, t, o = {}) {
+    const full = o.full || 0;
+    const R = 300 * s;
+    const g = ctx.createRadialGradient(x, y, 0, x, y, R);
+    g.addColorStop(0, `rgba(0,0,0,${0.22 + full * 0.2})`); g.addColorStop(1, 'rgba(0,0,0,0)');
+    ctx.fillStyle = g; ctx.fillRect(x - R, y - R, R * 2, R * 2);
+    ctx.save(); ctx.translate(x, y); ctx.rotate(o.face || 0); ctx.scale(s, s);
+    const br = Math.sin(t * 0.7) * 3 + full * 6;
+    ctx.strokeStyle = 'rgba(210,205,195,0.25)'; ctx.lineWidth = 1;
+    for (let i = 0; i < 5; i++) { ctx.beginPath(); ctx.moveTo(-86, (i - 2) * 4); ctx.quadraticCurveTo(-140, (i - 2) * 14 + Math.sin(t * 0.8 + i) * 10, -190, (i - 2) * 22 + Math.sin(t * 0.6 + i) * 18); ctx.stroke(); }
+    A.shape(ctx, [[-90, 0], [-50, -13], [10, -32 - br], [46, -48 - br], [54, 0], [46, 48 + br], [10, 32 + br], [-50, 13]], '#cdc8bf', { lw: 1.5, stroke: 'rgba(60,55,50,0.45)' });
+    ctx.strokeStyle = 'rgba(150,120,120,0.3)'; ctx.lineWidth = 1;
+    for (let i = -2; i <= 2; i++) { ctx.beginPath(); ctx.moveTo(-70, i * 3); ctx.quadraticCurveTo(0, i * 12, 44, i * 20); ctx.stroke(); }
+    A.ellipse(ctx, 49, 0, 11 + full * 4, 44 + br, 0, '#000000', 'rgba(235,230,220,0.6)', 1.8);
+    ctx.restore();
+  };
+
+  // Bell whelk (not from any sea above): a sea snail whose shell flares like a bell. Flash a
+  // note at it and it rings that note back, hard enough to push the water. o.ringT: 0..1
+  // since it last rang (1 = quiet); o.color: the note it rang.
+  A.bellWhelk = function (ctx, x, y, s, t, o = {}) {
+    const rt = o.ringT === undefined ? 1 : o.ringT, col = o.color || '#eef6fa';
+    ctx.save(); ctx.translate(x, y); ctx.scale(s * (o.dir || 1), s);
+    if (rt < 1) {
+      for (let k = 0; k < 3; k++) {
+        const rr = 30 + k * 34 + rt * 220;
+        ctx.strokeStyle = U.rgba(col, (1 - rt) * (0.55 - k * 0.15)); ctx.lineWidth = 3 - k * 0.8;
+        ctx.beginPath(); ctx.arc(46, -22, rr, -1.2, 1.2); ctx.stroke();
+      }
+    }
+    A.ellipse(ctx, 4, 2, 40, 7, 0, '#8d7f6c', 'rgba(36,52,68,0.4)', 1.4);
+    A.shape(ctx, [[-50, -58], [-26, -48], [16, -42], [44, -50], [54, -22], [46, 6], [10, 4], [-28, -8]], '#d6c4a2', { lw: 2 });
+    ctx.strokeStyle = 'rgba(120,95,70,0.45)'; ctx.lineWidth = 1.4;
+    for (let i = 0; i < 5; i++) { ctx.beginPath(); ctx.moveTo(-40 + i * 16, -50 + i * 2); ctx.quadraticCurveTo(-30 + i * 16, -24, -26 + i * 14, -6 + i); ctx.stroke(); }
+    ctx.beginPath(); ctx.moveTo(-50, -58); ctx.quadraticCurveTo(-62, -64, -66, -72); ctx.stroke();
+    A.ellipse(ctx, 47, -22, 8, 25, 0, rt < 1 ? U.mixHex('#f2e2cc', col, (1 - rt) * 0.8) : '#f2e2cc', 'rgba(36,52,68,0.45)', 1.6);
+    if (rt < 1) { addLight(ctx, () => A.glow(ctx, 47, -22, 60, col, (1 - rt) * 0.6)); }
+    ctx.strokeStyle = '#8d7f6c'; ctx.lineWidth = 4; ctx.lineCap = 'round';
+    ctx.beginPath(); ctx.moveTo(44, -46); ctx.quadraticCurveTo(56, -60, 60 + Math.sin(t) * 3, -66); ctx.stroke();
+    ctx.restore();
+  };
+
+  // Sargassum: golden weed that floats in mats at the surface, held up by little air berries.
+  // Drawn hanging down from (x, y).
+  A.sargassum = function (ctx, x, y, s, t, seed = 0) {
+    const r = U.rng(seed + 1);
+    ctx.save(); ctx.translate(x, y); ctx.scale(s, s);
+    for (let b = 0; b < 6; b++) {
+      const bx = (b - 2.5) * 22 + (r() - 0.5) * 10, len = 50 + r() * 60;
+      const pts = [];
+      for (let k = 0; k < 6; k++) { const f = k / 5; pts.push({ x: bx + Math.sin(t * 0.8 + b + f * 2) * 8 * f + (r() - 0.5) * 6, y: f * len }); }
+      A.taper(ctx, pts, 3, 1.5, '#9a7a32', 'rgba(60,40,10,0.35)');
+      for (let k = 1; k < 6; k++) {
+        const p = pts[k], side = k % 2 ? 1 : -1;
+        ctx.fillStyle = k % 2 ? '#b58f3c' : '#a3812f';
+        ctx.beginPath(); ctx.ellipse(p.x + side * 7, p.y, 7, 2.6, side * 0.5, 0, TAU); ctx.fill();
+        A.circle(ctx, p.x - side * 5, p.y + 3, 2.6, '#c9a24c', 'rgba(60,40,10,0.35)', 1);
+      }
+    }
+    ctx.restore();
+  };
+
+  // Seagrass: real grass that flowers under the sea. Ribbons, swaying.
+  A.seagrass = function (ctx, x, y, s, t, seed = 0) {
+    const r = U.rng(seed + 7);
+    ctx.save(); ctx.translate(x, y); ctx.scale(s, s);
+    ctx.lineCap = 'round';
+    for (let i = 0; i < 9; i++) {
+      const bx = (i - 4) * 7 + (r() - 0.5) * 6, h = 70 + r() * 70, sway = Math.sin(t * 0.9 + i * 0.7 + seed) * 16 + 8;
+      ctx.strokeStyle = U.hsl(95 + r() * 30, 42, 34 + r() * 14); ctx.lineWidth = 4.5;
+      ctx.beginPath(); ctx.moveTo(bx, 0); ctx.quadraticCurveTo(bx + sway * 0.3, -h * 0.55, bx + sway, -h); ctx.stroke();
+      if (i % 3 === 0) { A.circle(ctx, bx + sway * 0.5, -h * 0.6, 1.6, 'rgba(220,230,200,0.6)', null); }
+    }
+    ctx.restore();
+  };
+
+  // A bacterial mat: white fuzz with orange in it, living off what leaks out of the ground.
+  A.bacterialMat = function (ctx, x, y, w, t, seed = 0) {
+    const r = U.rng(seed + 3), n = 10, pts = [];
+    for (let i = 0; i <= n; i++) { const f = i / n; pts.push([x - w / 2 + f * w, y - Math.sin(f * Math.PI) * (6 + r() * 6)]); }
+    pts.push([x + w / 2, y + 4]); pts.push([x - w / 2, y + 4]);
+    ctx.beginPath(); A.smoothPath(ctx, pts, true);
+    ctx.fillStyle = 'rgba(236,232,218,0.55)'; ctx.fill();
+    for (let i = 0; i < 12; i++) { A.circle(ctx, x - w / 2 + r() * w, y - r() * 7, 1.5 + r() * 2, r() < 0.4 ? 'rgba(232,150,70,0.6)' : 'rgba(255,255,245,0.55)', null); }
+    ctx.strokeStyle = 'rgba(255,255,245,0.35)'; ctx.lineWidth = 1;
+    for (let i = 0; i < 6; i++) { const fx = x - w / 2 + r() * w; ctx.beginPath(); ctx.moveTo(fx, y - 4); ctx.lineTo(fx + Math.sin(t * 1.5 + i) * 3, y - 14 - r() * 6); ctx.stroke(); }
+  };
+
+  // Node reeds (not from any sea above): they only grow where a sound keeps bouncing back and
+  // forth, so they stand in rows, and each stalk is shaped like the wave it lives in: thick
+  // where the water shakes, beaded where it's still. Each is tuned to one skin color.
+  // lit: { W, R, B, G } 0..1 for how strongly each color is ringing in them.
+  A.nodeReeds = function (ctx, x, y, s, t, seed = 0, lit = {}) {
+    ctx.save(); ctx.translate(x, y); ctx.scale(s, s);
+    for (let i = 0; i < 6; i++) {
+      const c = 'WRBG'[(i + seed) % 4], L = lit[c] || 0;
+      const h = 120 + ((i * 37 + seed * 11) % 60), bx = (i - 2.5) * 18, m = 3;
+      const amp = (2 + L * 12) * Math.sin(t * (6 + i));
+      const pts = [];
+      for (let k = 0; k <= 12; k++) { const f = k / 12; pts.push({ x: bx + Math.sin(f * Math.PI * m) * amp + Math.sin(t * 0.5 + i) * 3 * f, y: -f * h }); }
+      A.taper(ctx, pts, 4, 2, U.mixHex('#33413c', NOTE_HEX[c], 0.15 + L * 0.5), 'rgba(10,16,20,0.4)');
+      for (let j = 0; j <= m; j++) {
+        const p = pts[Math.round(j / m * 12)];
+        A.circle(ctx, p.x, p.y, 3.4, U.mixHex('#46524c', NOTE_HEX[c], 0.3 + L * 0.7), 'rgba(10,16,20,0.4)', 1);
+        if (L > 0.05) { addLight(ctx, () => speck(ctx, p.x, p.y, 9, NOTE_HEX[c], L * 0.5)); }
+      }
+      if (L > 0.05) { addLight(ctx, () => A.glow(ctx, pts[12].x, pts[12].y, 30, NOTE_HEX[c], L * 0.6)); }
+    }
+    ctx.restore();
+  };
+
+  // Portraits for the journal: the new life, centered and posed.
+  A.portraits = {
+    'barreleye': (c, t) => A.barreleye(c, 0, 10, 1.5, t, { look: -1.4 + Math.sin(t * 0.6) * 0.5 }),
+    'siphonophore': (c, t) => A.siphonophore(c, 50, -20, 0.6, t, { n: 18, wave: (t * 0.3) % 1 }),
+    'giant-isopod': (c, t) => A.isopod(c, -6, 10, 1.2, t, { walk: t }),
+    'sea-pig': (c, t) => { A.seaPig(c, -20, 4, 1.1, t, { walk: t }); A.seaPig(c, 26, 20, 0.8, t + 1, { walk: t + 1 }); },
+    'gulper-eel': (c, t) => A.gulper(c, -10, -10, 0.55, t, { open: 0.5 + 0.5 * Math.sin(t * 0.8) }),
+    'yeti-crab': (c, t) => A.yetiCrab(c, 0, 30, 1.2, t),
+    'stone-hummer': (c, t) => A.stoneHummer(c, 0, 50, 0.4, t, { hum: 1, lift: 1, stones: [{ dx: -60, h: 150, r: 22, seed: 2 }, { dx: 30, h: 220, r: 30, seed: 5 }, { dx: 80, h: 110, r: 16, seed: 8 }] }),
+    'hushmouth': (c, t) => A.hushmouth(c, 10, 0, 0.6, t, { face: 0.3 }),
+    'bell-whelk': (c, t) => { const k = (t * 0.5) % 1; A.bellWhelk(c, -6, 26, 0.9, t, { ringT: k, color: NOTE_HEX['WRBG'[Math.floor(t * 0.5) % 4]] }); },
+    'sargassum': (c, t) => A.sargassum(c, 0, -50, 0.9, t, 3),
+    'seagrass': (c, t) => A.seagrass(c, 0, 50, 0.8, t, 2),
+    'bacterial-mat': (c, t) => { A.bacterialMat(c, 0, 20, 110, t, 4); },
+    'node-reeds': (c, t) => A.nodeReeds(c, 0, 50, 0.7, t, 1, { W: 0.5 + 0.5 * Math.sin(t), R: 0.5 + 0.5 * Math.sin(t + 1.6), B: 0.5 + 0.5 * Math.sin(t + 3.1), G: 0.5 + 0.5 * Math.sin(t + 4.7) }),
+  };
+
 })();

@@ -35,6 +35,7 @@
       end(a) { a.smellKind = null; },
       pose: (a, k) => { const w = U.window(k, 0.42, 0.5, 0.85, 0.95); return { sy: 1 - 0.12 * w, sx: 1 + 0.06 * w, rot: 0.08 * w * (a.dir || 1) }; },
       step(a, k, dt) {
+        if (k > 0.5 && k < 0.85 && Math.random() < dt * 0.8 && SO.blood) { SO.blood.spill(a.x + (Math.random() - 0.5) * 20, a.y + 8, 0.15); }
         if (k > 0.5 && k < 0.85 && Math.random() < dt * 3) { E.particles.push({ kind: 'spark', x: a.x + (Math.random() - 0.5) * 30, y: a.y + 10, vx: (Math.random() - 0.5) * 20, vy: 10 + Math.random() * 10, life: 1.5, t: 0, r: 1.5, color: '#5a1e2a', g: 6 }); }
       },
       extra(ctx, a, k, t) {
@@ -179,6 +180,7 @@
     jellies: { acts: [], wiggle: 1.2 },
     species: { acts: ['spin', 'hop', 'shy'], wiggle: 1.3 },
     humboldt: { acts: [], wiggle: 1.3, skip: () => true },
+    life: { acts: ['rise', 'shy', 'scoot'], wiggle: 0.5, skip: (a) => a.kind !== 'barreleye' && a.kind !== 'gulper-eel' },
   };
 
   function drawShrimp(ctx, x, y, dir, t) {

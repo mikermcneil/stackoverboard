@@ -45,7 +45,8 @@
     "WorldEvent": true,
     "WorldTile": true,
     "Species": true,
-    "NativeSpecies": true
+    "NativeSpecies": true,
+    "WorldFact": true
     
     // …and any others.
     // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -

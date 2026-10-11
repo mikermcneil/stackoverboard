@@ -247,6 +247,7 @@
             try {
               if (e.generated && e.traits) { A.species(c, e.kind, e.traits, 0, 10, 2, t, {}); }
               else if (PORTRAITS[e.key]) { c.scale(1.7, 1.7); PORTRAITS[e.key](c, t); }
+              else if (A.portraits && A.portraits[e.key]) { c.scale(1.7, 1.7); A.portraits[e.key](c, t); }
             } catch (err) { /* a portrait failing shouldn't break the book */ }
           });
         }

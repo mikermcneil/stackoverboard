@@ -1,0 +1,557 @@
+// The world's knowledge, as a flat list of facts (one row each in the WorldFact table).
+//
+// Sources:
+// - Places: read from the client's own room list (assets/game/js/rooms.js) every time this runs,
+//   so new rooms show up without touching this file.  If that file can't be read or parsed,
+//   ROOMS_SNAPSHOT (below) is used instead.  Hand-written notes for known rooms are in ROOM_NOTES.
+// - Sailsconf / Sails.js trivia: read from TRIVIA in assets/game/js/story.js, with a snapshot fallback.
+// - Regions, chapters, endings, memories, smells, dirt, oddities: the get-lore helper.
+// - Creatures, plants, items: the get-native-species helper.
+// - Skin words: the get-skin-words helper.
+// - Everything else (mechanics, the seafloor, idle behaviors, cutscenes, planned systems): below.
+//
+// Each fact: { key, topic, title, body, tags, related, status, spoilerLevel, optional, seeAlso, data, source }
+// - status: 'built' (in the game now) or 'planned' (designed, not built yet; don't treat as certain).
+// - spoilerLevel: 0 = none, 1 = mid-story detail, 2 = story-ending (endings, the buddy's fate).
+// - optional: true if a player can easily miss it (side things, not on the main path).
+//
+// A deliberate mystery: how the glass city flies is an open question.  Never state an answer here.
+
+const fs = require('fs');
+const path = require('path');
+
+const TOPICS = [
+  'story', 'chapter', 'ending', 'memory', 'region', 'place', 'skin-word', 'mechanic', 'creature', 'plant', 'item',
+  'character', 'oddity', 'seafloor', 'behavior', 'cutscene', 'trivia', 'mystery',
+];
+
+// Snapshot of assets/game/js/rooms.js (October 2026), used only if that file can't be read.
+// [key, name, region, depth (0 surface .. 1 deepest), darkness (0..1), at the surface?, exits]
+const ROOMS_SNAPSHOT = [
+  ['splash', 'Where you fell', 'surface', 0.08, 0, true, { left: 'bright-reef', right: 'open-blue', down: 'sinking' }],
+  ['sinking', 'The long sink', 'surface', 0.3, 0.3, false, { up: 'splash', down: 'glow-below', left: 'kelp-edge', right: 'cliff-face' }],
+  ['glow-below', 'Something glowing', 'hollowglass', 0.42, 0.42, false, { up: 'sinking', down: 'hollowglass-rim' }],
+  ['hollowglass-rim', 'Hollowglass', 'hollowglass', 0.5, 0.45, false, { up: 'glow-below', right: 'cliff-foot' }],
+  ['hollowglass-hall', 'Inside the dome', 'hollowglass', 0.52, 0.5, false, { left: 'hollowglass-rim', right: 'mural-room' }],
+  ['mural-room', 'A room full of glass', 'hollowglass', 0.52, 0.45, false, { left: 'hollowglass-hall' }],
+  ['cliff-face', 'The rock face', 'cliff', 0.32, 0.3, false, { left: 'sinking', up: 'open-blue', down: 'cliff-foot' }],
+  ['mouth', 'The Mouth', 'cliff', 0.45, 0.92, false, { right: 'mouth-deep', left: 'cliff-face' }],
+  ['mouth-deep', 'The throat of the Mouth', 'cliff', 0.48, 0.9, false, { left: 'mouth' }],
+  ['kelp-edge', 'The edge of the Swaying', 'kelp', 0.28, 0.15, false, { right: 'sinking', left: 'kelp-deep', up: 'bright-reef' }],
+  ['kelp-deep', 'The Swaying', 'kelp', 0.34, 0.32, false, { right: 'kelp-edge', down: 'kelp-heart' }],
+  ['kelp-heart', 'The heart of the Swaying', 'kelp', 0.42, 0.4, false, { up: 'kelp-deep' }],
+  ['bright-reef', 'The Bright', 'surface', 0.03, 0, true, { right: 'splash', down: 'kelp-edge' }],
+  ['open-blue', 'Open water', 'surface', 0.12, 0, true, { left: 'splash', down: 'cliff-face', right: 'warm-shallows' }],
+  ['cliff-foot', 'The foot of the cliff', 'cliff', 0.56, 0.55, false, { up: 'cliff-face', left: 'hollowglass-rim', down: 'trench-lip' }],
+  ['trench-lip', 'The lip of the trench', 'trench', 0.66, 0.68, false, { up: 'cliff-foot', down: 'trench-wall' }],
+  ['trench-wall', 'The trench wall', 'trench', 0.75, 0.78, false, { up: 'trench-lip', down: 'trench-floor' }],
+  ['trench-floor', 'The bottom of the trench', 'trench', 0.84, 0.82, false, { up: 'trench-wall', down: 'below:0,7' }],
+  ['undershine-gate', 'Warm water', 'undershine', 0.88, 0.55, false, { down: 'undershine' }],
+  ['undershine', 'The octopus garden', 'undershine', 0.86, 0.2, false, { up: 'undershine-gate', left: 'forge', right: 'keeper-hall' }],
+  ['keeper-hall', 'Grandmother Seven\'s den', 'undershine', 0.88, 0.3, false, { left: 'undershine', up: 'riser' }],
+  ['forge', 'The volcano', 'forge', 0.9, 0.55, false, { right: 'undershine' }],
+  ['riser', 'The Riser', 'undershine', 0.5, 0.3, false, { down: 'keeper-hall', up: 'warm-shallows' }],
+  ['warm-shallows', 'The warm shallows', 'surface', 0.06, 0, true, { left: 'open-blue', right: 'shoal-reef', down: 'riser' }],
+  ['shoal-reef', 'The reef of the Shoal', 'surface', 0.08, 0, true, { left: 'warm-shallows', right: 'plunge' }],
+  ['plunge', 'The Plunge', 'plunge', 0.1, 0, true, { left: 'shoal-reef', down: 'plunge-deep' }],
+  ['plunge-deep', 'Beneath the Plunge', 'plunge', 0.7, 0.7, false, { up: 'plunge' }],
+];
+
+// What happens in each known room (rooms added later get a generic description).
+const ROOM_NOTES = {
+  'splash': 'Where the squid hits the sea after falling from the sky island. Sunlit, with fish everywhere. Now and then a swan feather drifts down from very far above. The squid can leap out of the water here.',
+  'sinking': 'The long, slow sink after the splash. Far below, a light blinks gold three times, then rests (the crown jellies in the fallen dome). Copying it is how most squids discover glow. The cliff is off to one side and the kelp to the other.',
+  'glow-below': 'The top of an impossible shape rising out of the dark: the fallen glass dome, glowing from inside.',
+  'hollowglass-rim': 'Outside the fallen glass dome. A tower lies on its side, the great dome is cracked and glowing, and there\'s a dark opening at its base. A hermit crab lives in a piece of dome glass here, and a glass swan lies half buried.',
+  'hollowglass-hall': 'Inside the dome, looking up at a curved glass sky. A dead garden of little bleached sky trees. The vampire squid lives here and teaches "open". A door of glass petals leads on.',
+  'mural-room': 'Behind the glass petals: a room full of glass. The first piece of glass from home is here (memory 1, the pool).',
+  'cliff-face': 'A rock wall that goes up past the light and down past the dark. The Mouth, a pitch-black cave, opens in it.',
+  'mouth': 'A pitch-black cave in the cliff. The squid needs to glow to find its way in.',
+  'mouth-deep': 'The far end of the cave, where the nautilus teaches "calm" and the moray eel snaps until it\'s calmed.',
+  'kelp-edge': 'Where the giant kelp forest begins. Lots of little fish.',
+  'kelp-deep': 'The middle of the kelp forest, where Sepia the cuttlefish teaches "passing cloud" and then plays hide and seek.',
+  'kelp-heart': 'The oldest part of the kelp forest, under the Mother Kelp, which is older than the cliff. A swan feather lies here.',
+  'bright-reef': 'Warm, sunny shallows. Old Drift the turtle floats here, a crab drums on a shell, and firefly squid rise at night.',
+  'open-blue': 'Open water at the surface. Far to the east, a thread of water falls out of the sky and roars. A strong current blocks the way east until chapter 6. A school of fish sometimes makes the shape of a swan.',
+  'cliff-foot': 'The bottom of the cliff, darker and colder. Bubble rings rise from a crack in the floor. The way down into the trench starts here.',
+  'trench-lip': 'The top edge of the trench. From here on, the sperm whale hunts by clicking.',
+  'trench-wall': 'A tall, narrow drop down the trench wall. Far lights blink in some kind of order in the distance. Hide under ledges or go dark when the clicks get close.',
+  'trench-floor': 'The bones of something enormous (a whale fall) are slowly eaten by tiny worms. In chapter 3 the whale passes over, the floor cracks, and the squid falls through into the Below.',
+  'undershine-gate': 'Warm water at the bottom of the Below. Sea cucumbers inch along, all going the same way.',
+  'undershine': 'A warm, lit deep-sea spot where hundreds of pearl octopus mothers curl on warm rock, arms wrapped around their eggs. Dumbo octopuses flap around. One mother idly juggles three pearls.',
+  'keeper-hall': 'Grandmother Seven\'s den. She teaches "wake" for five pearls. There\'s a crack in her roof: when the volcano is awake, warm water rushes up through it.',
+  'forge': 'An undersea volcano and hydrothermal vent, with basalt columns ("forge" in the API). Played here while it\'s dormant, "wake" sets it erupting for everyone.',
+  'riser': 'The warm plume from the volcano, rushing up through the crack in Grandmother Seven\'s roof. While the volcano is awake, it carries squids up to the warm shallows.',
+  'warm-shallows': 'Warm, bright water near the top. It\'s too warm to breathe properly up high, so the squid has to stay low. Humboldt squid patrol here.',
+  'shoal-reef': 'A reef with crevices in the coral heads just big enough for a squid. The Shoal of sardines sweeps through every 6 minutes; hide in a crevice or go dark.',
+  'plunge': 'Where the water from the sky islands pours into the sea. Stay still near the falling water and the swans\' song (the call) comes down with it. Friends come here in chapter 7 to see the squid off.',
+  'plunge-deep': 'Beneath the Plunge, deep and dark. The sperm whale rises from below in chapter 7, not chasing, just looking.',
+};
+
+// Snapshot of TRIVIA in assets/game/js/story.js, used only if that file can't be read.
+const TRIVIA_SNAPSHOT = [
+  'The very first Sailsconf, in June 2021, was online. Three days, free, and nobody had to find parking.',
+  'At Sailsconf 2021, Mike McNeil\'s opening keynote made one thing very clear: Sails is not dead.',
+  'Paystack told Sailsconf 2021 their public API had run on Sails since January 2016. About 23 million requests a day.',
+  'Postman\'s Ankit Sobti told Sailsconf 2021 they\'d used Sails since 2014, across more than 40 microservices.',
+  'Kelvin Omereshone had never hosted a conference before Sailsconf 2021. He\'s hosted one every year since.',
+  'Sailsconf Africa 2024 was in Abuja, Nigeria. Kelvin\'s talk was "What\'s new in Sails land."',
+  'Sailsconf Africa 2025 had a pirate-themed competition called the Squiddy Games. The prize was $3,000. Ahoy.',
+  'Run `sails lift` and your app wakes up on port 1337. Nobody down here knows what that means. The fish suspect it\'s a joke.',
+  'Sails was first released in 2012. Some of the bones on the trench floor are older. Not many.',
+  'Sails talks to databases through Waterline. The waterline is where the water starts. It\'s very far up from here.',
+];
+
+const DIRECTION_WORDS = { up: 'up', down: 'down', left: 'west (left)', right: 'east (right)' };
+
+const straighten = (s) => String(s).replace(/[\u2018\u2019]/g, '\'').replace(/[\u201c\u201d]/g, '"').replace(/\\(['"\\])/g, '$1');
+
+// Read every room from the client's room list.  Returns null if it can't.
+function readRoomsFromClient() {
+  try {
+    var src = fs.readFileSync(path.resolve(sails.config.appPath, 'assets/game/js/rooms.js'), 'utf8');
+    var re = /def\(\s*'([^']+)'\s*,\s*\{/g;
+    var starts = [];
+    var m;
+    while ((m = re.exec(src))) { starts.push({ key: m[1], at: m.index + m[0].length }); }
+    var rooms = starts.map((s, i) => {
+      var chunk = src.slice(s.at, i + 1 < starts.length ? starts[i + 1].at : src.length);
+      var exitsAt = chunk.search(/\bexits\s*:/);
+      var head = exitsAt >= 0 ? chunk.slice(0, exitsAt) : chunk.slice(0, 400);
+      var str = (name) => { var mm = head.match(new RegExp('\\b'+name+'\\s*:\\s*\'((?:[^\'\\\\]|\\\\.)*)\'')); return mm ? straighten(mm[1]) : ''; };
+      var num = (name) => { var mm = head.match(new RegExp('\\b'+name+'\\s*:\\s*(-?[0-9.]+)')); return mm ? Number(mm[1]) : null; };
+      var exits = {};
+      if (exitsAt >= 0) {
+        var open = chunk.indexOf('{', exitsAt);
+        var depth = 0;
+        var close = open;
+        for (; close < chunk.length; close++) {
+          if (chunk[close] === '{') { depth++; } else if (chunk[close] === '}') { depth--; if (!depth) { break; } }
+        }
+        var block = chunk.slice(open + 1, close);
+        var exitRe = /(\w+)\s*:\s*(?:'([^']+)'|\{[^}]*?\bkey\s*:\s*'([^']+)'[^}]*\})/g;
+        var x;
+        while ((x = exitRe.exec(block))) { exits[x[1]] = x[2] || x[3]; }
+      }
+      return [s.key, str('name') || s.key, str('region') || 'unknown', num('depth'), num('dark') || 0, /\bsurface\s*:\s*true/.test(head), exits];
+    });
+    return rooms.length ? rooms : null;
+  } catch (err) {
+    sails.log.verbose('get-world-facts: could not read rooms from the client, using the snapshot:', err.message);
+    return null;
+  }
+}
+
+function readTriviaFromClient() {
+  try {
+    var src = fs.readFileSync(path.resolve(sails.config.appPath, 'assets/game/js/story.js'), 'utf8');
+    var start = src.indexOf('const TRIVIA = [');
+    if (start < 0) { return null; }
+    var block = src.slice(start, src.indexOf('];', start));
+    var re = /'((?:[^'\\]|\\.)*)'/g;
+    var out = [];
+    var m;
+    while ((m = re.exec(block))) { out.push(straighten(m[1])); }
+    return out.length ? out : null;
+  } catch (err) {
+    sails.log.verbose('get-world-facts: could not read trivia from the client, using the snapshot:', err.message);
+    return null;
+  }
+}
+
+// ── Hand-written facts ─────────────────────────────────────────────────────────
+
+const STORY_FACTS = [
+  { key: 'story', topic: 'story', title: 'The story of Stack Overboard', tags: ['premise', 'squid', 'sky islands', 'swans', 'home'],
+    body: 'A young squid lives in a pool in the glass city on the floating sky islands, under glass domes, where swans bend down to look at it. It was always told to stay away from the edge of the waterfall. One day the island shook, and it slipped over the edge and fell into the sea. Now it wants to go home. Everyone it meets is a real sea creature. The squid talks with its skin: four colors that are also four notes, flashed in short patterns called skin words. The way home is the waterfall far to the east (the Plunge), but the current up top is too strong, so it has to go the long way underneath.',
+    related: ['sky-islands', 'chapter-1', 'mechanic-skin-words', 'region-plunge'], seeAlso: ['get-lore', 'get-overview'] },
+  { key: 'sky-islands', topic: 'story', title: 'The sky islands and the glass city', tags: ['sky islands', 'glass city', 'domes', 'swans', 'home', 'waterfall'],
+    body: 'Home is a glass city on floating islands high above the sea: grass on top, a jagged rock keel below, and glass domes over pools where swans bend down to look at the squids. Water pours off the islands in a long waterfall that falls all the way into the sea far to the east (the Plunge). Pieces of the city have fallen into the sea before: Hollowglass is a whole glass dome that fell long ago, and bits of dome glass turn up on the seafloor.',
+    related: ['mystery-glass-city-flight', 'dome-glass-sand', 'region-hollowglass', 'region-plunge'] },
+  { key: 'dome-glass-sand', topic: 'story', title: 'The dome glass was made from harvested sand', status: 'planned', optional: true, tags: ['glass', 'sand', 'domes', 'glass city', 'history'],
+    body: 'Design intent: the glass of the sky domes was made from sand, and that sand had to be harvested from somewhere. This is meant to come out as background lore. Where the sand came from and who harvested it are not settled yet.',
+    related: ['sky-islands', 'region-hollowglass', 'mechanic-dirt'] },
+  { key: 'mystery-glass-city-flight', topic: 'mystery', title: 'How does the glass city fly?', optional: true, tags: ['mystery', 'glass city', 'sky islands', 'open question'],
+    body: 'An open question, on purpose. Nobody in the sea explains it and the game never states it. Hints are scattered only in optional places, for players who go looking. They are deliberately not recorded here, and no answer is recorded anywhere in this database. If someone asks, say it\'s a mystery the game leaves open.',
+    related: ['sky-islands'] },
+];
+
+const CHAPTER_DETAILS = {
+  0: { how: 'Sink. Watch the gold light far below (three blinks, then a rest) and flash gold three times to copy it. That teaches glow.', places: ['splash', 'sinking'] },
+  1: { how: 'Follow the glow down to Hollowglass, go inside the dome, and talk to the vampire squid. She teaches "open" (red, pale, red). Open the glass petals and find the shiny thing in the room behind them (memory 1). Then go back and tell her.', places: ['glow-below', 'hollowglass-rim', 'hollowglass-hall', 'mural-room'] },
+  2: { how: 'Learn to hide from Sepia the cuttlefish in the kelp ("passing cloud": red, red, shimmer, then find her three times in hide and seek), and learn to calm things from the nautilus deep in the cliff cave ("calm": pale, shimmer, pale; glow to get into the dark cave, then calm the moray eel). The trench stays closed until the squid knows both.', places: ['kelp-deep', 'mouth', 'mouth-deep'] },
+  3: { how: 'Go down past the foot of the cliff into the trench. When the clicks speed up, the whale is close: hide under a ledge or go dark with passing cloud. Glowing gets her attention. At the bottom she passes over, the floor cracks, and the squid falls through.', places: ['cliff-foot', 'trench-lip', 'trench-wall', 'trench-floor'] },
+  4: { how: 'Wander the dark maze of the Below. The drifting snow (marine snow) moves one way: follow it to find the way down. Gather pearls on the way (Grandmother Seven will want five), and look for memories 2 and 3.', places: ['below'] },
+  5: { how: 'Bring Grandmother Seven five pearls and she teaches "wake" (gold, red, gold, red). Play it at the volcano next door while it\'s dormant. While it erupts, warm water rushes up through the crack in her roof (the Riser).', places: ['undershine-gate', 'undershine', 'keeper-hall', 'forge', 'riser'] },
+  6: { how: 'Ride the Riser up to the warm shallows. Stay low (it\'s too warm to breathe properly near the top), calm or dodge the Humboldt squid, and hide from the Shoal in a crevice of the reef, heading east toward the waterfall.', places: ['riser', 'warm-shallows', 'shoal-reef'] },
+  7: { how: 'At the Plunge, friends come to see the squid off and the sperm whale rises from below. Stay still near the falling water to learn the swans\' call. Then choose how it ends.', places: ['plunge', 'plunge-deep'] },
+  8: { how: 'Nothing has to be done. The squid can keep swimming, or fall again as a new playthrough (skin words are forgotten, but endings and memories of the world carry on).', places: [] },
+};
+
+const ENDING_DETAILS = {
+  return: 'Swim straight up the waterfall at the Plunge, as fast as possible.',
+  lantern: 'When asked "So. Are you really going?", decide to stay.',
+  gift: 'Beneath the Plunge, play "calm" (pale, shimmer, pale) to the sperm whale.',
+  song: 'Find all three pieces of glass from home first, then play the swans\' call (blue, gold, blue, pale) at the Plunge. With fewer than three memories it comes out wrong.',
+};
+
+const MECHANICS = [
+  { key: 'mechanic-skin-words', title: 'Talking with skin (skin words)', tags: ['skin', 'colors', 'notes', 'music', 'controls'],
+    body: 'A squid has four skin colors, and each sings a note like a bell: red (D5), pale (F#5), shimmer or blue (A5), and glow or gold (B5). Short patterns of colors are skin words, which are also little melodies: glow, open, calm, passing cloud, call, and wake. In the game, keys A or 1 = pale, B or 2 = red, C or 3 = shimmer, D or 4 = glow (or tap the four skin buttons). More than about 1.9 seconds between notes and the squid starts over. Any squid can say any word; the trick is knowing it exists.',
+    related: ['skin-word-glow', 'skin-word-open', 'skin-word-calm', 'skin-word-cloud', 'skin-word-call', 'skin-word-wake', 'mechanic-palindromes'], seeAlso: ['get-skin-words'] },
+  { key: 'mechanic-palindromes', title: 'The palindrome rule (undoing skin words)', tags: ['skin words', 'undo', 'palindrome', 'backwards'],
+    body: 'A skin word played backwards takes back what it did, unless it reads the same both ways. Glow, open, and calm are palindromes, so they can\'t be undone: there\'s no "unglow", opened petals stay open, and what\'s calm stays calm. Passing cloud, call, and wake can be undone by playing them backwards (shimmer, red, red clears an ink cloud early; pale, blue, gold, blue hushes a call; red, gold, red, gold settles what you woke nearby, though the volcano won\'t go back to sleep). A squid can only undo a word it knows.',
+    related: ['mechanic-skin-words', 'mechanic-glow'], seeAlso: ['get-skin-words'] },
+  { key: 'mechanic-glow', title: 'Glow, and how it wears off', tags: ['glow', 'light', 'dark', 'timer'],
+    body: 'Gold, gold, gold turns on little lights along the squid\'s belly. They last about 60 seconds and then wear off; there\'s no way to turn them off early, because glow is a palindrome. Glow is needed to find the way through the Mouth, the pitch-black cave in the cliff. In the trench it draws the sperm whale\'s attention. Flash glow at the drumming crab and it dances.',
+    related: ['skin-word-glow', 'place-mouth', 'chapter-3', 'oddity-drummer'] },
+  { key: 'mechanic-hiding', title: 'Hiding (passing cloud, ledges, crevices)', tags: ['hiding', 'passing cloud', 'whale', 'shoal', 'stealth'],
+    body: 'Passing cloud (red, red, shimmer) turns the squid into a shadow for about 6 seconds. It keeps the squid safe from the sperm whale in the trench and from the Shoal at the reef. Ledges in the trench and crevices in the reef also hide a squid.',
+    related: ['skin-word-cloud', 'chapter-3', 'chapter-6', 'mechanic-shoal'] },
+  { key: 'mechanic-smell', title: 'Smell and scent trails', tags: ['smell', 'scent', 'senses', 'tracking'],
+    body: 'Squids can smell. Things give off a faint scent that drifts with the water, and when the squid swims through a trail it sniffs, looks toward where it\'s coming from, and the trail brightens for a moment, so players can follow their nose to things they can\'t see yet. Scents: pearls (salty and sweet), glass from home (smells like home), sulfur from the volcano, dead things (the whale fall, or a dead fish the vampire squid is feeding on), other players\' squids, octopuses, swan feathers, the sperm whale, and the moray eel.',
+    related: ['mechanic-presence', 'mechanic-blood'], seeAlso: ['get-lore'] },
+  { key: 'mechanic-dirt', title: 'Getting dirty', tags: ['dirt', 'grime', 'sand', 'silt', 'mud', 'soot', 'multiplayer'],
+    body: 'Scraping along the bottom picks up whatever it\'s made of: sand at the surface, silt on the cliff, in the trench, and at the Plunge, mud in the Below and the octopus garden, slime in the kelp, soot by the volcano, and glittery glass dust in Hollowglass. Racing just above the floor kicks up clouds that settle on any squid swimming through, including other players\' squids, and a dirty squid that brushes past another leaves some on it. It comes off as the squid swims: faster swimming, faster cleaning. Creatures can puff up clouds too (Grandmother Seven sometimes inks).',
+    related: ['mechanic-presence', 'mechanic-blood', 'mechanic-scales'], seeAlso: ['get-online', 'get-lore'] },
+  { key: 'mechanic-airtime', title: 'Air time and the splash', optional: true, tags: ['air time', 'jump', 'splash', 'belly flop', 'surface'],
+    body: 'Swim fast enough (click like crazy) and the squid bursts out of the sea into the air. Go high enough and an "air time" readout times the jump. The splash depends on height and how the squid hits: arms out is a huge, wide belly flop; tucked in is a tall, clean entry ("Clean entry", "Perfect entry", "Belly flop", "Colossal belly flop"). A really big jump gets a slow-motion replay. Only possible from rooms at the surface.',
+    related: ['region-surface'] },
+  { key: 'mechanic-rumble', title: 'Rumbles', optional: true, tags: ['rumble', 'earthquake', 'shake'],
+    body: 'Every so often (about once every five minutes of play, sometimes as long as eight) the whole sea shudders: the screen shakes, silt sifts down from above, and everything flinches. Never more than twice in two minutes. The squid wonders what moved down there. It\'s atmosphere, and nothing about it is explained.',
+    related: ['region-forge', 'chapter-3'] },
+  { key: 'mechanic-presence', title: 'Other squids (presence and multiplayer)', tags: ['multiplayer', 'presence', 'other players', 'online', 'shared world'],
+    body: 'Players never meet face to face, but they share one sea. A couple of times a second each game tells the server where its squid is and hears who else is in the same place. Other squids swim smoothly between updates, and are never pink: each gets its own steady shade of pale, ghostly gray, or near-black, so you can always tell which one is you. Squids nearby can see each other, smell each other, and get each other dirty. Each player is a squid with a public name like "Pale-Ember-Drift". Shared, permanent things: the map of the Below, procedural species, pearls, eruptions of the volcano, endings chosen, and an append-only history.',
+    related: ['mechanic-dirt', 'mechanic-smell', 'mechanic-below', 'mechanic-volcano', 'mechanic-pearls'], seeAlso: ['get-online', 'get-squids', 'get-history', 'get-overview'] },
+  { key: 'mechanic-pearls', title: 'Pearls (gems in the API)', tags: ['pearls', 'gems', 'below', 'grandmother seven', 'shared'],
+    body: 'Pearls grow on tiles of the Below (up to two per tile). Any squid can gather one, first come, first served: once gathered it\'s gone for everyone until the next 15-minute regrow window. Pearls smell salty and sweet. Grandmother Seven trades "wake" for five pearls for her den.',
+    related: ['mechanic-below', 'creature-grandmother', 'chapter-5', 'item-pearl'], seeAlso: ['get-map', 'claim-gem'] },
+  { key: 'mechanic-procedural-species', title: 'Procedurally generated species', tags: ['procedural', 'species', 'discovery', 'shared'],
+    body: 'Besides the real native animals, the sea has procedurally generated creatures, plants, and items (made-up names like a "Glimwick" with a body, colors, glow, pattern, and behavior, plus a little lore). The first squid to meet one introduces it to the world, and it stays, with that squid\'s name on it. At most 40 of each kind can exist. They live in the Below, the kelp, and the octopus garden. When idle they spin, hop, or shrink down shyly.',
+    related: ['mechanic-below', 'behavior-species', 'place-west-surface'], seeAlso: ['get-species'] },
+  { key: 'mechanic-below', title: 'The Below (the shared maze)', spoilerLevel: 1, tags: ['below', 'maze', 'tiles', 'procedural', 'shared', 'discovery'],
+    body: 'Under the trench floor is the Below: a dark 7 by 5 maze of tiles (x from -3 to 3, y from 7 to 11, y grows deeper), generated from the world seed so it\'s the same for every squid. Whoever reaches a tile first discovers it for everyone. Glowing sea pens light the tunnels, pearls grow here, squids leave fading traces of their colors behind, and about one dark tile in six has spiral marks. The drifting snow moves toward the way down, which leads to the octopus garden. Memories 2 and 3 are hidden on two tiles.',
+    related: ['region-below', 'chapter-4', 'mechanic-pearls', 'oddity-spiral'], seeAlso: ['get-map'] },
+  { key: 'mechanic-volcano', title: 'The volcano (forge in the API)', tags: ['volcano', 'vent', 'forge', 'eruption', 'wake', 'shared'],
+    body: 'An undersea volcano and hydrothermal vent next to the octopus garden. Any squid can wake it with "wake" (gold, red, gold, red) while it\'s dormant, and then it erupts for 20 minutes and cools for 40, for everyone in the shared world. It can\'t be put back to sleep. While it\'s awake, warm water rushes up through the crack in Grandmother Seven\'s roof (the Riser) and carries squids to the surface. It smells of sulfur, and squids near it get sooty.',
+    related: ['region-forge', 'skin-word-wake', 'place-riser', 'chapter-5'], seeAlso: ['get-state', 'get-history', 'wake-vent'] },
+  { key: 'mechanic-sea-day', title: 'The sea-day clock', tags: ['time', 'day', 'night', 'clock'],
+    body: 'The sea follows a shared 2-hour day: dawn, day, dusk, and night, the same for everyone. Firefly squid rise in the Bright at night.',
+    related: ['mechanic-shoal', 'creature-firefly-squid'], seeAlso: ['get-state'] },
+  { key: 'mechanic-shoal', title: 'The Shoal\'s schedule', tags: ['shoal', 'sardines', 'reef', 'schedule', 'danger'],
+    body: 'The Shoal, thousands of sardines, sweeps through the reef of the Shoal every 6 minutes and takes about 75 seconds to pass. A squid caught in the open gets swept away; hide in a crevice or use passing cloud.',
+    related: ['creature-shoal', 'place-shoal-reef', 'chapter-6', 'mechanic-hiding'], seeAlso: ['get-state'] },
+  { key: 'mechanic-heat', title: 'Too warm near the top (chapter 6)', spoilerLevel: 1, tags: ['heat', 'warm', 'surface', 'chapter 6'],
+    body: 'In the warm shallows the water near the surface is too warm for a deep-sea squid to breathe properly, so it has to stay low on the way east.',
+    related: ['chapter-6', 'place-warm-shallows'] },
+  { key: 'mechanic-current', title: 'The current to the east', tags: ['current', 'east', 'waterfall', 'surface'],
+    body: 'A strong current in open water blocks the way east along the surface until chapter 6. That\'s why the squid has to go the long way underneath: down the trench, through the Below, and back up on the volcano\'s warm water.',
+    related: ['place-open-blue', 'chapter-2', 'chapter-6'] },
+  { key: 'mechanic-golden-bubbles', title: 'Golden bubbles (Sailsconf trivia)', optional: true, tags: ['bubbles', 'trivia', 'sailsconf', 'sails.js'],
+    body: 'Now and then a golden bubble drifts through. Popping it shows a true (and silly) fact about Sailsconf, the Sails.js conference, or about Sails itself. The game shows unseen ones first.',
+    related: ['trivia-1'] },
+  { key: 'mechanic-playthroughs', title: 'Saving, endings, and falling again', tags: ['save', 'playthrough', 'endings', 'new game'],
+    body: 'Progress is saved on the server under the squid\'s name. After an ending, the squid can keep swimming, or fall again as a new playthrough: skin words are forgotten and must be found again, while the shared world (the map, species, endings, history) carries on.',
+    related: ['chapter-8'], seeAlso: ['get-squids', 'get-history'] },
+
+  // Planned systems (designed, not built yet).
+  { key: 'mechanic-blood', status: 'built', title: 'Blood in the water and on the squid', tags: ['blood', 'injury', 'smell', 'predators', 'strikers'],
+    body: 'things bleed down here. When something gets bitten, blood goes into the water in a slow red cloud (blue if it\'s the squid\'s own, since squid blood is blue). Clouds drift and thin out, but blood carries. Swimming through a cloud gets blood on the squid, which comes off as it swims; enough of it smears the squid\'s eye and makes it hard to see. Strikers (lean silver fish) dart in fast at the biggest globs of blood and at anything with blood on it, and if enough blood gathers in one place, worse things come.',
+    related: ['mechanic-dirt', 'mechanic-smell', 'mechanic-hunger', 'mechanic-scales'] },
+  { key: 'mechanic-scales', status: 'built', title: 'Fish scales', tags: ['scales', 'fish', 'glitter'],
+    body: 'when a fish gets bitten or eaten, scales come spinning off it, glinting as they drift and sink, alongside the blood.',
+    related: ['mechanic-dirt', 'mechanic-hunger', 'creature-shoal'] },
+  { key: 'mechanic-hunger', status: 'built', title: 'Hunger and eating', tags: ['hunger', 'eating', 'food', 'krill', 'shrimp'],
+    body: 'from chapter 2 on, the squid slowly gets hungry. Hungry, it can\'t swim as hard; starving, it can barely hurry at all. Food is small and alive: drifting clouds of krill, shrimp picking along the bottom, and little fish that dart away. Touching one eats it. Fish bleed when eaten.',
+    related: ['mechanic-blood', 'mechanic-scales'] },
+];
+
+const PLANNED_THINGS = [
+  { key: 'creature-water-elementals', topic: 'creature', status: 'built', spoilerLevel: 1, title: 'Water elementals', tags: ['water elementals', 'danger', 'enemies', 'chapter 5'],
+    body: 'some of the water here isn\'t just water. You notice them by the way the light bends: a slow lens of water with a few bubbles caught in it, lurching after the squid. They want to catch it but move badly: gather, surge a little way, stop, and get stuck on rock. Early on they can\'t hurt the squid (a cold squeeze, and they let go). Chapter by chapter they get twistier, quicker, and their grip gets worse, and from chapter 5 on they are a real danger: near the end they hold on, crush, and drag. Calm (pale, shimmer, pale) stills them.',
+    related: ['chapter-5', 'chapter-6', 'chapter-7', 'skin-word-calm'] },
+  { key: 'character-buddy', topic: 'character', status: 'built', spoilerLevel: 1, title: 'The buddy (Bead)', tags: ['buddy', 'bead', 'glass squid', 'friend', 'companion', 'recurring'],
+    body: 'Bead, a little glass squid so clear you can see its insides, found tangled in the kelp in chapter 2. The squid frees it and names it, and after that it keeps turning up throughout the game: following along, flashing the squid\'s own skin words back, finding food, warning when something\'s coming, and tugging the squid loose when the water grabs it. The squid helps it too, sharing food and pulling it free.',
+    related: ['character-buddy-fate', 'chapter-2', 'place-kelp-deep', 'creature-glass-squid'] },
+  { key: 'character-buddy-fate', topic: 'character', status: 'built', spoilerLevel: 2, title: 'What happens to the buddy (spoiler)', tags: ['buddy', 'spoiler', 'later chapters', 'tragedy'],
+    body: 'Spoiler. in the later chapters, something awful happens to Bead. Glass squid can\'t take warm water, and in chapter 6 Bead follows the squid up into the warm shallows anyway. It drifts up into the warm water, goes white all the way through, and sinks. Its body stays where it fell, and the crabs find it. In chapter 7 the squid thinks of it once more.',
+    related: ['character-buddy', 'chapter-6', 'place-warm-shallows'] },
+  { key: 'place-west-surface', topic: 'place', status: 'planned', title: 'The surface to the west (procedural)', tags: ['west', 'surface', 'procedural', 'exploration', 'birds', 'sea spiders', 'planned'],
+    body: 'Design intent: past the Bright, the surface to the west goes on and on, generated procedurally like the Below, with its own creatures that aren\'t found anywhere else, including seabirds and sea spiders. Details are not settled.',
+    related: ['creature-birds', 'creature-sea-spiders', 'mechanic-procedural-species', 'region-surface'] },
+  { key: 'creature-birds', topic: 'creature', status: 'planned', title: 'Birds', tags: ['birds', 'seabirds', 'west', 'surface', 'planned'],
+    body: 'Design intent: seabirds at the procedurally generated surface to the west, diving and skimming the water. Not swans, which only belong to the sky islands. Details are not settled.',
+    related: ['place-west-surface'] },
+  { key: 'creature-sea-spiders', topic: 'creature', status: 'planned', title: 'Sea spiders', tags: ['sea spiders', 'pycnogonids', 'west', 'planned'],
+    body: 'Design intent: sea spiders (real animals, pycnogonids: long thin legs, tiny bodies) picking their way along the bottom in the procedurally generated west. Details are not settled.',
+    related: ['place-west-surface'] },
+  { key: 'creature-distant-crustaceans', topic: 'creature', status: 'planned', optional: true, title: 'Distant crustaceans', tags: ['crustaceans', 'crabs', 'background', 'unreachable', 'planned'],
+    body: 'Design intent: crustaceans seen far off in the background, out of reach. The squid can watch them but never get to them. Details are not settled.',
+    related: ['oddity-far-lights'] },
+];
+
+const SEAFLOOR = [
+  { key: 'fish-corpse', title: 'A dead fish', body: 'A dead fish, belly up. The eyes went first. A hagfish has gone in through the gills and is eating it from the inside, while tiny amphipods pick at it.' },
+  { key: 'half-squid', title: 'Half a squid', body: 'Half a squid, someone like the player\'s own squid, bitten clean through the mantle. The arms are still curled, as if holding on to something.' },
+  { key: 'drowned-swan', title: 'A drowned swan', body: 'A swan on the bottom, a long way from the islands, its neck folded back under its body. Crabs have taken the eyes and most of the face. The feathers still lift a little in the current.' },
+  { key: 'egg-case', title: 'An empty egg case', body: 'An egg case torn open along one side. Empty. Something got to it before it hatched.' },
+  { key: 'turtle-shell', title: 'An empty turtle shell', body: 'A turtle shell, upside down, with nothing left inside but sand and a few small crabs. Barnacles grow on the inside now.' },
+  { key: 'dying-cuttle', title: 'A pale cuttlefish', body: 'An old, pale cuttlefish beside a cluster of eggs like black grapes. Her skin is coming away in white patches. She stopped eating weeks ago and won\'t see them hatch (real cuttlefish die soon after laying).' },
+  { key: 'squid-beaks', title: 'Squid beaks', body: 'A pile of squid beaks, only the beaks. A sperm whale can\'t digest them, so it brings them back up, hundreds at a time. Some of them are small.' },
+  { key: 'sinking-fish', title: 'A dead fish, sinking', body: 'A dead fish sinking slowly past, turning over as it goes. Nothing has found it yet. One can drift down anywhere, now and then.' },
+];
+
+const BEHAVIORS = [
+  { key: 'vampire-squid', who: 'The vampire squid', acts: 'feeds on a dead fish drifting down (wrapping her arms around it and drinking, since she only eats things already dead, and it smells dead while she does), pulls her webbed arms up over her body like a cloak with glowing tips, or puffs out a cloud of glowing blue mucus. All three are real vampire squid behaviors.' },
+  { key: 'nautilus', who: 'The nautilus', acts: 'pulls into its shell for a bit (with a few bubbles), rises and sinks by adjusting its buoyancy (what nautiluses actually do all day), or scoots backward and drifts back.' },
+  { key: 'sepia', who: 'Sepia the cuttlefish', acts: 'snatches a shrimp that wanders up by shooting out her tentacles, rolls colors over her skin, or turns around. Not while she\'s hiding or busy.' },
+  { key: 'turtle', who: 'Old Drift the turtle', acts: 'snaps up a jelly drifting past, or banks slowly the way turtles glide.' },
+  { key: 'hoard', who: 'The dumbo octopuses', acts: 'somersault, spread out like an umbrella and drift down a little, or hop.' },
+  { key: 'grandmother', who: 'Grandmother Seven', acts: 'rolls colors over her skin, moves a shell from one end of her den to the other, or puffs out a little ink, just because.' },
+  { key: 'species', who: 'Procedurally generated creatures', acts: 'spin, hop, or shrink down shyly and come back out.' },
+];
+
+const CUTSCENES = [
+  { key: 'light', chapter: 1, title: 'Looking up at the light', body: 'Lying on its back in the shallows, the squid looks up at the bright, wobbling skin of the surface, the islands warped through it and a swan crossing, its own arm tips drifting into view.' },
+  { key: 'kelp', chapter: 2, title: 'Peering through kelp', body: 'Peering out through kelp blades as Humboldt squid flicker past, red and white.' },
+  { key: 'whale', chapter: 3, title: 'The whale in the dark', body: 'Clicks speed up out of the dark. Cold flashes from somewhere show the sperm whale, closer each time. Then the jaw, and the teeth. Then black.' },
+  { key: 'caught', chapter: 3, title: 'Rammed', body: 'Caught: a gray wall rushing in, the hit, and spinning away.' },
+  { key: 'down', chapter: 4, title: 'Down the shaft', body: 'Sinking down a shaft into the Below, looking up as the opening at the top shrinks and rock walls rush past.' },
+  { key: 'eye', chapter: 5, title: 'The eye', body: 'Arms uncurl across the view, suckers and all, and a golden octopus eye with a long sideways pupil opens a hand\'s width away.' },
+  { key: 'vent', chapter: 6, title: 'The vent boiling up', body: 'The volcano\'s vent boils up from below: bubbles rushing past and heat shimmer.' },
+  { key: 'home', chapter: 7, title: 'Up the waterfall', body: 'Under the waterfall, looking up the column of falling water to the light, with wings beating far above the surface, and the light growing to white.' },
+  { key: 'whale-glimpse', chapter: null, title: 'The whale, far off', body: 'In the deep, every few minutes, a glimpse of the whale far off, passing. Its teeth catch the light once.' },
+];
+
+const ODDITY_EXTRA = {
+  hermit: 'Touch it and it hides in its glass for a few seconds.',
+  drummer: 'It drums a steady rhythm. Flash glow at it and it dances.',
+  spiral: 'Its three colored dots are different on every tile, and they are not real skin words.',
+};
+
+const fact = (o) => Object.assign({
+  tags: [], related: [], status: 'built', spoilerLevel: 0, optional: false, seeAlso: [], data: {}, source: '',
+}, o);
+
+module.exports = {
+
+
+  friendlyName: 'Get world facts',
+
+
+  description: 'Build the full list of world facts for Stack Overboard (places, regions, chapters, endings, mechanics, creatures, oddities, trivia, planned systems, and more).',
+
+
+  extendedDescription:
+`This is the source of truth the WorldFact table is seeded from (see seed-world-facts), and the
+fallback when that table isn't available.  Places are read from the client's room list at call time.`,
+
+
+  sync: true,
+
+
+  inputs: {},
+
+
+  exits: {
+
+    success: {
+      outputType: 'ref',
+      outputDescription: '`{ topics, facts: [{ key, topic, title, body, tags, related, status, spoilerLevel, optional, seeAlso, data, source }], roomsFrom }`'
+    },
+
+  },
+
+
+  fn: function () {
+
+    var lore = sails.helpers.world.getLore();
+    var natives = sails.helpers.world.getNativeSpecies();
+    var words = sails.helpers.world.getSkinWords();
+    var facts = [];
+    var add = (o) => facts.push(fact(o));
+
+    var clientRooms = readRoomsFromClient();
+    var rooms = clientRooms || ROOMS_SNAPSHOT;
+    var roomsFrom = clientRooms ? 'assets/game/js/rooms.js' : 'snapshot';
+    var roomName = _.zipObject(rooms.map((r) => r[0]), rooms.map((r) => r[1]));
+    var regionByKey = _.indexBy(lore.regions, 'key');
+    var grime = _.indexBy(lore.grime, 'key');
+    var regionName = (key) => (regionByKey[key] && regionByKey[key].name) || _.startCase(key);
+    var nativesAt = (roomKey) => natives.filter((n) => n.places.includes(roomKey));
+    var odditiesAt = (roomKey) => lore.oddities.filter((o) => o.where === roomKey);
+
+    // Story
+    STORY_FACTS.forEach((o) => add(Object.assign({ source: 'story' }, o)));
+
+    // Chapters
+    lore.chapters.forEach((c) => {
+      var d = CHAPTER_DETAILS[c.chapter] || { how: '', places: [] };
+      add({
+        key: 'chapter-'+c.chapter, topic: 'chapter', title: c.chapter >= 1 && c.chapter <= 7 ? 'Chapter '+c.chapter+': '+c.title : c.title,
+        body: c.summary+(d.how ? ' How to progress: '+d.how : ''),
+        tags: ['chapter '+c.chapter, c.title.toLowerCase(), 'progress', 'walkthrough'],
+        related: [].concat(c.chapter > 0 ? ['chapter-'+(c.chapter - 1)] : [], c.chapter < 8 ? ['chapter-'+(c.chapter + 1)] : [], d.places.map((p) => 'place-'+p)),
+        spoilerLevel: c.chapter >= 7 ? 2 : (c.chapter >= 3 ? 1 : 0),
+        data: { chapter: c.chapter, places: d.places },
+        seeAlso: ['get-lore'], source: 'assets/game/js/story.js',
+      });
+    });
+
+    // Endings (spoilers)
+    lore.endings.forEach((e) => add({
+      key: 'ending-'+e.key, topic: 'ending', title: 'Ending: '+e.name+' ("'+e.key+'")',
+      body: 'Spoiler. '+e.summary+(ENDING_DETAILS[e.key] ? ' How to reach it: '+ENDING_DETAILS[e.key] : ''),
+      tags: ['ending', e.key, e.name.toLowerCase(), 'spoiler', 'chapter 7'],
+      related: ['chapter-7', 'place-plunge'].concat(e.key === 'song' ? ['memory-1', 'memory-2', 'memory-3', 'skin-word-call'] : e.key === 'gift' ? ['skin-word-calm', 'creature-whale'] : []),
+      spoilerLevel: 2, data: { ending: e.key }, seeAlso: ['get-overview', 'get-history'], source: 'assets/game/js/story.js',
+    }));
+
+    // Memories
+    lore.memories.forEach((m) => add({
+      key: 'memory-'+m.memory, topic: 'memory', title: 'Memory '+m.memory+': '+m.name,
+      body: 'A piece of glass from home that brings back a memory: "'+m.line+'" Where: '+m.where+' Finding all three makes the "song" ending possible.',
+      tags: ['memory', 'glass from home', m.name.toLowerCase()],
+      related: ['item-glass', 'ending-song'].concat(m.memory === 1 ? ['place-mural-room'] : ['mechanic-below']),
+      spoilerLevel: m.memory === 1 ? 0 : 1, optional: m.memory !== 1, data: { memory: m.memory },
+      seeAlso: m.memory === 1 ? ['get-lore'] : ['get-map'], source: 'assets/game/js/story.js',
+    }));
+
+    // Regions
+    var regionKeys = _.uniq(lore.regions.map((r) => r.key).concat(rooms.map((r) => r[2])));
+    regionKeys.forEach((key) => {
+      var r = regionByKey[key];
+      var placesHere = rooms.filter((room) => room[2] === key);
+      add({
+        key: 'region-'+key, topic: 'region', title: regionName(key),
+        body: (r ? r.summary : 'A region of the sea.')+(placesHere.length ? ' Places: '+placesHere.map((p) => p[1]+' ('+p[0]+')').join(', ')+'.' : '')+(grime[r && r.dirt] ? ' Scraping the bottom here leaves a squid '+grime[r.dirt].look.toLowerCase()+' ('+r.dirt+').' : ''),
+        tags: ['region', key, regionName(key).toLowerCase()].concat(r && r.dirt ? [r.dirt] : []),
+        related: placesHere.map((p) => 'place-'+p[0]).concat(key === 'below' ? ['mechanic-below'] : key === 'forge' ? ['mechanic-volcano'] : []),
+        data: { region: key, dirt: r ? r.dirt : null, places: placesHere.map((p) => p[0]) },
+        seeAlso: ['get-lore'], source: 'api/helpers/world/get-lore.js',
+      });
+    });
+
+    // Places (every room)
+    rooms.forEach(([key, name, region, depth, dark, surface, exits]) => {
+      var exitList = Object.keys(exits).map((dir) => (DIRECTION_WORDS[dir] || dir)+' to '+(roomName[exits[dir]] || (exits[dir].startsWith('below:') ? 'the Below' : exits[dir]))+' ('+exits[dir]+')');
+      var here = nativesAt(key);
+      var odd = odditiesAt(key);
+      add({
+        key: 'place-'+key, topic: 'place', title: name,
+        body: [
+          name+' ('+key+') is in '+regionName(region).replace(/^The /, 'the ')+'.',
+          ROOM_NOTES[key] || '',
+          surface ? 'It\'s at the surface.' : (dark >= 0.85 ? 'It\'s pitch black.' : dark >= 0.5 ? 'It\'s dark.' : ''),
+          exitList.length ? 'Ways out: '+exitList.join(', ')+'.' : '',
+          key === 'undershine-gate' ? 'The way up leads back into the Below, wherever the maze\'s way down came out.' : '',
+          here.length ? 'Living or found here: '+here.map((n) => n.name).join(', ')+'.' : '',
+          odd.length ? 'Oddities here: '+odd.map((o) => o.name).join(', ')+'.' : '',
+        ].filter(Boolean).join(' '),
+        tags: ['place', key, name.toLowerCase(), region, regionName(region).toLowerCase()].concat(surface ? ['surface'] : []),
+        related: ['region-'+region].concat(Object.values(exits).map((k) => k.startsWith('below:') ? 'place-below' : 'place-'+k), here.map((n) => n.kind+'-'+n.key), odd.map((o) => 'oddity-'+o.key)),
+        data: { room: key, region, exits, depth, darkness: dark, surface, nativeSpecies: _.pluck(here, 'key') },
+        seeAlso: here.length ? ['get-species'] : [], source: roomsFrom,
+      });
+    });
+    add({
+      key: 'place-below', topic: 'place', title: 'The Below (any tile)', spoilerLevel: 1,
+      body: 'Every tile of the Below has the room key "below:x,y" (x from -3 to 3, y from 7 to 11). The trench floor opens into below:0,7. Tiles are generated from the world seed, the same for everyone, and discovered by whoever gets there first. Some have pearls, some have spiral marks, two hold memories, and one leads down to the octopus garden.',
+      tags: ['place', 'below', 'maze', 'tiles'],
+      related: ['region-below', 'mechanic-below', 'place-trench-floor', 'place-undershine-gate'],
+      data: { room: 'below:x,y', region: 'below', minX: -3, maxX: 3, minY: 7, maxY: 11, entrance: 'below:0,7' },
+      seeAlso: ['get-map'], source: 'api/helpers/world/generate-maze.js',
+    });
+
+    // Skin words
+    words.skinWords.forEach((w) => add({
+      key: 'skin-word-'+w.key, topic: 'skin-word', title: 'Skin word: '+w.name,
+      body: w.meaning+' '+w.inGame+' Who teaches it: '+w.teacher+' Melody: '+w.melody+'. '+w.undo,
+      tags: ['skin word', w.key, w.name.toLowerCase(), w.colorNames.join(' ')].concat(w.isPalindrome ? ['palindrome'] : []),
+      related: ['mechanic-skin-words', 'mechanic-palindromes'].concat(w.learnedAt.map((p) => 'place-'+p)),
+      spoilerLevel: w.key === 'call' || w.key === 'wake' ? 1 : 0,
+      data: { word: w.key, colors: w.colorNames, melody: w.melody, learnedAt: w.learnedAt, canBeUndone: w.canBeUndone },
+      seeAlso: ['get-skin-words'], source: 'api/helpers/world/get-skin-words.js',
+    }));
+
+    // Mechanics
+    MECHANICS.forEach((m) => add(Object.assign({ topic: 'mechanic', source: m.status === 'planned' ? 'design' : 'assets/game/js' }, m)));
+    lore.smells.forEach((s) => add({
+      key: 'smell-'+s.key, topic: 'mechanic', title: 'Smell: '+s.key, optional: true,
+      body: s.from+' give off a scent a squid can follow. What the squid thinks: "'+s.line+'"',
+      tags: ['smell', 'scent', s.key], related: ['mechanic-smell'], data: { smell: s.key }, source: 'assets/game/js/smell.js',
+    }));
+
+    // Creatures, plants, items
+    natives.forEach((n) => add({
+      key: n.kind+'-'+n.key, topic: n.kind, title: n.name+(n.commonName && n.commonName !== n.name ? ' ('+n.commonName+')' : ''),
+      body: [n.role, n.realWorld.length ? 'Real world: '+n.realWorld.join(' ') : ''].filter(Boolean).join(' '),
+      tags: [n.kind, n.key, n.name.toLowerCase(), (n.commonName || '').toLowerCase(), (n.latin || '').toLowerCase()].concat(n.regions, n.teaches ? ['teaches '+n.teaches] : []).filter(Boolean),
+      related: n.places.map((p) => 'place-'+p).concat(n.teaches ? ['skin-word-'+n.teaches] : [], n.smell ? ['smell-'+n.smell] : []),
+      data: { nativeSpecies: n.key, regions: n.regions, places: n.places, teaches: n.teaches || null, smell: n.smell || null, latin: n.latin || null },
+      seeAlso: ['get-species'], source: 'api/helpers/world/get-native-species.js',
+    }));
+
+    // Planned characters, creatures, places
+    PLANNED_THINGS.forEach((p) => add(Object.assign({ source: 'design' }, p)));
+
+    // Oddities
+    lore.oddities.forEach((o) => add({
+      key: 'oddity-'+o.key, topic: 'oddity', title: o.name, optional: true,
+      body: o.summary+(ODDITY_EXTRA[o.key] ? ' '+ODDITY_EXTRA[o.key] : '')+' Where: '+(o.where === 'below' ? 'tiles of the Below' : (roomName[o.where] || o.where)+' ('+o.where+')')+'. None of the oddities matter to the story; they\'re just there, being a little mysterious.',
+      tags: ['oddity', o.key, o.name.toLowerCase()],
+      related: [o.where === 'below' ? 'place-below' : 'place-'+o.where],
+      data: { oddity: o.key, room: o.where }, source: 'assets/game/js/oddities.js',
+    }));
+
+    // The seafloor: sad things
+    add({
+      key: 'seafloor', topic: 'seafloor', title: 'Things die down here', optional: true,
+      body: 'Here and there on the bottom (in about one place in four, the same places every time, never at the surface) lies something dead, and nobody comes to clean up. Clicking one makes the squid look properly. Now and then, anywhere, a dead fish sinks past. None of it is explained or dwelt on. It\'s just there.',
+      tags: ['seafloor', 'death', 'sad', 'dead'], related: SEAFLOOR.map((s) => 'seafloor-'+s.key), source: 'assets/game/js/sad.js',
+    });
+    SEAFLOOR.forEach((s) => add({
+      key: 'seafloor-'+s.key, topic: 'seafloor', title: s.title, optional: true, body: s.body,
+      tags: ['seafloor', 'dead', 'sad', s.key], related: ['seafloor'], data: { kind: s.key }, source: 'assets/game/js/sad.js',
+    }));
+
+    // Idle behaviors
+    BEHAVIORS.forEach((b) => {
+      var native = natives.find((n) => n.key === b.key);
+      add({
+        key: 'behavior-'+b.key, topic: 'behavior', title: 'Idle behavior: '+b.who, optional: true,
+        body: 'Creatures with nothing to do still do things. Every so often, '+b.who.replace(/^The /, 'the ').replace(/^Procedurally/, 'procedurally')+' '+b.acts+' Everything that moves wiggles a little as it goes, more when it\'s on the move.',
+        tags: ['behavior', 'idle', b.key],
+        related: native ? [native.kind+'-'+native.key] : ['mechanic-procedural-species'],
+        source: 'assets/game/js/idle.js',
+      });
+    });
+
+    // First-person cutscenes
+    CUTSCENES.forEach((c) => add({
+      key: 'cutscene-'+c.key, topic: 'cutscene', title: 'Cutscene: '+c.title,
+      body: 'Seen through the squid\'s own eye (letterboxed, a little shaky, breathing, blinking, grainy)'+(c.chapter ? ', in chapter '+c.chapter : '')+'. '+c.body,
+      tags: ['cutscene', 'first person'].concat(c.chapter ? ['chapter '+c.chapter] : []),
+      related: c.chapter ? ['chapter-'+c.chapter] : ['creature-whale'],
+      spoilerLevel: c.chapter >= 7 ? 2 : c.chapter >= 3 ? 1 : 0,
+      data: { chapter: c.chapter }, source: 'assets/game/js/fp.js',
+    }));
+
+    // Trivia
+    var clientTrivia = readTriviaFromClient();
+    (clientTrivia || TRIVIA_SNAPSHOT).forEach((t, i) => add({
+      key: 'trivia-'+(i + 1), topic: 'trivia', title: 'Sailsconf and Sails.js trivia #'+(i + 1), optional: true, body: t,
+      tags: ['trivia', 'sails.js', /sailsconf/i.test(t) ? 'sailsconf' : 'sails'].concat(/\b(20\d\d)\b/.test(t) ? [t.match(/\b(20\d\d)\b/)[1]] : []),
+      related: ['mechanic-golden-bubbles'], source: clientTrivia ? 'assets/game/js/story.js' : 'snapshot',
+    }));
+
+    // Keep `related` tidy: only keys that exist, no self-links, no duplicates.
+    var keys = _.indexBy(facts, 'key');
+    facts.forEach((f) => { f.related = _.uniq(f.related).filter((k) => k !== f.key && keys[k]); f.tags = _.uniq(f.tags.filter(Boolean)); });
+
+    return { topics: TOPICS, facts, roomsFrom };
+
+  }
+
+
+};

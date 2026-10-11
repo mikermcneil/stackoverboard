@@ -836,6 +836,7 @@
     } else { wd.x = sq.x; wd.y = sq.y; wd.t = 0; }
     if (SO.dirt) { SO.dirt.update(sq, dt, room); }
     if (SO.smell) { SO.smell.update(dt, room); }
+    if (SO.blood) { SO.blood.update(dt, room); }
 
     // Facing. Turning around is a turn of the whole body through depth: `yaw`
     // eases through 0 (nose toward you) while the nose dips, like a bank.
@@ -1275,6 +1276,7 @@
       }
       if (SO.dirt) { const keep = SO.dirt.stepParticle(p, dt); if (keep !== null) { return keep; } }
       if (SO.smell) { const keep = SO.smell.stepParticle(p, dt); if (keep !== null) { return keep; } }
+      if (SO.blood) { const keep = SO.blood.stepParticle(p, dt); if (keep !== null) { return keep; } }
       return p.t < p.life;
     });
   };
@@ -1523,7 +1525,7 @@
       } else if (p.kind === 'drop') {
         ctx.fillStyle = '#e9fbfb'; ctx.strokeStyle = A.C.ink; ctx.lineWidth = 1.2;
         ctx.beginPath(); ctx.arc(p.x, p.y, p.r, 0, TAU); ctx.fill(); ctx.stroke();
-      } else if (!(SO.dirt && SO.dirt.drawParticle(ctx, p)) && SO.smell) { SO.smell.drawParticle(ctx, p); }
+      } else if (!(SO.dirt && SO.dirt.drawParticle(ctx, p)) && !(SO.blood && SO.blood.drawParticle(ctx, p)) && SO.smell) { SO.smell.drawParticle(ctx, p); }
     });
   };
 

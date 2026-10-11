@@ -24,6 +24,7 @@
     swan: { hue: 40, sat: 8, lines: ['Swan. Up here?'] },
     whale: { hue: 222, sat: 30, lines: ['Whale. Big whale. Very close.'] },
     eel: { hue: 140, sat: 35, lines: ['Eel. And old fish.'] },
+    food: { hue: 18, sat: 55, lines: ['Shrimp. Somewhere close.', 'Food. That way.', 'Something small and alive. Lunch.'] },
   };
 
   // Who smells of what.
