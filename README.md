@@ -26,6 +26,8 @@ This was built on top of the conventions of sails.js using Claude in about 2 hou
 
 <img width="676" height="125" alt="image" src="https://github.com/user-attachments/assets/ca60e0ea-ffcd-4d1f-99a4-57ea5b74aa84" />
 <img width="726" height="565" alt="image" src="https://github.com/user-attachments/assets/f37f6e74-740a-4647-894a-9ccda4929a39" />
+<img width="639" height="878" alt="image" src="https://github.com/user-attachments/assets/ec423d97-cf62-4128-ba64-3559ef88e3e3" />
+
 
 
 
