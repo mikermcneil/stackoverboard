@@ -57,13 +57,12 @@
   let hud = null, num = null;
   function setupHud() {
     if (hud) { return; }
-    const host = document.getElementById('hud');
-    if (!host) { return; }
+    const host = document.body;// (not inside #hud: that only shows during the ending)
     hud = document.createElement('div');
     hud.id = 'purse';
     hud.title = 'Kept blood';
-    hud.style.cssText = 'position:absolute;left:18px;top:calc(env(safe-area-inset-top,0px) + 14px);display:flex;align-items:center;gap:6px;font:500 11px var(--mono, monospace);letter-spacing:0.08em;color:rgba(244,237,228,0.72);text-shadow:0 1px 6px rgba(0,0,0,0.6);opacity:0;transition:opacity 1.2s, transform 0.25s;';
-    hud.innerHTML = '<svg width="9" height="12" viewBox="0 0 9 12" aria-hidden="true"><path d="M4.5 0 C4.5 0 0 5.4 0 7.8 A4.5 4.2 0 0 0 9 7.8 C9 5.4 4.5 0 4.5 0Z" fill="#a8263a"/></svg><span></span>';
+    hud.style.cssText = 'position:fixed;z-index:6;pointer-events:none;left:18px;top:calc(env(safe-area-inset-top,0px) + 14px);display:flex;align-items:center;gap:6px;font:500 13px var(--mono, monospace);letter-spacing:0.08em;color:rgba(244,237,228,0.88);text-shadow:0 1px 6px rgba(0,0,0,0.6);opacity:0;transition:opacity 1.2s, transform 0.25s;';
+    hud.innerHTML = '<svg width="11" height="15" viewBox="0 0 9 12" aria-hidden="true"><path d="M4.5 0 C4.5 0 0 5.4 0 7.8 A4.5 4.2 0 0 0 9 7.8 C9 5.4 4.5 0 4.5 0Z" fill="#a8263a"/></svg><span></span>';
     host.appendChild(hud);
     num = hud.querySelector('span');
   }
@@ -188,7 +187,7 @@
       const room = E.room, sq = E.squid;
       if (this.shown && save().data) { setupHud(); }
       if (hud) {
-        const on = this.shown && E.mode === 'play';
+        const on = this.shown && E.mode === 'play' && !(SO.journal && SO.journal.open) && !(SO.cutscene && SO.cutscene.playing) && !(SO.fp && SO.fp.playing);
         hud.style.opacity = on ? '1' : '0';
         if (num && num.textContent !== String(this.amount)) { num.textContent = String(this.amount); }
       }

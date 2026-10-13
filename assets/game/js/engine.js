@@ -141,8 +141,9 @@
         this.holding = { x: e.clientX, y: e.clientY, t: U.now() };
         return;
       }
-      // Clicking something interesting: swim to it. (While something's being said, clicks only move you.)
-      const hit = SO.ui.talking ? null : this.pick(this.pointer.wx, this.pointer.wy);
+      // Clicking something interesting: swim to it. (While something important is being said, clicks
+      // only move you; the squid's own passing thoughts don't get in the way.)
+      const hit = SO.ui.busy ? null : this.pick(this.pointer.wx, this.pointer.wy);
       if (hit && hit === this.inspected) { this.interact(hit); return; }// a second click: do something with it
       if (hit) { this.select(hit); return; }// a first click: picked (it shows up in the corner), and off we go to it
       this.target = this.exitAware(this.pointer.wx, this.pointer.wy);
@@ -749,6 +750,16 @@
       if (K.arrowdown) { dy += 1; }
       if (dx || dy) { const m = Math.hypot(dx, dy); dx /= m; dy /= m; strength = 1; deliberate = true; this.target = null; }
       else if (this.target) {
+        // Going to a thing: not into it, but to just beside it, on the near side, facing it (and
+        // following it if it moves). That's where you'd talk to it, or look at it.
+        const hit = this.target.hit;
+        if (hit && !hit.door && !hit.hidden) {
+          const side = Math.sign(sq.x - hit.x) || this.target.side || 1;
+          this.target.side = side;
+          const stand = (hit.r || 60) + 95 * sq.scale;
+          const p = this.reachable(hit.x + side * stand, hit.y);
+          this.target.x = p[0]; this.target.y = p[1];
+        }
         let ty = this.target.y;
         // Right after a leap, aim for just under the surface instead of leaping again.
         if (room.surfaceY !== null && this.t - (this.lastBreachAt || -99) < 3.5) { ty = Math.max(ty, room.surfaceY + 90); }
@@ -757,9 +768,14 @@
         // water just above it instead, so the squid glides along the floor, not into it.
         if (!this.target.hit && !this.target.exit) { [tx, ty] = this.reachable(tx, ty); }
         const ox = tx - sq.x, oy = ty - sq.y, d = Math.hypot(ox, oy);
-        const arrive = this.target.hit ? (this.target.hit.r || 60) + 30 : 60;
+        const arrive = this.target.hit && !this.target.hit.door ? 40 : this.target.hit ? (this.target.hit.r || 60) + 30 : 60;
         if (d < arrive && !this.pointer.down) { this.target = null; }
-        else if (d > 20) { dx = ox / d; dy = oy / d; strength = U.clamp(U.smoothstep(10, 380, d), 0.15, 1); deliberate = Math.abs(ox) > 90; }
+        else if (d > 20) {
+          dx = ox / d; dy = oy / d;
+          // (going to a thing: an easy, steady swim, slowing only at the very end)
+          strength = this.target.hit ? U.clamp(U.smoothstep(0, 200, d), 0.4, 1) : U.clamp(U.smoothstep(10, 380, d), 0.15, 1);
+          deliberate = Math.abs(ox) > 90;
+        }
       }
     } else if (sq.auto) {
       const ox = sq.auto.x - sq.x, oy = sq.auto.y - sq.y, d = Math.hypot(ox, oy);
@@ -915,7 +931,9 @@
     sq.angle = sq.yaw >= 0 ? sq.pitch : Math.PI - sq.pitch;
     sq.flip = sq.yaw < 0;
     // Eyes follow whatever's interesting.
-    const lookAt = this.lookAt || (this.target ? this.target : null);
+    // (going to something, or beside the thing you picked: eyes on it)
+    const picked = this.inspected && !this.inspected.hidden && U.dist(this.inspected.x, this.inspected.y, sq.x, sq.y) < 700 ? this.inspected : null;
+    const lookAt = this.lookAt || (this.target ? (this.target.hit || this.target) : picked);
     if (lookAt) {
       const la = Math.atan2(lookAt.y - sq.y, (lookAt.x - sq.x) * (sq.yaw >= 0 ? 1 : -1)) - sq.pitch;
       sq.look = U.angleLerp(sq.look, la, 1 - Math.exp(-4 * dt));
@@ -1227,9 +1245,12 @@
       if (now - (this._lastTalkAt || 0) < 2200 || now - (o._lastTalkAt || 0) < 2500) { return; }
       this._lastTalkAt = now; o._lastTalkAt = now;
     }
-    if (T && T.onTouch) { T.onTouch(o, room); }
-    if (room.def.onTouch) { room.def.onTouch(room, o); }
-    SO.story.onTouch(o, room);
+    SO.ui._deliberate = true;// (what's said now is an answer to something you chose to do)
+    try {
+      if (T && T.onTouch) { T.onTouch(o, room); }
+      if (room.def.onTouch) { room.def.onTouch(room, o); }
+      SO.story.onTouch(o, room);
+    } finally { SO.ui._deliberate = false; }
     if (this.target && this.target.hit === o) { this.target = null; }
   };
 
@@ -1239,7 +1260,8 @@
     if (!o || o.hidden || this.locked) { return; }
     const sq = this.squid;
     const d = U.dist(sq.x, sq.y, o.x, o.y);
-    if (d < (o.r || 60) + 200) { this.doTouch(o); return; }
+    // Close enough already (just beside it)? Now. Otherwise swim over, and do it on arrival.
+    if (d < (o.r || 60) + 140 * sq.scale) { this.doTouch(o); return; }
     o._pending = true;
     this.target = { x: o.x, y: o.y, hit: o };
     this.spur();
@@ -1258,7 +1280,7 @@
       const talker = T && T.talk;
       const d = Math.min(U.dist(sq.x, sq.y, o.x, o.y), U.dist(mx, my, o.x, o.y));
       if (talker) {
-        if (o._pending && d < (o.r || 60) + 160) { o._pending = false; this.doTouch(o); }
+        if (o._pending && d < (o.r || 60) + 70) { o._pending = false; this.doTouch(o); }// (once we're beside it)
         return;
       }
       const near = d < (o.r || 60) + 40;

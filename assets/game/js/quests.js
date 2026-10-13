@@ -613,8 +613,22 @@
           }
         }
       }
-      // If you don't know the swans' song yet: wait by the first ring, and they sing it, overhead.
+      // Close to a crooked ring, it hums its color, now and then, and the matching color on your
+      // skin answers (the button for it beckons): that's the color it wants.
       const sq = E.squid;
+      let beckon = null;
+      Object.keys(a.tilt).forEach((i) => { const r = a.tilt[i]; if (!r.fix && Math.abs(sq.x - ringX(+i)) < 300) { beckon = r.c; } });
+      if (beckon !== a.beckon) {
+        a.beckon = beckon;
+        document.querySelectorAll('#skin button').forEach((b) => b.classList.toggle('beckon', b.dataset.c === beckon));
+      }
+      a.humT = (a.humT || 0) - dt;
+      if (beckon && a.humT < 0 && !E.locked) { a.humT = 2.6; if (AU().bell) { AU().bell(AU().NOTE({ W: 74, R: 78, B: 81, G: 83 }[beckon]), { gain: 0.035, dur: 2.4 }); } }
+      // All straight: the first ring (this end) waits for something to go through.
+      const allStraight = Object.keys(a.tilt).every((i) => a.tilt[i].fix);
+      if (allStraight && !has('ringsDone') && !a.saidStraight) { a.saidStraight = true; once('ringsStraight', 'All of them straight. Now something has to go through them. From this end.'); }
+      a.ready = allStraight && !has('ringsDone');
+      // If you don't know the swans' song yet: wait by the first ring, and they sing it, overhead.
       if (!save.knows('call') && Math.abs(sq.x - ringX(0)) < 400 && Math.hypot(sq.vx, sq.vy) < 70 && !E.locked) {
         a.listenT += dt;
         if (a.listenT > 4) {
@@ -633,12 +647,14 @@
         if (r && tk > 0.2) { ctx.globalCompositeOperation = 'lighter'; A.glow(ctx, 0, -90, 40, NOTE_HEX[r.c], 0.3 + 0.2 * Math.sin(t * 3 + i)); }
         ctx.restore();
       }
+      if (a.ready && !a.note) { ctx.save(); ctx.globalCompositeOperation = 'lighter'; A.glow(ctx, ringX(0), RING_Y, 140, '#fff2c8', 0.25 + 0.15 * Math.sin(t * 2)); ctx.restore(); }
       if (a.note && a.note.i < 12) { const k = a.note.t / 0.22; ctx.save(); ctx.globalCompositeOperation = 'lighter'; A.glow(ctx, ringX(0) - k * 240, RING_Y, 60, '#fff2c8', 0.9); ctx.restore(); }
       if (has('ringsDone')) { ctx.save(); ctx.globalCompositeOperation = 'lighter'; ctx.strokeStyle = 'rgba(255,250,210,0.3)'; ctx.lineWidth = 3; ctx.beginPath(); ctx.moveTo(ringX(0) + 60, RING_Y); ctx.lineTo(ringX(11) - 60, RING_Y); ctx.stroke(); ctx.restore(); }
     },
     skin(a, c) {
       Object.keys(a.tilt).forEach((i) => {
         const r = a.tilt[i];
+        if (!r.fix && r.c !== c && Math.abs(E.squid.x - ringX(+i)) < 280) { r.k = Math.min(1.25, r.k + 0.15); once('ringwrong', 'It shivered, but it stayed crooked. Not that color.'); }
         if (!r.fix && r.c === c && Math.abs(E.squid.x - ringX(+i)) < 280) {
           r.fix = true;
           if (AU().bell) { AU().bell(AU().NOTE({ W: 74, R: 78, B: 81, G: 83 }[c]), { gain: 0.05, dur: 3 }); }
@@ -762,6 +778,7 @@
   const enter0 = S.onEnterRoom;
   S.onEnterRoom = function (room, prev, entry) {
     enter0.call(this, room, prev, entry);
+    document.querySelectorAll('#skin button.beckon').forEach((b) => b.classList.remove('beckon'));// (nothing here is asking)
     try {
       if (prev === 'kept-garden' && room.key !== 'kept-garden') { keptLeft(); }
       if (PLACE[room.key]) { PLACE[room.key](room); }
@@ -813,6 +830,27 @@
     if (room.key === 'home-rings' && dir === 'left' && !has('ringsDone')) { return 'Too many of them. They won’t let me through. Not into my own pool.'; }
     return blocked0.call(this, room, dir, to);
   };
+  // Over the edge at the top of the waterfall: the long way down, back to the sea. (So you're never
+  // stuck up here.)
+  setInterval(() => {
+    if (E.mode !== 'play' || E.roomKey !== 'home-lip' || !E.room || E.locked || R().overEdge) { return; }
+    const sq = E.squid, edge = E.room.w - 150;
+    if (sq.x > edge - 250 && !R().edgeSaid) { R().edgeSaid = true; say('The edge. Past it, the water just goes over. It’s a long way down.'); }
+    if (sq.x < edge) { return; }
+    R().overEdge = true;
+    (async () => {
+      E.lock();
+      if (AU().whoosh) { AU().whoosh(); }
+      sq.vx = 300; sq.vy = 200;
+      await UI.fade(1, 900, '#fffaf0');
+      E.unlock();
+      await E.goto('plunge', { instant: true, pos: [800, 260] });
+      await UI.fade(0, 1200);
+      R().overEdge = false; R().edgeSaid = false;
+      say('Down. All the way down, again. I can always go back up.');
+    })();
+  }, 250);
+
   const ending0 = S.ending;
   S.ending = function (kind) {
     if (kind === 'return' && !this.has('homecoming') && !this.rt.ending && !/^home-/.test(E.roomKey || '')) { return Q.goHome(); }
@@ -821,8 +859,12 @@
   const hint0 = S.hint;
   S.hint = function () {
     const key = E.roomKey || '';
-    if (key === 'home-lip') { return 'The stream goes left, back toward the pool.'; }
-    if (key === 'home-rings' && !has('ringsDone')) { return 'Some rings are crooked, and each one hums a color. Then the swans’ song, from this end, through all twelve.'; }
+    if (key === 'home-lip') { return 'The stream goes left, back toward the pool. Or over the edge, the long way down.'; }
+    if (key === 'home-rings' && !has('ringsDone')) {
+      const rings = E.room && E.room.actors.find((x) => x.kind === 'twelve-rings');
+      const left = rings ? Object.keys(rings.tilt).filter((i) => !rings.tilt[i].fix).length : 4;
+      return left ? `Some rings are crooked. Each one hums a color, and my skin knows which. Up close, flash that color at it. (${left} still crooked.)` : 'They’re all straight. The swans’ song, sung at this end (the right), would go through all twelve.';
+    }
     if (key === 'home-pool' && !has('homecoming')) { return 'She sang it, then took it back. She used to do that at night, when I couldn’t sleep.'; }
     if (key === 'kept-garden' && R().kept && R().kept.closed) { return 'It wants to keep me. Doors open for red, pale, red. Maybe arms do too.'; }
     return hint0.call(this);

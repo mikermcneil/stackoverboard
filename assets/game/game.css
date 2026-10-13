@@ -354,3 +354,7 @@ body:not(.game-mode) #hint-btn { display: none; }
 #skip-btn:hover { color: #fff; border-color: rgba(255, 255, 255, 0.65); }
 
 #cheat:hover, #cheat:focus-within { opacity: 1; }
+
+/* A skin color something nearby is asking for (the crooked rings) */
+#skin button.beckon { animation: beckon 1.3s ease-in-out infinite; }
+@keyframes beckon { 0%, 100% { box-shadow: 0 0 0 0 rgba(var(--c), 0); } 50% { box-shadow: 0 0 0 6px rgba(var(--c), 0.45), 0 0 18px 4px rgba(var(--c), 0.5); } }

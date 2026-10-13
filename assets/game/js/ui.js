@@ -67,9 +67,12 @@
       this.inspectCanvas$.addEventListener('pointerdown', (e) => {
         e.stopPropagation();
         const E = SO.E;
-        if (this.talking || E.locked) { return; }
-        if (E.inspected) { E.interact(E.inspected); return; }
-        if (E.hover && !E.hover.hidden) { E.select(E.hover); }
+        if (this.busy || E.locked) { return; }
+        // (like Loom's icon box: clicking the picture is the same as using the thing itself)
+        const o = E.inspected || (this._preview && !this._preview.hidden ? this._preview : null);
+        if (!o) { return; }
+        if (o !== E.inspected) { E.select(o); }
+        E.interact(o);
       });
       this.hint$ = document.createElement('button');
       this.hint$.id = 'hint-btn'; this.hint$.type = 'button'; this.hint$.setAttribute('aria-label', 'What was I doing?'); this.hint$.title = 'What was I doing?';
@@ -94,8 +97,10 @@
         // Nothing piles up. The squid's own passing thoughts never wait in line: if anything else
         // is being said, they're simply not said. And when something that matters comes up (a
         // creature talking, a scene, a key line), idle chatter already waiting makes way for it.
+        // (Anything said because you chose to do something isn't idle: it waits its turn.)
+        if (this._deliberate) { opts = Object.assign({ deliberate: true }, opts); }
         const item = { text, who, opts, resolve };
-        const idle = (q) => q && (q.opts.minor || ((q.who === 'squid' || q.who === 'world' || q.who === 'gold') && !q.opts.key));
+        const idle = (q) => q && (q.opts.minor || ((q.who === 'squid' || q.who === 'world' || q.who === 'gold') && !q.opts.key && !q.opts.deliberate));
         const scene = SO.E && SO.E.locked && !SO.E._going;
         if (idle(item) && !scene && this.talking) { resolve(); return; }
         if (!idle(item)) {
@@ -120,6 +125,13 @@
       const creature = (q) => q && q.who && !(q.opts && q.opts.casual) && !['squid', 'world', 'gold', 'other'].includes(q.who);
       // (and for a little while after a creature has spoken: that's usually 'now you try')
       return creature(this.current) || this.queue.some(creature) || U.now() - (this._creatureAt || -1e9) < 20000 || !!(SO.story && SO.story.rt && SO.story.rt.lesson);
+    },
+    // Busy right now (for clicks): a scene, or someone other than the squid actually speaking.
+    get busy() {
+      const E = SO.E;
+      if ((E && E.locked && !E._going) || (SO.fp && SO.fp.playing)) { return true; }
+      const creature = (q) => q && q.who && !['squid', 'world', 'gold', 'other'].includes(q.who);
+      return creature(this.current) || this.queue.some(creature);
     },
     // A passing remark: only if nothing important is going on and nobody else is talking.
     aside(text) {
@@ -255,8 +267,18 @@
         try { PORTRAITS[this.speaker](c, t); } catch (err) { /* a portrait failing shouldn't stop the talking */ }
       }
       const E = SO.E;
-      // Nothing picked, but hovering over something: just its picture, no words.
-      const preview = !E.inspected && E.hover && !E.hover.hidden && !this.talking ? E.hover : null;
+      // Nothing picked, but hovering over something (or right next to it, as on a phone, where
+      // there's no hovering): just its picture, no words.
+      let preview = !E.inspected && E.hover && !E.hover.hidden && !this.busy ? E.hover : null;
+      if (!E.inspected && !preview && !this.busy && E.room && E.squid && E.mode === 'play') {
+        let bd = Infinity;
+        E.room.actors.forEach((a) => {
+          if (!a.touch || a.hidden || a.type === 'food' || a.type === 'bubble' || a.door) { return; }
+          const d = U.dist(a.x, a.y, E.squid.x, E.squid.y) - (a.r || 60);
+          if (d < 110 && d < bd) { bd = d; preview = a; }
+        });
+      }
+      this._preview = preview;
       const o = E.inspected || preview;
       this.inspect$.classList.toggle('preview', !!preview);
       if (!o || o.hidden || !E.room || (E.room.actors.indexOf(o) === -1 && E.room.hotspots.indexOf(o) === -1)) {
