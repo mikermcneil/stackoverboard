@@ -167,8 +167,8 @@
         if (depth < 0.2 && r() < 0.7) { const x = 200 + r() * (room.w - 400), y = fy(x); if (y) { E.addActor(room, { id: 'night-polyps', type: 'polyps', x, y: y - 2 }); } }
         // fewer of the daytime fish
         if (E.ambient) { E.ambient = E.ambient.filter((f, i) => f.type !== 'fish' || i % 2); }
-      } else if (room.def.region === 'west' && (room.def.west || 0) >= 4) {
-        const n = 1 + Math.floor(r() * 3);
+      } else if (room.def.region === 'west' && (room.def.west || 0) >= 4 && r() < 0.25) {// (now and then, not everywhere)
+        const n = 1 + Math.floor(r() * 2);
         for (let i = 0; i < n; i++) { const x = 300 + r() * (room.w - 600), y = 260 + r() * (room.h - 520); E.addActor(room, { id: 'drinker-' + i, type: 'lightDrinker', x, y, home: { x, y }, seed: r() * 10, front: true }); }
       }
     },

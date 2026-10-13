@@ -692,8 +692,10 @@
       if (dress.glassy) { d.props.push(glassFloorProp(U.hash('g' + n))); }
       if (dress.columns) { d.props.push(columnsProp(U.hash('c' + n))); }
       if (dress.dead) { const x = 400 + r() * (W - 800); d.props.push(deadFishProp(x, r() * 10)); }
-      // (never more than two of a kind in one place)
+      // (never more than two of a kind in one place, counting what a landmark brings)
+      if (d.landmark) { buildLandmark(d, n, r); d._built = true; }
       const seen = {};
+      d.actors.forEach((a) => { if (a.type === 'thing') { seen[a.kind] = (seen[a.kind] || 0) + 1; } });
       (dress.things || []).forEach((k) => { seen[k] = (seen[k] || 0) + 1; if (seen[k] <= 2 && (k !== 'cucumberbananadog' || r() < 0.6)) { add(k); } });
       (dress.birds || []).forEach((type, i) => d.actors.push({ id: 'wbird-' + i, type, x: r() * W, y: -200, seed: r() * 10, home: { x: r() * W } }));
     }
@@ -702,7 +704,7 @@
       if ((sea && n >= 40) || (!sea && reg && /plains|hills/.test(reg.key))) { d.actors.push({ id: 'hookbill', type: 'hookbill', x: r() * W, y: -300, seed: r() * 10 }); }
       if (sea && n >= 50) { d.actors.push({ id: 'spearneck', type: 'spearneck', x: r() * W, y: -300, seed: r() * 10 }); }
     }
-    if (d.landmark) { buildLandmark(d, n, r); }
+    if (d.landmark && !d._built) { buildLandmark(d, n, r); }
   }
 
   // ── Props for the lands (cached where heavy) ─────────────────────────────────

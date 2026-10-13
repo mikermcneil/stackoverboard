@@ -1250,7 +1250,8 @@
     B.onEnter = function (room) { enter0.apply(this, arguments); H.flies = []; H.raptor = null; H.raptorIn = 8; };
     B.update = function (dt, room) {
       update0.apply(this, arguments);
-      if (skyRoom(room) || sq().inAir || H.flies.length || H.raptor) { try { skyHunt(dt, room); } catch (err) { console.error(err); } }
+      const landBelow = SO.westlife && SO.westlife.landRoom && SO.westlife.landRoom(room);// (out on the land in the far west, westlife.js sends its own)
+      if (!landBelow && (skyRoom(room) || sq().inAir || H.flies.length || H.raptor)) { try { skyHunt(dt, room); } catch (err) { console.error(err); } }
     };
   }
   const hidden = () => (sq().hideUntil || 0) > E.t;

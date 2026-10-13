@@ -109,7 +109,8 @@
   const LAST = () => REGIONS[REGIONS.length - 1];
   const LAND_END = () => REG.hills.to;
   // The trench's way down (to deepwest.js, 'deep:0').
-  const TRENCH_N = () => REG.trench.from + 2;
+  // (westsea.js, once it makes the trench, says which of its places it is: its last.)
+  const TRENCH_N = () => (IMPL.trench && SO.westsea && SO.westsea.trenchN && SO.westsea.trenchN()) || REG.trench.from + 2;
 
   // Which region a place is in. (Past the last one, the orcas go on forever.)
   function regionOf(n) {
@@ -698,22 +699,59 @@
   // ── The river: the mouth, the red gorge, the great falls ──
   M.river = (ctx, d) => {
     const r = ctx.r, ph = ctx.phase, s = ctx.n * 2.3;
-    if (ph === 0) {// the mouth: a wide river, reed banks, sand islands
-      ctx.depth = (u) => 190 + 60 * noise(u, 4, s) - 230 * bump(u, 0.3 + 0.4 * noise(0, 1, s), 0.07);
-    } else if (ph === 1) {// the gorge: deep, fast, boulders
+    // Each part of the river its own country: a gold delta under a big sky; a red slot of a gorge,
+    // the water thick with its mud; then black wet rock, moss, and the mist off the falls.
+    if (ph === 0) {// the mouth: wide and shallow, sand bars, reed banks, the sky over everything
+      const c1 = 0.28 + 0.12 * noise(0, 1, s), c2 = 0.62 + 0.12 * noise(1, 1, s);
+      ctx.depth = (u) => 170 + 50 * noise(u, 4, s) - 240 * bump(u, c1, 0.06) - (ctx.local % 3 === 1 ? 0 : 215 * bump(u, c2, 0.05));
+      d.palette = 'warm'; d.sand = '#e4cf94'; d.rock = '#9c8456'; d.rockHi = '#c9ad74'; d.floorTop = '#e8d49c';
+      d.props.push(range({ seed: 41 + ctx.n, col: 'rgba(170,150,120,0.35)', h: 60, par: 0.15, n: 20 }));
+      d.props.push({ layer: 'back', draw(c, t, room) {// the light low and gold over the delta
+        const g = c.createLinearGradient(0, room.surfaceY - 500, 0, room.surfaceY); g.addColorStop(0, 'rgba(255,214,150,0)'); g.addColorStop(1, 'rgba(255,200,130,0.28)');
+        c.fillStyle = g; c.fillRect(camX() - 200, room.surfaceY - 500, 3000, 500);
+      } });
+      ctx.after.push(() => {// driftwood, fetched up on the bars
+        [0.2, 0.55, 0.8].forEach((k, i) => {
+          const x = ctx.W * k + r() * 120, g = ctx.groundY(x), a = (r() - 0.5) * 0.5, L = 160 + r() * 120;
+          d.props.push({ layer: 'mid', draw(c) { c.save(); c.translate(x, g - 6); c.rotate(a); c.fillStyle = '#8a7356'; c.beginPath(); c.ellipse(0, 0, L / 2, 9, 0, 0, TAU); c.fill(); c.fillStyle = '#b39a76'; c.fillRect(-L / 2 + 10, -3, L - 30, 3); c.strokeStyle = '#6e5a42'; c.lineWidth = 5; c.beginPath(); c.moveTo(L / 2 - 20, 0); c.lineTo(L / 2 + 20, -30 - i * 6); c.stroke(); c.restore(); } });
+        });
+      });
+    } else if (ph === 1) {// the gorge: deep, fast, red, boulders; walls of rock nearly closing over
       ctx.depth = (u) => 230 + 70 * noise(u, 5, s);
       d.current = [70, 0];// (the river runs east, against you)
+      d.palette = 'forge'; d.sand = '#9a5a3c'; d.rock = '#6e3424'; d.rockHi = '#a8573a'; d.floorTop = '#8e4a30';
       ctx.after.push(() => {
-        for (let i = 0; i < 3; i++) { const x = 500 + i * 700 + r() * 200, g = ctx.groundY(x), rr = 60 + r() * 40; d.solids.push({ type: 'ellipse', x, y: g + 10, rx: rr * 1.4, ry: rr + 10 }); }
+        for (let i = 0; i < 3; i++) { const x = 500 + i * 700 + r() * 200, g = ctx.groundY(x), rr = 60 + r() * 40; d.solids.push({ type: 'ellipse', x, y: g + 10, rx: rr * 1.4, ry: rr + 10, color: '#7a3a26' }); }
       });
-      d.props.push(range({ seed: 31 + ctx.n, col: 'rgba(150,70,50,0.9)', h: 380, par: 0.25, shape: 'mesa', n: 8 }));
-    } else {// below the falls: spray, a big pool, rainbows in the mist
+      d.props.push(range({ seed: 31 + ctx.n, col: 'rgba(120,52,34,0.95)', h: 640, par: 0.3, shape: 'mesa', n: 7 }));
+      d.props.push(range({ seed: 57 + ctx.n, col: 'rgba(168,82,52,0.95)', h: 420, par: 0.55, n: 10 }));
+      d.props.push({ layer: 'back', draw(c, t, room) {// strata in the near wall, and the river's mud in the water
+        const x0 = camX() - 100;
+        c.save(); c.strokeStyle = 'rgba(230,150,100,0.18)'; c.lineWidth = 6;
+        for (let i = 0; i < 6; i++) { const y = room.surfaceY - 60 - i * 55; c.beginPath(); c.moveTo(x0, y); for (let k = 0; k <= 12; k++) { c.lineTo(x0 + k * 240, y + Math.sin(k * 1.3 + i + ctx.n) * 10); } c.stroke(); }
+        c.restore();
+        c.fillStyle = 'rgba(128,66,32,0.3)'; c.fillRect(x0, room.surfaceY, 2800, room.h - room.surfaceY);
+      } });
+    } else {// below the falls: spray, a big pool, black wet rock and moss, rainbows in the mist
       ctx.depth = (u) => 260 + 40 * noise(u, 3, s);
-      d.props.push({ layer: 'back', draw(c, t, room) { c.save(); c.globalAlpha = 0.2; c.lineWidth = 18; ['#e05050', '#f0c040', '#60c060', '#5080e0'].forEach((col, i) => { c.strokeStyle = col; c.beginPath(); c.arc(room.w * 0.3, room.surfaceY + 120, 520 - i * 16, Math.PI * 1.1, Math.PI * 1.75); c.stroke(); }); c.restore(); } });
+      d.palette = 'kelp'; d.sand = '#4e5a44'; d.rock = '#2f3a3a'; d.rockHi = '#4d5e5a'; d.floorTop = '#4f7a3a';
+      d.props.push(range({ seed: 61 + ctx.n, col: 'rgba(40,58,52,0.9)', h: 520, par: 0.4, n: 9 }));
+      d.props.push({ layer: 'back', draw(c, t, room) {// far falls, white in the dark rock
+        const x0 = camX() * 0.4 + 900;
+        c.save(); c.globalAlpha = 0.55;
+        for (let i = 0; i < 3; i++) { const x = x0 + i * 700, w = 60 + i * 30, top = room.surfaceY - 460 + i * 60; const g = c.createLinearGradient(0, top, 0, room.surfaceY); g.addColorStop(0, 'rgba(235,245,248,0.9)'); g.addColorStop(1, 'rgba(235,245,248,0.2)'); c.fillStyle = g; c.fillRect(x, top, w, room.surfaceY - top); }
+        c.restore();
+        c.save(); c.globalAlpha = 0.2; c.lineWidth = 18; ['#e05050', '#f0c040', '#60c060', '#5080e0'].forEach((col, i) => { c.strokeStyle = col; c.beginPath(); c.arc(room.w * 0.3, room.surfaceY + 120, 520 - i * 16, Math.PI * 1.1, Math.PI * 1.75); c.stroke(); }); c.restore();
+      } });
+      d.props.push({ layer: 'front', draw(c, t, room) {// the mist off the falls
+        const y = room.surfaceY, x0 = camX() - 100;
+        const g = c.createLinearGradient(0, y - 340, 0, y + 60); g.addColorStop(0, 'rgba(230,240,240,0)'); g.addColorStop(0.7, `rgba(230,240,240,${0.3 + 0.06 * Math.sin(t * 0.7)})`); g.addColorStop(1, 'rgba(230,240,240,0)');
+        c.fillStyle = g; c.fillRect(x0, y - 340, 2800, 400);
+      } });
     }
-    d.props.push(range({ seed: 21, col: 'rgba(120,130,110,0.55)', h: 260 + ph * 120, par: 0.6, snow: ph === 2 ? 0.2 : 0 }));
+    if (ph !== 1) { d.props.push(range({ seed: 21, col: ph === 2 ? 'rgba(70,90,84,0.6)' : 'rgba(150,140,110,0.4)', h: ph === 2 ? 380 : 140, par: 0.6, snow: ph === 2 ? 0.2 : 0 })); }
     const list = [];
-    for (let i = 0; i < 14; i++) { const x = 100 + i * 180 + r() * 60; list.push([ph === 0 ? 'reed' : (i % 3 ? 'grass' : 'shrub'), x, 0.8 + r() * 0.4, Math.floor(r() * 1000), { col: ph === 1 ? '#8a7a4a' : undefined }]); }
+    for (let i = 0; i < 14; i++) { const x = 100 + i * 180 + r() * 60; list.push([ph === 0 ? 'reed' : ph === 2 ? (i % 2 ? 'fern' : 'grass') : (i % 3 ? 'grass' : 'shrub'), x, 0.8 + r() * 0.4, Math.floor(r() * 1000), { col: ph === 1 ? '#8a6a3a' : ph === 2 ? '#3f6a34' : undefined }]); }
     d.props.push(plants(list));
     d.isles = [];
   };
@@ -732,6 +770,59 @@
   }
   // Which climb of its region this is (0, 1, 2...), by the place it starts from.
   const climbIndex = (ctx, local) => Object.keys(ctx.R.climbs || {}).map(Number).sort((a, b) => a - b).indexOf(local);
+  // ── How a stretch of country looks (so each part of a region is its own place) ──
+  // rock colors, the water's color, a sky over it, a far skyline, and a little weather.
+  function look(ctx, d, L) {
+    if (!L) { return; }
+    ['palette', 'sand', 'rock', 'rockHi', 'floorTop'].forEach((k) => { if (L[k]) { d[k] = L[k]; } });
+    if (L.sky) {// the sky's own color, behind everything
+      d.props.unshift({ layer: 'back', draw(c, t, room) { const y = room.surfaceY, g = c.createLinearGradient(0, y - 900, 0, y); g.addColorStop(0, L.sky[0]); g.addColorStop(1, L.sky[1]); c.save(); c.globalAlpha = 0.7; c.fillStyle = g; c.fillRect(camX() - 200, y - 1400, 3000, 1400); c.restore(); } });
+    }
+    if (L.far) { d.props.push(range(Object.assign({ seed: 71 + ctx.n }, L.far))); }
+    if (L.water) {// the water's own color (after the skylines, before the ground)
+      d.props.push({ layer: 'back', draw(c, t, room) { c.fillStyle = L.water; c.fillRect(camX() - 200, room.surfaceY, 3000, room.h - room.surfaceY); } });
+    }
+    if (L.weather === 'icicles') {// an overhang of blue ice along the top of the view, dripping
+      d.props.push({ layer: 'front', draw(c, t, room) {
+        const E = SO.E, top = E.cam.y - 10, x0 = Math.floor((E.cam.x - 100) / 90) * 90, x1 = E.cam.x + E.W / E.scale + 100;
+        c.fillStyle = 'rgba(170,215,238,0.85)'; c.fillRect(x0, top, x1 - x0, 40);
+        for (let x = x0; x < x1; x += 90) { const k = (U.hash('ic' + x) % 100) / 100, L2 = 40 + k * 110; c.beginPath(); c.moveTo(x, top + 38); c.lineTo(x + 18 + k * 20, top + 38 + L2); c.lineTo(x + 40 + k * 30, top + 38); c.fill(); if (k > 0.6 && Math.sin(t * 2 + x) > 0.97) { c.fillRect(x + 20 + k * 20, top + 40 + L2 + ((t * 300) % 200), 3, 8); } }
+      } });
+    } else if (L.weather === 'storm') {// snow blowing sideways through everything
+      d.props.push({ layer: 'front', draw(c, t) {
+        const E = SO.E, w = E.W / E.scale, h = E.H / E.scale;
+        c.fillStyle = 'rgba(90,90,120,0.16)'; c.fillRect(E.cam.x - 20, E.cam.y - 20, w + 40, h + 40);
+        c.strokeStyle = 'rgba(240,244,250,0.55)'; c.lineWidth = 2;
+        for (let i = 0; i < 90; i++) { const x = E.cam.x + ((i * 397 - t * (500 + (i % 5) * 90)) % (w + 200) + w + 200) % (w + 200) - 100, y = E.cam.y + (i * 131 + Math.sin(t + i) * 20) % h; c.beginPath(); c.moveTo(x, y); c.lineTo(x + 26, y - 4); c.stroke(); }
+      } });
+    } else if (L.weather === 'mist') {// low cloud in the valley
+      d.props.push({ layer: 'front', draw(c, t, room) { const y = room.surfaceY, g = c.createLinearGradient(0, y - 300, 0, y + 40); g.addColorStop(0, 'rgba(225,228,220,0)'); g.addColorStop(0.75, `rgba(225,228,220,${0.32 + 0.05 * Math.sin(t * 0.5)})`); g.addColorStop(1, 'rgba(225,228,220,0)'); c.fillStyle = g; c.fillRect(camX() - 200, y - 300, 3000, 340); } });
+    }
+  }
+  const LOOKS = {
+    rainforest: [
+      { sand: '#5a4a30', sky: ['#8a9a90', '#c8ccbc'], water: 'rgba(120,80,30,0.32)', far: { col: 'rgba(52,80,44,0.9)', h: 200, par: 0.7, shape: 'trees', n: 26 } },// the flooded forest: brown water, gray rain
+      { floorTop: '#2e4a22', rock: '#3a2e22', rockHi: '#54442e', sky: ['#1e3a24', '#3e5a34'], water: 'rgba(20,40,20,0.3)', far: { col: 'rgba(18,36,20,0.95)', h: 420, par: 0.75, shape: 'trees', n: 30 } },// the understory: no sky, only leaves
+      { floorTop: '#5aa03a', rock: '#3e5a2a', rockHi: '#6a8a42', sky: ['#8ad0a0', '#e0f4d0'], water: 'rgba(60,160,120,0.2)', weather: 'mist' },// the fern gullies: green as anything
+    ],
+    mountains: [
+      { palette: 'kelp', sand: '#7c8a52', rock: '#5e6a48', rockHi: '#86935e', floorTop: '#7ea04a', sky: ['#9ccbe0', '#e8e2c4'], far: { col: 'rgba(94,128,78,0.9)', h: 170, par: 0.7, shape: 'round', n: 9 }, water: 'rgba(60,120,80,0.16)' },// green foothills, meadow banks
+      { palette: 'glass', rock: '#3e4654', rockHi: '#5e6878', floorTop: '#5a6472', sky: ['#2f6fb4', '#a9d0ec'], water: 'rgba(16,52,130,0.3)' },// the high lakes: granite and deep blue
+      { palette: 'glass', sand: '#9a8668', rock: '#7a6650', rockHi: '#a08a6a', floorTop: '#ab977a', sky: ['#c8c4bc', '#e6ddd0'], far: { col: 'rgba(120,100,84,0.95)', h: 260, par: 0.7, n: 18 }, water: 'rgba(170,220,206,0.3)' },// the scree: rust talus, milky glacier water
+      { floorTop: '#f2f6f8', rock: '#8c98a4', rockHi: '#c8d4dc', water: 'rgba(200,225,240,0.2)' },// the snowline
+    ],
+    snow: [
+      { sky: ['#bcd6ea', '#f4f8fb'], water: 'rgba(150,200,230,0.18)' },// snowfields, all glare
+      { rock: '#5d8aa8', rockHi: '#a9d4ea', floorTop: '#dff2fa', sky: ['#7fa8c4', '#d6ecf6'], water: 'rgba(60,170,220,0.24)', weather: 'icicles' },// the ice caves: blue ice over everything
+      { rock: '#6c6a7c', rockHi: '#9a98aa', sky: ['#5a5a70', '#a8a8b8'], water: 'rgba(60,60,90,0.25)', weather: 'storm' },// the pass, in a storm
+    ],
+    conifer: [
+      { floorTop: '#6a5634', rock: '#4a4a44', rockHi: '#6a6a60', sand: '#5a4a32', sky: ['#7fa4b8', '#cfdcd4'], far: { col: 'rgba(24,44,32,0.95)', h: 300, par: 0.75, shape: 'trees', n: 44 }, water: 'rgba(20,60,40,0.22)' },// the high pines: needles, dark
+      { floorTop: '#557a34', rock: '#3c4a36', rockHi: '#5e7050', sand: '#4a4430', sky: ['#9ab8a8', '#e0e4cc'], water: 'rgba(150,90,30,0.3)' },// the pine streams: moss, tea-dark water
+      { floorTop: '#8a6a34', rock: '#5e5040', rockHi: '#8a7458', sand: '#7a6440', sky: ['#c8b890', '#efe4c4'], far: { col: 'rgba(176,138,58,0.9)', h: 220, par: 0.7, shape: 'trees', n: 36 }, water: 'rgba(120,100,50,0.18)', weather: 'mist' },// the way down: larches gone gold, mist
+    ],
+  };
+
   M.mountains = (ctx, d) => {
     const r = highShape(ctx, d), ph = ctx.phase;
     if (ph === 2 && !/falls|pooltop|brink/.test(d.htype)) { d.htype = 'ridge'; const s = ctx.n; ctx.depth = (u) => 210 - 300 * bump(u, 0.5 + 0.1 * noise(0, 1, s), 0.15); }
@@ -743,6 +834,7 @@
     if (d.htype === 'falls') { d.name = fallsN[climbIndex(ctx, ctx.local)] || d.name; }
     if (d.htype === 'pooltop') { d.name = ctx.local === 0 ? 'The top of the great falls' : (topN[climbIndex(ctx, ctx.local - 1)] || d.name); }
     if (ph >= 2) { d.snow = 0.3; }
+    look(ctx, d, LOOKS.mountains[ph]);
   };
   M.snow = (ctx, d) => {
     const r = highShape(ctx, d), ph = ctx.phase;
@@ -766,6 +858,7 @@
     for (let i = 0; i < 8; i++) { list.push([i % 3 ? 'snowpile' : 'pine', 150 + i * 320 + r() * 100, 0.7 + r() * 0.4, Math.floor(r() * 1000), { dry: true, snow: true, col: '#3a4a40' }]); }
     d.props.push(plants(list));
     d.edgeWind = ph === 2;
+    look(ctx, d, LOOKS.snow[ph]);
   };
   M.conifer = (ctx, d) => {
     const r = highShape(ctx, d), ph = ctx.phase;
@@ -779,6 +872,7 @@
     d.props.push(plants(list));
     // Fallen logs over the stream (they sit on the banks).
     if (ph === 1 && d.htype === 'stream') { ctx.after.push(() => { const x = 900 + r() * 700; d.props.push(plants([['log', x, 1.6, 1]])); }); }
+    look(ctx, d, LOOKS.conifer[ph]);
   };
 
   // ── The crystal gauntlet: inside the mountain. Ice, then crystals that close on a beat ──
@@ -875,7 +969,7 @@
   M.aquifer = (ctx, d) => {
     const ph = ctx.phase;
     caveRock(ctx, d, (u, r) => 0.12 + r() * 0.16, (u, r) => 0.1 + r() * 0.2 + (ph === 1 ? 0.06 : 0));
-    d.dark = 0.85; d.palette = 'abyss'; d.snow = 0.35; d.ambient = { fish: 0 };
+    d.dark = [0.72, 0.8, 0.7][ph] || 0.85; d.palette = 'abyss'; d.snow = 0.35; d.ambient = { fish: 0 };
     const r = ctx.r;
     ctx.after.push(() => {
       for (let i = 0; i < 8; i++) {// stalactites and stalagmites, on the rock
@@ -885,6 +979,19 @@
       if (ph >= 1) {// roots coming down through the roof, glowing a little (the rainforest above)
         d.props.push({ layer: 'back', draw(c, t) { c.strokeStyle = 'rgba(200,220,150,0.35)'; c.lineWidth = 2; for (let i = 0; i < 9; i++) { const x = 160 + i * 270, y0 = ctx.caveY(x).ceil; c.beginPath(); c.moveTo(x, y0); c.quadraticCurveTo(x + Math.sin(t * 0.3 + i) * 14, y0 + 120, x + 6, y0 + 200 + (i % 3) * 40); c.stroke(); } } });
         d.lights = [{ x: ctx.W * 0.5, y: 300, r: 900, color: '#d8f0b0', level: 0.18 }];
+      }
+      // Each part its own light: daylight down the shaft; glowworms on the roof of the halls;
+      // and, rising, the rock goes orange with what the water left on it, lit by something warm.
+      const x = ctx.W * (0.3 + 0.4 * r());
+      if (ph === 0) {
+        d.lights = [{ x, y: ctx.caveY(x).ceil + 120, r: 1000, color: '#fff2d0', level: 0.65 }];
+        d.props.push({ layer: 'back', draw(c, t) { const g = c.createLinearGradient(x - 160, 0, x + 160, 0); g.addColorStop(0, 'rgba(255,244,210,0)'); g.addColorStop(0.5, `rgba(255,244,210,${0.4 + 0.06 * Math.sin(t * 0.6)})`); g.addColorStop(1, 'rgba(255,244,210,0)'); c.fillStyle = g; c.beginPath(); c.moveTo(x - 90, -100); c.lineTo(x + 90, -100); c.lineTo(x + 220, ctx.H); c.lineTo(x - 220, ctx.H); c.fill(); } });
+      } else if (ph === 1) {
+        d.lights = (d.lights || []).concat([0.2, 0.5, 0.8].map((k) => ({ x: ctx.W * k, y: ctx.caveY(ctx.W * k).ceil + 80, r: 650, color: '#7fe8d8', level: 0.5 })));
+        d.props.push({ layer: 'mid', draw(c, t) { for (let i = 0; i < 140; i++) { const gx = 40 + i * 18.3, cy = ctx.caveY(gx).ceil, k = (i * 0.618) % 1; c.fillStyle = `rgba(140,255,230,${0.35 + 0.35 * Math.sin(t * (0.5 + k) + i)})`; c.fillRect(gx, cy + 6 + k * 40, 2.5, 2.5); c.fillStyle = 'rgba(160,255,235,0.12)'; c.fillRect(gx + 1, cy + 8 + k * 40, 1, 20 + k * 30); } } });
+      } else {
+        d.rock = '#5a3e28'; d.rockHi = '#9a6a40'; d.floorTop = '#b07a48';
+        d.lights = [{ x, y: ctx.caveY(x).floor - 60, r: 1100, color: '#ffb468', level: 0.6 }];
       }
     });
   };
@@ -906,6 +1013,7 @@
     d.ambient.fish = ph === 0 ? 3 : 0;
     d.ambient.firefly = ph === 1 ? 6 : 0;
     if (ph === 2) { d.fog = 0.3; }
+    look(ctx, d, LOOKS.rainforest[ph]);
   };
 
   // ── The sequoias: fog, giants, and the climb ──

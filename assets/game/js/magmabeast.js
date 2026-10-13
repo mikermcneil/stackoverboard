@@ -209,6 +209,8 @@
       A.glow(ctx, v.x, fy, 60 + k * 120, '#ff8a3a', 0.25 + 0.6 * k);
       ctx.strokeStyle = `rgba(255,${180 + Math.round(60 * k)},120,${0.4 + 0.5 * k})`; ctx.lineWidth = 2 + k * 3;
       ctx.beginPath(); ctx.moveTo(v.x - v.w / 2, fy); for (let j = 1; j <= 6; j++) { ctx.lineTo(v.x - v.w / 2 + v.w * j / 6, fy + Math.sin(j * 2.1 + v.x) * 6); } ctx.stroke();
+      // the column it'll come up through, shimmering (seen even when the floor isn't), and bubbles in it
+      if (v.top && !v.harmless) { const cg = ctx.createLinearGradient(0, fy, 0, v.top); cg.addColorStop(0, `rgba(255,140,60,${0.1 + 0.18 * k})`); cg.addColorStop(1, 'rgba(255,140,60,0)'); ctx.fillStyle = cg; ctx.fillRect(v.x - v.w / 2, v.top, v.w, fy - v.top); }
       // bubbles, and the water above it starting to shimmer
       ctx.fillStyle = `rgba(255,220,180,${0.15 + 0.25 * k})`;
       for (let j = 0; j < 8; j++) { const by = fy - ((t * 160 + j * 70) % (v.top ? fy - v.top : 500)); ctx.beginPath(); ctx.arc(v.x + Math.sin(j * 3 + t * 4) * v.w * 0.3, by, 2 + (j % 3), 0, TAU); ctx.fill(); }
@@ -236,6 +238,8 @@
   // ── Small things for the fight ──────────────────────────────────────────────
   function haze(ctx, x0, y0, ang, len, spread, a, t) {// a cone of shimmering water: where it will breathe
     ctx.save(); ctx.globalCompositeOperation = 'lighter';
+    ctx.fillStyle = `rgba(255,170,110,${a * (0.12 + 0.05 * Math.sin(t * 9))})`;
+    ctx.beginPath(); ctx.moveTo(x0, y0); ctx.arc(x0, y0, len, ang - spread, ang + spread); ctx.closePath(); ctx.fill();
     for (let j = 0; j < 30; j++) {
       const f = ((j / 30) + t * 0.6) % 1, d = f * len, w = Math.sin(j * 7.7) * spread * d;
       const px = x0 + Math.cos(ang) * d - Math.sin(ang) * w, py = y0 + Math.sin(ang) * d + Math.cos(ang) * w;
@@ -307,6 +311,8 @@
       if (P.open > 0.3) { out.push({ x: a.x + (P.dir || 1) * 150, y: a.y + 40, r: 500, a: 0.7 * P.open, color: '#ffd080', add: 0.4 }); }
       const F = M.fight;
       if (F) { F.vents.forEach((v) => out.push({ x: v.x, y: room.floorY(v.x) - (v.state === 'burst' ? 300 : 20), r: v.state === 'burst' ? 600 : 260, a: v.state === 'burst' ? 0.9 : 0.5, color: '#ff8a3a', add: 0.4 })); }
+      // where it's going to breathe: lit, all along the line, so it can be seen coming in the dark
+      if (F && F.aim) { const k = F.sub === 'breathe' ? 1 : U.clamp(F.t / 1.6, 0, 1); for (let j = 1; j <= 4; j++) { out.push({ x: F.aim.x + Math.cos(F.aim.ang) * j * 320, y: F.aim.y + Math.sin(F.aim.ang) * j * 320, r: 240 + j * 40, a: 0.3 + 0.4 * k, color: '#ffb070', add: 0.15 * k }); } }
       return out;
     },
     onTouch(a) {
@@ -663,7 +669,11 @@
     const s = Math.max(W / VW, Math.min(H / VH, W / 820));
     ctx.save(); ctx.translate((W - VW * s) / 2, (H - VH * s) / 2); ctx.scale(s, s); fn(); ctx.restore();
   }
+  // (Skippable, like every cutscene: cutscene.js. A skipped film just ends; what it means still happens.)
+  let cut = false;// (this film was skipped: none of its later lines either)
+  const skipped = () => { if (SO.cutscene && SO.cutscene.skipped) { cut = true; } return cut; };
   function play(draw, dur) {
+    if (skipped()) { return Promise.resolve(); }
     return new Promise((resolve) => {
       const t0 = E.t;
       E.overlay = (ctx, W, H, t) => {
@@ -675,13 +685,18 @@
         g.addColorStop(0, 'rgba(0,0,0,0)'); g.addColorStop(1, 'rgba(0,0,0,0.6)');
         ctx.fillStyle = g; ctx.fillRect(0, 0, W, H);
         ctx.restore();
-        if (el >= dur) { E.overlay = null; resolve(); }
+        if (el >= dur || skipped()) { E.overlay = null; resolve(); }
       };
     });
   }
+  async function film0(fn) {// one skippable stretch of film
+    cut = false;
+    if (SO.cutscene) { SO.cutscene.begin(); }
+    try { await fn(); } finally { if (SO.cutscene) { SO.cutscene.end(); } }
+  }
   async function closeUp(dur, line) {
     setTimeout(() => UI.thought(line), 800);
-    await play((ctx, k, el, t) => {
+    await film0(() => play((ctx, k, el, t) => {
       const g = ctx.createRadialGradient(VW / 2, VH * 0.7, 40, VW / 2, VH * 0.7, 900);
       g.addColorStop(0, '#5a1406'); g.addColorStop(1, '#0a0202');
       ctx.fillStyle = g; ctx.fillRect(-900, -900, VW + 1800, VH + 1800);
@@ -689,7 +704,7 @@
       ctx.save(); ctx.globalCompositeOperation = 'lighter';
       for (let i = 0; i < 30; i++) { ctx.fillStyle = `rgba(255,${120 + (i % 5) * 20},60,${0.4 + 0.3 * Math.sin(t * 2 + i)})`; ctx.fillRect((i * 173 + t * 30) % VW, VH - ((t * 50 + i * 61) % VH), 2, 2); }
       ctx.restore();
-    }, dur);
+    }, dur));
   }
 
   // ── The fifth ending ──────────────────────────────────────────────────────────
@@ -699,7 +714,7 @@
     E.resetArms(sq);
     return sq;
   }
-  function script(lines) { lines.forEach(([at, text]) => setTimeout(() => UI.say(text, { who: 'squid', syllables: 1 }), at * 1000)); }
+  function script(lines) { lines.forEach(([at, text]) => setTimeout(() => { if (!skipped()) { UI.say(text, { who: 'squid', syllables: 1 }); } }, at * 1000)); }
 
   async function film() {
     // 1. It goes out.
@@ -739,6 +754,7 @@
       A.squid(ctx, sq);
       if (k > 0.85) { ctx.fillStyle = `rgba(20,60,80,${(k - 0.85) / 0.15 * 0.6})`; ctx.fillRect(-900, -900, VW + 1800, VH + 1800); }
     }, Math.max(24, musicMs / 1000 - 4));
+    if (skipped()) { return; }
     UI.say('It’s cold down there now. Cold, and quiet, and full of light.', { who: 'squid' });
     await wait(4500);
   }
@@ -754,7 +770,8 @@
     await UI.fade(1, 1400, '#02060b');
     E.mode = 'cutscene';
     await UI.fade(0, 10);
-    try { await film(); } catch (err) { console.error(err); }
+    try { await film0(film); } catch (err) { console.error(err); }
+    if (UI.clear) { UI.clear(); }
     if (save().data.chapter >= 7) { save().data.ending = 'magma'; save().data.chapter = 8; }
     await save().flush();
     let tally = {};

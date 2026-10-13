@@ -38,9 +38,7 @@
     'smokers': [['vent', 0.78]],
     'whale-fall': [['eel', 0.32, 0.62]],
     'hadal-floor': [['ray', 0.66]],
-    'west:9': [['ray', 0.55]],
-    'west:10': [['eel', 0.35, 0.72], ['eel', 0.7, 0.66]],// the weed king's hollow, full of eels
-    'west:16': [['ray', 0.4]],
+    'west:3': [['ray', 0.55, 0.3]],
     'deep:5': [['ray', 0.5]],
     'deep:12': [['eel', 0.45, 0.6]],
     'deep:17': [['vent', 0.35]],

@@ -43,6 +43,7 @@
     { key: 'others', name: 'Stranger things', parent: 'creatures' },
     { key: 'insects', name: 'Insects', parent: 'creatures' },
     { key: 'mammals', name: 'Mammals', parent: 'creatures' },
+    { key: 'amphibians', name: 'Frogs and newts', parent: 'creatures' },
     { key: 'weeds', name: 'Weeds and grasses', parent: 'plants' },
     { key: 'notplants', name: 'Animals, really', parent: 'plants' },
     { key: 'flowers', name: 'Flowers', parent: 'plants' },
@@ -503,7 +504,7 @@
       s: ['purr', 34, 6],
     },
     'old-axolotl': {
-      g: 'others', like: 'the axolotl, Ambystoma mexicanum',
+      g: 'amphibians', like: 'the axolotl, Ambystoma mexicanum',
       lore: 'Axolotls come from one lake, far away on the ground, and nowhere else. This one lived in our pool. Someone carried it up.',
       fact: 'It never grows up: it keeps its gills and stays a child all its life, and can grow back a lost leg, or part of its heart.',
       sex: 'Males have a swollen bump under the tail when they are ready to breed. Females are rounder. The male leaves little packets on the bottom, and the female picks them up.',
@@ -971,6 +972,84 @@
       sex: 'The adults have no mouths, and live only a few days, to mate. The females are sometimes caught in the larvae’s threads and eaten.',
       s: ['bell', 90, 3],
     },
+    // The land out west (westlife.js)
+    'spadefoot-toad': {
+      g: 'amphibians', like: 'spadefoot toads, Scaphiopus and Spea',
+      lore: 'Out in the dry, it is the first to know that rain is coming. The old lungfish and the toads wake on the same night, the first night of rain, and nobody knows which wakes the other.',
+      fact: 'It can stay buried for most of a year, wrapped in a skin it sheds and seals around itself. Its tadpoles can grow into toads in under two weeks, racing the puddle.',
+      sex: 'Only the males sing, all together, on the first wet nights. They have dark throats, and a hard pad on each thumb for holding on.',
+      s: ['rasp', 52, 4],
+    },
+    'pika': {
+      g: 'mammals', like: 'the American pika, Ochotona princeps',
+      lore: 'Its hay piles are older than it is. Each pika takes over the rocks of the last one, and keeps adding to the same pile, in the same crack, year on year.',
+      fact: 'It doesn’t sleep through the winter. It lives under the snow, on the hay it dried all summer. It dies of heat at a temperature most animals would call mild.',
+      sex: 'Males and females look the same and call the same. Each keeps its own patch of rocks, and they live as neighbors.',
+      s: ['chirp', 98, 2],
+    },
+    'river-otter': {
+      g: 'mammals', like: 'the river otter, Lontra canadensis',
+      lore: 'Every otter in the river knows the falls. They go down it for fun, over and over, and carry stones up to drop from the top.',
+      fact: 'It has the thickest fur of almost any animal, and none of it ever gets wet to the skin. It eats crayfish, and squid, when it finds them.',
+      sex: 'Males are a little bigger. The female raises the pups alone, and teaches them to swim by dragging them in.',
+      s: ['chirp', 80, 5],
+    },
+    'fog-beetle': {
+      g: 'insects', like: 'the fog-basking beetle, Onymacris unguicularis',
+      lore: 'On foggy mornings the dunes out west are covered in them, all on their heads, all facing the sea. Something taught them where the sea is.',
+      fact: 'The bumps on its back catch water and the grooves between carry it to its mouth. It can drink almost half its weight in a morning.',
+      sex: 'Males and females look alike. They dig their eggs into the sand at the foot of the dune, where the fog water runs down.',
+      s: ['tock', 76, 2],
+    },
+    'diving-beetle': {
+      g: 'insects', like: 'great diving beetles, Dytiscus',
+      lore: 'Every pond in the lake country has them, and they fly between ponds by moonlight, looking for the shine of water.',
+      fact: 'The silver bubble under its wing cases works like a gill: oxygen soaks into it from the water, so one bubble lasts longer than it should.',
+      sex: 'Males have suckers on their front legs for holding on to the female. Her wing cases are grooved, so he can’t hold on too well.',
+      s: ['bubble', 70, 3],
+    },
+    'leafcutter-ants': {
+      g: 'insects', like: 'leafcutter ants, Atta',
+      lore: 'Their roads through the rainforest are cleared down to the bare earth, and some of them are older than the trees beside them.',
+      fact: 'The fungus they grow exists nowhere else. When a queen leaves to start a new nest, she carries a piece of it in her mouth.',
+      sex: 'Almost all of them are sisters, and never breed. Once a year, winged queens and males fly out, mate in the air, and the males die.',
+      s: ['click', 90, 6],
+    },
+    'bombardier-beetle': {
+      g: 'insects', like: 'bombardier beetles, Brachinus',
+      lore: 'In the bug hills, nothing eats them twice. Even the toads spit them out.',
+      fact: 'The spray comes out at the boiling point of water, in hundreds of tiny pulses a second, and it can aim it almost anywhere, even over its own head.',
+      sex: 'Males and females look the same. They live together under stones in the same few places for years.',
+      s: ['pop', 84, 3],
+    },
+    'cloud-monkeys': {
+      g: 'mammals', like: 'something like the golden snub-nosed monkey, Rhinopithecus roxellana',
+      lore: 'Some of them wear pieces of island glass on strings around their necks. They don’t make glass. They find it, under the old one’s tree, where it falls.',
+      fact: 'They almost never come down to the ground. Up in the crowns, rain collects in the plants, and that is all the water they need.',
+      sex: 'One big male to a troop, with a silver back. The females stay together all their lives; the young males leave.',
+      s: ['call', 900, 1300, 0.3, 3],
+    },
+    'old-one': {
+      g: 'mammals', like: 'nothing anyone up top has named. An old monkey, older than monkeys get',
+      lore: 'It watches the sky from the top of the tallest tree. Things fall out of the sky, sometimes, it says with its hands: glass, seeds, and once something small and wet and red.',
+      fact: 'The troop brings it food and keeps its tree. It hasn’t left the top in longer than any of them have been alive.',
+      sex: 'It’s a male, or was. There is no female in its troop who remembers it young.',
+      s: ['groan', 40, 2],
+    },
+    'horsefly': {
+      g: 'insects', like: 'horseflies, Tabanidae',
+      lore: 'Out on the land, they come for blood the way the strikers do in the sea, and from farther away.',
+      fact: 'They find blood by heat, by movement, and by the breath of what they bite. Their mouths are blades: they cut, and lap up what comes.',
+      sex: 'Only the females bite, for the blood to make their eggs. The males drink nectar, and have eyes that meet in the middle.',
+      s: ['fizz', 48, 3],
+    },
+    'buzzard': {
+      g: 'hunters', like: 'the turkey vulture, Cathartes aura',
+      lore: 'They can smell something dying from a long way up. They came for me before I knew I was.',
+      fact: 'It can ride warm air for hours without a beat of its wings. Its bare head stays clean, whatever it puts it into.',
+      sex: 'Males and females look alike. They nest on bare rock or in hollow trees, and both feed the young, by bringing it back up.',
+      s: ['hiss', 50, 2],
+    },
     'cloud-jelly': {
       g: 'jellies', like: 'nothing anyone up top has named. Like a jellyfish, but in air',
       lore: 'They drift in the cloud with the same slow pulse as the moon jellies far below. Some of the old ones say the moon jellies came down from up here.',
@@ -1299,6 +1378,23 @@
     return out;
   }
 
+  // A bug or an animal made for one place out west (westlife.js: 'landbug:<n>', 'landbeast:<n>').
+  function landMade(key, e) {
+    const r = rng('facts:' + key), beast = /^landbeast:/.test(key);
+    const out = { g: beast ? 'mammals' : 'insects', generated: true, like: 'nothing anyone up top has named' };
+    out.lore = (e.line ? e.line + ' ' : '') + pick(r, beast ? [
+      'Nobody had seen one until a squid did. It lives where nobody comes, and it would like to keep it that way.',
+      'It may be the last of its kind, or the first. Out here, it’s hard to tell the difference.',
+    ] : [
+      'Nobody had seen one until a squid did. It had been out here all along.',
+      'Things like it turn up where the land is old and nobody looks. There are more of them than anyone thinks.',
+    ]);
+    out.fact = pick(r, beast ? ['It hears through the ground as well as the air.', 'It gets all the water it needs from what it eats, and never drinks.', 'It sleeps through the heat of the day, under the ground.'] : ['It can go a whole season without eating.', 'Its young live underground for years, and come up all at once.', 'It tastes with its feet.']);
+    out.sex = beast ? pick(r, ['Males are bigger, with longer ears.', 'Males and females look the same, and pair for life.']) : pick(r, ['The males are smaller and brighter.', 'Females are bigger. Males are rarely seen at all.']);
+    out.s = beast ? ['chirp', 86 + Math.floor(r() * 10), 2] : ['click', 80 + Math.floor(r() * 16), 2 + Math.floor(r() * 3)];
+    return out;
+  }
+
   // Everything known about one thing. `e` is what the journal knows about it ({ key, kind,
   // name, generated, traits, lore, region }); `bird` is its birds.js roster entry, if it’s a bird.
   function facts(key, e, bird) {
@@ -1306,6 +1402,8 @@
     let f = null;
     if (/^sky(bug|bird):/.test(key)) {
       f = skyMade(key, e);
+    } else if (/^land(bug|beast):/.test(key)) {
+      f = landMade(key, e);
     } else if (e.generated || /^(creature|plant|item):\d+$/.test(key)) {
       f = generate(Object.assign({ key }, e));
     } else if (FACTS[key]) {

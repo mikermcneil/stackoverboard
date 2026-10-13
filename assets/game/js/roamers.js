@@ -22,8 +22,8 @@
   // route: the places it passes through, in order. secondsPerRoom: how long it takes to cross one.
   // loop: 'pingpong' (there and back), or 'wrap' (to the end, then it turns up at the start again).
   const ROAMERS = [
-    { key: 'whale-shark', name: 'The whale shark', kind: 'whaleShark', about: 'A whale shark, bigger than anything at the surface, cruising slowly west and back with its mouth open.', route: ['open-blue'].concat(westRun(1, 12)), secondsPerRoom: 90, loop: 'pingpong' },
-    { key: 'turtles', name: 'The turtle line', kind: 'turtles', about: 'Six sea turtles in a line, always travelling west. Nobody has seen where they go. They turn up again in the east.', route: westRun(2, 18), secondsPerRoom: 75, loop: 'wrap' },
+    { key: 'whale-shark', name: 'The whale shark', kind: 'whaleShark', about: 'A whale shark, bigger than anything at the surface, cruising slowly west and back with its mouth open.', route: ['open-blue'].concat(westRun(1, 4)), secondsPerRoom: 90, loop: 'pingpong' },
+    { key: 'turtles', name: 'The turtle line', kind: 'turtles', about: 'Six sea turtles in a line, always travelling west. Nobody has seen where they go. They turn up again in the east.', route: westRun(2, 4).concat(westRun(123, 133)), secondsPerRoom: 75, loop: 'wrap' },// (over the land, nobody sees them go)
   ];
 
   const hash = (s) => { let h = 2166136261; for (let i = 0; i < s.length; i++) { h ^= s.charCodeAt(i); h = Math.imul(h, 16777619); } return h >>> 0; };
@@ -83,7 +83,7 @@
     const kinds = ROAMERS.map((r) => r.kind);
     room.actors = room.actors.filter((a) => !(a.type === 'westSight' && !a.roamer && kinds.includes(a.kind)));// (only the real ones)
     ROAMERS.forEach((r) => {
-      if (!r.route.includes(E.roomKey)) { return; }
+      if (!r.route.includes(E.roomKey) || room.def.land) { return; }
       const a = { id: 'roamer-' + r.key, type: 'westSight', kind: r.kind, roamer: r.key, x: 0, y: (room.surfaceY || 150) + 200, dir: -1, home: room.w / 2 };
       E.addActor(room, a);
       place(room.actors.find((q) => q.id === a.id) || a, room);

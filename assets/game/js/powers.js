@@ -567,7 +567,7 @@
     const pw = SO.powers.has('drift');
     // Rising air pushes up. It carries a squid that knows how to let it.
     const up = SO.powers.updraftAt(sq.x, sq.y);
-    if (up) {
+    if (up && sq.y > 100) {// (it gives out up at the top, so nobody is held there)
       if (pw) { sq.vy = Math.max(-560, sq.vy - 1700 * dt); if (!R.saidRise) { R.saidRise = true; SO.ui.aside('Up! The air is carrying me up. Arms out. Don’t fight it.'); } }
       else { sq.vy -= 430 * dt; }
     }

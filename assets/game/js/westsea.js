@@ -144,7 +144,7 @@
   // Something living out here (see KINDS below), standing on the ground or in the water.
   const life = (d, kind, x, y, o) => { const a = Object.assign({ id: kind + '-' + Math.round(x) + '-' + Math.round(y), type: 'seaLife', kind, x, y }, o || {}); d.actors.push(a); return a; };
   const onFloor = (d, kind, x, lift, o) => life(d, kind, x, yAt(d, x) - (lift || 20), o);
-  const inWater = (d, kind, x, k, o) => { const top = d.surfaceY + 90, bot = yAt(d, x) - 90; return life(d, kind, x, top + (bot - top) * k, o); };
+  const inWater = (d, kind, x, k, o) => { let top = d.surfaceY + 90; const bot = yAt(d, x) - 90; d.solids.forEach((s) => { if (s.passable) { return; } const b = bottomOf(s, x); if (b !== null && b + 90 < bot) { top = Math.max(top, b + 90); } }); return life(d, kind, x, top + (bot - top) * k, o); };// (never inside the ice)
   const ice = (x, y, rx, ry, o) => Object.assign({ type: 'ellipse', x, y, rx, ry, color: '#d8ebf3' }, o || {});
   const rock = (x, y, rx, ry, o) => Object.assign({ type: 'ellipse', x, y, rx, ry }, o || {});
   // Variation every three places.
@@ -190,6 +190,20 @@
     } };
   }
   // Kelp, in a stand.
+  // A sky of its own over a place (with the northern lights, if it's dark enough), and the water's own color.
+  const skyProp = (top, bot, aurora) => ({ layer: 'back', draw(ctx, t, room) {
+    const [x, , w] = viewRect(), y = room.surfaceY, g = ctx.createLinearGradient(0, y - 700, 0, y);
+    g.addColorStop(0, top); g.addColorStop(1, bot); ctx.save(); ctx.globalAlpha = 0.85; ctx.fillStyle = g; ctx.fillRect(x, y - 1200, w, 1200); ctx.restore();
+    if (!aurora) { return; }
+    ctx.save(); ctx.globalCompositeOperation = 'lighter';
+    for (let b = 0; b < 3; b++) {
+      ctx.beginPath();
+      for (let i = 0; i <= 40; i++) { const xx = x + i / 40 * w, yy = y - 420 + b * 50 + Math.sin(i * 0.35 + t * 0.15 + b * 2) * 50 + Math.sin(i * 0.11 - t * 0.07) * 40; if (i) { ctx.lineTo(xx, yy); } else { ctx.moveTo(xx, yy); } }
+      ctx.strokeStyle = b === 1 ? 'rgba(170,110,220,0.18)' : `rgba(90,240,170,${0.22 + 0.08 * Math.sin(t * 0.4 + b)})`; ctx.lineWidth = 60 - b * 14; ctx.stroke();
+    }
+    ctx.restore();
+  } });
+  const tintProp = (col) => ({ layer: 'back', draw(ctx, t, room) { const [x, , w] = viewRect(); ctx.fillStyle = col; ctx.fillRect(x, room.surfaceY, w, room.h - room.surfaceY); } });
   const kelpProps = (d, x0, x1, n, r) => { for (let i = 0; i < n; i++) { const x = x0 + (x1 - x0) * (i + r()) / n; d.props.push({ type: 'kelp', x, h: Math.max(180, yAt(d, x) - d.surfaceY - 40 - r() * 80), seed: Math.floor(r() * 1000), plant: 'kelp', w: 40, dark: 0.2 }); } };
   // Steam off warm water (the warm island).
   const steamProp = (x0, x1) => ({ layer: 'front', draw(ctx, t, room) {
@@ -279,10 +293,17 @@
     const names = ['The boulder coast', 'The king crab march', 'The molting grounds'];
     const W = 1.6 * RW;
     const { d } = base(n, R, {
-      name: names[p], palette: 'glass', sand: '#a69c86', depthTint: 0.22, snow: 0.3,
-      depth: (x) => CFG['crab-coast'].typ(R.local) + Math.sin(x / 260 + n * 1.7) * 70 + r() * 40,
-      ambient: { fish: 6 }, props: [farProp(U.hash('cc-far' + n), 'isles')],
+      name: names[p], palette: p === 1 ? 'warm' : 'glass', sand: ['#a69c86', '#c2aa80', '#d8ccb6'][p], depthTint: 0.22, snow: 0.3,
+      depth: (x) => CFG['crab-coast'].typ(R.local) + Math.sin(x / 260 + n * 1.7) * (p === 1 ? 25 : 70) + r() * 40,
+      ambient: { fish: 6 }, props: [skyProp(['#8fb4c8', '#d4b48a', '#8a9094'][p], ['#d8e4e8', '#f0c890', '#c4c8c8'][p]), farProp(U.hash('cc-far' + n), 'isles')],
     });
+    d.props.push(tintProp(['rgba(40,110,90,0.14)', 'rgba(60,90,130,0.16)', 'rgba(120,124,120,0.22)'][p]));
+    if (p === 1) {// the march: the floor far off moving with them, thousands, all one way
+      d.props.push({ layer: 'back', draw(ctx, t, room) {
+        const [x0, , w] = viewRect();
+        for (let i = 0; i < 160; i++) { const k = (i * 0.618) % 1, x = x0 + ((i * 53 - t * (8 + k * 6)) % w + w) % w, f = room.floorY(x); if (!isFinite(f)) { continue; } const y = f - 6 - k * 26; ctx.fillStyle = `rgba(${150 + k * 60},${50 + k * 30},40,${0.5 + k * 0.4})`; ctx.beginPath(); ctx.ellipse(x, y, 7 + k * 6, 4 + k * 3, 0, 0, TAU); ctx.fill(); }
+      } });
+    }
     if (p === 0) {
       for (let i = 0; i < 5; i++) { const x = 300 + i * 480 + r() * 120; d.props.push({ type: 'rock', x, y: yAt(d, x) + 10, r: 50 + r() * 50, seed: i + 1 }); }
       for (let i = 0; i < 2; i++) { onFloor(d, 'spider-crab', 600 + i * 1200 + r() * 200, 60, { seed: r() * 10 }); }
@@ -335,12 +356,16 @@
     const W = 1.6 * RW;
     const { d } = base(n, R, {
       name: names[p], palette: p === 2 ? 'abyss' : 'glass', sand: '#7c8890', depthTint: 0.35 + k * 0.2,
-      depth: (x) => CFG['cold-sea'].typ(R.local) + Math.sin(x / 500 + n) * 90 + r() * 60,
+      // (each stretch its own floor: sand waves; a hole going down; a seamount nearly to the top)
+      depth: (x) => CFG['cold-sea'].typ(R.local) + r() * 60 + (p === 0 ? Math.sin(x / 140 + n) * 40 + Math.sin(x / 500 + n) * 60 : p === 1 ? Math.sin(x / 500 + n) * 60 + 380 * Math.max(0, 1 - Math.abs(x / W - 0.5) / 0.22) : Math.sin(x / 500 + n) * 50 - 430 * Math.max(0, 1 - Math.abs(x / W - 0.55) / 0.2)),
       snow: 0.8 + k * 1.4, drift: [-3, 8 + k * 6], cold: 0.3 + k * 0.4,
       ambient: { fish: Math.round(8 - k * 6), jelly: p === 1 ? 4 : 1 },
-      props: [farProp(U.hash('cs-far' + n), 'ice')],
+      props: [skyProp(['#5e6a6c', '#9aa6a4', '#1e2a3c', '#3c4c5a', '#6a7e86', '#b8c4c4'][p * 2], ['#5e6a6c', '#9aa6a4', '#1e2a3c', '#3c4c5a', '#6a7e86', '#b8c4c4'][p * 2 + 1], p === 1), farProp(U.hash('cs-far' + n), 'ice')],
     });
     d.props.push(coldProp(0.04 + k * 0.12), deepProp(300, 0.5));
+    if (p === 0) { d.props.push(tintProp('rgba(70,110,90,0.18)')); }// gray-green, under a gray sky
+    else if (p === 1) { d.props.push(tintProp('rgba(40,40,110,0.22)')); }// under the lights, violet
+    else { d.props.push(tintProp('rgba(20,70,70,0.2)')); }
     if (p === 0) {
       for (let i = 0; i < 3; i++) { inWater(d, 'krill', 400 + i * 800 + r() * 200, 0.2 + r() * 0.4, { seed: r() * 10 }); }
       inWater(d, 'sea-angel', W * 0.5, 0.3, { seed: r() * 10 });
@@ -467,7 +492,7 @@
     const p = phase(R, 3);
     const names = ['The walrus beach', 'The warm island', 'The whalers’ island'];
     const W = 1.6 * RW, solids = [];
-    solids.push(rock(W * (0.45 + (r() - 0.5) * 0.1), SURF - 30, 300, 200, { color: p === 1 ? '#4c3f38' : '#575e64' }));
+    solids.push(rock(W * (0.45 + (r() - 0.5) * 0.1), SURF + 95, 300, 170, { color: p === 1 ? '#4c3f38' : '#575e64' }));// (its top in view, 75 below the top of the place)
     const { d } = base(n, R, {
       name: names[p], solids, palette: p === 1 ? 'warm' : 'glass', sand: p === 1 ? '#8e7d68' : '#868c8e', depthTint: 0.24,
       depth: () => CFG['far-isles'].typ(R.local) + r() * 60, snow: p === 1 ? 0.3 : 0.8, drift: [-4, 5], cold: p === 1 ? 0 : 0.4,
@@ -476,14 +501,14 @@
     const s = solids[0];
     d.props.push(rootProp(s.x, s.y + s.ry * 0.7, s.rx * 0.35));
     if (p === 0) {
-      for (let i = 0; i < 5; i++) { life(d, 'walrus', s.x - s.rx * 0.6 + i * s.rx * 0.3, s.y - s.ry * 0.95 + Math.abs(i - 2) * 16, { haul: true, seed: r() * 10 }); }
+      for (let i = 0; i < 5; i++) { const k = -0.6 + i * 0.3; life(d, 'walrus', s.x + k * s.rx, s.y - s.ry * Math.sqrt(1 - k * k) - 30, { haul: true, seed: r() * 10 }); }// (lying on the rock)
       inWater(d, 'walrus', W * 0.8, 0.6, { seed: r() * 10 });
       d.props.push(coldProp(0.08));
       if (R.local === 0) { d.walrusScene = true; }
     } else if (p === 1) {
       d.props.push(steamProp(200, W - 200));
       kelpProps(d, 200, s.x - s.rx, 5, r); kelpProps(d, s.x + s.rx, W - 200, 5, r);
-      for (let i = 0; i < 3; i++) { life(d, 'sea-otter', 300 + i * 700 + r() * 200, SURF + 10, { seed: r() * 10 }); }
+      [0.3, 0.75, 1.5].forEach((k) => { const x = k < 1 ? 200 + (s.x - s.rx - 320) * k : s.x + s.rx + 140 + r() * 120; life(d, 'sea-otter', x, SURF + 10, { seed: r() * 10 }); });// (in the kelp, off the rock)
       d.warm = true;
     } else {
       d.props.push(bonesProp(U.hash('bones' + n), 7), coldProp(0.1));
@@ -511,7 +536,9 @@
       depth: (x) => CFG['seal-deep'].typ(R.local) + Math.sin(x / 420 + n) * 80 + r() * 50, snow: 1, drift: [-2, 6], cold: 0.6,
       ambient: { fish: 3 }, props: [iceGlowProp()],
     });
-    d.props.push(coldProp(0.1), deepProp(250, 0.65));
+    d.props.push(coldProp(0.1), deepProp(250, 0.65), tintProp(['rgba(90,150,210,0.16)', 'rgba(6,14,30,0.3)', 'rgba(30,90,80,0.2)'][p]));
+    // light coming down through the holes in the ice, the only light there is
+    d.props.push({ layer: 'mid', draw(ctx, t, room) { holes.forEach((hk, i) => { const x = W * hk, g = ctx.createLinearGradient(x - 160, 0, x + 160, 0); g.addColorStop(0, 'rgba(210,235,250,0)'); g.addColorStop(0.5, `rgba(210,235,250,${(p === 1 ? 0.26 : 0.14) + 0.04 * Math.sin(t * 0.7 + i)})`); g.addColorStop(1, 'rgba(210,235,250,0)'); ctx.fillStyle = g; ctx.beginPath(); ctx.moveTo(x - 100, room.surfaceY); ctx.lineTo(x + 100, room.surfaceY); ctx.lineTo(x + 260, room.surfaceY + 1100); ctx.lineTo(x - 260, room.surfaceY + 1100); ctx.fill(); }); } });
     solids.forEach((s, i) => { if (i % 2 === 0) { life(d, 'ice-amphipods', s.x + s.w * 0.5, s.y + s.h + 14, { seed: i }); } });
     if (p === 0) {
       for (let i = 0; i < 2; i++) { inWater(d, 'weddell-seal', W * (0.3 + i * 0.4), 0.2 + r() * 0.3, { seed: r() * 10 }); }
@@ -1058,10 +1085,11 @@
   const HP = 6, KO = 5;
   const OPEN = { stuck: 1, up: 1, stunned: 1, dazzled: 1 };
   const crabPhase = (a) => (a.hp > 4 ? 1 : a.hp > 2 ? 2 : 3);
+  let crabFrom = HP;
   SO.actorTypes.greatCrab = {
     r: 230, touch: true, talk: true,
     init(a, room) {
-      a.hp = HP; a.dmg = 0; a.state = has('ws:crab') ? 'gone' : 'buried'; a.gone = a.state === 'gone';
+      a.hp = crabFrom; a.dmg = 0; a.state = has('ws:crab') ? 'gone' : 'buried';// (swim off and come back: it's where that part of the fight began) a.gone = a.state === 'gone';
       a.dir = -1; a.cool = 2; a.st = 0; a.lo = room.w * 0.12 + 330; a.hi = room.w * 0.9;
       a.claw = null;
     },
@@ -1100,12 +1128,12 @@
           if (!hidden()) { a.lastX = s.x; }
           break;
         }
-        // 1: the claws
-        case 'raise': if (a.st > 1.1) { a.state = 'slam'; a.st = 0; if (AU().noise) { AU().noise({ dur: 0.4, freq: 300, q: 1, gain: 0.08, sweep: 0.4 }); } } break;
+        // 1: the claws (raised long enough to get out from under, even from a standstill)
+        case 'raise': if (a.st > 1.5) { a.state = 'slam'; a.st = 0; if (AU().noise) { AU().noise({ dur: 0.4, freq: 300, q: 1, gain: 0.08, sweep: 0.4 }); } } break;
         case 'slam': {
           if (a.st > 0.25) {
             puff(room, a.tx, floorAt(room, a.tx), 10); E.ring(a.tx, a.ty, '#e8d0b0', 180, 0.6);
-            if (U.dist(a.tx, a.ty, s.x, s.y) < 130) { hitSquid(a, room, 'The claw! It caught me.'); a.state = 'stalk'; a.cool = 2.6; }
+            if (U.dist(a.tx, a.ty, s.x, s.y) < 120) { hitSquid(a, room, 'The claw! It caught me.'); a.state = 'stalk'; a.cool = 2.6; }
             else { a.state = 'stuck'; a.st = 0; if (!room.state.stuckSaid) { room.state.stuckSaid = true; aside('It’s stuck in the sand! Its face, now!'); } }
           }
           break;
@@ -1138,16 +1166,16 @@
         case 'charge': {
           a.x += a.vx * dt;
           a.y = U.lerp(a.y, floorAt(room, a.x) - 110, Math.min(1, dt * 6));
-          if (!a.hitThis && Math.abs(s.x - a.x) < 200 && s.y > a.y - 430 && s.y < a.y + 100 && !hidden()) { a.hitThis = true; hitSquid(a, room, 'It ran me down. All claws.'); }
-          if (a.x < a.lo - 80 || a.x > a.hi + 60) {
-            a.x = U.clamp(a.x, a.lo - 80, a.hi + 60);
+          if (!a.hitThis && Math.abs(s.x - a.x) < 200 && s.y > a.y - 300 && s.y < a.y + 100 && !hidden()) { a.hitThis = true; hitSquid(a, room, 'It ran me down. All claws.'); }
+          if (a.x < a.lo - 20 || a.x > a.hi + 60) {// (not so far west that its face is in the wall)
+            a.x = U.clamp(a.x, a.lo - 20, a.hi + 60);
             if (a.hitThis) { a.state = 'stalk'; a.cool = 2; }
             else { a.state = 'stunned'; a.st = 0; if (SO.rumble && SO.rumble.shake) { SO.rumble.shake(0.6); } puff(room, a.x, floorAt(room, a.x), 16); if (!room.state.stunSaid) { room.state.stunSaid = true; aside('It hit the rocks. It’s dazed.'); } }
             a.hitThis = false;
           }
           break;
         }
-        case 'stunned': if (a.st > 2.8) { a.state = 'stalk'; a.cool = 1; } break;
+        case 'stunned': if (a.st > 5) { a.state = 'stalk'; a.cool = 1; } break;
         case 'recoil': a.x = U.clamp(a.x - a.dir * 160 * dt, a.lo, a.hi); if (a.st > 1.2) { a.state = 'stalk'; a.cool = 1.6; } break;
         case 'leaving': {
           a.x -= 260 * dt; a.y = U.lerp(a.y, floorAt(room, Math.max(40, a.x)) - 60, dt * 2); a.alpha = Math.max(0, 1 - a.st / 4);
@@ -1191,6 +1219,7 @@
     if (a.hp <= 0) { beaten(a, room); return; }
     a.state = 'recoil';
     const P = crabPhase(a);
+    if (a.hp === 4 || a.hp === 2) { crabFrom = a.hp; }
     if (a.hp === 4) { a.spawned = false; setTimeout(() => say('It’s going under the sand. Where is it? Where is it going to come up?'), 900); }
     else if (a.hp === 2) { (room.actors || []).forEach((q) => { if (q.kind === 'crab-spawn') { q.gone = true; q.touch = false; } }); setTimeout(() => say('It’s angry now. Really angry.'), 900); }
     else if (P) { aside(pried ? 'I pried at it. Something gave.' : 'I got its mouth. It felt that.'); }

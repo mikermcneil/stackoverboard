@@ -325,7 +325,7 @@ const PLANNED_THINGS = [
     body: 'Spoiler. In the later chapters, something awful happens to Bead. Glass squid can\'t take warm water, and in chapter 6 Bead follows the squid up into the warm shallows anyway. It drifts up into the warm water, goes white all the way through, and sinks. Its body stays where it fell, and the crabs find it. In chapter 7 the squid thinks of it once more.',
     related: ['character-buddy', 'chapter-6', 'place-warm-shallows'] },
   { key: 'creature-birds', topic: 'creature', title: 'Birds of the west', tags: ['birds', 'seabirds', 'gulls', 'dark birds', 'west', 'surface', 'danger'],
-    body: 'Out in the procedural west, gulls wheel over the surface, harmless and loud. Farther out, in the wet desert (from about 22 rooms west), big dark birds with red eyes circle over the water, and when a squid comes near the surface they dive, splash in, and hit it hard enough to draw blood. Stay deep out there. Terns, frigatebirds and pelicans fly over the lands past the desert. Very far out come hookbills, which grab a squid, carry it up out of the water and drop it (from 40 places into any crossing, and everywhere past west:240), and then spearnecks, standing on stilts and stabbing down through the water (from 50 places in, and everywhere past west:600). Not swans, which only belong to the sky islands.',
+    body: 'Out in the procedural west, gulls wheel over the reef, harmless and loud. In the wet desert, over the dunes and the cactus flats, big dark birds with red eyes circle over the water, and when a squid comes near the surface they dive, splash in, and hit it hard enough to draw blood. Stay deep out there. Terns, frigatebirds and pelicans fly over the coasts. Over the plains and the hills come hookbills, which grab a squid, carry it up out of the water and drop it, and over the sea on the far side of the land, spearnecks, standing on stilts and stabbing down through the water. Out on the land, a bleeding squid draws horseflies, and from the taiga on, buzzards. Not swans, which only belong to the sky islands.',
     related: ['place-west-surface', 'mechanic-blood'], seeAlso: ['get-west-path'] },
   { key: 'creature-sea-spiders', topic: 'creature', title: 'Sea spiders', tags: ['sea spiders', 'pycnogonids', 'west'],
     body: 'Sea spiders pick their way slowly along the bottom of the western reef and the tidepool coast: tiny bodies, enormous legs. Real animals (pycnogonids). Their guts run down inside their legs, because there\'s nowhere else in the body to put them.',
@@ -395,7 +395,7 @@ const QUEST_FACTS = [
     related: ['place-lantern-ledges', 'place-ledge-cave', 'creature-flashlight-fish', 'quest-singing-shards', 'plant-lantern-weed', 'skin-word-glow'] },
   { key: 'quest-rain-for-the-lungfish', title: 'Rain for the lungfish (side quest)', spoilerLevel: 1,
     tags: ['quest', 'side quest', 'rain', 'lungfish', 'float', 'west', 'burrow', 'where it rains'],
-    body: 'Under the low island at Where it rains (rain-sea), a glass ball from the islands is caught under a root, full of rain. Fresh water. Somebody, somewhere, wants rain. Far out west, at the first lungfish (west:14), an old lungfish sleeps in a cocoon of dried mud on the highest step, waiting for rain; it has been asleep a long, long time. Carry the float all the way out there and it rains on the hot mud, rain from home. The mud cracks, an eye opens, and the lungfish slides off the step into the mud. There\'s a hole there now, going in: the lungfish burrow (west-in:14:1), with rings in the mud wall, one for every dry season it slept through, and a pearl.',
+    body: 'Under the low island at Where it rains (rain-sea), a glass ball from the islands is caught under a root, full of rain. Fresh water. Somebody, somewhere, wants rain. Out west, at the first lungfish (west:5, on the shore), an old lungfish sleeps in a cocoon of dried mud on the highest step, waiting for rain; it has been asleep a long, long time. Carry the float all the way out there and it rains on the hot mud, rain from home. The mud cracks, an eye opens, and the lungfish slides off the step into the mud. There\'s a hole there now, going in: the lungfish burrow (west-in:5:1), with rings in the mud wall, one for every dry season it slept through, and a pearl.',
     related: ['item-rain-float', 'creature-lungfish', 'place-rain-sea', 'place-west-first-lungfish', 'place-west-interiors'] },
   { key: 'quest-warm-room', title: 'The warm room (spoiler)', spoilerLevel: 2,
     tags: ['quest', 'warm room', 'kept garden', 'holder', 'stay', 'forever', 'calypso', 'holdfasts', 'time', 'open', 'spoiler'],
@@ -623,22 +623,21 @@ fallback when that table isn't available.  Places are read from the client's roo
     var hf = west.highlands.from;
     add({
       key: 'place-west-surface', topic: 'place', title: 'The way west (the endless surface west of the Bright)',
-      body: 'West of the Bright, the surface goes on and on, and never ends. Past the last hand-built place, every step west is a made-up room with the key "west:N" (N = how far west), generated from the world seed so it\'s the same for everyone, and stranger the farther you go. It comes in crossings of '+west.placesPerCrossing+' places, one after another, forever. Within each crossing, in bands: '+
-        west.bands.map((b, i) => lc(b.name)+' ('+b.from+(i === west.bands.length - 1 ? ' on' : ' to '+b.to)+(b.about ? ': '+b.about.replace(/\.$/, '').replace(/^./, (c) => c.toLowerCase()) : '')+')').join('; ')+
-        '. Past the wet desert, the land changes every few places: '+west.lands.map((l) => lc(l.name)+' ('+l.from+')').join(', ')+' (see place-west-lands). '+
-        'Whatever the seed, '+west.path.length+' landmarks are always at the same distance, in the same order: '+west.path.map((p) => lc(p.name)+' ('+p.n+')').join(', ')+
-        '. Every later crossing brings the same landmarks back at the same distances within it, recalled and changed, with a word added to the name (such as "older", "half buried", or "in the dark"). Some landmarks have rooms inside (see place-west-interiors). '+
-        'From west:'+hf+' on, the land rises into highlands (see place-west-highlands). In the daytime, light-drinkers can make it dark. None of it is on the way anywhere; it\'s just there, if you keep going.',
+      body: 'West of the Bright, the way goes on and on, and never ends. Past the last hand-built place, every step west is a made-up room with the key "west:N" (N = how far west), generated from the world seed so it\'s the same for everyone. It comes in regions, in order: '+
+        west.regions.map((r) => lc(r.name)+' ('+r.from+(r.to === null ? ' on' : r.to === r.from ? '' : ' to '+r.to)+(r.about ? ': '+r.about.replace(/\.$/, '').replace(/^./, (c) => c.toLowerCase()) : '')+')').join('; ')+
+        '. The land runs from the shore to west:'+west.landEnds+' (see place-west-lands); then the sea again, and the orca sea goes on forever. '+
+        'Whatever the seed, '+west.path.length+' landmarks are always in the same place: '+west.path.map((p) => lc(p.name)+' ('+p.n+')').join(', ')+
+        '. Some landmarks have rooms inside (see place-west-interiors). From west:'+hf+' the land climbs into the mountains (see place-west-highlands). None of it is on the way anywhere; it\'s just there, if you keep going.',
       tags: ['west', 'surface', 'procedural', 'exploration', 'birds', 'sea spiders', 'lungfish', 'landmarks', 'crossings', 'endless', 'end of the west'],
       related: ['mechanic-endless-west', 'place-west-lands', 'place-west-interiors', 'place-west-highlands', 'creature-birds', 'creature-sea-spiders', 'creature-lungfish', 'creature-light-drinkers', 'region-surface', 'place-bright-reef', 'level-surface'].concat(west.path.map((p) => 'place-west-'+p.key)),
-      data: { room: 'west:N', endless: west.endless, end: west.end, placesPerCrossing: west.placesPerCrossing, highlandsFrom: hf, recallWords: west.recallWords, bands: west.bands, lands: west.lands, landmarks: west.path.map((p) => ({ n: p.n, key: p.key, room: 'west:'+p.n })) },
+      data: { room: 'west:N', endless: west.endless, end: west.end, highlandsFrom: hf, landEnds: west.landEnds, regions: west.regions, landmarks: west.path.map((p) => ({ n: p.n, key: p.key, room: 'west:'+p.n })) },
       seeAlso: ['get-west-path'], source: west.source,
     });
     west.path.forEach((p) => {
       var inside = west.interiors.find((i) => i.landmark === p.key);
       add({
         key: 'place-west-'+p.key, topic: 'place', title: p.name+' (west:'+p.n+')', optional: true,
-        body: p.line+' It\'s always '+p.n+' rooms west of the Bright (room "west:'+p.n+'"), whatever the seed, and it comes back, recalled and changed, in every later crossing, forever ('+p.n+' + '+west.placesPerCrossing+' for each crossing before).'+
+        body: p.line+' It\'s always '+p.n+' rooms west of the Bright (room "west:'+p.n+'"), whatever the seed.'+
           (inside ? ' There are rooms inside ('+inside.rooms.map((r) => r.name+', "'+r.room+'"').join('; ')+'). '+inside.about : ''),
         tags: ['west', 'landmark', p.key, p.name.toLowerCase()].concat(inside ? ['inside', 'interior'] : []),
         related: ['place-west-surface'].concat(p.key === 'sand-cuts' ? ['dome-glass-sand'] : [], inside ? ['place-west-interiors'] : [], p.key === 'first-lungfish' ? ['quest-rain-for-the-lungfish'] : []),
@@ -647,18 +646,18 @@ fallback when that table isn't available.  Places are read from the client's roo
       });
     });
     add({
-      key: 'place-west-lands', topic: 'place', title: 'The far-west lands (past the wet desert)', optional: true,
-      body: 'Past the wet desert, the land out west changes every few places, the same distances in every crossing: '+
-        west.lands.map((l) => lc(l.name)+' ('+l.from+' to '+l.to+(l.about ? ': '+l.about.replace(/\.$/, '').replace(/^./, (c) => c.toLowerCase()) : '')+')').join('; ')+'. '+
-        west.laterCrossings.about+' '+west.laterCrossings.features.map((f) => f.about).join(' ')+' The birds get worse the farther you go (see creature-birds).',
-      tags: ['west', 'lands', 'dune sea', 'cactus shallows', 'humming flats', 'ribbon shallows', 'bone coast', 'dog plains', 'schooling sands', 'glass flats', 'lifting ground', 'salt pans', 'jelly lake', 'tar', 'later crossings'],
+      key: 'place-west-lands', topic: 'place', title: 'The land out west (from the shore to the far shore)', optional: true,
+      body: 'Out west, past the shore, a whole continent: '+
+        west.lands.map((l) => lc(l.name)+' ('+l.from+' to '+l.to+(l.phases && l.phases.length > 1 ? ': '+l.phases.map(lc).join(', ') : '')+')').join('; ')+'. '+
+        'Living there: '+west.landLife.animals+' '+west.landLife.bugs+' '+west.landLife.blood+' Getting across: '+west.landLife.sustain,
+      tags: ['west', 'lands', 'desert', 'river', 'mountains', 'snow', 'crystal', 'taiga', 'plains', 'aquifer', 'rainforest', 'sequoia', 'treetops', 'clouds', 'rainbows', 'old one', 'monkeys', 'hills', 'bugs', 'horseflies', 'buzzards', 'dew'],
       related: ['place-west-surface', 'creature-birds', 'creature-cucumberbananadog', 'creature-ribbonfish', 'creature-ghost-crab', 'creature-spine-sponge', 'creature-sea-skater', 'item-fulgurite', 'creature-golden-jelly', 'creature-brine-shrimp'],
-      data: { lands: west.lands, laterFeatures: west.laterCrossings.features },
+      data: { lands: west.lands, landLife: west.landLife },
       seeAlso: ['get-west-path'], source: 'assets/game/js/westlands.js',
     });
     add({
       key: 'place-west-interiors', topic: 'place', title: 'Inside the landmarks out west', optional: true,
-      body: 'Some of the landmarks out west can be gone into. The rooms inside have keys "west-in:N:K": N is the landmark\'s place out west, K counts the rooms going in, from 1. They come back with their landmark in every crossing (west-in:'+(west.interiors[0] ? west.interiors[0].n + west.placesPerCrossing : 74)+':1 is the same burrow, one crossing on). '+
+      body: 'Some of the landmarks out west can be gone into. The rooms inside have keys "west-in:N:K": N is the landmark\'s place out west, K counts the rooms going in, from 1. '+
         west.interiors.map((i) => i.name+' ('+i.rooms.map((r) => r.name+', "'+r.room+'"').join('; ')+'): '+i.about).join(' '),
       tags: ['west', 'inside', 'interiors', 'west-in', 'landmarks', 'burrow', 'cenote', 'whale', 'fish', 'sphinx', 'sand engine'],
       related: ['place-west-surface'].concat(west.interiors.map((i) => 'place-west-'+i.landmark), ['creature-tongue-louse', 'creature-hagfish', 'creature-bone-worm', 'item-squid-beaks', 'creature-blind-cave-fish']),
@@ -667,10 +666,10 @@ fallback when that table isn't available.  Places are read from the client's roo
     });
     add({
       key: 'mechanic-endless-west', topic: 'mechanic', title: 'Does the west ever end? (No.)', optional: true,
-      body: 'The west never ends. It used to run out after 60 crossings, at the end of the west, and wrap around to the spray zone; now there is no last place. Crossing after crossing of '+west.placesPerCrossing+' places goes on forever, the landmarks coming back at the same distances in every one, recalled with a new word each time (the words come round again every '+west.recallWords.length+' crossings), and the crossings keep their names: the 61st, the 1,000th. And it rises: from west:'+hf+' on, more and more of it is highland, and the farther you go the higher it gets, measured in meters, with no top. It gets harder the farther you go, and it never ends.',
-      tags: ['west', 'endless', 'end of the west', 'forever', 'crossings', 'highlands', 'elevation', 'wrap'],
+      body: 'The west never ends. It used to come in crossings, and before that it ran out and wrapped around to the spray zone; now it is one long road. Past the reef comes the land, all the way to the far shore at west:'+west.landEnds+', and then the sea again, west, and the last of it, the orca sea, goes on forever: there is no last place. It gets harder the farther you go.',
+      tags: ['west', 'endless', 'end of the west', 'forever', 'orcas', 'highlands', 'land', 'wrap'],
       related: ['place-west-surface', 'place-west-highlands', 'place-west-lands', 'level-highwater'],
-      data: { endless: west.endless, end: west.end, placesPerCrossing: west.placesPerCrossing, highlandsFrom: hf },
+      data: { endless: west.endless, end: west.end, highlandsFrom: hf, landEnds: west.landEnds },
       seeAlso: ['get-west-path'], source: west.source,
     });
     var breath = readBreathFromClient();

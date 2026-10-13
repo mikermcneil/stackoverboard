@@ -238,8 +238,9 @@ function questions(t) {
 
     ['What\'s at west:123?', async () => {
       var r = await ask('getWestPath', { n: 123 });
-      check(r.at && r.at.room === 'west:123' && r.at.crossing === 3 && r.at.distanceInCrossing === 3, 'crossing 3, place 3');
-      check(r.at.landmark && r.at.landmark.key === 'glass-buoy', 'the glass buoy, recalled');
+      check(r.at && r.at.room === 'west:123' && r.at.region === 'west-shore' && r.at.sea === true, 'the western shore, past the land');
+      var tree = await ask('getWestPath', { n: 113 });
+      check(tree.at.landmark && tree.at.landmark.key === 'old-ones-tree' && tree.at.region === 'clouds', 'the old one\'s tree, in the cloud sea');
     }],
 
     ['Does the west ever end?', async () => {
@@ -248,7 +249,7 @@ function questions(t) {
       check(r.highlands && r.highlands.from > 1 && /highland/i.test(r.highlands.about), 'a highland note');
       check(/never ends/i.test(r.explanation), 'the explanation says it never ends');
       var far = await ask('getWestPath', { n: 3601 });
-      check(far.at.exists === true && far.at.crossing === 61 && far.at.leadsWestTo, 'west:3601 exists, in the 61st crossing, and leads on');
+      check(far.at.exists === true && far.at.region === 'orcas' && far.at.leadsWestTo, 'west:3601 exists, in the orca sea, and leads on');
       var f = await ask('getWorldFacts', { key: 'mechanic-endless-west' });
       check(/never ends/i.test(f.facts[0].body), 'a fact says so');
     }],

@@ -422,7 +422,7 @@
       const sp = SPOTS()[key];
       if (sp && !spirals(room).length && P.has('warp')) {// (only a squid that can warp ever sees the folds)
         const r = U.rng('warp-seq:' + key);
-        const [x, y] = E.findFree(room.w * sp[0], room.h * sp[1]);
+        const fx = room.w * sp[0], [x, y] = E.findFree(fx, /^west:/.test(key) ? floorAt(room, fx) - 130 : room.h * sp[1]);// (out west: just over the ground, never hanging in the air)
         E.addActor(room, { id: 'odd-warp', type: 'oddity', kind: 'spiral', x, y, seq: [0, 1, 2].map(() => 'WRBG'[Math.floor(r() * 4)]) });
       }
       if (key === 'west:' + westWarpN()) {

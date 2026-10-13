@@ -674,7 +674,7 @@
       if (room.def.sky === true) { return; }// (the places up in the air; a `sky` drawing doesn't count)
       if (PLACES[room.key]) { place(room, PLACES[room.key]); return; }
       // Out west, on the open surface: now and then, the slugs and the men o' war, drifting together.
-      if (/^west:\d+$/.test(room.key) && room.def.region === 'west' && room.surfaceY !== null) {
+      if (/^west:\d+$/.test(room.key) && room.def.region === 'west' && room.surfaceY !== null && !room.def.land) {
         const r = U.rng('dragons:' + room.key);
         if (r() < 0.3) {
           const n = 1 + Math.floor(r() * 3), list = [['man-o-war', 0.2 + r() * 0.6, 'surf', {}]];
