@@ -259,6 +259,76 @@ body.game-mode #cheat { display: none; }
 .name-pick input.saved { border-color: var(--fleet-green, #009A7D); background: rgba(232, 255, 248, 0.85); }
 .name-ok { display: block; min-height: 1.3em; margin-top: 2px; font: 500 12px var(--sans); letter-spacing: 0; text-transform: none; color: var(--fleet-green, #009A7D); }
 
-.j-mapscroll { max-width: min(900px, 100%); overflow-x: auto; overflow-y: hidden; cursor: grab; -webkit-overflow-scrolling: touch; touch-action: pan-x; scrollbar-width: thin; }
-.j-mapscroll:active { cursor: grabbing; }
-.j-mapscroll .j-mapcanvas { width: auto; max-width: none; display: block; margin: 0 0 10px; }
+/* The map: a window onto a long strip, moved by dragging, the wheel, or the arrows. */
+.j-mapview { position: relative; width: 100%; margin: 0 auto 10px; border-radius: 14px; overflow: hidden; background: linear-gradient(180deg, rgba(150, 200, 230, 0.05), rgba(2, 6, 12, 0.35)); box-shadow: inset 0 0 0 1px rgba(244, 237, 228, 0.07), inset 0 0 40px rgba(0, 0, 0, 0.45); }
+.j-mapview .j-mapcanvas { width: 100%; max-width: none; display: block; margin: 0; cursor: grab; touch-action: pan-y; }
+.j-mapview .j-mapcanvas:active { cursor: grabbing; }
+.j-maparrow { position: absolute; top: 50%; transform: translateY(-50%); width: 30px; height: 46px; border: none; border-radius: 10px; background: rgba(6, 12, 18, 0.6); color: rgba(244, 237, 228, 0.75); font-size: 24px; line-height: 1; cursor: pointer; transition: opacity 0.2s, background 0.2s; }
+.j-maparrow:hover { background: rgba(6, 12, 18, 0.85); color: #fff; }
+.j-maparrow:disabled { opacity: 0; pointer-events: none; }
+.j-maparrow.j-west { left: 6px; }
+.j-maparrow.j-east { right: 6px; }
+.j-maplegend { max-width: 640px; margin: 0 auto; }
+
+/* Your name, labelled, in the memories screen. */
+.j-namerow .j-namelabel { font-family: var(--mono); font-size: 11px; letter-spacing: 0.16em; text-transform: uppercase; color: rgba(233, 239, 233, 0.5); white-space: nowrap; }
+
+/* The blood you keep: one quiet line. */
+.j-blood { margin: 10px 0 0; font-size: 12px; letter-spacing: 0.04em; color: rgba(214, 120, 120, 0.6); }
+
+/* Cards you can click: skin-words (to hear them) and living things (for a closer look). */
+.j-card.j-click { cursor: pointer; border-radius: 16px; padding: 8px 4px 10px; transition: background 0.2s; outline: none; }
+.j-card.j-click:hover, .j-card.j-click:focus-visible { background: rgba(255, 255, 255, 0.04); }
+.j-card.j-click:hover .j-portrait { background: radial-gradient(circle at 50% 45%, rgba(140, 210, 220, 0.36), rgba(20, 40, 55, 0) 70%); }
+.j-dot { transition: transform 0.25s, box-shadow 0.25s, filter 0.25s; }
+.j-dot.lit { transform: scale(1.35); filter: brightness(1.35); box-shadow: 0 0 14px 4px var(--glow, #fff), 0 0 2px 1px rgba(255, 255, 255, 0.9); }
+.j-card.playing .j-name { color: #fff; }
+
+/* Narrowing the living things down by group. */
+.j-filter { margin: -6px 0 22px; }
+.j-chips { display: flex; flex-wrap: wrap; justify-content: center; gap: 4px 6px; }
+.j-subchips { margin-top: 6px; }
+.j-chip { border: none; background: none; padding: 4px 10px; border-radius: 999px; font-size: 12px; letter-spacing: 0.03em; cursor: pointer; color: rgba(233, 239, 233, 0.5); }
+.j-chip span { margin-left: 5px; font-size: 10px; color: rgba(233, 239, 233, 0.32); }
+.j-chip:hover { color: rgba(233, 239, 233, 0.9); }
+.j-chip.on { color: #f4ede4; background: rgba(244, 237, 228, 0.09); }
+.j-subchips .j-chip { font-size: 11px; }
+
+/* A close look at one living thing. */
+.j-detail { max-width: 760px; margin: 0 auto; }
+.j-back { border: none; background: none; padding: 4px 0; margin-bottom: 8px; cursor: pointer; font-size: 12px; letter-spacing: 0.05em; color: rgba(233, 239, 233, 0.55); }
+.j-back:hover { color: #f4ede4; }
+.j-dtop { display: flex; gap: 28px; align-items: center; }
+.j-dpic { flex: 0 0 auto; }
+.j-bigportrait { width: 260px; height: 260px; display: block; border-radius: 50%; cursor: zoom-in; background: radial-gradient(circle at 50% 45%, rgba(120, 180, 190, 0.3), rgba(20, 40, 55, 0) 70%); }
+.j-dside { flex: 1; min-width: 0; }
+.j-dpath { margin: 0 0 4px; font-family: var(--mono); font-size: 11px; letter-spacing: 0.12em; text-transform: uppercase; color: rgba(233, 239, 233, 0.45); }
+.j-dname { margin: 0 0 6px; font-family: var(--sans); font-weight: 600; font-size: clamp(24px, 3.4vw, 32px); color: #f4ede4; letter-spacing: -0.01em; }
+.j-dlike { margin: 0 0 10px; font-size: 13px; font-style: italic; color: rgba(233, 239, 233, 0.6); }
+.j-dline { margin: 0 0 10px; font-size: 15px; line-height: 1.55; color: rgba(233, 239, 233, 0.85); }
+.j-dwhen .j-meta { margin: 2px 0; }
+.j-dbtns { display: flex; flex-wrap: wrap; gap: 8px; margin-top: 14px; }
+.j-pill { border: 1px solid rgba(244, 237, 228, 0.3); background: transparent; border-radius: 999px; padding: 7px 14px; font-size: 13px; cursor: pointer; color: #f4ede4; transition: background 0.2s, border-color 0.2s; }
+.j-pill:hover { background: rgba(244, 237, 228, 0.08); }
+.j-pill.playing { border-color: rgba(191, 248, 234, 0.8); box-shadow: 0 0 14px rgba(191, 248, 234, 0.25); }
+.j-dknow { display: grid; grid-template-columns: repeat(auto-fit, minmax(260px, 1fr)); gap: 6px 28px; margin-top: 26px; }
+.j-dsec .j-kicker { font-family: var(--mono); font-size: 10px; letter-spacing: 0.18em; text-transform: uppercase; color: rgba(233, 239, 233, 0.42); margin: 14px 0 4px; }
+.j-dtext { margin: 0; font-size: 14px; line-height: 1.6; color: rgba(233, 239, 233, 0.78); }
+
+/* The big picture. */
+.j-lightbox { position: absolute; inset: 0; z-index: 3; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 6px; background: rgba(2, 5, 10, 0.88); opacity: 0; transition: opacity 0.3s; cursor: zoom-out; }
+.j-lightbox.show { opacity: 1; }
+.j-lbcanvas { width: min(720px, 82vw, 82vh); height: min(720px, 82vw, 82vh); border-radius: 18px; }
+.j-lbname { margin: 6px 0 0; font-family: var(--sans); font-weight: 600; font-size: 20px; color: #f4ede4; }
+
+@media (max-width: 620px) {
+  .j-head { padding: 0 36px; }
+  .j-head h2 { font-size: 26px; }
+  .j-namerow { flex-wrap: wrap; gap: 6px 10px; }
+  .j-namerow input { min-width: 0; width: 62vw; }
+  .j-namerow .j-namemsg { min-width: 0; width: 100%; text-align: center; }
+  .j-dtop { flex-direction: column; gap: 14px; text-align: center; }
+  .j-bigportrait { width: 220px; height: 220px; }
+  .j-dbtns { justify-content: center; }
+  .j-dknow { grid-template-columns: 1fr; }
+}

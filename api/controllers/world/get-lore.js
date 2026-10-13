@@ -24,7 +24,8 @@ Plunge, where the water from the islands falls into the sea).  Chapter 8 means a
 
 Endings: "return" (home: straight up the waterfall), "lantern" (stay: the sea is home now), "gift"
 (the whale: calm her and swim off into the open ocean with her), "song" (the swans: with all three
-memories, play the swans' call and the sky islands come down to rest on the sea).
+memories, play the swans' call and the sky islands come down to rest on the sea), and a secret fifth,
+"magma" (the furnace, at the bottom of the deep under the far west).
 
 Regions (room keys in brackets): the surface [splash, sinking, bright-reef, open-blue, warm-shallows,
 shoal-reef], Hollowglass, the fallen dome [glow-below, hollowglass-rim, hollowglass-hall, mural-room],

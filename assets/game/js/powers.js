@@ -33,6 +33,10 @@
   const SKIN_HEX = E.SKIN_HEX;
 
   if (E.PATTERNS) { E.PATTERNS.spin = ['B', 'R', 'B']; E.PATTERNS.chill = ['B', 'W', 'B']; }
+  if (S.SKIN_WORDS) {
+    S.SKIN_WORDS.spin = { name: 'Spin', colors: 'B R B', line: 'Shimmer, red, shimmer. I spin, and little biting things get flung off. The water winds up under me and throws me up, out of the water, even.', learn: 'Shimmer, red, shimmer. I spun, and the water went round with me.' };
+    S.SKIN_WORDS.chill = { name: 'Chill', colors: 'B W B', line: 'Shimmer, pale, shimmer. Cold comes off my skin for a while. Heat slides off me, and lava close by crusts over.', learn: 'Shimmer, pale, shimmer. Cold.' };
+  }
 
   const save = () => SO.save;
   const has = (k) => !!(save().data && save().data.flags && save().data.flags[k]);
@@ -187,6 +191,7 @@
       word: 'spin', label: 'A little striped fish', act: 3.5, period: 14, r: 50,
       look: 'A little fish with stripes going round it, like a top. It never quite stops turning.',
       learn: 'Shimmer, red, shimmer, and it spun so fast the water went round with it, and up. Shimmer, red, shimmer.',
+      hint: 'That little striped fish flashed something, and then the water spun up around it. I was too far off to catch the colors.',
       draw(ctx, a, t, k) {
         const spinning = k > 0 ? U.window(k, 0, 0.1, 0.8, 1) : 0;
         if (spinning > 0.05) { drawVortex(ctx, a.x, a.y + 40, 260 * spinning, 70, t, spinning); }
@@ -206,6 +211,7 @@
       word: 'chill', label: 'An icefish', act: 4.5, period: 15, r: 50,
       look: 'A fish you can see through. Its blood is clear. It lives where the water is coldest.',
       learn: 'Shimmer, pale, shimmer, and frost grew on the water all around it. Shimmer, pale, shimmer. Cold.',
+      hint: 'The clear fish said something, and the water went white around it. Frost. In the sea. I should get closer.',
       draw(ctx, a, t, k) {
         const frost = k > 0 ? U.window(k, 0, 0.2, 0.75, 1) : 0;
         if (frost > 0.02) {
@@ -237,14 +243,15 @@
     'bright-reef': [['giant-clam', 1500]],
     'meadow': [['giant-clam', 1100]],
     'shoal-reef': [['pufferfish', 1350, 520]],
-    'kelp-edge': [['pufferfish', 950, 480]],
+    'kelp-edge': [['pufferfish', 950, 480], ['whirligig', 1500, 420]],
+    'cliff-foot': [['whirligig', 900, 500]],
     'holdfasts': [['mimic-octopus', 700]],
     'abyssal-plain': [['mimic-octopus', 1900]],
     'blue-dusk': [['sea-butterfly', 900, 420]],
     'drop-off': [['sea-butterfly', 1500, 360], ['whirligig', 700, 520]],
     'warm-shallows': [['whirligig', 1000, 520]],
     'brine-lake': [['icefish', 900, 520]],
-    'forge': [['icefish', 520, 470]],
+    'cold-seep': [['icefish', 1200, 520]],
   };
 
   function drawVortex(ctx, x, y, h, w, t, k) {
@@ -295,6 +302,10 @@
             S.learnSkin(K.word, true);
             if (AU().learned) { AU().learned(); }
             SO.ui.thought(K.learn, { key: true });
+          } else if (!knows(K.word) && d < 1300 && !E.locked) {
+            // Seen from too far off, or not to the end: a hint, once per kind.
+            const said = rt().hinted || (rt().hinted = {});
+            if (!said[a.kind]) { said[a.kind] = true; SO.ui.aside(K.hint || 'It said something with its skin first, and then it did it. Closer, next time. And watch it all the way through.'); }
           }
         }
       }
@@ -335,8 +346,23 @@
       a.flungX = (a.x - sq.x) / d * 600; a.flungY = (a.y - sq.y) / d * 600; a.flungUntil = E.t + 2.5;
       flung.push(a);
     });
+    // Dragonflies (skylife.js), and anything else that hunts in the air close by.
+    const H = SO.skylife && SO.skylife.hunters;
+    ((H && H.flies) || []).forEach((f) => {
+      const d = U.dist(f.x, f.y, sq.x, sq.y);
+      if (d > 520) { return; }
+      f.vx = (f.x - sq.x) / (d || 1) * 900; f.vy = (f.y - sq.y) / (d || 1) * 900 - 200;
+      f.life = Math.min(f.life, f.t + 0.5); f.cool = 4; f.strike = false; f.next = 1;
+      flung.push(f);
+    });
     E.ring(sq.x, sq.y, '#dff8ff', 380, 0.9);
     if (flung.length && !rt().saidFling) { rt().saidFling = true; setTimeout(() => SO.ui.aside('Off! Get off. That’s mine, all of it.'), 600); }
+    // Stranded on rock, out of the water: the spin throws up a little spray, and me with it.
+    if (sq.inAir && sq._touchingRock) {
+      sq.vy = Math.min(sq.vy, -820); sq.dvy = sq.vy;
+      for (let i = 0; i < 18; i++) { E.particles.push({ kind: 'bubble', x: sq.x + (Math.random() - 0.5) * 80, y: sq.y + 30, vx: (Math.random() - 0.5) * 200, vy: -200 - Math.random() * 300, life: 0.8, t: 0, r: 1 + Math.random() * 2 }); }
+      if (!rt().saidHop) { rt().saidHop = true; setTimeout(() => SO.ui.aside('Even out here. A little spin, and up I go.'), 300); }
+    }
     // A whirlpool, under me, that throws me up. (Only in water.)
     if (!sq.inAir) {
       rt().whirl = { t: 0, x: sq.x };
@@ -381,20 +407,26 @@
   if (spider) {
     const up0 = spider.update, draw0 = spider.draw;
     spider.update = function (a, dt, room) {
+      // Watching it: anywhere close, for a couple of seconds, is enough. (It doesn't have to be the run itself.)
+      const close = near(a, 720);
+      a.watch = close ? (a.watch || 0) + dt : Math.max(0, (a.watch || 0) - dt * 0.5);
+      const want = !SO.powers.has('crawl');
       a.runIn = (a.runIn === undefined ? 4 + (U.hash(a.id + room.key) % 70) / 10 : a.runIn) - dt;
-      if (a.runIn < 0 && !a.run) { a.run = { t: 0, dir: Math.random() < 0.5 ? -1 : 1 }; a.runIn = 9 + Math.random() * 6; a.sawRun = near(a, 560); }
+      if (want && close && a.watch > 0.6) { a.runIn = Math.min(a.runIn, 1.2); }// (it's shy: when something big watches, it bolts)
+      if (a.runIn < 0 && !a.run) { a.run = { t: 0, dir: Math.random() < 0.5 ? -1 : 1 }; a.runIn = 9 + Math.random() * 6; }
       if (a.run) {
         a.run.t += dt;
         if (typeof a.home === 'number') { a.home = U.clamp(a.home + a.run.dir * 420 * dt, 200, room.w - 200); }
         if (a.run.t > 1.1) {
           a.run = null;
-          if (a.sawRun && near(a, 600) && (a.watch || 0) > 2.5 && !E.locked && !SO.powers.has('crawl')) {
-            SO.powers.grant('crawl', 'It ran up the rock like the rock was a floor. All legs, flat to it. I have ten arms. I can do that.');
+          if (want && near(a, 900) && a.watch > 1.8 && !E.locked) {
+            SO.powers.grant('crawl', 'It ran over the rock like the rock was a floor. All legs, flat to it. I have ten arms. I can do that.');
+            setTimeout(() => SO.ui.aside('Along the rock. Along the ground, even. Flat, and fast.'), 5200);
           }
         }
       }
-      a.watch = near(a, 560) ? (a.watch || 0) + dt : Math.max(0, (a.watch || 0) - dt * 3);
       up0.call(this, a, dt, room);
+      if (a.run) { a.y -= Math.abs(Math.sin(a.run.t * 18)) * 4; }// (scuttling)
     };
     spider.draw = function (ctx, a, room, t) { draw0.call(this, ctx, a, room, a.run ? t * 6 : t); };
   }
@@ -416,7 +448,9 @@
       ctx.save();
       const g = ctx.createLinearGradient(x - w / 2, 0, x + w / 2, 0);
       g.addColorStop(0, 'rgba(255,248,230,0)'); g.addColorStop(0.5, 'rgba(255,248,230,0.09)'); g.addColorStop(1, 'rgba(255,248,230,0)');
-      ctx.fillStyle = g; ctx.fillRect(x - w / 2, -200, w, room.h + 400);
+      const bottom = room.surfaceY !== null && !room.def.sky ? room.surfaceY : room.h + 200;// (the air above the water only)
+      ctx.beginPath(); ctx.rect(x - w / 2 - 20, -600, w + 40, bottom + 600); ctx.clip();
+      ctx.fillStyle = g; ctx.fillRect(x - w / 2, -600, w, bottom + 600);
       // motes and threads of warm air, going up
       ctx.strokeStyle = 'rgba(255,252,240,0.28)'; ctx.lineWidth = 1.3;
       ctx.beginPath();
@@ -429,6 +463,18 @@
       ctx.restore();
     },
   };
+  // Other places open to the sky (the far west's high places, the cloud, the islands): one or two
+  // columns of rising air, in the same places for everyone.
+  const SKY_REGIONS = /cloud|canopy|sequoia|treetop|sky|isle|home/;
+  function skyDrafts(room) {
+    const W = SO.rooms.WEST;
+    let sky = room.def.sky === true || room.def.region === 'home' || (SO.skylife && SO.skylife.skyRoom && SO.skylife.skyRoom(room));
+    if (!sky && room.def.west && W && W.regionAt) { try { const g = W.regionAt(room.def.west); sky = !!(g && SKY_REGIONS.test(g.key || '')); } catch (err) { sky = false; } }
+    if (!sky || (room.surfaceY === null && !room.def.sky)) { return []; }
+    const r = U.rng('pw-drafts:' + room.key), n = 1 + Math.floor(r() * 2), out = [];
+    for (let i = 0; i < n; i++) { out.push([room.w * (0.2 + 0.6 * (i + r() * 0.8) / n), 220 + r() * 120]); }
+    return out;
+  }
   SO.powers.updraftAt = (x, y) => (E.room ? E.room.actors.find((a) => a.type === 'pwUpdraft' && Math.abs(x - a.x) < a.w / 2) : null);
 
   // ══════════════════════════════════════════════════════════════════════════
@@ -442,7 +488,7 @@
       (HOMES[key] || []).forEach(([kind, x, y], i) => {
         E.addActor(room, { id: 'pw-' + kind + '-' + i, type: 'watchling', kind, x, y: y === undefined ? room.h / 2 : y });
       });
-      (UPDRAFTS[key] || []).forEach(([x, w], i) => { E.addActor(room, { id: 'pw-updraft-' + i, type: 'pwUpdraft', x, y: room.h / 2, w }); });
+      (UPDRAFTS[key] || skyDrafts(room)).forEach(([x, w], i) => { E.addActor(room, { id: 'pw-updraft-' + i, type: 'pwUpdraft', x, y: room.h / 2, w }); });
       // More sea spiders, down on the deep bottoms.
       const deep = { 'abyssal-plain': 2, 'whale-fall': 1, 'hadal-floor': 2, 'tether-anchor': 1 }[key];
       if (deep && SO.actorTypes.seaSpider) {
@@ -464,22 +510,29 @@
   // ══════════════════════════════════════════════════════════════════════════
   function crawl(dt) {
     const R = rt(), sq = E.squid;
-    if (!sq.inAir) { R.landCrawl = 0; }
     if (!SO.powers.has('crawl') || E.locked || sq.burrow || (SO.breath && SO.breath.thrashing)) { R.crawling = false; return; }
     const [dx, dy, str] = desire(), n = rockNormal();
     if (!str || !n) { R.crawling = false; return; }
-    if (sq.inAir) { R.landCrawl = (R.landCrawl || 0) + dt; if (R.landCrawl > 2.5) { if (R.crawling && !R.saidTired) { R.saidTired = true; SO.ui.aside('Not for long, out here. The air’s too heavy.'); } R.crawling = false; return; } }
     const dot = dx * n[0] + dy * n[1];
     let tx = dx - dot * n[0], ty = dy - dot * n[1];
     const tm = Math.hypot(tx, ty);
     if (tm < 0.25 || dot > 0.6) { R.crawling = false; return; }// straight into it, or away from it
     tx /= tm; ty /= tm;
-    const speed = sq.inAir ? 380 : 580, k = 1 - Math.exp(-9 * dt);
-    sq.vx += (tx * speed - n[0] * 70 - sq.vx) * k; sq.vy += (ty * speed - n[1] * 70 - sq.vy) * k;
-    sq.dvx = sq.vx; sq.dvy = sq.vy;
+    if (sq.inAir) {
+      // On land: all ten arms at once, over the ground, up and over rocks. (The engine only walks
+      // it, slowly; this carries it the rest of the way, and keeps it pressed to the ground.)
+      const sp = 340;
+      E.moveSquid(sq, tx * (sp - 110) * dt, ty * sp * dt);
+      sq.vx = tx * 110; sq.vy = ty < -0.2 ? ty * 200 : Math.max(Math.min(sq.vy, 60), -60) - n[1] * 30;
+      sq.dvx = sq.vx; sq.dvy = sq.vy;
+    } else {
+      const speed = 580, k = 1 - Math.exp(-9 * dt);
+      sq.vx += (tx * speed - n[0] * 70 - sq.vx) * k; sq.vy += (ty * speed - n[1] * 70 - sq.vy) * k;
+      sq.dvx = sq.vx; sq.dvy = sq.vy;
+    }
     sq.frenzy = Math.max(sq.frenzy || 0, 0.25);
-    if (!R.crawling && !R.saidCrawl) { R.saidCrawl = true; SO.ui.aside('Flat to the rock. All arms. Fast.'); }
-    R.crawling = true;
+    if (!R.crawling && !R.saidCrawl) { R.saidCrawl = true; SO.ui.aside(sq.inAir ? 'Flat to the ground. All arms. I’m faster out here than I thought.' : 'Flat to the rock. All arms. Fast.'); }
+    R.crawling = true; R.crawlAt = E.t;
     R.tick = (R.tick || 0) - dt;
     if (R.tick < 0) {
       R.tick = 0.11;
@@ -487,13 +540,19 @@
       E.particles.push({ kind: 'bubble', x: sq.x - n[0] * 30, y: sq.y - n[1] * 30, vx: n[0] * 20, vy: -10, life: 0.8, t: 0, r: 1 + Math.random() * 1.5 });
     }
   }
+  SO.powers.crawling = () => !!rt().crawling && E.t - (rt().crawlAt || -9) < 0.3;
+  // Crawling over wet rock out of the water, the skin stays wet against it: the air lasts longer.
+  if (SO.items && SO.items.airDrain) {
+    const drain0 = SO.items.airDrain;
+    SO.items.airDrain = function () { return drain0.call(this) * (SO.powers.crawling() ? 0.55 : 1); };
+  }
 
   function drift(dt, room) {
     const sq = E.squid, R = rt();
     if (!sq.inAir || E.locked) { R.drifting = false; return; }
     const pw = SO.powers.has('drift');
     // Rising air pushes up. It carries a squid that knows how to let it.
-    const up = room.def.sky ? SO.powers.updraftAt(sq.x, sq.y) : null;
+    const up = SO.powers.updraftAt(sq.x, sq.y);
     if (up) {
       if (pw) { sq.vy = Math.max(-560, sq.vy - 1700 * dt); if (!R.saidRise) { R.saidRise = true; SO.ui.aside('Up! The air is carrying me up. Arms out. Don’t fight it.'); } }
       else { sq.vy -= 430 * dt; }
@@ -552,7 +611,7 @@
   const enter0 = S.onEnterRoom;
   S.onEnterRoom = function (room, prev, entry) {
     const R = rt();
-    R.whirl = null; R.landCrawl = 0; R.skyWatch = 0;
+    R.whirl = null; R.skyWatch = 0;
     return enter0.call(this, room, prev, entry);
   };
 

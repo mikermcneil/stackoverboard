@@ -47,25 +47,25 @@
   // The species (plain data). key: stable journal key. group: a short taxonomy.
   // ════════════════════════════════════════════════════════════════════════════
   const SPECIES = {
-    'sky-thrift': { kind: 'plant', group: 'Plants', name: 'Sea thrift', commonName: 'Sea thrift', latin: 'Armeria maritima', where: ['home', 'highland', 'spray-mist'],
+    'sky-thrift': { kind: 'plant', group: 'Plants » Flowers', name: 'Sea thrift', commonName: 'Sea thrift', latin: 'Armeria maritima', where: ['home', 'highland', 'spray-mist'],
       line: 'Pink pompoms on wire stems, in tight cushions. It grows right at the edge, where the wind is worst.' },
-    'edelweiss': { kind: 'plant', group: 'Plants', name: 'Edelweiss', commonName: 'Edelweiss', latin: 'Leontopodium nivale', where: ['home-lip', 'highland'],
+    'edelweiss': { kind: 'plant', group: 'Plants » Flowers', name: 'Edelweiss', commonName: 'Edelweiss', latin: 'Leontopodium nivale', where: ['home-lip', 'highland'],
       line: 'A white star made of felt. The fuzz keeps the cold and the sun off it, way up high.' },
-    'beard-lichen': { kind: 'plant', group: 'Lichens', name: 'Beard lichen', commonName: 'Old man’s beard', latin: 'Usnea', where: ['rain-keel'],
+    'beard-lichen': { kind: 'plant', group: 'Plants » Lichens and fungi', name: 'Beard lichen', commonName: 'Old man’s beard', latin: 'Usnea', where: ['rain-keel'],
       line: 'Pale tangles hanging off the rock. Not one thing: a fungus and an alga, living as one. It drinks the cloud.' },
-    'resurrection-fern': { kind: 'plant', group: 'Plants » Ferns', name: 'Resurrection fern', commonName: 'Resurrection fern', latin: 'Pleopeltis polypodioides', where: ['rain-keel', 'spray-mist'],
+    'resurrection-fern': { kind: 'plant', group: 'Plants » Ferns and liverworts', name: 'Resurrection fern', commonName: 'Resurrection fern', latin: 'Pleopeltis polypodioides', where: ['rain-keel', 'spray-mist'],
       line: 'Hangs upside down from the rock. Dry, it curls up brown and looks dead. Wet, it opens green again.' },
-    'ghost-fungus': { kind: 'plant', group: 'Fungi', name: 'Ghost fungus', commonName: 'Ghost fungus', latin: 'Omphalotus nidiformis', where: ['rain-keel'],
+    'ghost-fungus': { kind: 'plant', group: 'Plants » Lichens and fungi', name: 'Ghost fungus', commonName: 'Ghost fungus', latin: 'Omphalotus nidiformis', where: ['rain-keel'],
       line: 'Pale shelves on the dead roots. In the dark they glow green, very faintly, all night.' },
-    'air-plant': { kind: 'plant', group: 'Plants', name: 'Air plants', commonName: 'Air plant', latin: 'Tillandsia', where: ['rain-keel', 'spray-mist', 'cloud-sea'],
+    'air-plant': { kind: 'plant', group: 'Plants » Flowers', name: 'Air plants', commonName: 'Air plant', latin: 'Tillandsia', where: ['rain-keel', 'spray-mist', 'cloud-sea'],
       line: 'Silver rosettes holding on to nothing much. No soil. They drink the mist through fuzz on their leaves.' },
-    'cloud-orchid': { kind: 'plant', group: 'Plants » Orchids', name: 'Cloud orchid', commonName: 'Epiphytic orchid', latin: 'Orchidaceae', where: ['rain-keel', 'spray-mist'],
+    'cloud-orchid': { kind: 'plant', group: 'Plants » Flowers', name: 'Cloud orchid', commonName: 'Epiphytic orchid', latin: 'Orchidaceae', where: ['rain-keel', 'spray-mist'],
       line: 'Roots hanging in the air like pale string, and a few small flowers. It lives on the wet that passes.' },
-    'lift-pods': { kind: 'plant', group: 'Plants', name: 'Lift pods', madeUp: true, where: ['cloud-sea', 'rain-cloud'],
+    'lift-pods': { kind: 'plant', group: 'Plants » Flowers', name: 'Lift pods', madeUp: true, where: ['cloud-sea', 'rain-cloud'],
       line: 'A knot of roots held up by bubbles it grows itself, full of something lighter than air. It never touches ground.' },
-    'spray-liverwort': { kind: 'plant', group: 'Plants » Liverworts', name: 'Spray liverwort', commonName: 'Liverwort', latin: 'Marchantiophyta', where: ['spray-mist'],
+    'spray-liverwort': { kind: 'plant', group: 'Plants » Ferns and liverworts', name: 'Spray liverwort', commonName: 'Liverwort', latin: 'Marchantiophyta', where: ['spray-mist'],
       line: 'Flat green ribbons pressed to the wet rock, with tiny umbrellas on stalks. Older than flowers.' },
-    'rain-harps': { kind: 'plant', group: 'Plants', name: 'Rain harps', madeUp: true, where: ['rain-keel', 'rain-column'],
+    'rain-harps': { kind: 'plant', group: 'Plants » Flowers', name: 'Rain harps', madeUp: true, where: ['rain-keel', 'rain-column'],
       line: 'A bulb under the rock with long threads hanging straight down, a seed at the end of each. The rain plays them.' },
     'glider-dragonfly': { kind: 'creature', group: 'Creatures » Insects', name: 'Glider dragonflies', commonName: 'Wandering glider', latin: 'Pantala flavescens', where: ['rain-column', 'rain-cloud', 'spray-mist', 'cloud-sea', 'home', 'highland'],
       line: 'Gold dragonflies that ride the wind across whole seas. They eat in the air. Blood brings them.' },
@@ -73,13 +73,13 @@
       line: 'A column of tiny flies dancing up and down in one spot. They don’t bite. They hardly eat at all.' },
     'keel-glowworms': { kind: 'creature', group: 'Creatures » Insects', name: 'Glowworms', commonName: 'Glowworm', latin: 'Arachnocampa', where: ['rain-keel'],
       line: 'Little larvae under the rock, each with a light and threads of sticky beads hanging down. Things fly to the light.' },
-    'cloud-jelly': { kind: 'creature', group: 'Creatures » Drifters', name: 'Cloud jellies', madeUp: true, where: ['cloud-sea', 'rain-cloud'],
+    'cloud-jelly': { kind: 'creature', group: 'Creatures » Jellies and drifters', name: 'Cloud jellies', madeUp: true, where: ['cloud-sea', 'rain-cloud'],
       line: 'A bell of warm air, thin as breath, with a fringe that drinks the cloud. It drifts wherever the cloud goes.' },
     'keel-bats': { kind: 'creature', group: 'Creatures » Mammals', name: 'Keel bats', commonName: 'Bats', latin: 'Chiroptera', where: ['rain-keel'],
       line: 'Bats sleeping under the island, wrapped in their own wings. At night they hunt the cloud.' },
   };
   // Procedural ones (the key carries the place): groups for the journal.
-  const GROUP = { skybug: 'Creatures » Insects', skybird: 'Creatures » Birds' };
+  const GROUP = { skybug: 'Creatures » Insects', skybird: 'Birds' };
 
   // ── Little helpers ─────────────────────────────────────────────────────────
   // A variant: a stable handful of random numbers for one thing (by its id).
@@ -199,57 +199,111 @@
     };
     const n = 5 + Math.floor(v.r(3) * 5);
     for (let i = 0; i < n; i++) { strand((i - n / 2) * 6 + (r() - 0.5) * 4, 0, Math.PI / 2 + (r() - 0.5) * 0.6, 22 + r() * 18, 0, 2.2); }
-    c.fillStyle = hsl(hue, 18, lit - 14); c.beginPath(); c.ellipse(0, 1, n * 3.5, 3, 0, 0, TAU); c.fill();
+    for (let k = 0; k < n * 2; k++) {// the holdfast: a pale crust in clumps on the rock
+      const x = (k / (n * 2 - 1) - 0.5) * n * 6.5;
+      c.fillStyle = hsl(hue, 16, lit - 10 + v.r(k + 40) * 10); c.beginPath(); c.ellipse(x, 1 + v.r(k + 50) * 1.5, 2.4 + v.r(k + 60) * 2, 1.6 + v.r(k + 70), 0, 0, TAU); c.fill();
+    }
     c.restore();
   };
 
-  // Resurrection fern: fronds hanging from the rock; v.curl 0 (open, green) .. 1 (curled, brown).
+  // Resurrection fern: a scaly rhizome creeping along the rock, fronds hanging from it. a.curl:
+  // 0 (wet: open, green, flat) .. 1 (dry: pinnae folded up, the fronds rolled in, brown and grey).
   DRAW['resurrection-fern'] = (c, s, t, v, a) => {
-    const k = a ? (a.curl === undefined ? 0.6 : a.curl) : 0.15;
-    c.save(); c.scale(s, s); c.lineCap = 'round';
-    const n = 4 + Math.floor(v.r(1) * 4);
+    const k = U.clamp(a ? (a.curl === undefined ? 0.6 : a.curl) : 0.15, 0, 1);
+    c.save(); c.scale(s, s); c.lineCap = 'round'; c.lineJoin = 'round';
+    const n = 4 + Math.floor(v.r(1) * 4), span = 18 + n * 6;
     for (let i = 0; i < n; i++) {
-      const side = i % 2 ? 1 : -1;
-      let x = (i - n / 2) * 5, y = 0, ang = Math.PI / 2 + side * (0.2 + v.r(i + 10) * 0.6) + wind(t + i, v, 1.5);
-      const N = 14, L = (40 + v.r(i + 20) * 26) * (1 - k * 0.35), step = L / N;
-      const green = hsl(U.lerp(108, 38, k), U.lerp(42, 22, k), U.lerp(33, 38, k)), under = hsl(U.lerp(100, 30, k), 25, U.lerp(28, 32, k));
-      c.strokeStyle = hsl(30, 25, 25); c.lineWidth = 1.2;
-      const pts = [];
+      const x0 = -span / 2 + (i + 0.5) / n * span + (v.r(i + 2) - 0.5) * 5, side = v.r(i + 12) < 0.5 ? -1 : 1;
+      const L = 34 + v.r(i + 20) * 30, N = 12, step = L / N;
+      let ang = Math.PI / 2 + (v.r(i + 30) - 0.5) * 0.9 + wind(t + i, v, 1.4), x = x0, y = 2;
+      const pts = [[x, y, ang]];
       for (let j = 0; j < N; j++) {
-        ang += side * k * 0.42 + (1 - k) * 0.01 * side;
-        x += Math.cos(ang) * step; y += Math.sin(ang) * step;
+        ang += side * (0.02 + k * 0.32 * Math.pow(j / N, 1.6));// (dry, the tip rolls in toward the rock)
+        x += Math.cos(ang) * step * (1 - k * 0.12); y += Math.sin(ang) * step * (1 - k * 0.12);
         pts.push([x, y, ang]);
       }
-      c.beginPath(); c.moveTo((i - n / 2) * 5, 0); pts.forEach((p) => c.lineTo(p[0], p[1])); c.stroke();
-      pts.forEach((p, j) => {
-        const pl = ((1 - j / N) * 8 + 2) * (1 - k * 0.6);
-        [-1, 1].forEach((sd) => leaf(c, p[0], p[1], p[2] + sd * (1.25 - k * 0.6), pl, 2.1 * (1 - k * 0.5), sd > 0 ? green : under));
-      });
+      const top = hsl(U.lerp(104, 36, k), U.lerp(48, 24, k), U.lerp(30, 34, k)), under = hsl(U.lerp(96, 34, k), U.lerp(30, 10, k), U.lerp(26, 52, k));
+      // the stipe and rachis
+      c.strokeStyle = hsl(28, 30, 20); c.lineWidth = 1.3;
+      c.beginPath(); c.moveTo(pts[0][0], pts[0][1]); pts.forEach((p) => c.lineTo(p[0], p[1])); c.stroke();
+      // the pinnae: lance-shaped frond (short at the base, longest a third down, tapering to the tip)
+      for (let j = 2; j < pts.length; j++) {
+        const f = j / pts.length, p = pts[j];
+        const pl = (3 + Math.sin(Math.min(1, f * 1.4) * Math.PI) * 8 * (1 - f * 0.4)) * (1 - k * 0.35);
+        [-1, 1].forEach((sd) => {
+          const off = sd * U.lerp(1.15, 0.28, k);// open, they stand out; dry, they fold up against the rachis
+          const showUnder = k > 0.5 && sd === side;// (curled, you see the grey-scaled undersides)
+          leaf(c, p[0], p[1], p[2] + off, pl, U.lerp(2.3, 1.4, k), showUnder ? under : top, 'rgba(20,30,10,0.35)');
+          if (k < 0.4 && pl > 5) {// the little brown sori under the open pinnae, seen through the edge
+            const sx = p[0] + Math.cos(p[2] + off) * pl * 0.6, sy = p[1] + Math.sin(p[2] + off) * pl * 0.6;
+            c.fillStyle = 'rgba(120,70,30,0.55)'; c.beginPath(); c.arc(sx, sy, 0.7, 0, TAU); c.fill();
+          }
+        });
+      }
+    }
+    // the rhizome, furred with brown scales, along the rock
+    c.strokeStyle = hsl(26, 30, 22); c.lineWidth = 3;
+    c.beginPath(); c.moveTo(-span / 2 - 6, 1); c.quadraticCurveTo(0, 4, span / 2 + 6, 0); c.stroke();
+    for (let i = 0; i < span / 2.5; i++) {
+      const x = -span / 2 - 4 + i * 2.5 + v.r(i + 40);
+      c.strokeStyle = hsl(30, 28, 38 + v.r(i + 50) * 14, 0.8); c.lineWidth = 0.7;
+      c.beginPath(); c.moveTo(x, 2); c.lineTo(x + 1.6, 4.4 + v.r(i + 60) * 1.5); c.stroke();
     }
     c.restore();
   };
 
-  // Ghost fungus: overlapping cream fans with gills, glowing green in the dark.
+  // Ghost fungus: overlapping fans growing sideways out of a dead root, creamy caps with darker
+  // middles, deep gills running down to a short stem. In the dark, the gills glow green.
   DRAW['ghost-fungus'] = (c, s, t, v, a, room) => {
-    c.save(); c.scale(s, s);
-    const n = 3 + Math.floor(v.r(1) * 4), dim = room ? dimAt(room) : 0.8;
-    for (let i = 0; i < n; i++) {
-      const x = (i - n / 2) * 10 + v.r(i + 5) * 6, y = (i % 2) * 7 - i * 2, R = 12 + v.r(i + 15) * 9, tilt = (v.r(i + 25) - 0.5) * 0.5;
-      c.save(); c.translate(x, y); c.rotate(tilt);
-      c.beginPath(); c.moveTo(0, 0);
-      for (let k = 0; k <= 12; k++) { const an = Math.PI * (1.05 + k / 12 * 0.9), rr = R * (1 + Math.sin(k * 2.7 + i) * 0.06); c.lineTo(Math.cos(an) * rr, Math.sin(an) * rr * 0.6 + R * 0.7); }
-      c.closePath();
-      const g = c.createRadialGradient(0, 0, 1, 0, R * 0.3, R);
-      g.addColorStop(0, hsl(35, 30, 52)); g.addColorStop(0.5, hsl(45, 30, 80)); g.addColorStop(1, hsl(60, 20, 88));
-      c.fillStyle = g; c.fill(); c.strokeStyle = 'rgba(90,80,60,0.45)'; c.lineWidth = 0.8; c.stroke();
-      c.strokeStyle = 'rgba(120,110,80,0.35)'; c.lineWidth = 0.5;// the gills
-      for (let k = 1; k < 11; k++) { const an = Math.PI * (1.05 + k / 12 * 0.9); c.beginPath(); c.moveTo(0, 2); c.lineTo(Math.cos(an) * R * 0.9, Math.sin(an) * R * 0.54 + R * 0.7); c.stroke(); }
-      c.restore();
+    c.save(); c.scale(s, s); c.lineCap = 'round';
+    const dim = room ? dimAt(room) : 0.8, pulse = 0.85 + 0.15 * Math.sin(t * 0.4 + v.ph);
+    const bare = !!(a && a.bare);// (growing out of one of the hanging roots: no wood drawn, they climb it)
+    // the dead root they're eating
+    if (!bare) {
+      c.fillStyle = hsl(24, 22, 20); c.beginPath(); c.moveTo(-46, -4); c.quadraticCurveTo(0, -8, 46, -3); c.lineTo(46, 6); c.quadraticCurveTo(0, 9, -46, 5); c.closePath(); c.fill();
+      c.strokeStyle = 'rgba(0,0,0,0.35)'; c.lineWidth = 0.6;
+      for (let i = 0; i < 6; i++) { c.beginPath(); c.moveTo(-44 + i * 16, -3 + v.r(i) * 3); c.quadraticCurveTo(-36 + i * 16, 0, -28 + i * 16, -2 + v.r(i + 6) * 4); c.stroke(); }
     }
-    // the glow
-    const pulse = 0.5 + 0.5 * Math.sin(t * 0.4 + v.ph);
-    c.globalCompositeOperation = 'lighter';
-    glowDot(c, 0, 4, 46, 'rgba(150,255,150,A)', (0.08 + 0.3 * dim) * (0.8 + 0.2 * pulse));
+    const n = 3 + Math.floor(v.r(1) * 3), caps = [];
+    for (let i = 0; i < n; i++) {
+      const sd = i % 2 ? 1 : -1;
+      caps.push({ x: bare ? sd * 2 : (i - (n - 1) / 2) * 18 + (v.r(i + 5) - 0.5) * 6, y: bare ? (i - (n - 1) / 2) * 15 : 4 + i * 3 + v.r(i + 7) * 4, R: 13 + v.r(i + 15) * 9, sd, tilt: sd * (0.15 + v.r(i + 25) * 0.25) });
+    }
+    caps.sort((p, q) => p.y - q.y).forEach((p, i) => {
+      c.save(); c.translate(p.x, p.y); c.rotate(p.tilt);
+      const R = p.R, cx = p.sd * R * 0.55, cy = R * 0.25;
+      // stem (short, off to one side of the cap)
+      c.fillStyle = hsl(40, 25, 70); c.beginPath(); c.moveTo(-2.5, -2); c.lineTo(2.5, -2); c.lineTo(cx * 0.5 + 2, cy); c.lineTo(cx * 0.5 - 2, cy); c.closePath(); c.fill();
+      // underside: the gills, fanning out from the stem
+      c.fillStyle = hsl(42, 28, 74); c.beginPath(); c.ellipse(cx, cy + 1, R, R * 0.42, 0, 0, Math.PI); c.fill();
+      c.strokeStyle = 'rgba(120,105,70,0.55)'; c.lineWidth = 0.45;
+      for (let k = 1; k < 16; k++) { const an = (k / 16) * Math.PI; c.beginPath(); c.moveTo(cx * 0.5, cy); c.lineTo(cx + Math.cos(an) * R * 0.97, cy + 1 + Math.sin(an) * R * 0.4); c.stroke(); }
+      // the cap: funnel-dished, margin wavy, cream with an olive-brown middle
+      c.beginPath();
+      for (let k = 0; k <= 20; k++) {
+        const an = Math.PI + (k / 20) * Math.PI, wob = 1 + Math.sin(k * 1.9 + i * 3) * 0.05;
+        const px = cx + Math.cos(an) * R * wob, py = cy + Math.sin(an) * R * 0.5 * wob;
+        if (k) { c.lineTo(px, py); } else { c.moveTo(px, py); }
+      }
+      for (let k = 20; k >= 0; k--) { const an = (k / 20) * Math.PI; c.lineTo(cx + Math.cos(an) * R, cy + 1 + Math.sin(an) * R * 0.12); }
+      c.closePath();
+      const g = c.createRadialGradient(cx * 0.6, cy - R * 0.1, 1, cx, cy, R);
+      g.addColorStop(0, hsl(38, 30, 42)); g.addColorStop(0.35, hsl(42, 28, 66)); g.addColorStop(1, hsl(50, 22, 86));
+      c.fillStyle = g; c.fill();
+      c.strokeStyle = 'rgba(90,78,50,0.5)'; c.lineWidth = 0.7; c.stroke();
+      c.strokeStyle = 'rgba(255,255,240,0.35)'; c.lineWidth = 0.5;// fine radial streaks on the cap
+      for (let k = 1; k < 8; k++) { const an = Math.PI + (k / 8) * Math.PI; c.beginPath(); c.moveTo(cx + Math.cos(an) * R * 0.3, cy + Math.sin(an) * R * 0.15); c.lineTo(cx + Math.cos(an) * R * 0.9, cy + Math.sin(an) * R * 0.45); c.stroke(); }
+      // the glow, from the gills
+      if (dim > 0.2) {
+        c.save(); c.globalCompositeOperation = 'lighter';
+        c.fillStyle = `rgba(120,255,140,${0.35 * dim * pulse})`; c.beginPath(); c.ellipse(cx, cy + 1, R * 0.95, R * 0.38, 0, 0, Math.PI); c.fill();
+        c.restore();
+      }
+      c.restore();
+    });
+    c.save(); c.globalCompositeOperation = 'lighter';
+    glowDot(c, 0, 12, 56, 'rgba(140,255,150,A)', (0.04 + 0.28 * dim) * pulse);
+    c.restore();
     c.restore();
   };
 
@@ -346,35 +400,74 @@
     c.restore();
   };
 
-  // Spray liverwort: forking flat green ribbons on wet rock, little umbrellas, glinting drops.
+  // Spray liverwort: flat, forking ribbons (thalli) pressed to the wet rock, each with a groove
+  // down the middle, a notch at the tip and a skin of tiny pores; little cups of buds; and on stalks,
+  // the umbrellas: fingered ones (female) and scalloped discs (male). Spray glints on it.
   DRAW['spray-liverwort'] = (c, s, t, v) => {
     c.save(); c.scale(s, s); c.lineCap = 'round'; c.lineJoin = 'round';
     const r = U.rng(v.seed + ':lobes');
-    const tips = [];
+    const tips = [], cups = [];
     const lobe = (x, y, ang, len, w, d) => {
-      const ex = x + Math.cos(ang) * len, ey = y + Math.sin(ang) * len;
-      c.strokeStyle = hsl(120, 45, 20 + d * 3); c.lineWidth = w + 1.4; c.beginPath(); c.moveTo(x, y); c.lineTo(ex, ey); c.stroke();
-      c.strokeStyle = hsl(118, 50, 30 + d * 4); c.lineWidth = w; c.beginPath(); c.moveTo(x, y); c.lineTo(ex, ey); c.stroke();
-      c.strokeStyle = 'rgba(10,40,10,0.5)'; c.lineWidth = 0.6; c.beginPath(); c.moveTo(x, y); c.lineTo(ex, ey); c.stroke();
-      c.fillStyle = 'rgba(180,230,170,0.35)';
-      for (let k = 0; k < 3; k++) { c.beginPath(); c.arc(U.lerp(x, ex, 0.25 + k * 0.25) + w * 0.2, U.lerp(y, ey, 0.25 + k * 0.25), 0.5, 0, TAU); c.fill(); }
-      if (d < 3) { lobe(ex, ey, ang - 0.35 - r() * 0.2, len * 0.8, w * 0.85, d + 1); lobe(ex, ey, ang + 0.35 + r() * 0.2, len * 0.8, w * 0.85, d + 1); }
+      const ex = x + Math.cos(ang) * len, ey = y + Math.sin(ang) * len, nx = -Math.sin(ang), ny = Math.cos(ang);
+      const wob = (k) => 1 + Math.sin(k * 5 + d + x) * 0.08;
+      // the ribbon: a little wider toward the end, notched at the tip
+      c.beginPath();
+      c.moveTo(x + nx * w * 0.4, y + ny * w * 0.4);
+      c.quadraticCurveTo(x + (ex - x) * 0.5 + nx * w * 0.55 * wob(1), y + (ey - y) * 0.5 + ny * w * 0.55 * wob(1), ex + nx * w * 0.5, ey + ny * w * 0.5);
+      c.quadraticCurveTo(ex + Math.cos(ang) * w * 0.35, ey + Math.sin(ang) * w * 0.35, ex - Math.cos(ang) * w * 0.15, ey - Math.sin(ang) * w * 0.15);// the notch
+      c.quadraticCurveTo(ex + Math.cos(ang) * w * 0.35, ey + Math.sin(ang) * w * 0.35, ex - nx * w * 0.5, ey - ny * w * 0.5);
+      c.quadraticCurveTo(x + (ex - x) * 0.5 - nx * w * 0.55 * wob(2), y + (ey - y) * 0.5 - ny * w * 0.55 * wob(2), x - nx * w * 0.4, y - ny * w * 0.4);
+      c.closePath();
+      c.fillStyle = hsl(116 + d * 4, 42, 24 + d * 3); c.fill();
+      c.strokeStyle = 'rgba(20,50,20,0.7)'; c.lineWidth = 0.6; c.stroke();
+      // the edges curl up a little: a paler rim on one side
+      c.strokeStyle = 'rgba(170,220,150,0.35)'; c.lineWidth = 0.7;
+      c.beginPath(); c.moveTo(x + nx * w * 0.35, y + ny * w * 0.35); c.quadraticCurveTo(x + (ex - x) * 0.5 + nx * w * 0.5, y + (ey - y) * 0.5 + ny * w * 0.5, ex + nx * w * 0.45, ey + ny * w * 0.45); c.stroke();
+      // the groove down the middle
+      c.strokeStyle = 'rgba(10,35,10,0.6)'; c.lineWidth = 0.7; c.beginPath(); c.moveTo(x, y); c.lineTo(ex - Math.cos(ang) * 1.5, ey - Math.sin(ang) * 1.5); c.stroke();
+      // pores, in a grid
+      c.fillStyle = 'rgba(190,235,170,0.4)';
+      for (let k = 1; k < 6; k++) {
+        for (let m = -1; m <= 1; m += 2) {
+          const f = k / 6, px = x + (ex - x) * f + nx * m * w * 0.25, py = y + (ey - y) * f + ny * m * w * 0.25;
+          c.beginPath(); c.arc(px, py, 0.35, 0, TAU); c.fill();
+        }
+      }
+      if (d === 1 && r() < 0.5) { cups.push([x + (ex - x) * 0.55, y + (ey - y) * 0.55]); }
+      if (d < 3) { lobe(ex, ey, ang - 0.32 - r() * 0.2, len * 0.82, w * 0.9, d + 1); lobe(ex, ey, ang + 0.32 + r() * 0.2, len * 0.82, w * 0.9, d + 1); }
       else { tips.push([ex, ey]); }
     };
     const n = 3 + Math.floor(v.r(1) * 3);
-    for (let i = 0; i < n; i++) { lobe(0, 0, (i / n) * TAU + v.r(2), 9 + r() * 4, 5, 0); }
+    for (let i = 0; i < n; i++) { lobe(0, 0, (i / n) * TAU + v.r(2), 9 + r() * 4, 6, 0); }
+    // gemma cups: little rimmed cups full of green buds
+    cups.forEach(([x, y]) => {
+      c.fillStyle = hsl(110, 35, 16); c.beginPath(); c.arc(x, y, 2.6, 0, TAU); c.fill();
+      c.strokeStyle = 'rgba(190,230,170,0.7)'; c.lineWidth = 0.6; c.stroke();
+      c.fillStyle = hsl(100, 50, 45); for (let k = 0; k < 4; k++) { c.beginPath(); c.arc(x + Math.cos(k * 1.6) * 1.1, y + Math.sin(k * 1.6) * 1.1, 0.6, 0, TAU); c.fill(); }
+    });
+    // the umbrellas, on pale stalks, standing out from the rock (and toward you)
     tips.forEach(([x, y], i) => {
       if (i % 4) { return; }
-      const h = 9 + v.r(i + 10) * 6, female = v.r(i + 20) < 0.5;
-      c.strokeStyle = hsl(60, 20, 55); c.lineWidth = 1; c.beginPath(); c.moveTo(x, y); c.lineTo(x, y - h); c.stroke();
-      if (female) { for (let k = 0; k < 7; k++) { const a = Math.PI + (k / 6) * Math.PI; c.strokeStyle = hsl(100, 35, 40); c.lineWidth = 1.4; c.beginPath(); c.moveTo(x, y - h); c.lineTo(x + Math.cos(a) * 4.5, y - h + Math.sin(a) * 2.5 + 2); c.stroke(); } }
-      else { c.fillStyle = hsl(110, 40, 32); c.beginPath(); c.ellipse(x, y - h, 4, 1.8, 0, 0, TAU); c.fill(); }
+      const h = 10 + v.r(i + 10) * 7, female = v.r(i + 20) < 0.5, lean = (v.r(i + 25) - 0.5) * 4, hx = x + lean, hy = y - h;
+      c.strokeStyle = hsl(60, 18, 58); c.lineWidth = 1.1; c.beginPath(); c.moveTo(x, y); c.quadraticCurveTo(x, y - h * 0.6, hx, hy); c.stroke();
+      if (female) {// nine fingers, drooping, like a little palm
+        for (let k = 0; k < 9; k++) {
+          const a = Math.PI + 0.15 + (k / 8) * (Math.PI - 0.3);
+          c.strokeStyle = hsl(96, 38, 34); c.lineWidth = 1.3;
+          c.beginPath(); c.moveTo(hx, hy); c.quadraticCurveTo(hx + Math.cos(a) * 3.5, hy + Math.sin(a) * 2.2, hx + Math.cos(a) * 5.2, hy + Math.sin(a) * 1.4 + 1.6); c.stroke();
+          c.fillStyle = hsl(80, 40, 46); c.beginPath(); c.arc(hx + Math.cos(a) * 5.2, hy + Math.sin(a) * 1.4 + 1.6, 0.7, 0, TAU); c.fill();
+        }
+      } else {// a scalloped disc
+        c.fillStyle = hsl(108, 36, 28); c.beginPath();
+        for (let k = 0; k <= 16; k++) { const a = (k / 16) * TAU, rr = 4.2 + (k % 2) * 0.7; const px = hx + Math.cos(a) * rr, py = hy + Math.sin(a) * rr * 0.4; if (k) { c.lineTo(px, py); } else { c.moveTo(px, py); } }
+        c.fill(); c.fillStyle = 'rgba(200,240,190,0.35)'; c.beginPath(); c.ellipse(hx - 1, hy - 0.4, 2, 0.7, 0, 0, TAU); c.fill();
+      }
     });
-    for (let k = 0; k < 9; k++) {// drops of spray
-      const a = v.r(k + 30) * TAU, d = 6 + v.r(k + 40) * 30, gl = 0.5 + 0.5 * Math.sin(t * 2 + k * 1.7);
+    for (let k = 0; k < 11; k++) {// drops of spray
+      const a = v.r(k + 30) * TAU, d = 4 + v.r(k + 40) * 30, gl = 0.5 + 0.5 * Math.sin(t * 2 + k * 1.7);
       const x = Math.cos(a) * d, y = Math.sin(a) * d;
-      c.fillStyle = 'rgba(220,240,255,0.55)'; c.beginPath(); c.arc(x, y, 1.6, 0, TAU); c.fill();
-      c.fillStyle = `rgba(255,255,255,${0.4 + gl * 0.6})`; c.beginPath(); c.arc(x - 0.5, y - 0.5, 0.6, 0, TAU); c.fill();
+      c.fillStyle = 'rgba(220,240,255,0.5)'; c.beginPath(); c.arc(x, y, 1.3, 0, TAU); c.fill();
+      c.fillStyle = `rgba(255,255,255,${0.4 + gl * 0.6})`; c.beginPath(); c.arc(x - 0.4, y - 0.4, 0.5, 0, TAU); c.fill();
     }
     c.restore();
   };
@@ -412,7 +505,7 @@
     const body = o.hunter ? hsl(14, 70, 42) : hsl(40 + v.r(1) * 8, 70, 52), dark = o.hunter ? hsl(5, 60, 20) : hsl(30, 50, 24);
     const wing = (x, ang, L, W, hind, k) => {
       const wy = 1 - beat * 0.55 * (0.5 + 0.5 * Math.sin(ph + k));
-      c.save(); c.translate(x, 0); c.rotate(ang); c.scale(1, wy);
+      c.save(); c.translate(x, 0); c.rotate(ang); c.scale(0.45 + 0.55 * wy, 1);
       c.beginPath(); c.moveTo(0, -1); c.bezierCurveTo(L * 0.3, -W, L * 0.9, -W * 0.7, L, -W * 0.25); c.quadraticCurveTo(L * 1.02, 0, L * 0.9, W * 0.3); c.bezierCurveTo(L * 0.6, W * (hind ? 0.9 : 0.5), L * 0.2, W * (hind ? 1.1 : 0.6), 0, 1); c.closePath();
       c.fillStyle = 'rgba(232,240,246,0.2)'; c.fill();
       if (hind && !o.hunter) { c.fillStyle = 'rgba(214,160,60,0.3)'; c.beginPath(); c.ellipse(L * 0.12, W * 0.2, L * 0.12, W * 0.6, 0, 0, TAU); c.fill(); }
@@ -424,7 +517,7 @@
       c.restore();
     };
     // wings: forewings and hindwings, each pair spread out to both sides
-    [-1, 1].forEach((sd) => { wing(-2, sd * Math.PI * 0.53, 26, 4.5, true, sd); wing(3, sd * Math.PI * 0.45, 27, 3.6, false, sd + 1); });
+    [-1, 1].forEach((sd) => { wing(-2, sd * Math.PI * 0.56, 26, 7, true, sd); wing(3, sd * Math.PI * 0.44, 27, 5.2, false, sd + 1); });
     // abdomen: ten segments, tapering
     for (let i = 0; i < 10; i++) {
       const x = -6 - i * 3.6, w = 2.6 - i * 0.12;
@@ -463,22 +556,52 @@
     }
     c.restore();
   };
-  // One midge, big (for the journal): plumed antennae, two wings, long legs.
+  // One midge, big (for the journal), from the side, heading +x: a long thin curved abdomen, a
+  // humped thorax, a small head with feathery antennae (a male's), wings folded back over the body,
+  // long thin legs, the front pair held up and forward the way they do.
   function oneMidge(c, s, t) {
-    c.save(); c.scale(s, s); c.lineCap = 'round';
-    c.strokeStyle = 'rgba(40,40,36,0.8)'; c.lineWidth = 0.8;
-    for (let i = 0; i < 3; i++) { [-1, 1].forEach((sd) => { c.beginPath(); c.moveTo(-1 + i * 2, 1); c.lineTo(-3 + i * 4 + sd * 1, 8); c.lineTo(-6 + i * 6, 16 + sd); c.stroke(); }); }
-    c.fillStyle = '#4a4a3e'; c.beginPath(); c.ellipse(-10, 0, 9, 1.8, 0.1, 0, TAU); c.fill();
-    c.fillStyle = '#3a3a30'; c.beginPath(); c.ellipse(1, -1, 4, 3, 0, 0, TAU); c.fill(); c.beginPath(); c.arc(6, -1, 2.2, 0, TAU); c.fill();
-    [-1, 1].forEach((sd) => {
-      c.strokeStyle = 'rgba(60,60,50,0.8)'; c.lineWidth = 0.5;
-      c.beginPath(); c.moveTo(7, -2); c.lineTo(12, -7 + sd * 2); c.stroke();
-      for (let k = 0; k < 8; k++) { const x = 7.5 + k * 0.6, y = -2.5 - k * 0.6 + sd; c.beginPath(); c.moveTo(x, y); c.lineTo(x + sd * 1.2, y - 2); c.stroke(); }
+    c.save(); c.scale(s, s); c.lineCap = 'round'; c.lineJoin = 'round';
+    const body = '#3d3b30', leg = 'rgba(55,52,42,0.9)';
+    // legs (jointed: femur, tibia, the tarsus thin and long)
+    const legAt = (x0, y0, pts, w) => { c.strokeStyle = leg; c.lineWidth = w; c.beginPath(); c.moveTo(x0, y0); pts.forEach((p) => c.lineTo(p[0], p[1])); c.stroke(); };
+    const tw = Math.sin(t * 3) * 0.6;
+    legAt(3, 2, [[7, -3], [13, -9 + tw], [19, -14 + tw]], 0.55);// the front pair, held up like feelers
+    legAt(2, 2, [[5, 7], [4, 14], [7, 21]], 0.6);
+    legAt(0, 2.4, [[-3, 8], [-8, 14], [-12, 21]], 0.6);
+    // abdomen: nine segments, slender, curving down a little at the end
+    for (let i = 0; i < 9; i++) {
+      const f = i / 8, x = -3 - i * 2.4, y = 1 + f * f * 3, w = 1.5 - f * 0.4;
+      c.fillStyle = i % 2 ? '#47443a' : body; c.beginPath(); c.ellipse(x, y, 1.6, w, 0.1 + f * 0.25, 0, TAU); c.fill();
+    }
+    c.strokeStyle = body; c.lineWidth = 0.6; c.beginPath(); c.moveTo(-24, 4.2); c.lineTo(-26, 5.6); c.moveTo(-24, 4.2); c.lineTo(-26.4, 3.8); c.stroke();// the claspers
+    // thorax, humped up over the head
+    c.fillStyle = body; c.beginPath(); c.moveTo(-3, 2.4); c.bezierCurveTo(-3, -3.5, 3.5, -4.5, 5, 0); c.quadraticCurveTo(3, 3.5, -3, 2.4); c.fill();
+    c.fillStyle = 'rgba(160,150,120,0.35)'; c.beginPath(); c.ellipse(0.5, -1.8, 2.4, 0.9, -0.2, 0, TAU); c.fill();// the shine on the hump
+    // head, low and forward; a dark eye
+    c.fillStyle = '#34322a'; c.beginPath(); c.arc(5.6, 1.4, 1.7, 0, TAU); c.fill();
+    c.fillStyle = '#121210'; c.beginPath(); c.ellipse(6, 0.9, 1, 1.2, 0, 0, TAU); c.fill();
+    // the plumed antennae
+    [0, 0.25].forEach((da) => {
+      const a0 = -0.5 + da, L = 7;
+      c.strokeStyle = 'rgba(70,66,52,0.9)'; c.lineWidth = 0.45;
+      c.beginPath(); c.moveTo(6.6, 0.4); c.lineTo(6.6 + Math.cos(a0) * L, 0.4 + Math.sin(a0) * L); c.stroke();
+      c.lineWidth = 0.25; c.strokeStyle = 'rgba(90,86,70,0.75)';
+      for (let k = 1; k < 10; k++) {
+        const f = k / 10, x = 6.6 + Math.cos(a0) * L * f, y = 0.4 + Math.sin(a0) * L * f, h = 2.4 * (1 - f * 0.6);
+        c.beginPath(); c.moveTo(x - Math.sin(a0) * h, y + Math.cos(a0) * h); c.lineTo(x + Math.sin(a0) * h, y - Math.cos(a0) * h); c.stroke();
+      }
     });
-    c.save(); c.rotate(-0.3 + Math.sin(t * 30) * 0.05);
-    c.fillStyle = 'rgba(225,235,240,0.35)'; c.strokeStyle = 'rgba(80,80,80,0.4)'; c.lineWidth = 0.4;
-    c.beginPath(); c.ellipse(-8, -5, 9, 2.4, -0.2, 0, TAU); c.fill(); c.stroke();
-    c.restore();
+    // the wings, folded back over the abdomen, clear, with a few veins; one trembles
+    [0, 1].forEach((k) => {
+      c.save(); c.translate(-1, -1.2); c.rotate(-0.12 - k * 0.1 + (k ? Math.sin(t * 22) * 0.03 : 0));
+      c.beginPath(); c.moveTo(0, 0); c.bezierCurveTo(-6, -3.2, -16, -3, -19, -0.6); c.quadraticCurveTo(-12, 1.6, 0, 0.6); c.closePath();
+      c.fillStyle = 'rgba(225,232,236,0.3)'; c.fill(); c.strokeStyle = 'rgba(80,80,74,0.45)'; c.lineWidth = 0.35; c.stroke();
+      c.beginPath(); c.moveTo(0, -0.2); c.quadraticCurveTo(-8, -2.2, -15, -1.6); c.moveTo(-2, 0.2); c.quadraticCurveTo(-9, -0.4, -16, 0); c.stroke();
+      c.restore();
+    });
+    // the halteres (the little knobs that are left of a second pair of wings)
+    c.strokeStyle = 'rgba(200,190,150,0.8)'; c.lineWidth = 0.4; c.beginPath(); c.moveTo(-2.4, 0); c.lineTo(-4.2, -1.4); c.stroke();
+    c.fillStyle = 'rgba(220,210,170,0.9)'; c.beginPath(); c.arc(-4.4, -1.5, 0.55, 0, TAU); c.fill();
     c.restore();
   }
 
@@ -549,39 +672,59 @@
     c.restore();
   };
 
-  // A bat, hanging upside down and wrapped in its wings (at 0,0 its feet), or flying.
+  // A bat, hanging upside down from its toes and wrapped in its wings (at 0,0 its feet), or flying.
   function bat(c, s, t, k, o = {}) {
-    c.save(); c.scale(s, s); c.lineCap = 'round';
-    const brown = hsl(20, 18, 20 + (k % 3) * 3), mem = hsl(15, 15, 14);
-    if (o.flying) {
+    c.save(); c.scale(s, s); c.lineCap = 'round'; c.lineJoin = 'round';
+    const fur = hsl(24, 22, 24 + (k % 3) * 3), furLit = hsl(30, 22, 36 + (k % 3) * 3), mem = hsl(12, 14, 13), bone = 'rgba(95,72,60,0.75)';
+    if (o.flying) {// from below: the arm and finger bones through the membrane
       const f = Math.sin(t * 14 + k);
       [-1, 1].forEach((sd) => {
-        c.fillStyle = mem; c.beginPath(); c.moveTo(0, 0);
-        c.lineTo(sd * 10, -6 - f * 8); c.lineTo(sd * 22, -2 - f * 10); c.quadraticCurveTo(sd * 18, 2, sd * 15, 3 - f * 3); c.quadraticCurveTo(sd * 10, 2, sd * 7, 5); c.quadraticCurveTo(sd * 4, 3, 0, 4); c.fill();
+        const wx = sd * 10, wy = -5 - f * 7, tx = sd * 23, ty = -1 - f * 10;
+        c.fillStyle = mem; c.beginPath(); c.moveTo(0, -1);
+        c.lineTo(wx, wy); c.lineTo(tx, ty); c.quadraticCurveTo(sd * 20, 1 - f * 4, sd * 17, 3 - f * 3); c.quadraticCurveTo(sd * 13, 1 - f * 2, sd * 11, 5 - f * 1.5); c.quadraticCurveTo(sd * 7, 3, sd * 3, 6); c.quadraticCurveTo(sd * 1, 6, 0, 5); c.closePath(); c.fill();
+        c.strokeStyle = bone; c.lineWidth = 0.6; c.beginPath(); c.moveTo(sd * 2, 0); c.lineTo(wx, wy); c.lineTo(tx, ty); c.moveTo(wx, wy); c.lineTo(sd * 17, 3 - f * 3); c.moveTo(wx, wy); c.lineTo(sd * 11, 5 - f * 1.5); c.stroke();
       });
-      c.fillStyle = brown; c.beginPath(); c.ellipse(0, 1, 3.4, 5, 0, 0, TAU); c.fill();
-      c.beginPath(); c.moveTo(-2, -3); c.lineTo(-1.5, -7); c.lineTo(0, -3.5); c.lineTo(1.5, -7); c.lineTo(2, -3); c.fill();
+      c.fillStyle = fur; c.beginPath(); c.ellipse(0, 1, 3.2, 5.2, 0, 0, TAU); c.fill();
+      c.fillStyle = furLit; c.beginPath(); c.ellipse(0, -0.5, 2, 3, 0, 0, TAU); c.fill();
+      c.fillStyle = fur; c.beginPath(); c.moveTo(-2.2, -3.5); c.lineTo(-2.2, -8); c.lineTo(-0.6, -4.6); c.lineTo(0.6, -4.6); c.lineTo(2.2, -8); c.lineTo(2.2, -3.5); c.closePath(); c.fill();
       c.restore(); return;
     }
     const sw = Math.sin(t * 0.4 + k) * 0.05, br = 1 + Math.sin(t * 1.2 + k) * 0.03, stretch = o.stretch || 0;
     c.rotate(sw);
-    c.strokeStyle = '#2a2420'; c.lineWidth = 0.9; c.beginPath(); c.moveTo(-1.5, 0); c.lineTo(-1.2, 3); c.moveTo(1.5, 0); c.lineTo(1.2, 3); c.stroke();
-    if (stretch > 0.01) {// one wing opened, slowly, and folded back
-      c.fillStyle = mem; c.beginPath(); c.moveTo(0, 5); c.lineTo(10 * stretch, 6); c.lineTo(17 * stretch, 14); c.quadraticCurveTo(12 * stretch, 15, 9 * stretch, 20); c.quadraticCurveTo(5 * stretch, 18, 2, 22); c.fill();
-      c.strokeStyle = 'rgba(80,60,50,0.5)'; c.lineWidth = 0.5; c.beginPath(); c.moveTo(1, 6); c.lineTo(17 * stretch, 14); c.moveTo(1, 8); c.lineTo(9 * stretch, 20); c.stroke();
+    // the toes, hooked over the rock
+    c.strokeStyle = '#1e1a16'; c.lineWidth = 0.8;
+    [-1.6, 1.6].forEach((x) => { c.beginPath(); c.moveTo(x - 0.8, -0.4); c.quadraticCurveTo(x, -1.6, x + 0.5, 0); c.lineTo(x * 0.8, 3); c.stroke(); });
+    if (stretch > 0.01) {// one wing opened, slowly, and folded back: the long fingers showing through
+      const S = stretch;
+      c.fillStyle = mem; c.beginPath(); c.moveTo(1, 5); c.lineTo(11 * S + 1, 7); c.lineTo(18 * S + 1, 15); c.quadraticCurveTo(13 * S, 15.5, 10 * S + 1, 20); c.quadraticCurveTo(6 * S, 18.5, 2, 22); c.closePath(); c.fill();
+      c.strokeStyle = bone; c.lineWidth = 0.6; c.beginPath(); c.moveTo(1.5, 6); c.lineTo(11 * S + 1, 7); c.lineTo(18 * S + 1, 15); c.moveTo(11 * S + 1, 7); c.lineTo(10 * S + 1, 20); c.moveTo(11 * S + 1, 7); c.lineTo(5 * S + 2, 19); c.stroke();
     }
-    c.fillStyle = brown; c.beginPath(); c.moveTo(0, 2.5); c.bezierCurveTo(6 * br, 4, 7 * br, 16, 3.5, 22); c.quadraticCurveTo(0, 24, -3.5, 22); c.bezierCurveTo(-7 * br, 16, -6 * br, 4, 0, 2.5); c.fill();
-    c.strokeStyle = 'rgba(70,55,45,0.6)'; c.lineWidth = 0.5;
-    c.beginPath(); c.moveTo(-3, 6); c.quadraticCurveTo(-1, 14, -2.5, 20); c.moveTo(3, 6); c.quadraticCurveTo(1, 14, 2.5, 20); c.moveTo(0, 5); c.lineTo(0, 19); c.stroke();
-    // the head, upside down at the bottom: ears pointing down, little eyes
-    c.fillStyle = hsl(22, 20, 24); c.beginPath(); c.arc(0, 23.5, 3.2, 0, TAU); c.fill();
-    c.beginPath(); c.moveTo(-2.6, 25); c.lineTo(-3.2, 29.5); c.lineTo(-0.8, 26); c.fill(); c.beginPath(); c.moveTo(2.6, 25); c.lineTo(3.2, 29.5); c.lineTo(0.8, 26); c.fill();
-    if (o.awake) { c.fillStyle = 'rgba(240,230,200,0.9)'; c.beginPath(); c.arc(-1.2, 23, 0.5, 0, TAU); c.arc(1.2, 23, 0.5, 0, TAU); c.fill(); }
+    // the wrapped body: wings over it like a cloak, the forearms down the front
+    const g = c.createLinearGradient(-6, 0, 6, 0);
+    g.addColorStop(0, mem); g.addColorStop(0.45, hsl(14, 14, 19)); g.addColorStop(1, mem);
+    c.fillStyle = g; c.beginPath(); c.moveTo(0, 2.5); c.bezierCurveTo(6.4 * br, 4, 7 * br, 16, 3.6, 21.5); c.quadraticCurveTo(0, 23.5, -3.6, 21.5); c.bezierCurveTo(-7 * br, 16, -6.4 * br, 4, 0, 2.5); c.fill();
+    c.strokeStyle = bone; c.lineWidth = 0.8;
+    c.beginPath(); c.moveTo(-3.4, 5); c.quadraticCurveTo(-1.6, 13, -2.4, 20); c.moveTo(3.4, 5); c.quadraticCurveTo(1.6, 13, 2.4, 20); c.stroke();
+    c.strokeStyle = 'rgba(0,0,0,0.35)'; c.lineWidth = 0.5;// the membrane's folds
+    for (let i = 0; i < 4; i++) { c.beginPath(); c.moveTo(-5 + i * 0.4, 7 + i * 3.5); c.quadraticCurveTo(-3, 8.5 + i * 3.5, -2.2, 7.5 + i * 3.6); c.moveTo(5 - i * 0.4, 7 + i * 3.5); c.quadraticCurveTo(3, 8.5 + i * 3.5, 2.2, 7.5 + i * 3.6); c.stroke(); }
+    // a strip of furry belly between the wings
+    c.fillStyle = furLit; c.beginPath(); c.ellipse(0, 12, 1.6, 7, 0, 0, TAU); c.fill();
+    // the thumbs' claws, at the bottom of the wrap
+    c.fillStyle = '#d8ccb4'; [-2.4, 2.4].forEach((x) => { c.beginPath(); c.moveTo(x, 20); c.lineTo(x + (x < 0 ? -0.8 : 0.8), 21.6); c.lineTo(x + (x < 0 ? 0.4 : -0.4), 20.6); c.fill(); });
+    // the head, upside down at the bottom: furry, a short snout, big ears pointing down
+    c.fillStyle = fur; c.beginPath(); c.arc(0, 23.6, 3.3, 0, TAU); c.fill();
+    c.fillStyle = hsl(18, 20, 18);
+    c.beginPath(); c.moveTo(-2.8, 24.5); c.quadraticCurveTo(-4.6, 28, -3.2, 30.5); c.lineTo(-1, 26.2); c.closePath(); c.fill();
+    c.beginPath(); c.moveTo(2.8, 24.5); c.quadraticCurveTo(4.6, 28, 3.2, 30.5); c.lineTo(1, 26.2); c.closePath(); c.fill();
+    c.fillStyle = 'rgba(150,100,90,0.5)'; c.beginPath(); c.ellipse(-2.6, 27.3, 0.6, 1.6, 0.25, 0, TAU); c.ellipse(2.6, 27.3, 0.6, 1.6, -0.25, 0, TAU); c.fill();// inside the ears
+    c.fillStyle = hsl(14, 18, 14); c.beginPath(); c.ellipse(0, 21, 1.4, 1.6, 0, 0, TAU); c.fill();// the snout (pointing up, the head's upside down)
+    if (o.awake) { c.fillStyle = 'rgba(30,20,10,1)'; c.beginPath(); c.arc(-1.3, 22.6, 0.65, 0, TAU); c.arc(1.3, 22.6, 0.65, 0, TAU); c.fill(); c.fillStyle = 'rgba(255,240,220,0.8)'; c.beginPath(); c.arc(-1.1, 22.4, 0.22, 0, TAU); c.arc(1.5, 22.4, 0.22, 0, TAU); c.fill(); }
+    else { c.strokeStyle = 'rgba(20,10,5,0.8)'; c.lineWidth = 0.4; c.beginPath(); c.moveTo(-1.9, 22.6); c.lineTo(-0.8, 22.6); c.moveTo(0.8, 22.6); c.lineTo(1.9, 22.6); c.stroke(); }
     c.restore();
   }
   DRAW['keel-bats'] = (c, s, t, v, a) => {
     const n = a ? a.n : 5;
-    const away = a && night() ? Math.floor(n / 2) : 0;
+    const away = a && a.room && night() ? Math.floor(n / 2) : 0;
     for (let i = 0; i < n; i++) {
       const x = (i - (n - 1) / 2) * 13 * s + (v.r(i) - 0.5) * 5 * s;
       if (i < away) {// out hunting: a couple of them flitting about nearby
@@ -655,13 +798,19 @@
     };
     const P = tr.plan;
     if (P === 'cranefly') { legs(22); } else { legs(P === 'beetle' || P === 'weevil' ? 7 : 6); }
-    if (P === 'moth') {
+    if (P === 'moth') {// forewings (long, patterned) over the rounder hindwings, a fringe on the edges
       [-1, 1].forEach((sd) => {
         const wy = 1 - beat * 0.6 * (0.5 + 0.5 * Math.sin(ph * 0.5 + sd));
         c.save(); c.scale(1, wy);
-        c.fillStyle = col; c.beginPath(); c.moveTo(2, 0); c.lineTo(-4, sd * 18); c.quadraticCurveTo(-12, sd * 17, -14, sd * 9); c.lineTo(-6, sd * 2); c.fill();
-        c.fillStyle = dark; c.beginPath(); c.moveTo(-3, sd * 1.5); c.lineTo(-9, sd * 10); c.quadraticCurveTo(-13, sd * 6, -12, sd * 3); c.fill();
-        c.save(); c.beginPath(); c.moveTo(2, 0); c.lineTo(-4, sd * 18); c.quadraticCurveTo(-12, sd * 17, -14, sd * 9); c.lineTo(-6, sd * 2); c.clip(); patternOn(-5, sd * 10, 8, 6); c.restore();
+        const fore = () => { c.beginPath(); c.moveTo(2, sd * 1); c.bezierCurveTo(0, sd * 10, -4, sd * 18, -7, sd * 19); c.quadraticCurveTo(-12, sd * 18, -13, sd * 14); c.quadraticCurveTo(-9, sd * 7, -5, sd * 1.5); c.closePath(); };
+        c.fillStyle = dark; c.beginPath(); c.moveTo(-3, sd * 1.5); c.bezierCurveTo(-6, sd * 9, -12, sd * 15, -16, sd * 12); c.quadraticCurveTo(-17, sd * 6, -9, sd * 1.5); c.closePath(); c.fill();// hindwing
+        c.strokeStyle = 'rgba(255,255,255,0.15)'; c.lineWidth = 0.4; c.stroke();
+        fore(); c.fillStyle = col; c.fill(); c.strokeStyle = dark; c.lineWidth = 0.5; c.stroke();
+        c.save(); fore(); c.clip(); patternOn(-5, sd * 10, 8, 7);
+        c.strokeStyle = 'rgba(0,0,0,0.25)'; c.lineWidth = 0.35;// veins, and a wavy band across
+        for (let k = 0; k < 5; k++) { c.beginPath(); c.moveTo(0, sd * 1.5); c.lineTo(-3 - k * 2.4, sd * (19 - k * 1.2)); c.stroke(); }
+        c.lineWidth = 0.7; c.beginPath(); c.moveTo(1, sd * 6); c.quadraticCurveTo(-5, sd * 7, -11, sd * 12); c.stroke();
+        c.restore();
         c.restore();
       });
     } else if (P === 'beetle' || P === 'weevil') {
@@ -696,7 +845,7 @@
       if (tr.antenna === 'club') { c.fillStyle = dark; c.beginPath(); c.arc(bx + 6, sd * 5, 1, 0, TAU); c.fill(); }
       if (tr.antenna === 'feather') { for (let k = 1; k < 6; k++) { const x = bx + k, y = sd * k * 0.85; c.beginPath(); c.moveTo(x, y); c.lineTo(x + 1.2, y + sd * 1.4); c.moveTo(x, y); c.lineTo(x - 0.6, y + sd * 1.6); c.stroke(); } }
     });
-    if (tr.glow) { c.globalCompositeOperation = 'lighter'; glowDot(c, ab[0] - ab[1] * 0.6, 0, 9, hsl(tr.hue2, 90, 70, 'A').replace(/,A\)$/, ',A)'), 0.5 + 0.3 * Math.sin(t * 2)); }
+    if (tr.glow) { c.globalCompositeOperation = 'lighter'; glowDot(c, ab[0] - ab[1] * 0.6, 0, 9, `hsla(${Math.round(tr.hue2)},90%,70%,A)`, 0.5 + 0.3 * Math.sin(t * 2)); }
     c.restore();
   }
 
@@ -723,7 +872,7 @@
     const adj = ADJ[Math.floor(r() * ADJ.length)];
     const parts = ['throated', 'capped', 'winged', 'breasted', 'masked', 'tailed', 'eyed'];
     const ART = SO.birdArt;
-    const bases = ART && ART.LOOK ? Object.keys(ART.LOOK).filter((k) => { const L = ART.LOOK[k]; return L && !L.owl && BIRD_NOUN[L.species] && L.air !== false; }) : [];
+    const bases = ART && ART.LOOK ? Object.keys(ART.LOOK).filter((k) => /^bird-/.test(k)).sort().filter((k) => { const L = ART.LOOK[k]; return L && !L.owl && BIRD_NOUN[L.species] && L.air !== false; }) : [];
     const base = bases.length ? bases[Math.floor(r() * bases.length)] : null;
     const sp = base ? ART.LOOK[base].species : 'swift';
     const tr = { adj: adj[0], hue: adj[1], sat: adj[2], lit: adj[3], hueShift: Math.floor(r() * 360), part: parts[Math.floor(r() * parts.length)], base, noun: BIRD_NOUN[sp] || 'swift', size: 0.7 + r() * 0.5, seed: Math.floor(r() * 1e6) };
@@ -754,7 +903,7 @@
     return L;
   }
   function drawSkyBird(c, s, t, key, tr, o = {}) {
-    if (birdLook(key, tr)) { SO.birdArt.draw(c, key, 0, 0, s * tr.size, t, { pose: 'glide', dir: o.dir || 1, flap: Math.sin(t * 2) }); return; }
+    if (birdLook(key, tr)) { SO.birdArt.draw(c, key, 0, 0, s * tr.size, t, { pose: 'fly', dir: o.dir || 1, flap: Math.sin(t * 4) }); return; }
     // (no birdfaces: a plain swift-like shape)
     c.save(); c.scale(s * tr.size * (o.dir || 1), s * tr.size);
     const f = Math.sin(t * 3) * 6;
@@ -782,7 +931,7 @@
     'spray-liverwort': (c, t) => DRAW['spray-liverwort'](c, 1.1, t, portraitV('spray-liverwort')),
     'rain-harps': (c, t) => { c.translate(0, -44); DRAW['rain-harps'](c, 0.4, t, portraitV('rain-harps'), { hum: 0.4 }); },
     'glider-dragonfly': (c, t) => { c.rotate(-0.25); dragonfly(c, 1.3, t, portraitV('glider-dragonfly')); },
-    'mist-midges': (c, t) => { DRAW['mist-midges'](c, 0.6, t, portraitV('mist-midges')); oneMidge(c, 2.4, t); },
+    'mist-midges': (c, t) => { c.save(); c.translate(-30, -10); DRAW['mist-midges'](c, 0.45, t, portraitV('mist-midges')); c.restore(); c.translate(14, 4); oneMidge(c, 2.6, t); },
     'keel-glowworms': (c, t) => { c.translate(0, -36); DRAW['keel-glowworms'](c, 0.7, t, portraitV('keel-glowworms')); },
     'cloud-jelly': (c, t) => { c.translate(0, -12); DRAW['cloud-jelly'](c, 1.0, t, portraitV('cloud-jelly')); },
     'keel-bats': (c, t) => { c.translate(0, -30); DRAW['keel-bats'](c, 1.4, t, portraitV('keel-bats'), { n: 3, stir: 1 }); },
@@ -835,7 +984,7 @@
     'keel-bats': ['Bats. Asleep, upside down, wrapped in their own wings.', 'One opened an eye at me. Then closed it.', 'At night they go out over the cloud.'],
   };
   const DESC = {
-    'sky-thrift': 'Sea thrift', 'edelweiss': 'Edelweiss', 'beard-lichen': 'Beard lichen', 'resurrection-fern': (a) => (a.curl > 0.5 ? 'A curled-up fern' : 'A fern, open'),
+    'sky-thrift': 'Sea thrift', 'edelweiss': 'Edelweiss', 'beard-lichen': 'Beard lichen', 'resurrection-fern': (a) => (a.curl > 0.5 ? 'A curled-up fern' : 'An open fern'),
     'ghost-fungus': 'Ghost fungus', 'air-plant': 'Air plants', 'cloud-orchid': 'An orchid in the air', 'lift-pods': 'Lift pods, drifting',
     'spray-liverwort': 'Liverwort, on wet rock', 'rain-harps': 'Rain harps', 'glider-dragonfly': 'Glider dragonflies', 'mist-midges': 'Dancing midges',
     'keel-glowworms': 'Glowworms', 'cloud-jelly': 'A cloud jelly', 'keel-bats': 'Bats, asleep',
@@ -856,7 +1005,8 @@
       lines: typeof LINES[key] === 'function' ? LINES[key] : () => LINES[key],
       init(a) {
         a.v = variant(key + ':' + a.id);
-        a.s = a.s || (0.85 + a.v.r(90) * 0.4);
+        a.s = (a.s || 1) * (1.05 + a.v.r(90) * 0.45);
+        a.r = sh.r * a.s;
         if (a.ax === undefined) { a.ax = a.x; a.ay = a.y; a.y = a.ay + sh.cy * a.s; a.x = a.ax; }
         a.hx = a.x; a.hy = a.y;
         if (key === 'keel-bats') { a.n = 3 + Math.floor(a.v.r(91) * 5); }
@@ -931,7 +1081,7 @@
   // Procedural things: one actor kind for the rare bugs and birds.
   K['sky-made'] = {
     r: 70, see: 1,
-    desc: (a) => (a.bird ? 'A bird I don’t know' : 'A bug I don’t know'),
+    desc: (a) => (known[a.spKey] && a.tr ? a.tr.name : a.bird ? 'A bird I don’t know' : 'A bug I don’t know'),// (named, once I’ve named it)
     init(a) { a.tr = procedural(a.spKey); a.r = a.bird ? 90 : 50; a.hx = a.x; a.hy = a.y; a.dir = 1; },
     update(a, dt) {
       const t = E.t, ph = U.hash(a.spKey) % 100;
@@ -988,7 +1138,7 @@
       { const y = ceil(room, 1720); if (y !== null) { out.push(thing('keel-bats', 1720, y - 2, { s: 1.4 })); } }
       [[R[3], 'ghost-fungus'], [R[11], 'ghost-fungus'], [R[1], 'air-plant'], [R[8], 'air-plant'], [R[13], 'cloud-orchid'], [R[5], 'cloud-orchid']].forEach(([p, k]) => {
         const midX = (p[0] + p[2]) / 2, midY = k === 'ghost-fungus' ? U.lerp(p[3], p[1], 0.55) : p[1];
-        out.push(thing(k, k === 'ghost-fungus' ? U.lerp(p[2], p[0], 0.55) : midX + (p[0] - midX), midY, k === 'air-plant' ? { rot: Math.PI } : {}));
+        out.push(thing(k, k === 'ghost-fungus' ? U.lerp(p[2], p[0], 0.55) : midX + (p[0] - midX), midY, k === 'air-plant' ? { rot: Math.PI } : k === 'ghost-fungus' ? { bare: true } : {}));
       });
       [1360, 1760].forEach((x) => { const y = ceil(room, x); if (y !== null) { out.push(thing('rain-harps', x, y - 2)); } });
       out.push(thing('mist-midges', 1000, 560, { s: 1.2 }));
@@ -1024,9 +1174,35 @@
     }
     return out;
   }
+  // Out west, what kind of high country a place is (west.js: SO.rooms.WEST.regionAt, when it's there):
+  // 'cloud' (cloud, rainbows, open sky), 'trees' (the tops of the big trees), or null.
+  function westSky(room) {
+    const W = SO.rooms && SO.rooms.WEST, n = room && room.def && room.def.west;
+    if (!n || !W || typeof W.regionAt !== 'function') { return null; }
+    let g = null;
+    try { g = W.regionAt(n); } catch (err) { return null; }
+    const k = String((g && (g.key || g.kind || g.name)) || g || '').toLowerCase();
+    return /cloud|rainbow|sky/.test(k) ? 'cloud' : /treetop|canopy|sequoia|crown/.test(k) ? 'trees' : null;
+  }
   function placeHigh(room) {
     const d = room.def, out = [];
-    const r = U.rng('skyhigh:' + room.key);
+    const r = U.rng('skyhigh:' + room.key), ws = westSky(room);
+    const airY = (f) => { const top = 160, bot = room.surfaceY !== null && room.surfaceY < room.h ? room.surfaceY - 160 : room.h * 0.7; return top + f * Math.max(80, bot - top); };
+    const free = (x, y) => !room.solidAt(x, y);
+    if (ws) {// the high places out west that are mostly sky
+      const add = (kind, n, o) => { for (let i = 0; i < n; i++) { const x = room.w * (0.15 + 0.7 * (i + r()) / Math.max(1, n)), y = airY(r()); if (free(x, y)) { out.push(thing(kind, x, y, o)); } } };
+      if (ws === 'cloud') { add('lift-pods', 1 + Math.floor(r() * 2)); add('cloud-jelly', 1 + Math.floor(r() * 2)); }
+      else {// in the tops of the trees: things that hang from what's overhead, and things that drink the mist
+        [0.25, 0.55, 0.8].forEach((f, i) => {
+          const x = room.w * f + (r() - 0.5) * 120, c = ceil(room, x);
+          if (c !== null && c > 0 && c < room.h * 0.6) { out.push(thing(['beard-lichen', 'cloud-orchid', 'resurrection-fern'][(i + Math.floor(r() * 3)) % 3], x, c - 2)); }
+        });
+        dryGround(room, 2, 'skyhigh-trees:' + room.key).forEach(([x, y]) => { if (r() < 0.6) { out.push(thing('air-plant', x, y)); } });
+        if (r() < 0.6) { add('mist-midges', 1); }
+      }
+      if (r() < 0.6) { add('glider-dragonfly', 1); }
+      return out;
+    }
     if (d.region === 'home') {
       // on the banks behind the water (drawn just above the water line)
       const n = 2 + Math.floor(r() * 2);
@@ -1035,10 +1211,11 @@
       if (r() < 0.7) { out.push(thing('glider-dragonfly', room.w * (0.3 + r() * 0.4), room.surfaceY - 180)); }
     } else if (d.region === 'highland') {
       const cold = (d.elev || 0) > 1100;
-      dryGround(room, 2, 'skyhigh-dry:' + room.key).forEach(([x, y], i) => {
-        if (r() < 0.55) { out.push(thing(cold && i === 0 ? 'edelweiss' : 'sky-thrift', x, y)); }
+      dryGround(room, 3, 'skyhigh-dry:' + room.key).forEach(([x, y], i) => {
+        if (r() < 0.75) { out.push(thing(cold && i !== 1 ? 'edelweiss' : 'sky-thrift', x, y)); }
       });
-      if (r() < 0.35) { out.push(thing('glider-dragonfly', room.w * (0.25 + r() * 0.5), room.surfaceY - 200 - r() * 150)); }
+      if (r() < 0.5) { out.push(thing('glider-dragonfly', room.w * (0.25 + r() * 0.5), room.surfaceY - 200 - r() * 150)); }
+      if (!cold && r() < 0.35) { out.push(thing('mist-midges', room.w * (0.2 + r() * 0.6), room.surfaceY - 130)); }// (over still water, in the evening)
     }
     return out;
   }
@@ -1046,7 +1223,7 @@
   function placeMade(room) {
     const key = room.key, day = Math.floor(now() / 86400000), out = [];
     const h = U.hash('skymade:' + key);
-    const sky = room.def.sky === true || room.def.region === 'home' || room.def.region === 'highland';
+    const sky = room.def.sky === true || room.def.region === 'home' || room.def.region === 'highland' || !!westSky(room);
     if (!sky) { return out; }
     const top = room.def.sky ? 160 : Math.max(120, (room.surfaceY || 400) - 260);
     const r = U.rng('skymade-at:' + key);
@@ -1060,25 +1237,20 @@
   // BLOOD IN THE AIR: no strikers, no sharks, no fish kills up here. Dragonflies come instead.
   // ════════════════════════════════════════════════════════════════════════════
   const SKY_LEVELS = { isles: 1, keels: 1, clouds: 1, rain: 1 };
-  const skyRoom = (room) => !!room && (room.def.sky === true || room.def.region === 'home' || !!SKY_LEVELS[room.level]);
+  const skyRoom = (room) => {
+    if (!room) { return false; }
+    if (room._skyl === undefined) { room._skyl = room.def.sky === true || room.def.region === 'home' || !!SKY_LEVELS[room.level] || !!westSky(room); }
+    return room._skyl;
+  };
   const B = SO.blood;
   const H = { flies: [], raptor: null, said: {} };
+  // (blood.js itself keeps strikers, sharks and fish kills out of the air. Here: what comes instead.)
   if (B) {
-    const spawn0 = B.spawnStriker, shark0 = B.callShark, hunt0 = B.huntFish, update0 = B.update, enter0 = B.onEnter;
-    B.spawnStriker = function (room, prey) { if (skyRoom(E.room)) { return { t: 0, life: 0, x: 0, y: 0, vx: 0, vy: 0, hit: true, sky: true }; } return spawn0.apply(this, arguments); };
-    B.callShark = function () { if (skyRoom(E.room)) { return; } return shark0.apply(this, arguments); };
-    B.huntFish = function () { if (skyRoom(E.room)) { return; } return hunt0.apply(this, arguments); };
-    B.onEnter = function (room) { enter0.apply(this, arguments); H.flies = []; H.raptor = null; if (skyRoom(room)) { this.level = 0; } };
+    const update0 = B.update, enter0 = B.onEnter;
+    B.onEnter = function (room) { enter0.apply(this, arguments); H.flies = []; H.raptor = null; H.raptorIn = 8; };
     B.update = function (dt, room) {
-      const sky = skyRoom(room);
-      if (sky) {// (anything that came up from below goes away; no blood in the air builds up into a frenzy)
-        this.strikers = []; this.killSlot = Math.floor(now() / 150000); this.rogueIn = Math.max(this.rogueIn || 0, 600);
-        if (E.actor('frenzy-shark')) { E.removeActor('frenzy-shark'); }
-        this.level = Math.min(this.level, 1);
-      }
-      update0.call(this, dt, room);
-      if (sky) { this.strikers = []; try { skyHunt(dt, room); } catch (err) { console.error(err); } }
-      else if (H.flies.length || H.raptor) { H.flies = []; H.raptor = null; }
+      update0.apply(this, arguments);
+      if (skyRoom(room) || sq().inAir || H.flies.length || H.raptor) { try { skyHunt(dt, room); } catch (err) { console.error(err); } }
     };
   }
   const hidden = () => (sq().hideUntil || 0) > E.t;
@@ -1094,11 +1266,19 @@
     if (B) { B.spill(s0.x, s0.y, 0.12 * power, true, true); }
     const au = AU(); if (au.tock && au.NOTE) { au.tock(au.NOTE(52), { gain: 0.08 * power }); }
   }
+  // A drop of kept blood, spat up into the air: red, and falling.
+  function spat(s0) {
+    if (!B) { return; }
+    const n0 = E.particles.length;
+    B.spill(s0.x, s0.y - 40, 0.2, false, true);
+    for (let i = n0; i < E.particles.length; i++) { E.particles[i].trail = true; }// (spent: it doesn't soak back in)
+  }
   function skyHunt(dt, room) {
     const s0 = sq(), blood = s0.blood || 0, hush = SO.ui.important || E.locked;
     // over water you can be under, they wait above it (the island pool)
     const reach = room.surfaceY === null || room.def.sky || s0.y < room.surfaceY + 60;
-    const want = blood > 0.22 && !hush && !hidden() ? Math.min(6, 1 + Math.floor(blood * 6)) : 0;
+    const up = skyRoom(room) || !!s0.inAir, under = !up && room.surfaceY !== null && s0.y > room.surfaceY + 150;// (down in the sea they give up)
+    const want = up && blood > 0.22 && !hush && !hidden() ? Math.min(6, 1 + Math.floor(blood * 6)) : 0;
     if (H.flies.length < want && Math.random() < dt * 0.7) {
       const vw = E.W / E.scale, vh = E.H / E.scale, left = Math.random() < 0.5;
       H.flies.push({ x: left ? E.cam.x - 60 : E.cam.x + vw + 60, y: E.cam.y + vh * (0.1 + Math.random() * 0.5), vx: 0, vy: 0, t: 0, life: 22 + Math.random() * 10, next: 0, tx: 0, ty: 0, hover: false, cool: 1.5, v: variant('hunter:' + Math.random()) });
@@ -1107,7 +1287,7 @@
     H.flies = H.flies.filter((f) => !f.gone);
     H.flies.forEach((f) => {
       f.t += dt; f.cool -= dt; f.next -= dt;
-      const leaving = f.t > f.life || blood < 0.1 || hush || hidden();
+      const leaving = f.t > f.life || blood < 0.1 || hush || hidden() || under;
       if (leaving) {// off they go
         f.vx = U.lerp(f.vx, (f.x < s0.x ? -1 : 1) * 500, dt * 2); f.vy = U.lerp(f.vy, -200, dt * 2);
         if (f.t > f.life + 6 || Math.abs(f.x - s0.x) > 1600) { f.gone = true; }
@@ -1125,6 +1305,7 @@
         else { const sp = f.strike ? 760 : 560; f.vx = U.lerp(f.vx, dx / (d || 1) * sp, dt * 7); f.vy = U.lerp(f.vy, dy / (d || 1) * sp, dt * 7); }
         if (f.strike && U.dist(f.x, f.y, s0.x, s0.y) < 55) {
           f.strike = false; f.cool = 1.8 + Math.random() * 1.5; f.next = 0.2;
+          if (SO.purse && SO.purse.ward()) { spat(s0); H.flies.forEach((g) => { g.t = Math.max(g.t, g.life); }); return; }// (they go for the red instead)
           bite(f.vx, f.vy, 1);
           SO.story.remember('glider-dragonfly');
           aside('bite', ['They bite. Little hard mouths.', 'Swim it off. Get the blood off.', 'They’re not going to stop while I’m bleeding.'][Math.floor(Math.random() * 3)], 14);
@@ -1139,7 +1320,7 @@
     const lv = room.level, ch = SO.story.ch || 0;
     const high = lv === 'isles' || lv === 'keels' || room.def.region === 'home';
     H.raptorIn = (H.raptorIn === undefined ? 8 : H.raptorIn) - dt;
-    if (!H.raptor && blood > 0.45 && (high || ch >= 6) && H.raptorIn <= 0 && !hush && !hidden() && reach) {
+    if (!H.raptor && up && blood > 0.45 && (high || ch >= 6) && H.raptorIn <= 0 && !hush && !hidden() && reach) {
       H.raptorIn = 25 + Math.random() * 20;
       const eagle = lv === 'isles' || room.def.region === 'home', left = Math.random() < 0.5, vw = E.W / E.scale;
       H.raptor = { eagle, x: left ? E.cam.x - 200 : E.cam.x + vw + 200, y: E.cam.y - 150, vx: left ? 200 : -200, vy: 0, t: 0, phase: 'circle', dir: left ? 1 : -1 };
@@ -1155,16 +1336,17 @@
           R.phase = 'stoop';
           const au = AU(); if (au.tone) { au.tone(R.eagle ? 1500 : 2600, { dur: 0.5, gain: 0.02, glide: 0.6, attack: 0.01, verb: 0.5 }); }
         }
-        if (hidden() || hush) { R.phase = 'leave'; }
+        if (hidden() || hush || under) { R.phase = 'leave'; }
       } else if (R.phase === 'stoop') {
         const dx = s0.x - R.x, dy = s0.y - R.y, d = Math.hypot(dx, dy) || 1, sp = R.eagle ? 1100 : 1500;
         R.vx = U.lerp(R.vx, dx / d * sp, dt * 4); R.vy = U.lerp(R.vy, dy / d * sp, dt * 4);
-        if (d < (R.eagle ? 90 : 60)) {
+        if (d < (R.eagle ? 90 : 60) && SO.purse && SO.purse.ward()) { spat(s0); R.phase = 'leave'; R.t = Math.max(R.t, 8); }
+        else if (d < (R.eagle ? 90 : 60)) {
           bite(R.vx, R.vy, R.eagle ? 3 : 2.4);
           aside('stoop', R.eagle ? 'It hit me. Talons. I’m still here. I’m still here.' : 'It came out of nowhere. Like a stone.', 20);
           R.phase = 'leave';
         }
-        if (R.t > 7 || hidden()) { R.phase = 'leave'; }
+        if (R.t > 7 || hidden() || under) { R.phase = 'leave'; }
       } else {
         R.vx = U.lerp(R.vx, R.dir * 600, dt * 1.5); R.vy = U.lerp(R.vy, -500, dt * 1.5);
         if (R.t > 14) { H.raptor = null; }
@@ -1172,8 +1354,31 @@
       if (H.raptor) { R.x += R.vx * dt; R.y += R.vy * dt; if (Math.abs(R.vx) > 30) { R.dir = R.vx > 0 ? 1 : -1; } }
     }
   }
-  // A raptor: wings out while it circles, folded into a teardrop when it stoops.
+  // The raptors' looks, from the talking birds' drawings: a golden eagle, and a peregrine (slate
+  // back, barred pale front, yellow cere and feet).
+  function raptorLook(eagle) {
+    const ART = SO.birdArt, key = eagle ? 'sky-eagle' : 'sky-falcon';
+    if (!ART || !ART.LOOK) { return null; }
+    if (ART.LOOK[key]) { return key; }
+    const base = ART.LOOK[eagle ? 'bird-grimsel' : 'bird-hale'];
+    if (!base) { return null; }
+    let L;
+    try { L = JSON.parse(JSON.stringify(base)); } catch (err) { return null; }
+    delete L.deco; L.key = key;
+    if (!eagle) {
+      Object.assign(L, { head: '#2e333c', shade: '#4a5260', back: '#56606e', wing: '#56606e', wingTip: '#1c2026', breast: '#ece4d4', neckCol: null, throatCol: '#f4efe4', marks: [], legs: '#f0c030', span: Math.round((L.span || 80) * 0.8) });
+      L.eye = Object.assign({}, L.eye, { iris: '#1a1410', ring: '#f0c030', ringW: 1.6 });
+      L.bill = Object.assign({}, L.bill, { upper: '#3a4250', cere: { k: 0.3, c: '#f0c030' } });
+    }
+    ART.LOOK[key] = L;
+    return key;
+  }
+  // A raptor: drawn like the other birds while it circles, folded into a teardrop when it stoops.
   function raptor(c, R, t) {
+    const look = R.phase !== 'stoop' ? raptorLook(R.eagle) : null;
+    if (look) {
+      try { SO.birdArt.draw(c, look, R.x, R.y, R.eagle ? 1.5 : 1.1, t, { pose: R.phase === 'circle' ? 'glide' : 'fly', dir: R.dir, flap: Math.sin(t * (R.eagle ? 3 : 5)) }); return; } catch (err) { /* (fall through to the plain shape) */ }
+    }
     c.save(); c.translate(R.x, R.y);
     const s = R.eagle ? 2.4 : 1.5, stoop = R.phase === 'stoop';
     c.scale(s * R.dir, s);
@@ -1209,10 +1414,11 @@
   SO.oddities.populate = function (room) {
     populate(room);
     try {
+      room._skyl = undefined; skyRoom(room);
       const P = PLACES[room.key];
       const list = (P ? P(room) : placeHigh(room)).concat(placeMade(room));
       list.forEach((o) => { o.room = room.key; if (!room.actors.some((x) => x.id === o.id)) { E.addActor(room, o); } });
-      if (skyRoom(room)) { E.addActor(room, { id: 'sky-hunters', type: 'skyHunters', x: 0, y: 0, front: true, touch: false }); }
+      E.addActor(room, { id: 'sky-hunters', type: 'skyHunters', x: 0, y: 0, front: true, touch: false });
     } catch (err) { console.error(err); }
   };
 

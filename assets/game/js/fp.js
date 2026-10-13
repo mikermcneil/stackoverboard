@@ -1355,6 +1355,9 @@
     },
   };
 
+  // The pieces of a frame, for scenes defined in other files (westlife.js).
+  SO.fp.kit = { water, specks, rays, eye, film, blinkAt, unit, glowAt, sky, surface };
+
   // Listen to everything said, so a scene can follow a line.
   const say0 = SO.ui.say;
   SO.ui.say = function (text, opts) { heard[text] = U.now(); return say0.call(this, text, opts); };

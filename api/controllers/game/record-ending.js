@@ -1,4 +1,5 @@
-const ENDINGS = ['return', 'lantern', 'gift', 'song'];
+const ENDINGS = ['return', 'lantern', 'gift', 'song', 'magma'];
+const RELICS = ['snailfish-skull', 'pompeii-fleece', 'scaly-shell', 'strain-121'];
 
 module.exports = {
 
@@ -10,11 +11,14 @@ module.exports = {
 
 
   extendedDescription:
-`Only one ending can be recorded per playthrough (the first one wins).  Requires reaching chapter 7.
+`Only one ending can be recorded per playthrough (the first one wins).  Requires reaching chapter 7,
+except for "magma", the secret one, which can be reached any time (it requires having found at least
+two of the deep's relics and knowing the skin word "quench").
 Endings: "return" (home: leapt up the waterfall back to the sky island), "lantern" (stay: decided the
 sea is home and stayed with its friends), "gift" (the whale: calmed the sperm whale and swam off into
-the open ocean with her), and "song" (the swans: called the swans, and the sky islands came down to
-rest on the sea).
+the open ocean with her), "song" (the swans: called the swans, and the sky islands came down to
+rest on the sea), and "magma" (the furnace: went all the way down the deep under the far west, and
+put out the thing that lives in the magma there).
 Note: if the ending is newly recorded, it's appended to \`save.endings\` and the save's \`revision\`
 increases, so clients should adopt the returned save.
 
@@ -30,7 +34,7 @@ before).  To see who reached which ending, and when, see get-history (kind "endi
       isIn: ENDINGS,
       required: true,
       example: 'lantern',
-      description: 'Which ending: "return" (home), "lantern" (stay), "gift" (the whale), or "song" (the swans).'
+      description: 'Which ending: "return" (home), "lantern" (stay), "gift" (the whale), "song" (the swans), or "magma" (the furnace, a secret).'
     },
 
   },
@@ -39,7 +43,7 @@ before).  To see who reached which ending, and when, see get-history (kind "endi
   exits: {
 
     success: {
-      outputDescription: '`{ save, tally, recorded }` where `tally` is `{ return, lantern, gift, song }` (counts across the whole world) and `recorded` is false if an ending was already recorded for this playthrough.'
+      outputDescription: '`{ save, tally, recorded }` where `tally` is `{ return, lantern, gift, song, magma }` (counts across the whole world) and `recorded` is false if an ending was already recorded for this playthrough.'
     },
 
     noSave: {
@@ -49,7 +53,7 @@ before).  To see who reached which ending, and when, see get-history (kind "endi
 
     notYet: {
       statusCode: 409,
-      description: 'This squid has not reached chapter 7 in this playthrough yet.'
+      description: 'This squid has not reached chapter 7 in this playthrough yet (or, for "magma", hasn\'t found two of the deep\'s relics and learned "quench").'
     },
 
   },
@@ -62,7 +66,14 @@ before).  To see who reached which ending, and when, see get-history (kind "endi
     if (!save) {
       throw 'noSave';
     }
-    if (save.chapter < 7) {
+    if (ending === 'magma') {
+      // The secret one: the relics (kept for good, in the save's flags) and the word, not the chapter.
+      var data = save.data || {};
+      var flags = data.flags || {};
+      if (RELICS.filter((k) => flags['relic:'+k]).length < 2 || (data.patterns || []).indexOf('quench') === -1) {
+        throw 'notYet';
+      }
+    } else if (save.chapter < 7) {
       throw 'notYet';
     }
 

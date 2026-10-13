@@ -271,6 +271,17 @@ function questions(t) {
       check((await ask('getLevels', { room: 'aq:301' })).at.level.key === 'highwater', 'aq:301 is the high waters');
     }],
 
+    ['How do you tell male from female kelp, and what does the nautilus sound like?', async () => {
+      var kelp = (await ask('getLifeFacts', { key: 'kelp' })).things[0];
+      check(kelp && kelp.path === 'Plants » Weeds and grasses', `kelp is a weed (got ${kelp && kelp.path})`);
+      check(kelp && /female/i.test(kelp.tell || '') && kelp.means && kelp.where, 'kelp has tell, means, where');
+      var nautilus = (await ask('getLifeFacts', { key: 'nautilus' })).things[0];
+      check(nautilus && nautilus.sound && nautilus.sound.instrument && nautilus.sex && nautilus.lore, 'nautilus has a sound, sex and lore');
+      var crabs = await ask('getLifeFacts', { group: 'Creatures > Crustaceans' });
+      check(crabs.things.length > 0 && crabs.things.every((x) => /^Creatures » Crustaceans/.test(x.path)), 'group filter');
+      check((await ask('getLifeFacts', { key: 'bird-mags' })).things[0].name === 'Mags', 'birds by key');
+    }],
+
     ['What happens to skin words in Hollowglass?', async () => {
       var r = await ask('getLevels', { key: 'glass' });
       check(r.levels.length === 1 && r.levels[0].rules.skin.echo === true, 'echo is true');

@@ -15,6 +15,7 @@ const ENDINGS = {
   lantern: 'the "lantern" ending (it stayed: the sea is home now)',
   gift: 'the "gift" ending (it calmed the whale and swam off into the open ocean with her)',
   song: 'the "song" ending (it called the swans, and the sky islands came down to rest on the sea)',
+  magma: 'the "magma" ending (it went all the way down the deep under the far west, and put out what was burning there)',
 };
 const STATS = { westFarthest: 'farthest west', bestAirTime: 'longest leap', bestAirHeight: 'highest leap', deepest: 'deepest dive' };
 const WORD_NAMES = { cloud: 'passing cloud' };

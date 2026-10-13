@@ -50,8 +50,8 @@ sea fans.
 
 Endings: "return" (home: leapt up the waterfall back to the sky island), "lantern" (stay: decided the
 sea is home and stayed with its friends), "gift" (the whale: calmed the sperm whale and swam off into
-the open ocean with her), and "song" (the swans: called the swans, and the sky islands came down to
-rest on the sea).
+the open ocean with her), "song" (the swans: called the swans, and the sky islands came down to
+rest on the sea), and "magma" (a secret: something deep under the far west, put out).
 
 The world also gets older, on a fixed schedule counted from \`bornAt\`: eight stages lasting minutes,
 then hours, then minutes, hours, days, hours, days, and minutes (the first tide, the long calm, the
@@ -143,7 +143,7 @@ How to answer common questions (which read-only tool to call):
     success: {
       outputFriendlyName: 'World overview',
       outputDescription:
-        '`{ serverNow, worldSeed, bornAt, squids, finishedSquids, endingsTally: {return,lantern,gift,song}, tilesDiscovered, tilesTotal, '+
+        '`{ serverNow, worldSeed, bornAt, squids, finishedSquids, endingsTally: {return,lantern,gift,song,magma}, tilesDiscovered, tilesTotal, '+
         'speciesCount: {creature,plant,item}, nativeSpeciesCount, worldFactsCount, eruptionsTotal, state, age, recent }`.  `bornAt` is when the first world event happened (epoch ms, or null). '+
         '`devices` = how many squids were last played on each kind of device; `speciesCount` counts procedurally generated species; `nativeSpeciesCount` counts the native (real) ones; `worldFactsCount` counts the facts get-world-facts can search.  `squids` = squids ever hatched; `finishedSquids` = distinct squids who reached at least one ending.  `state` is the live world state '+
         '(same as get-state).  `age` is the stage of life the world is in now, `{ index, key, name, progress, startsAt, endsAt, during }` (null before the world is made; see get-world-age for the whole schedule).  `recent` is the 10 most recent world events (no spoilers), newest first, each with a plain-language `line` (see get-history).  `historyEvents` is how many events the history holds.'
@@ -158,7 +158,7 @@ How to answer common questions (which read-only tool to call):
 
     var first = (await WorldEvent.find().sort([{ startsAt: 'ASC' }, { id: 'ASC' }]).limit(1))[0];
     var endingEvents = await WorldEvent.find({ where: { kind: 'ending' }, select: ['squidName', 'subject'] });
-    var endingsTally = { return: 0, lantern: 0, gift: 0, song: 0 };
+    var endingsTally = { return: 0, lantern: 0, gift: 0, song: 0, magma: 0 };
     for (let event of endingEvents) {
       if (endingsTally[event.subject] !== undefined) {
         endingsTally[event.subject]++;

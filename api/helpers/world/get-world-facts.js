@@ -208,6 +208,7 @@ const ENDING_DETAILS = {
   return: 'Swim straight up the waterfall at the Plunge, as fast as possible. At the top, the way home isn\'t over yet (see story-homecoming): the ending comes when the swan who waited knows the squid.',
   lantern: 'When asked "So. Are you really going?", decide to stay.',
   gift: 'Beneath the Plunge, play "calm" (pale, shimmer, pale) to the sperm whale.',
+  magma: 'Any time, not just in chapter 7. Go down the deep under the far west trench (deep:0 to deep:31). Find at least two of the four relics kept down there (a soft skull in a hollow off the trench, an iron shell in a crevice under the vent fields, a smear of light in a pocket of the volcano, and a worm\'s fleece on a chimney in the black smokers), and learn "quench" (shimmer, pale, red, pale, shimmer) from the oldest light, in a cell behind a seam that opens to red, pale, red. Wake the dead chimney (gold, red, gold, red). At the bottom, quench the thing in the magma when it shows you its face, twice when it pants after breathing, and once more from inside it.',
   song: 'Find all three pieces of glass from home first, then play the swans\' call (blue, gold, blue, pale) at the Plunge. With fewer than three memories it comes out wrong.',
 };
 
@@ -522,8 +523,8 @@ fallback when that table isn't available.  Places are read from the client's roo
     lore.endings.forEach((e) => add({
       key: 'ending-'+e.key, topic: 'ending', title: 'Ending: '+e.name+' ("'+e.key+'")',
       body: 'Spoiler. '+e.summary+(ENDING_DETAILS[e.key] ? ' How to reach it: '+ENDING_DETAILS[e.key] : ''),
-      tags: ['ending', e.key, e.name.toLowerCase(), 'spoiler', 'chapter 7'],
-      related: ['chapter-7', 'place-plunge'].concat(e.key === 'song' ? ['memory-1', 'memory-2', 'memory-3', 'skin-word-call'] : e.key === 'gift' ? ['skin-word-calm', 'creature-whale'] : []),
+      tags: ['ending', e.key, e.name.toLowerCase(), 'spoiler', e.key === 'magma' ? 'secret' : 'chapter 7'],
+      related: (e.key === 'magma' ? [] : ['chapter-7', 'place-plunge']).concat(e.key === 'song' ? ['memory-1', 'memory-2', 'memory-3', 'skin-word-call'] : e.key === 'gift' ? ['skin-word-calm', 'creature-whale'] : []),
       spoilerLevel: 2, data: { ending: e.key }, seeAlso: ['get-overview', 'get-history'], source: 'assets/game/js/story.js',
     }));
 

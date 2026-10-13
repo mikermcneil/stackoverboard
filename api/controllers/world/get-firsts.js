@@ -118,7 +118,7 @@ get-species and get-west-path (what each thing is).`,
         case 'natives': return natives[subject] ? natives[subject].name : subject;
         case 'quests': return QUESTS[subject] || subject;
         case 'westLandmarks': return landmarks[subject] ? landmarks[subject].name+' (west:'+landmarks[subject].n+')' : subject;
-        case 'endings': return { return: 'Return (home)', lantern: 'Lantern (stay)', gift: 'Gift (the whale)', song: 'Song (the swans)' }[subject] || subject;
+        case 'endings': return { return: 'Return (home)', lantern: 'Lantern (stay)', gift: 'Gift (the whale)', song: 'Song (the swans)', magma: 'Magma (the furnace)' }[subject] || subject;
       }
       return subject;
     };
@@ -129,7 +129,7 @@ get-species and get-west-path (what each thing is).`,
       let kind = wanted[cat];
       let rows = (byKind[kind] || []).map((e) => ({ subject: e.details && e.details.subject !== undefined ? String(e.details.subject) : String(e.subject).slice(kind.length + 1), squidName: e.squidName, at: e.startsAt, eventKey: e.key, kind }));
       if (kind === 'chapter-reached' || kind === 'ending') {
-        let subjects = kind === 'ending' ? ['return', 'lantern', 'gift', 'song'] : ['1', '2', '3', '4', '5', '6', '7', '8'];
+        let subjects = kind === 'ending' ? ['return', 'lantern', 'gift', 'song', 'magma'] : ['1', '2', '3', '4', '5', '6', '7', '8'];
         let early = await oldest(kind, subjects);
         let bySubject = _.indexBy(rows, 'subject');
         for (let e of early) {

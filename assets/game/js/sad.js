@@ -231,11 +231,16 @@
       const r = U.rng(room.key + ':sad');
       const kind = SAD[Math.floor(r() * SAD.length)];
       const x = 220 + r() * (room.w - 440);
-      E.addActor(room, { id: 'sad-0', type: 'oddity', kind, x, y: room.h - 80 });
+      const f = room.floorY ? room.floorY(x) : Infinity;
+      E.addActor(room, { id: 'sad-0', type: 'oddity', kind, x, y: (isFinite(f) ? Math.min(f, room.h) : room.h) - 30 });// (lying on the bottom, not in it)
     }
-    // And now and then, wherever you are, a dead fish drifts down.
-    if (Math.random() < 0.12) {
-      E.addActor(room, { id: 'sad-sinking', type: 'oddity', kind: 'sinking-fish', x: 300 + Math.random() * (room.w - 600), y: (room.surfaceY !== null ? room.surfaceY + 80 : 60) });
+    // And now and then, wherever you are, a dead fish drifts down. (The same one, for everyone here
+    // in the same ten minutes.)
+    const slot = Math.floor(SO.api.serverNow() / 600000), hs = U.hash(room.key + ':sinking:' + slot);
+    if (hs % 100 < 12) {
+      const x = 300 + (hs >> 8) % Math.max(1, room.w - 600);
+      const p = E.findFreeBody(x, room.surfaceY !== null ? room.surfaceY + 80 : (room.ceilY && isFinite(room.ceilY(x)) ? room.ceilY(x) + 80 : 140));
+      E.addActor(room, { id: 'sad-sinking', type: 'oddity', kind: 'sinking-fish', x: p[0], y: p[1] });
     }
   };
 

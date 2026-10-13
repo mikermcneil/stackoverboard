@@ -42,7 +42,7 @@ get-records, get-timeline (one squid's story), get-history (everything, with fil
 
     success: {
       outputDescription:
-        '`{ story, paragraphs, highlights: [{ key, kind, squidName, subject, startsAt, line }], numbers: { squids, arrivals, events, eruptions, tilesDiscovered, tilesTotal, speciesIntroduced, pearlsGathered, questsFinished, endings: { return, lantern, gift, song }, worldFirsts, recentEvents }, bornAt, age, generatedAt }`.  '+
+        '`{ story, paragraphs, highlights: [{ key, kind, squidName, subject, startsAt, line }], numbers: { squids, arrivals, events, eruptions, tilesDiscovered, tilesTotal, speciesIntroduced, pearlsGathered, questsFinished, endings: { return, lantern, gift, song, magma }, worldFirsts, recentEvents }, bornAt, age, generatedAt }`.  '+
         '`story` is the paragraphs joined with blank lines.  `bornAt` is when the first world event happened (epoch ms, or null if nothing has happened yet).  `age` is the world\'s stage of life now (see get-world-age).'
     },
 
@@ -81,7 +81,7 @@ get-records, get-timeline (one squid's story), get-history (everything, with fil
       worldFirsts: await WorldEvent.count({ kind: 'world-first' }),
       recentEvents: 0,
     };
-    for (let ending of ['return', 'lantern', 'gift', 'song']) { numbers.endings[ending] = await WorldEvent.count({ kind: 'ending', subject: ending }); }
+    for (let ending of ['return', 'lantern', 'gift', 'song', 'magma']) { numbers.endings[ending] = await WorldEvent.count({ kind: 'ending', subject: ending }); }
     var age = (await sails.helpers.world.getWorldAge.with({ bornAt: first.startsAt, at: now })).current;
     var paragraphs = [];
 
@@ -149,7 +149,7 @@ get-records, get-timeline (one squid's story), get-history (everything, with fil
     var endingTotal = _.sum(_.values(numbers.endings));
     if (endingTotal) {
       let firstEnding = note(await oldestOf({ kind: 'ending' }));
-      let named = { return: 'went home', lantern: 'stayed', gift: 'left with the whale', song: 'called the swans' };
+      let named = { return: 'went home', lantern: 'stayed', gift: 'left with the whale', song: 'called the swans', magma: 'went all the way down' };
       p3.push(plural(endingTotal, 'story has', 'stories have')+' ended: '+list(_.map(_.pick(numbers.endings, (n) => n > 0), (n, k) => n+' '+named[k]))+'.  '+firstEnding.squidName+' was the first to finish.');
     } else {
       p3.push('No squid has reached an ending yet.');

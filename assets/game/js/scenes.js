@@ -431,11 +431,11 @@
     return new Promise((resolve) => {
       E.overlay = (ctx, W, H) => { ctx.fillStyle = '#04080e'; ctx.fillRect(0, 0, W, H); };
       const el = document.getElementById('credits');
-      const names = { return: 'You went home.', lantern: 'You stayed.', gift: 'You swam off with a whale.', song: 'You called the swans, and home came down to you.' };
-      const total = (tally.return || 0) + (tally.lantern || 0) + (tally.gift || 0) + (tally.song || 0);
+      const names = { return: 'You went home.', lantern: 'You stayed.', gift: 'You swam off with a whale.', song: 'You called the swans, and home came down to you.', magma: 'You went all the way down, and put out what was burning there.' };
+      const total = (tally.return || 0) + (tally.lantern || 0) + (tally.gift || 0) + (tally.song || 0) + (tally.magma || 0);
       el.querySelector('[data-ending]').textContent = names[kind] || '';
       el.querySelector('[data-tally]').textContent = total
-        ? `Of every squid who has fallen so far: ${tally.return || 0} went home, ${tally.lantern || 0} stayed, ${tally.gift || 0} swam off with a whale, and ${tally.song || 0} called the swans.`
+        ? `Of every squid who has fallen so far: ${tally.return || 0} went home, ${tally.lantern || 0} stayed, ${tally.gift || 0} swam off with a whale, and ${tally.song || 0} called the swans.` + (tally.magma ? ` ${tally.magma === 1 ? 'One' : tally.magma} went all the way down.` : '')
         : '';
       el.querySelector('[data-mcp]').textContent = location.origin + '/mcp/safe';
       el.classList.add('show');

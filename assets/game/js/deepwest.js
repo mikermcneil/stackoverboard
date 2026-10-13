@@ -53,7 +53,19 @@
   const OPP = { left: 'right', right: 'left', up: 'down', down: 'up' };
   const GAP = [0.4, 0.6];// every hole up or down is in the same place, so they always line up
 
-  const trenchAbove = () => { const W = SO.rooms && SO.rooms.WEST; return W && W.TRENCH_N ? 'west:' + W.TRENCH_N : null; };
+  // The way in: the bottom of the trench in the far west sea. Whoever makes that place either says
+  // so (SO.rooms.DEEP.link(key)) or just gives it a way down to 'deep:0'; either way deep:0 leads back.
+  const keyOf = (to) => (typeof to === 'string' ? to : to && to.key);
+  function trenchAbove() {
+    const R = SO.rooms;
+    if (!R) { return null; }
+    if (R.DEEP && R.DEEP.entry) { return R.DEEP.entry; }
+    const W = R.WEST;
+    if (W && W.TRENCH_N) { return 'west:' + W.TRENCH_N; }
+    const defs = R.defs || {};
+    for (const k in defs) { if (!/^deep:/.test(k) && defs[k] && defs[k].exits && keyOf(defs[k].exits.down) === 'deep:0') { return k; } }
+    return null;
+  }
   const metersAt = (y) => 2600 + y * 430;
 
   function exitsOf(i) {
@@ -87,7 +99,8 @@
     const r = U.rng(SEED + ':' + i), zone = ZONE(i), ex = exitsOf(i);
     const [px, py] = POS[i], k = i / LAST;
     const arena = i === LAST;
-    const w = arena ? 2 : (ex.left || ex.right ? 1.4 : 1.2), h = arena ? 1.4 : (ex.up && ex.down ? 1.5 : 1.15);
+    const top = i === 0 && ex.up && SO.rooms.defs[ex.up];// the trench above, if it's been made
+    const w = arena ? 2 : top && top.w ? top.w : (ex.left || ex.right ? 1.4 : 1.2), h = arena ? 1.4 : (ex.up && ex.down ? 1.5 : 1.15);
     const W = w * RW, H = h * RH;
     const terrain = arena
       ? { floor: [0.1, 0.12, 0.1, 0.09, 0.1, 0.11, 0.12, 0.14], ceiling: [0.14, 0.1, 0.07, 0.06, 0.06, 0.08, 0.1, 0.14], ceilGap: GAP.slice(), walls: { left: true, right: true } }
@@ -113,6 +126,9 @@
     else { const L = zone === 'trench' ? TRENCH_NAMES : VENT_NAMES; d.name = L[(i + (zone === 'vents' ? 3 : 0)) % L.length] + ' (' + metersAt(row).toLocaleString('en-US') + ' m)'; }
     if (i === SEAL) { d.name = 'The dead chimney (' + metersAt(row).toLocaleString('en-US') + ' m)'; d.seal = true; }
     if (arena) { d.arena = true; d.roar = 0.6; }
+    // under the trench: its hole down comes out in our roof, wherever it is
+    if (top && top.terrain && top.terrain.floorGap) { terrain.ceilGap = top.terrain.floorGap.slice(); }
+    if (top && top.map) { d.map = [top.map[0], top.map[1] + Math.max(1, Math.round(top.mapH || top.h || 1))]; }
     furnish(d, r, i, zone, W, H);
     return d;
   }
@@ -167,6 +183,8 @@
     const ceilAt = (x) => U.sampleCurve(T.ceiling, x / W) * H;
     const spots = [0.16, 0.28, 0.74, 0.86].map((f) => f * W);// away from the holes in the middle and from the edges
     if (d.arena) {
+      // two old basalt columns, the only cover there is (magmabeast.js has the rest)
+      [0.3, 0.7].forEach((f, j) => { const x = W * f; d.solids.push({ type: 'rect', id: 'column-' + j, x: x - 55, y: floorAt(x) - 470, w: 110, h: 560, color: '#1a1210' }); });
       d.props.push({ layer: 'back', draw: lavaSeams(W, floorAt, 10, r) });
       d.lights.push({ x: W * 0.25, y: H - 100, r: 900, color: '#ff4a1a', level: 0.6, flicker: true }, { x: W * 0.7, y: H - 80, r: 700, color: '#ff6a2a', level: 0.4, flicker: true });
       return;
@@ -370,7 +388,7 @@
     if (!SO.rooms) { return null; }
     const defs = SO.rooms.defs;
     // (the way in from above, if the far west has a trench yet: check again each time)
-    if (key === 'deep:0' && defs[key] && !!defs[key].exits.up !== !!trenchAbove()) { delete defs[key]; delete made[key]; }
+    if (key === 'deep:0' && defs[key] && (defs[key].exits.up || null) !== trenchAbove()) { delete defs[key]; delete made[key]; }
     if (!defs[key]) { const d = build(key); if (!d) { return null; } d.key = key; defs[key] = d; made[key] = true; }
     return defs[key];
   }
@@ -378,7 +396,11 @@
   if (SO.rooms) {
     const get0 = SO.rooms.get.bind(SO.rooms);
     SO.rooms.get = async function (key) { return /^deep:/.test(key) ? get(key) : get0(key); };
-    SO.rooms.DEEP = { MOVES, LAST, SEAL, SIDES, POS, ZONE, all: ALL, build: (key) => get(key), buildAll: () => ALL().map(get) };
+    SO.rooms.DEEP = {
+      MOVES, LAST, SEAL, SIDES, POS, ZONE, GAP, entry: null, all: ALL, build: (key) => get(key), buildAll: () => ALL().map(get),
+      // The far west sea says which of its places has the way down (and so where deep:0 leads back up to).
+      link(key) { if (this.entry !== key) { this.entry = key; delete SO.rooms.defs['deep:0']; } },
+    };
   }
 
   // ════════════════════════════════════════════════════════════════════════════
@@ -408,7 +430,7 @@
   Object.keys(RELICS).forEach((k) => { S.NATIVE[k] = { kind: 'item', name: RELICS[k].name, line: RELICS[k].line }; });
 
   SO.actorTypes.deepRelic = {
-    r: 46, touch: true, talk: true,
+    r: 46, touch: true,
     init(a) { a.hidden = hasRelic(a.relic); },
     draw(ctx, a, room, t) { drawRelic(ctx, a.relic, a.x, a.y + Math.sin(t * 1.1) * 3, 1, t); },
     light(a) { return { x: a.x, y: a.y, r: 140, a: 0.6, color: a.relic === 'strain-121' ? '#ffd08a' : '#cfe8ff', add: 0.25 }; },

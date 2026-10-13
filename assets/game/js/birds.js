@@ -781,6 +781,9 @@
     [/far sea|open sea|ocean|sea lion|orca|sargass|drift/, 'farsea'],
     [/river|falls|pool|spring|sinkhole|delta/, 'rivers'],
     [/shore|coast|tide|beach|cliff|sand|dune|desert|bay/, 'shore'],
+    [/sequoia|redwood|canopy|treetop/, 'rainforest'],
+    [/hill|heath/, 'plains'],
+    [/cloud|rainbow/, null],
   ];
   function norm(s) {
     if (!s) { return undefined; }

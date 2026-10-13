@@ -103,7 +103,8 @@
     SO.blood.wound = function (x, y, amount, opts = {}) {
       wound(x, y, amount, opts);
       if (opts.scales && !opts.blue && E.room && amount >= 0.6) {// (a fish, torn: not the squid's own blood)
-        E.addActor(E.room, { id: 'kill-' + Math.round(E.t * 1000), type: 'oddity', kind: 'sinking-fish', x, y });
+        const free = E.room.solidAt(x, y) && E.findFreeBody ? E.findFreeBody(x, y) : [x, y];// (never inside the rock)
+        E.addActor(E.room, { id: 'kill-' + Math.round(E.t * 1000), type: 'oddity', kind: 'sinking-fish', x: free[0], y: free[1] });
       }
     };
   };

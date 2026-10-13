@@ -25,6 +25,7 @@ const ENDINGS = [
   { key: 'lantern', name: 'Stay', summary: 'Asked "So. Are you really going?", the squid decides the sea is home now and stays with its friends.' },
   { key: 'gift', name: 'The whale', summary: 'Beneath the Plunge the sperm whale isn\'t chasing, just looking. The squid calms her (pale, shimmer, pale) and swims off into the open ocean with her.' },
   { key: 'song', name: 'The swans', summary: 'With all three memories found, the squid flashes the swans\' call (blue, gold, blue, pale) at the Plunge. The swans hear it, and the sky islands come down to rest on the sea.' },
+  { key: 'magma', name: 'The furnace', summary: 'A secret. Far west, past the end of the sea floor, a trench goes down and down: the deep, the vent fields, and under them a last volcano, sealed. At the bottom, something lives in the magma. The squid puts it out.' },
 ];
 
 const MEMORIES = [

@@ -41,8 +41,13 @@
     { key: 'worms', name: 'Worms', parent: 'creatures' },
     { key: 'whales', name: 'Whales and turtles', parent: 'creatures' },
     { key: 'others', name: 'Stranger things', parent: 'creatures' },
+    { key: 'insects', name: 'Insects', parent: 'creatures' },
+    { key: 'mammals', name: 'Mammals', parent: 'creatures' },
     { key: 'weeds', name: 'Weeds and grasses', parent: 'plants' },
     { key: 'notplants', name: 'Animals, really', parent: 'plants' },
+    { key: 'flowers', name: 'Flowers', parent: 'plants' },
+    { key: 'ferns', name: 'Ferns and liverworts', parent: 'plants' },
+    { key: 'lichens', name: 'Lichens and fungi', parent: 'plants' },
     { key: 'gulls', name: 'Gulls and terns', parent: 'birds' },
     { key: 'swans', name: 'Swans', parent: 'birds' },
     { key: 'seabirds', name: 'Seabirds', parent: 'birds' },
@@ -729,6 +734,257 @@
       fact: 'A squid beak is the only hard part of a squid. Sperm whales’ stomachs are full of them, and that’s how we know what giant squid exist.',
       s: ['tock', 70, 5],
     },
+
+    // The deep under the far west (deepwest.js), and what lives at the bottom of it (magmabeast.js)
+    'deep-dragonfish': {
+      g: 'fish', like: 'the black dragonfish, Idiacanthus atlanticus',
+      lore: 'They’re thicker in the trench than anywhere else. Something keeps falling down it for them to eat, and none of it is fish.',
+      fact: 'It sees by red light it makes itself, a color almost nothing else in the deep can see. Its teeth are glassy and nearly invisible, so they don’t shine in the light of what it bites.',
+      sex: 'Very different. The female is long, black and toothed. The male is small, brown, toothless and has no working gut; he doesn’t eat at all once he’s grown.',
+      s: ['hiss', 40, 2],
+    },
+    'deep-fangtooth': {
+      g: 'fish', like: 'the common fangtooth, Anoplogaster cornuta',
+      lore: 'Their teeth are scratched, the way teeth get from biting something hard. Nothing down here is hard, except bone, and glass.',
+      fact: 'Its two longest teeth fit into sockets on either side of its brain when it closes its mouth.',
+      sex: 'Males and females look the same. The young look so different (spines, small teeth) they were once called a different fish.',
+      s: ['click', 52, 3],
+    },
+    'deep-angler': {
+      g: 'fish', like: 'a black seadevil, Melanocetus johnsonii, with her mate',
+      lore: 'Some of them carry more than one male. One carries six. The light on her lure is the brightest thing for a long way down.',
+      fact: 'The light isn’t hers. It’s bacteria living in the lure, and she can squeeze it off and on.',
+      sex: 'As different as it gets. She’s the fish. He’s tiny, bites into her, fuses to her blood, and spends the rest of his life as a part of her that makes sperm.',
+      s: ['groan', 36, 1],
+    },
+    'deep-loosejaw': {
+      g: 'fish', like: 'the stoplight loosejaw, Malacosteus niger',
+      lore: 'It hunts the other light-makers by a light none of them can see. Down here, that makes it nearly a ghost.',
+      fact: 'To see its own red light, it uses a pigment made from chlorophyll, which it gets from eating copepods that ate plants, a mile overhead.',
+      sex: 'Hard to tell. Males have bigger lights under their eyes.',
+      s: ['hiss', 46, 3],
+    },
+    'deep-snailfish': {
+      g: 'fish', like: 'a hadal snailfish, Pseudoliparis swirei',
+      lore: 'They don’t bother with the hollow fish, and the hollow fish don’t bother with them. Soft things last down here. Hard things crack.',
+      fact: 'Its skull isn’t fully closed. Bone that never hardened is what lets it live under eight kilometers of water.',
+      sex: 'Hard to tell. Females carry a few big eggs at a time.',
+      s: ['bubble', 72, 2],
+    },
+    'deep-hollow': {
+      g: 'others', like: 'nothing living. A school of fish skeletons',
+      lore: 'They swim the way a school of lanternfish swims. As if they remember how. They keep looking up, toward the far west, the way they came down.',
+      fact: 'In the real sea, a fish falls apart in days once the hagfish and the amphipods find it. These have been picked clean, and kept going.',
+      sex: 'There’s no telling, now.',
+      s: ['rasp', 44, 4],
+    },
+    'deep-tubeworm': {
+      g: 'worms', like: 'giant tube worms, Riftia pachyptila',
+      lore: 'They’re taller here than anywhere, as if they’ve been growing undisturbed since before the sea was salty.',
+      fact: 'The plume is red with a blood that carries oxygen and poison at once, sulfide, to the bacteria inside that feed it. Half its body is those bacteria.',
+      sex: 'Separate males and females, like us. The larvae drift off to find a vent of their own, and most never do.',
+      s: ['hum', 38, 2],
+    },
+    'deep-shrimp': {
+      g: 'crustaceans', like: 'vent shrimp, Rimicaris exoculata',
+      lore: 'Thousands crowd each chimney, just close enough to the heat. Too close and they cook. They push each other.',
+      fact: 'The patch on its back sees the dim glow of the hot water itself, light from heat, the only light some vents have ever had.',
+      sex: 'Females carry their eggs under them, away from the hottest water, and go farther from the vent to do it.',
+      s: ['click', 84, 6],
+    },
+    'deep-eelpout': {
+      g: 'fish', like: 'a vent eelpout, Thermarces cerberus',
+      lore: 'It lies with its tail toward the heat and its mouth toward the dark, and waits. It is never in a hurry. There’s no reason to be.',
+      fact: 'One of the few fish that lives right at the vents, eating the shrimp and snails that crowd them.',
+      sex: 'Males guard the eggs, coiled around them in a crack in the rock.',
+      s: ['slime', 46, 2],
+    },
+    'deep-scaly': {
+      g: 'shells', like: 'the scaly-foot snail, Chrysomallon squamiferum',
+      lore: 'The shells of the dead ones rust. The vent fields are full of little rusting shells.',
+      fact: 'The only animal known to build its armor out of iron, iron sulfide, from the water of the vent.',
+      sex: 'Both at once, and male and female in the same snail.',
+      s: ['tock', 66, 2],
+    },
+    'deep-archaea': {
+      g: 'others', like: 'archaea: single cells, older than bacteria',
+      lore: 'If anything here remembers the world before the sea, it’s these. They have been breathing the same rock for longer than there has been light to see it by.',
+      fact: 'Some archaea live in water hotter than boiling, held liquid by the weight of the sea above. One, called strain 121, can still grow at 121 degrees.',
+      sex: 'None. They split in two, and the two split in two.',
+      s: ['fizz', 90, 4],
+    },
+    'deep-cinder': {
+      g: 'fish', like: 'nothing known. Eels of the last volcano',
+      lore: 'They follow the heat as it moves through the rock. When a seam cools, they leave it. They know where the heat is going before it gets there.',
+      fact: 'Nothing with a backbone is known to live above about 50 degrees. These do.',
+      sex: 'Unknown. Nobody has been down here.',
+      s: ['hiss', 58, 3],
+    },
+    'deep-elder': {
+      g: 'others', like: 'a mat of archaea, very old, on the wall of a sealed cell',
+      lore: 'It isn’t saying the word to anyone. It says it the way it breathes. The word means the heat is going out of things. It has been going out of things for a very long time.',
+      fact: 'Real microbial mats can be thousands of years old, the same colony, growing a little each century.',
+      sex: 'None.',
+      s: ['bell', 50, 5],
+    },
+    'snailfish-skull': {
+      g: 'things', like: 'the skull of a hadal snailfish',
+      lore: 'It bends. Whatever lands on it, it bends, and comes back. It’s why they live where they live.',
+      fact: 'Fish at those depths carry a molecule, TMAO, that keeps their proteins in shape under pressure. They have so much of it they smell of it.',
+      s: ['bubble', 70, 2],
+    },
+    'pompeii-fleece': {
+      g: 'things', like: 'the tube of a Pompeii worm, Alvinella pompejana',
+      lore: 'The fleece is alive, bacteria growing like wool on its back. The worm feeds them with its own slime, and they keep the heat off it.',
+      fact: 'One of the most heat-tolerant animals there is: its tail can sit in water near 80 degrees while its head rests in 22.',
+      s: ['fizz', 76, 3],
+    },
+    'scaly-shell': {
+      g: 'things', like: 'a scaly-foot snail’s shell, plated in iron',
+      lore: 'Three layers: iron outside, then a soft layer that soaks up blows, then hard shell. Things that bite it crack their teeth.',
+      fact: 'People study it to make better armor.',
+      s: ['tock', 60, 3],
+    },
+    'strain-121': {
+      g: 'things', like: 'a smear of archaea from the hottest stone',
+      lore: 'They don’t mind being carried. They don’t mind anything. They’re still breathing the rock, a little of it, still on my skin.',
+      fact: 'Strain 121 was found in a black smoker. Heated to 130 degrees for two hours, it didn’t grow, but it didn’t die either.',
+      s: ['fizz', 94, 5],
+    },
+    'magmabeast': {
+      g: 'others', like: 'nothing known. Something that lives in the magma under the floor of the sea',
+      lore: 'It was here before the sea. Everything else came down to it, sooner or later, and it ate everything that came. The heat in the world’s vents is its breath, going out.',
+      fact: 'Real magma under the sea floor is around 1,200 degrees. The sea keeps it from boiling the water away by turning its skin to black glass the moment it touches.',
+      sex: 'There is only one.',
+      s: ['groan', 28, 3],
+    },
+
+    // Up in the sky places, and on the high ground out west (skylife.js)
+    'sky-thrift': {
+      g: 'flowers', like: 'sea thrift, Armeria maritima',
+      lore: 'It grows on the very edge of the island tops, where the wind off the drop is worst. The swans line their nests with it. It was blooming the day the squid fell.',
+      fact: 'It can grow in soil so full of salt, or of metals like copper and zinc, that nothing else will. Miners once looked for it to find ore.',
+      tell: 'Each flower is both male and female, but most plants can’t pollinate themselves: some have one kind of pollen and some another, and only the two kinds together make seed.',
+      means: 'Salt in the wind, thin soil, and nothing taller around to take the light. An edge.',
+      where: 'From sea cliffs right up to high, bare ridges. Never in shade.',
+      s: ['hush', 70, 2],
+    },
+    'edelweiss': {
+      g: 'flowers', like: 'edelweiss, Leontopodium nivale',
+      lore: 'Only on the coldest ridges out west, and on the lip of the island top where the waterfall goes over. Somebody planted the one on the lip. It is the only thing up there in a row.',
+      fact: 'The white star isn’t petals. It’s woolly leaves around a cluster of tiny yellow flowers. The wool soaks up the ultraviolet up there, like a sunscreen.',
+      tell: 'The little flowers in the middle are male on the outside of each cluster and female inside. Bees and flies do the rest.',
+      means: 'High, cold, bright, and dry underfoot. Limestone, usually.',
+      where: 'Bare rock and thin grass, high up: 1,800 to 3,400 m in the real mountains.',
+      s: ['hush', 84, 1],
+    },
+    'beard-lichen': {
+      g: 'lichens', like: 'old man’s beard, Usnea',
+      lore: 'It hangs thickest under the island where it rains. The roots that hold old bones are wrapped in it, as if it were tidying them away.',
+      fact: 'Pull a strand gently and it stretches: there’s a white elastic cord down the middle. That’s how you know it’s Usnea.',
+      tell: 'Neither. It’s a fungus and an alga living as one thing, and it spreads by dropping little crumbs that hold both.',
+      means: 'Clean air. It dies where the air is dirty, so where it grows long, nothing has fouled the sky.',
+      where: 'Hanging from rock and branches wherever cloud passes through. It drinks the cloud.',
+      s: ['hush', 58, 2],
+    },
+    'resurrection-fern': {
+      g: 'ferns', like: 'the resurrection fern, Pleopeltis polypodioides',
+      lore: 'Under the keel it stays curled and brown until something wet comes near. It opened for the squid. It doesn’t open for the birds.',
+      fact: 'It can lose almost all its water, three quarters or more, and live. Wet again, it is green within a day. Some have been dry for a hundred years and come back.',
+      tell: 'The fern itself isn’t male or female. Its spores grow into a tiny heart-shaped plant that is both, and that makes the next fern.',
+      means: 'Rain that comes and goes. Somewhere that dries out, and then gets soaked.',
+      where: 'Upside down on rock and old branches, wherever there’s air and passing wet.',
+      s: ['creak', 66, 2],
+    },
+    'ghost-fungus': {
+      g: 'lichens', like: 'the ghost fungus, Omphalotus nidiformis',
+      lore: 'It grows on the roots that hang out of the keel, on the dead ones. Its light is the only light under the island at night, apart from the glowworms.',
+      fact: 'Its gills glow green all the time, day and night, by the same chemistry as a firefly. It’s poisonous: it would make you sick, not kill you.',
+      tell: 'A fungus isn’t male or female. It has mating types, many of them, and any two different ones can join.',
+      means: 'Dead wood, damp, and shade. Something is rotting nearby, slowly.',
+      where: 'On dead roots and stumps, low and wet.',
+      s: ['hum', 48, 2],
+    },
+    'air-plant': {
+      g: 'flowers', like: 'air plants, Tillandsia',
+      lore: 'They cling under the keel and on the rock in the spray, and in the cloud, on nothing at all. Rain falling past is all they ever get.',
+      fact: 'The silver fuzz on the leaves is made of tiny scales that open when wet and drink, then close up to keep the water in.',
+      tell: 'Each flower is both. After it blooms, the plant grows little copies of itself at its base, called pups, and the mother slowly dies.',
+      means: 'Air that’s often wet, and light. They need nothing else.',
+      where: 'On branches, rock, wire, anywhere off the ground and in the open air.',
+      s: ['fizz', 80, 2],
+    },
+    'cloud-orchid': {
+      g: 'flowers', like: 'an epiphytic orchid (Orchidaceae)',
+      lore: 'They grow under the keel, from the hanging roots of trees that are gone. Their roots hang in the air below them, like they’re reaching for something that fell.',
+      fact: 'Its roots are wrapped in a white spongy skin, velamen, that soaks up water from the air in seconds. When wet, the roots turn green.',
+      tell: 'Each flower is both, but it can’t pollinate itself: the pollen is packed in tiny sacks that one particular insect has to carry away.',
+      means: 'Cloud forest: air that stays wet nearly all the time.',
+      where: 'High up, on trees and rock in the mist, not in soil.',
+      s: ['bell', 84, 2],
+    },
+    'lift-pods': {
+      g: 'flowers', like: 'nothing anyone up top has named. It never touches ground',
+      lore: 'They drift in the cloud under the islands. Some of the old ones are torn, and drift low, and hang just over the sea for a while, and then they’re gone.',
+      fact: 'Its bubbles are full of a gas lighter than air that it makes itself. In the cold of night they shrink and it sinks; at dawn it rises again.',
+      tell: 'Old pods let go of a single bubble with a seed knotted under it. Nobody has seen where they go.',
+      means: 'Cloud, and plenty of it. They wilt in dry air.',
+      where: 'The cloud sea. Only the cloud sea.',
+      s: ['pop', 78, 3],
+    },
+    'spray-liverwort': {
+      g: 'ferns', like: 'a liverwort, like Marchantia polymorpha',
+      lore: 'It covers the rock in the waterfall’s spray, where nothing else holds on. Among the first things to grow on land, it was here first up here too.',
+      fact: 'The little cups on it are full of green buds. A drop of rain hitting the cup throws them out, up to a meter away, and each grows a whole new plant.',
+      tell: 'Separate male and female plants. The females carry little umbrellas with fingers; the males carry flat discs. Sperm swims between them in the spray.',
+      means: 'Constant wet, and rock. It needs water to make more of itself.',
+      where: 'Wet rock, stream banks, spray. Low, always flat against something.',
+      s: ['drip', 72, 3],
+    },
+    'rain-harps': {
+      g: 'flowers', like: 'nothing anyone up top has named',
+      lore: 'They hang in the rain where it falls off the low island, and under the keel. On still nights, with no rain, they still hum a little. Nobody knows what plays them.',
+      fact: 'Each thread is a single long cell, hollow, with a seed at the end. The seeds fall when a thread is struck hard enough, and only then.',
+      tell: 'Nobody has seen two together. Every bulb up here might be the same plant.',
+      means: 'Rain, a lot of it, falling from somewhere high.',
+      where: 'Hanging from rock over a long drop, in the rain.',
+      s: ['notes', 69, 4],
+    },
+    'glider-dragonfly': {
+      g: 'insects', like: 'the wandering glider, Pantala flavescens',
+      lore: 'Out at sea, they come in on the wind from somewhere nobody’s been. Up here, they find blood from a long way off. They found mine.',
+      fact: 'They cross whole oceans, generation by generation: one trip of 18,000 km takes four lifetimes. They fly higher than any other dragonfly, over 6,000 m.',
+      sex: 'Males are a little redder on the body. They mate in the air, joined in a wheel, and the female lays eggs in any rain puddle, even a temporary one.',
+      s: ['fizz', 60, 2],
+    },
+    'mist-midges': {
+      g: 'insects', like: 'non-biting midges, Chironomidae',
+      lore: 'They dance in the same spot under the keel every evening, in the same column. The swans say it has been that column for longer than there have been swans.',
+      fact: 'A swarm is mostly males, dancing over a landmark. Females fly into it to find a mate. Grown, most of them never eat at all.',
+      sex: 'The males have the big feathery antennae. They use them to hear the female’s wingbeat.',
+      s: ['fizz', 96, 4],
+    },
+    'keel-glowworms': {
+      g: 'insects', like: 'glowworms, Arachnocampa',
+      lore: 'They hang where the keel is darkest. If a light goes out up there, they go out too, as if they’re listening for something.',
+      fact: 'They aren’t worms. They’re the larvae of a fungus gnat. The light comes from their gut, and the hungrier they are, the brighter they glow.',
+      sex: 'The adults have no mouths, and live only a few days, to mate. The females are sometimes caught in the larvae’s threads and eaten.',
+      s: ['bell', 90, 3],
+    },
+    'cloud-jelly': {
+      g: 'jellies', like: 'nothing anyone up top has named. Like a jellyfish, but in air',
+      lore: 'They drift in the cloud with the same slow pulse as the moon jellies far below. Some of the old ones say the moon jellies came down from up here.',
+      fact: 'Its bell holds air warmer than the cloud around it, and the warmth is what keeps it up. Cold nights, they sink.',
+      sex: 'Nobody has seen two together.',
+      s: ['hush', 76, 2],
+    },
+    'keel-bats': {
+      g: 'mammals', like: 'bats (Chiroptera)',
+      lore: 'They sleep under the island, among the roots. At night they go out over the cloud and eat the midges, and come back before the light.',
+      fact: 'A bat’s wing is a hand: the same bones as yours, stretched long, with skin between the fingers. It hangs by tendons that lock, so it doesn’t have to hold on.',
+      sex: 'Males and females look much the same. Females gather in nurseries and leave their pups in a crowd, and find their own again by its voice.',
+      s: ['chirp', 98, 3],
+    },
   };
 
   // ── The talking birds, by species ─────────────────────────────────────────
@@ -846,12 +1102,38 @@
     return out;
   }
 
+  // A bug or a bird made for one place up high (skylife.js: 'skybug:<place>', 'skybird:<place>').
+  function skyMade(key, e) {
+    const r = rng('facts:' + key), bird = /^skybird:/.test(key);
+    const out = { g: bird ? 'birds' : 'insects', generated: true, like: 'nothing anyone up top has named' };
+    out.lore = (e.line ? e.line + ' ' : '') + pick(r, bird ? [
+      'It is only ever seen in this one place. It may be the last of its kind, or the first.',
+      'The other birds don’t talk about it. When it’s near, they go quiet.',
+    ] : [
+      'Nobody had seen one until a squid did. It had been up here all along.',
+      'Things like it turn up where the sky is thin. There are more of them every year.',
+    ]);
+    out.fact = pick(r, bird ? [
+      'It never lands where anything can see it land.',
+      'Its song has one note in it that is too high to hear. Other birds flinch at it anyway.',
+    ] : [
+      'It lives for a single summer, up here, and spends most of it in the air.',
+      'It only comes out when the wind drops. Then it is everywhere at once.',
+      'It eats almost nothing. It came up here to mate, and to die.',
+    ]);
+    out.sex = bird ? 'Hard to tell, from below. Nobody has seen two together.' : pick(r, ['The males are smaller and brighter, and dance for the females in the air.', 'Females are bigger. Males are rarely seen at all.']);
+    out.s = bird ? ['chirp', 84 + Math.floor(r() * 12), 3] : ['fizz', 80 + Math.floor(r() * 16), 2 + Math.floor(r() * 3)];
+    return out;
+  }
+
   // Everything known about one thing. `e` is what the journal knows about it ({ key, kind,
   // name, generated, traits, lore, region }); `bird` is its birds.js roster entry, if it’s a bird.
   function facts(key, e, bird) {
     e = e || {};
     let f = null;
-    if (e.generated || /^(creature|plant|item):\d+$/.test(key)) {
+    if (/^sky(bug|bird):/.test(key)) {
+      f = skyMade(key, e);
+    } else if (e.generated || /^(creature|plant|item):\d+$/.test(key)) {
       f = generate(Object.assign({ key }, e));
     } else if (FACTS[key]) {
       f = Object.assign({}, FACTS[key]);
