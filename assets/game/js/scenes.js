@@ -32,6 +32,7 @@
       let skip = false;
       const onSkip = () => { if (opts.skippable && E.t - t0 > 1) { skip = true; } };
       window.addEventListener('pointerdown', onSkip);
+      SO.cutscene.begin();
       E.overlay = (ctx, W, H, t) => {
         const el = t - t0;
         const k = Math.min(1, el / dur);
@@ -45,8 +46,10 @@
           ctx.fillStyle = g; ctx.fillRect(0, 0, W, H);
         }
         ctx.restore();
+        if (SO.cutscene.skipped) { skip = true; }
         if (el >= dur || skip) {
           window.removeEventListener('pointerdown', onSkip);
+          SO.cutscene.end();
           if (!opts.keep) { E.overlay = null; }
           resolve();
         }

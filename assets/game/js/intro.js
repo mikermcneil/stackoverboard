@@ -124,7 +124,6 @@
   }
 
   function drawIslands(ctx, t) {
-    A.island(ctx, 310, 270, 260, { seed: 5, t, domes: [[-0.1, 0.11], [0.15, 0.08]], trees: 3, fall: { at: 0.32, w: 16, h: 220 } });
     A.island(ctx, 120, 470, 1140, { seed: 1, t, keel: 0.22, trees: 12, fall: { at: 0.4, w: 58, h: 1400 } });
     A.tower(ctx, 190, 460, 70, 300);
     A.dome(ctx, -60, 470, 210, { seed: 2 });
@@ -138,9 +137,9 @@
 
   function drawSwans(ctx, t, live) {
     const k = 1 + live * 1.5;
-    A.swan(ctx, 1020 + Math.sin(t * 0.3) * 30 - live * 260, 210 + Math.sin(t * 0.9) * 8, 1.3, t * 2.2 * k, -1, { eye: true });
-    A.swan(ctx, 700 + Math.sin(t * 0.25 + 1) * 20 - live * 400, 260 + Math.sin(t * 1.1) * 6, 0.5, t * 2.8 * k + 1, -1);
-    A.swan(ctx, 880 + Math.sin(t * 0.2 + 2) * 20 - live * 500, 320 + Math.sin(t) * 5, 0.25, t * 3.1 * k + 2, -1);
+    // (low and to the right, clear of the title)
+    A.swan(ctx, 1130 + Math.sin(t * 0.3) * 30 - live * 260, 400 + Math.sin(t * 0.9) * 8, 1.1, t * 2.2 * k, -1, { eye: true });
+    A.swan(ctx, 1320 + Math.sin(t * 0.25 + 1) * 20 - live * 400, 440 + Math.sin(t * 1.1) * 6, 0.45, t * 2.8 * k + 1, -1);
   }
 
   function drawHugeClouds(ctx, t, depthK) {
@@ -297,6 +296,8 @@
     // Page text follows the scroll.
     const title = document.getElementById('intro-title');
     if (title) { const a = 1 - U.smoothstep(0.02, 0.12, this.p); title.style.opacity = a; title.style.transform = `translateY(${-this.p * 260}px) scale(${1 + this.p * 0.15})`; title.style.visibility = a < 0.01 ? 'hidden' : 'visible'; }
+    const foot = document.querySelector('.intro-foot');
+    if (foot) { const a = 1 - U.smoothstep(0.01, 0.06, this.p); foot.style.opacity = a; foot.style.visibility = a < 0.01 ? 'hidden' : 'visible'; }
     TEXT.forEach(([id, a, b, c, d]) => {
       const el = document.getElementById('intro-' + id);
       if (!el) { return; }

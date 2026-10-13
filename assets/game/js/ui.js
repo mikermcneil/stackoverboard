@@ -62,7 +62,20 @@
       this.inspect$ = $('inspect');
       this.inspectCanvas$ = $('inspect-canvas');
       this.inspectLabel$ = $('inspect-label');
-      this.inspectCanvas$.addEventListener('pointerdown', (e) => { e.stopPropagation(); if (SO.E.inspected && !this.talking) { SO.E.interact(SO.E.inspected); } });
+      // The picture in the corner: if it's only a preview (hovering), clicking it picks that thing
+      // and goes to it; once it's picked, clicking it again does something with it.
+      this.inspectCanvas$.addEventListener('pointerdown', (e) => {
+        e.stopPropagation();
+        const E = SO.E;
+        if (this.talking || E.locked) { return; }
+        if (E.inspected) { E.interact(E.inspected); return; }
+        if (E.hover && !E.hover.hidden) { E.select(E.hover); }
+      });
+      this.hint$ = document.createElement('button');
+      this.hint$.id = 'hint-btn'; this.hint$.type = 'button'; this.hint$.setAttribute('aria-label', 'What was I doing?'); this.hint$.title = 'What was I doing?';
+      this.hint$.innerHTML = '<i></i><i></i><i></i>';
+      this.hint$.addEventListener('pointerdown', (e) => { e.stopPropagation(); const h = this._hint; this.setHint(null); if (h) { this.thought(h); } });
+      document.body.appendChild(this.hint$);
       this.card$ = $('card');
       this.fade$ = $('fade');
       $('speech').addEventListener('pointerdown', (e) => { e.stopPropagation(); this.advance(); });
@@ -78,9 +91,18 @@
         // Don't stack the same line twice (or say it again right after).
         if ((this.current && this.current.text === text) || this.queue.some((q) => q.text === text) || (this._lastText === text && U.now() - this._lastAt < 15000)) { resolve(); return; }
         this._lastText = text; this._lastAt = U.now();
-        // Background chatter gives way if the queue gets long.
-        if (opts.minor && this.queue.length >= 2) { resolve(); return; }
-        this.queue.push({ text, who, opts, resolve });
+        // Nothing piles up. The squid's own passing thoughts never wait in line: if anything else
+        // is being said, they're simply not said. And when something that matters comes up (a
+        // creature talking, a scene, a key line), idle chatter already waiting makes way for it.
+        const item = { text, who, opts, resolve };
+        const idle = (q) => q && (q.opts.minor || ((q.who === 'squid' || q.who === 'world' || q.who === 'gold') && !q.opts.key));
+        const scene = SO.E && SO.E.locked && !SO.E._going;
+        if (idle(item) && !scene && this.talking) { resolve(); return; }
+        if (!idle(item)) {
+          this.queue = this.queue.filter((q) => { if (idle(q)) { q.resolve(); return false; } return true; });
+          if (this.current && idle(this.current) && !this.current.revealedAt && !scene) { this.current.fast = true; }// (hurry it off)
+        }
+        this.queue.push(item);
         if (!this.current) { this._next(); }
       });
     },
@@ -129,7 +151,9 @@
       this.line$.appendChild(item.shown$); this.line$.appendChild(item.rest$);
       const color = COLORS[item.who] || COLORS.other;
       this.line$.style.color = color;
-      this.speaker = PORTRAITS[item.who] || (SO.portraits && SO.portraits.has(item.who)) ? item.who : null;
+      // (The squid never gets a portrait: the squid on screen acts the line out instead.)
+      this.speaker = item.who !== 'squid' && (PORTRAITS[item.who] || (SO.portraits && SO.portraits.has(item.who))) ? item.who : null;
+      if (item.who === 'squid' && SO.E && SO.E.emote) { SO.E.emote(item.opts.mood || (SO.portraits && SO.portraits.moodFor ? SO.portraits.moodFor(item) : 'neutral')); }
       this.portrait$.classList.toggle('show', !!this.speaker);
       this.portrait$.style.borderColor = color;
       this.ribbon$.classList.add('show');
@@ -205,6 +229,13 @@
 
     get talking() { return !!this.current || this.queue.length > 0; },
 
+    // When the squid is stuck, it doesn't say what to do next out of nowhere: a small thought
+    // bubble shows up instead, and the thought is only said if you click it.
+    setHint(text) {
+      this._hint = text || null;
+      if (this.hint$) { this.hint$.classList.toggle('show', !!text); }
+    },
+
     // Called every frame after the scene is drawn: the speaker's portrait, and
     // the thing you last clicked on (a live close-up of it, cut from the scene).
     renderPanels(t) {
@@ -223,10 +254,15 @@
         c.translate(100, 100);
         try { PORTRAITS[this.speaker](c, t); } catch (err) { /* a portrait failing shouldn't stop the talking */ }
       }
-      const E = SO.E, o = E.inspected;
+      const E = SO.E;
+      // Nothing picked, but hovering over something: just its picture, no words.
+      const preview = !E.inspected && E.hover && !E.hover.hidden && !this.talking ? E.hover : null;
+      const o = E.inspected || preview;
+      this.inspect$.classList.toggle('preview', !!preview);
       if (!o || o.hidden || !E.room || (E.room.actors.indexOf(o) === -1 && E.room.hotspots.indexOf(o) === -1)) {
         // Gone (picked up, swum off)? Keep the last close-up a moment, rather than empty water.
-        if (o) { E.inspected = null; this._goneAt = U.now(); }
+        if (o && o === E.inspected) { E.inspected = null; this._goneAt = U.now(); }
+        if (o && o === E.hover) { E.hover = null; }
         if (!this._goneAt || U.now() - this._goneAt > 2500) { this.inspect$.classList.remove('show'); }
         return;
       }
@@ -257,7 +293,7 @@
           try { c.drawImage(E.canvas, (sx - R) * d, (sy - R) * d, R * 2 * d, R * 2 * d, 0, 0, 240, 240); } catch (err) { /* off the edge */ }
         }
       }
-      const text = near && SO.story.describe ? SO.story.describe(o) : '';
+      const text = near && !preview && SO.story.describe ? SO.story.describe(o) : '';
       if (this.inspectLabel$.textContent !== text) { this.inspectLabel$.textContent = text; }
     },
 

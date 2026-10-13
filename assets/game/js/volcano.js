@@ -284,7 +284,7 @@
         if (a.teaches === 'burrow') {
           P.grant('burrow', 'I pushed an arm into the soft rock and it went in, and the rest of me after it. I can go through. Pushing hard, straight in.');
         } else {
-          P.grant('warp', 'For a moment I was in every spiral at once. The marks in the dark places, the hermit crab’s glass. They’re all one place, folded. Light one and I can go to another.');
+          P.grant('warp', 'For a moment I was everywhere the water folds, all at once. They’re all one place. If I touch a fold, I can go to another.');
           remember(room.key, a.x, a.y);
         }
         E.ring(E.squid.x, E.squid.y, '#ffb070', 600, 2);
@@ -357,7 +357,7 @@
     E.ring(x, y, '#bff8ea', 700, 1.6);
     if (SO.self && SO.self.bump) { SO.self.bump('warps'); }
     const n = (rt().warps = (rt().warps || 0) + 1);
-    if (n === 1) { SO.ui.thought('I went into the spiral and came out of this one. There was no in between. Or there was, and it was everywhere.'); }
+    if (n === 1) { SO.ui.thought('I went into the fold and came out of this one. There was no in between. Or there was, and it was everywhere.'); }
   }
 
   // The hermit crab out west: it walks into one spiral and out of the other.
@@ -376,7 +376,7 @@
       a.watch = close ? a.watch + dt : Math.max(0, a.watch - dt * 0.5);
       if (a.crossed && a.watch > 3 && !P.has('warp') && !E.locked) {
         a.crossed = 0;
-        P.grant('warp', 'It went into the glass on that spiral and came out of the glass on this one. It didn’t cross. The spirals are one place, folded. Light one and I can go to another.');
+        P.grant('warp', 'It went into the water over there and came out over here. It didn’t cross. The water is folded, in places. If I touch a fold, I can go to another.');
         remember(room.key, a.bx, a.y - 120);
       }
     },
@@ -420,7 +420,7 @@
       const key = room.key;
       (MAGMA[key] || []).forEach((m, i) => { E.addActor(room, Object.assign({ id: 'magma-' + i, type: 'magma', x: m.spiral ? m.x : m.x0, y: m.spiral ? m.y : room.h - 100 }, m)); });
       const sp = SPOTS()[key];
-      if (sp && !spirals(room).length) {
+      if (sp && !spirals(room).length && P.has('warp')) {// (only a squid that can warp ever sees the folds)
         const r = U.rng('warp-seq:' + key);
         const [x, y] = E.findFree(room.w * sp[0], room.h * sp[1]);
         E.addActor(room, { id: 'odd-warp', type: 'oddity', kind: 'spiral', x, y, seq: [0, 1, 2].map(() => 'WRBG'[Math.floor(r() * 4)]) });
@@ -463,7 +463,7 @@
       // Near a spiral: remembered, for later.
       spirals(room).forEach((a) => {
         if (!near(a, 380)) { return; }
-        if (remember(room.key, a.x, a.y) && P.has('warp')) { SO.ui.aside('Another spiral. The same one. I’ll be able to come back here.'); }
+        if (remember(room.key, a.x, a.y) && P.has('warp')) { SO.ui.aside('Another fold. I’ll be able to come back here.'); }
       });
     } catch (err) { console.error(err); }
   };

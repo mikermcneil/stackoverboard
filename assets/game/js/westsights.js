@@ -101,7 +101,7 @@
   SO.oddities.populate = function (room) {
     populate(room);
     const n = room.def.west;
-    if (!n || room.surfaceY === null) { return; }
+    if (!n || room.surfaceY === null || room.def.land) { return; }// (sights at sea only: not out on the land)
     const kind = sightFor(n);
     if (!kind) { return; }
     const dir = (n % 2) ? 1 : -1;

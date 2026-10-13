@@ -33,7 +33,6 @@
   const WEST = SO.rooms.WEST || { CROSSING: 60, WEST_END: 3600, RECALL: [''], landmarkAt: () => null, crossingName: (c) => c + ' crossing' };
   const SEED = () => (SO.world && SO.world.seed) || 1847;
   const baseOf = (n) => ((n - 1) % WEST.CROSSING) + 1;
-  const crossOf = (n) => Math.floor((n - 1) / WEST.CROSSING);
   const say = (text) => SO.ui.thought(text);
   const AU = () => SO.audio || {};
   const NOTE_HEX = { W: '#eef6fa', R: '#c8353f', B: '#3fc6d8', G: '#ffd36a' };
@@ -634,33 +633,8 @@
   });
 
   // ════════════════════════════════════════════════════════════════════════════
-  // LANDS: what the far west is like, place by place, past the wet desert.
-  // (Keyed by distance within a crossing; west.js's own bands still run 1-21.)
+  // DRESSING the places west.js makes, region by region.
   // ════════════════════════════════════════════════════════════════════════════
-  const LANDS = [
-    { from: 22, name: 'The dune sea', sand: '#efdcae', palette: 'warm', dunes: '#e8d4a0', things: ['ghost-crab', 'ghost-crab'], birds: ['tern', 'frigate'] },
-    { from: 26, name: 'The cactus shallows', sand: '#d8c8a0', palette: 'kelp', dunes: '#cdb890', cactus: true, things: ['spine-sponge'], birds: ['frigate'] },
-    { from: 30, name: 'The humming flats', sand: '#e0d0a8', palette: 'warm', dunes: '#e4d2a4', things: ['sea-skaters', 'booming-dune'], birds: ['tern'] },
-    { from: 34, name: 'The ribbon shallows', sand: '#cfc6b0', palette: 'glass', shallow: true, things: ['ribbonfish', 'ribbonfish'], dead: true, birds: ['pelican'] },
-    { from: 39, name: 'The bone coast', sand: '#d8d0bc', palette: 'glass', bones: true, things: ['shell-heap'], birds: ['frigate'] },
-    { from: 45, name: 'The dog plains', sand: '#d6c890', palette: 'kelp', things: ['cucumberbananadog', 'cucumberbananadog', 'cucumberbananadog'], birds: ['tern'] },
-    { from: 49, name: 'The schooling sands', sand: '#cfc0a0', palette: 'warm', heads: true, schools: true, things: [], birds: ['frigate'] },
-    { from: 54, name: 'The glass flats', sand: '#cfe0d8', palette: 'glass', glassy: true, things: ['fulgurite', 'fulgurite', 'fulgurite'], birds: ['tern'] },
-    { from: 58, name: 'The lifting ground', sand: '#d8c49a', palette: 'warm', columns: true, things: ['booming-dune'], birds: [] },
-  ];
-  // Extra things for the near bands, so even the first places out have more going on.
-  const NEAR = [
-    { from: 1, things: [] },
-    { from: 4, things: ['mudskipper', 'sea-star', 'sea-star'] },
-    { from: 8, things: ['flying-fish'] },
-    { from: 13, things: ['mudskipper', 'flying-fish'] },
-    { from: 19, things: ['ghost-crab'], birds: ['tern', 'pelican'] },
-  ];
-  // Later crossings: one of these, now and then, anywhere.
-  const FEATURES = ['salt', 'mirror', 'jellies', 'tar', 'mangrove', 'midden'];
-  const landFor = (base) => LANDS.slice().reverse().find((l) => base >= l.from) || null;
-  const nearFor = (base) => NEAR.slice().reverse().find((l) => base >= l.from);
-
   // Dunes, standing up out of the water behind everything (drawn once).
   function dunesProp(seed, color) {
     return { layer: 'back', draw(ctx, t, room) {
@@ -678,53 +652,57 @@
     } };
   }
 
+  // What each region (and phase) of the way west gets (west.js names the places; this only dresses them).
+  // things: kinds of thing (westlands' own); props: dunes, bones, columns, glassy, dead; birds: sea birds, near the coasts.
+  const DRESS = {
+    tidepools: [{ things: ['sea-star', 'sea-star', 'mudskipper'], birds: ['tern'] }],
+    shore: [{ things: ['mudskipper', 'ghost-crab'], birds: ['tern', 'pelican'] }],
+    desert: [
+      { things: ['flying-fish', 'ghost-crab'], birds: ['tern'] },
+      { things: ['ghost-crab', 'ghost-crab', 'booming-dune'], dunes: '#e8d4a0', heads: true, birds: ['frigate'] },
+      { things: ['fulgurite', 'fulgurite', 'spine-sponge'], glassy: true },
+      { things: ['salt-crust', 'fulgurite'], bones: true, columns: true, sand: '#f2ece0' },
+    ],
+    plains: [
+      { things: ['cucumberbananadog', 'cucumberbananadog'] },
+      { things: ['tar-seep'] },
+      { things: ['brine-shrimp', 'shell-heap'], dead: true },
+      { things: ['tar-seep'] },
+    ],
+    hills: [{}, {}, { birds: ['tern', 'pelican'] }],
+  };
   function enrich(d, n) {
-    const base = baseOf(n), c = crossOf(n), r = U.rng('westlands:' + n + ':' + SEED());
-    const W = d.w * RW, high = !!(WEST.typeOf && WEST.typeOf(n));
-    const land = high ? null : landFor(base), near = high ? null : nearFor(base);
-    // (Only the middle of the ground changes: the edges have to agree with the places next door.)
-    const mid = (fn) => { const f = d.terrain.floor; if (f && f.length > 2) { for (let i = 1; i < f.length - 1; i++) { f[i] = fn(f[i]); } } };
-    const add = (kind, o) => { const x = 300 + r() * (W - 600); const t0 = thing(kind, x, 0, Object.assign({ seed: r() * 10 }, o || {})); t0.y = kind === 'flying-fish' || kind === 'sea-skaters' ? 160 : kind === 'golden-jelly' || kind === 'brine-shrimp' ? 300 + r() * 200 : fy(d, x) - 20; d.actors.push(t0); };
-    if (land) {
-      if (!d.landmark) { d.name = land.name + (c ? ' (' + WEST.crossingName(c) + ')' : ''); }
-      if (!c) { d.palette = land.palette; }
-      d.sand = land.sand;
-      // The stalagmites belong to the wet desert; out here the ground is other things.
-      d.solids = d.solids.filter((s) => !(s.type === 'ellipse' && s.y === RH));
-      if (land.shallow) { mid((v) => Math.min(0.46, v + 0.1)); }
-      if (land.dunes) { d.props.push(dunesProp(U.hash('d' + n) % 1000, land.dunes)); }
-      if (land.cactus) {
-        for (let i = 0; i < 4; i++) { const x = 300 + i * 600 + r() * 160; d.actors.push(thing('spine-sponge', x, fy(d, x), { s: 0.9 + r() * 0.6, seed: r() * 10 })); }
-      }
-      if (land.bones) { d.props.push(bonesProp(U.hash('b' + n))); }
-      if (land.heads && !d.landmark) { d.props.push(headsProp(U.hash('h' + n))); }
-      if (land.schools) { d.props.push(schoolProp(U.hash('s' + n))); }
-      if (land.glassy) { d.props.push(glassFloorProp(U.hash('g' + n))); }
-      if (land.columns) { d.props.push(columnsProp(U.hash('c' + n))); }
-      if (land.dead) { const x = 400 + r() * (W - 800); d.props.push(deadFishProp(x, r() * 10)); }
-      land.things.forEach((k) => add(k));
-      (land.birds || []).forEach((type, i) => d.actors.push({ id: 'wbird-' + i, type, x: r() * W, y: -200, seed: r() * 10, home: { x: r() * W } }));
-    } else if (near) {
-      near.things.forEach((k) => add(k));
-      (near.birds || []).forEach((type, i) => d.actors.push({ id: 'wbird-' + i, type, x: r() * W, y: -200, seed: r() * 10, home: { x: r() * W } }));
+    const r = U.rng('westlands:' + n + ':' + SEED());
+    const W = d.w * RW;
+    const reg = WEST.regionAt ? WEST.regionAt(n) : null;
+    const list = reg && DRESS[reg.key], dress = list ? list[Math.min(list.length - 1, Math.floor(reg.local / 3))] : null;
+    const sea = !!(reg && reg.sea), cave = !!(reg && /crystal|aquifer/.test(reg.key)), sky = !!(reg && /canopy|clouds/.test(reg.key));
+    const add = (kind, o) => {
+      // On the ground, on dry land, or in the water, as the kind likes; never inside rock (placement.js checks too).
+      const x = 300 + r() * (W - 600);
+      const t0 = thing(kind, x, 0, Object.assign({ seed: r() * 10 }, o || {}));
+      t0.y = kind === 'flying-fish' || kind === 'sea-skaters' ? Math.max(160, (d.surfaceY || 150) + 10) : kind === 'golden-jelly' || kind === 'brine-shrimp' ? (d.surfaceY || 150) + 120 + r() * 120 : fy(d, x) - 20;
+      d.actors.push(t0);
+    };
+    if (dress) {
+      if (dress.sand) { d.sand = dress.sand; }
+      if (dress.dunes) { d.props.push(dunesProp(U.hash('d' + n) % 1000, dress.dunes)); }
+      if (dress.bones) { d.props.push(bonesProp(U.hash('b' + n))); }
+      if (dress.heads && !d.landmark) { d.props.push(headsProp(U.hash('h' + n))); }
+      if (dress.glassy) { d.props.push(glassFloorProp(U.hash('g' + n))); }
+      if (dress.columns) { d.props.push(columnsProp(U.hash('c' + n))); }
+      if (dress.dead) { const x = 400 + r() * (W - 800); d.props.push(deadFishProp(x, r() * 10)); }
+      // (never more than two of a kind in one place)
+      const seen = {};
+      (dress.things || []).forEach((k) => { seen[k] = (seen[k] || 0) + 1; if (seen[k] <= 2 && (k !== 'cucumberbananadog' || r() < 0.6)) { add(k); } });
+      (dress.birds || []).forEach((type, i) => d.actors.push({ id: 'wbird-' + i, type, x: r() * W, y: -200, seed: r() * 10, home: { x: r() * W } }));
     }
-    // The worst birds, only very far out.
-    if (base >= 40 || n > 240) { d.actors.push({ id: 'hookbill', type: 'hookbill', x: r() * W, y: -300, seed: r() * 10 }); }
-    if (base >= 50 || n > 600) { d.actors.push({ id: 'spearneck', type: 'spearneck', x: r() * W, y: -300, seed: r() * 10 }); }
-    // Later crossings: something extra, now and then.
-    if (c && !high && r() < 0.55) { const nm = d.name; feature(d, FEATURES[Math.floor(r() * FEATURES.length)], r); if (d.landmark) { d.name = nm; } }
+    // The worst birds: over open water and open ground, far out. (Not in caves, not up in the trees and clouds.)
+    if (!cave && !sky) {
+      if ((sea && n >= 40) || (!sea && reg && /plains|hills/.test(reg.key))) { d.actors.push({ id: 'hookbill', type: 'hookbill', x: r() * W, y: -300, seed: r() * 10 }); }
+      if (sea && n >= 50) { d.actors.push({ id: 'spearneck', type: 'spearneck', x: r() * W, y: -300, seed: r() * 10 }); }
+    }
     if (d.landmark) { buildLandmark(d, n, r); }
-  }
-
-  function feature(d, f, r) {
-    const W = d.w * RW, x = 400 + r() * (W - 800);
-    d.feature = f;
-    if (f === 'salt') { d.name += ', salt pans'; d.actors.push(thing('salt-crust', x, fy(d, x)), thing('brine-shrimp', x + 300, 380)); d.sand = '#f2f0e8'; }
-    else if (f === 'mirror') { d.name += ', mirror water'; d.props.push(mirrorProp()); }
-    else if (f === 'jellies') { d.name += ', the jelly lake'; d.actors.push(thing('golden-jelly', x, 400)); }
-    else if (f === 'tar') { d.name += ', tar seeps'; d.actors.push(thing('tar-seep', x, fy(d, x))); }
-    else if (f === 'mangrove') { d.name += ', drowned trees'; d.props.push(mangroveProp(U.hash(d.key))); }
-    else if (f === 'midden') { d.name += ', shell heaps'; d.actors.push(thing('shell-heap', x, fy(d, x)), thing('shell-heap', U.clamp(x + 700, 300, W - 300), fy(d, U.clamp(x + 700, 300, W - 300)))); }
   }
 
   // ── Props for the lands (cached where heavy) ─────────────────────────────────
@@ -742,22 +720,6 @@
       for (let i = 0; i < 2; i++) {
         const x = 500 + i * 1300 + r() * 300, y = floorAt(room, x) + 30, s = 0.6 + r() * 0.4;
         ctx.drawImage(sphinxFace(), x - 300 * s, y - 360 * s, 600 * s, 380 * s);
-      }
-    } };
-  }
-  function schoolProp(seed) {
-    return { layer: 'mid', draw(ctx, t, room) {
-      // A school that keeps making shapes: a hand, a face, a squid, then nothing.
-      const shape = Math.floor(t / 9 + seed) % 4, k = U.window((t % 9) / 9, 0.1, 0.3, 0.7, 0.9);
-      const cx = room.w * 0.5 + Math.sin(t * 0.05) * 300, cy = 450;
-      for (let i = 0; i < 90; i++) {
-        const f = i / 90, an = f * TAU;
-        let tx = Math.cos(an) * 180, ty = Math.sin(an) * 100;
-        if (shape === 0) { tx = (f - 0.5) * 300; ty = (i % 5 - 2) * 30 - Math.abs(Math.sin(f * 15)) * 80; }
-        else if (shape === 1) { tx = Math.cos(an) * 140; ty = Math.sin(an) * 170; if (i % 9 === 0) { tx *= 0.3; ty = -40; } }
-        else if (shape === 2) { tx = (f - 0.3) * 400; ty = f > 0.5 ? Math.sin(f * 40) * 60 * (f - 0.5) : Math.sin(an * 2) * 40; }
-        const wx = cx + U.lerp(Math.sin(i * 7.1 + t * 0.6) * 260, tx, k), wy = cy + U.lerp(Math.cos(i * 3.3 + t * 0.5) * 140, ty, k);
-        A.fish(ctx, wx, wy, 0.6, Math.sin(t + i) * 0.4, 30, t + i, { silver: true, noLine: true });
       }
     } };
   }
@@ -782,27 +744,6 @@
   }
   function deadFishProp(x, seed) {
     return { layer: 'mid', draw(ctx, t, room) { A.fish(ctx, x, floorAt(room, x) - 10, 3.2, 0.1 + Math.sin(seed) * 0.1, 30, 0, { dead: true }); } };
-  }
-  function mirrorProp() {
-    return { layer: 'back', draw(ctx, t, room) {
-      // Water so still the islands show in it, upside down, under the surface.
-      const sy = room.surfaceY;
-      ctx.save(); ctx.globalAlpha = 0.18; ctx.translate(SO.E.cam.x * 0.9, sy * 2 + 40); ctx.scale(1, -1);
-      (room.def.isles && room.def.isles.length ? room.def.isles : [[600, 0.8], [1700, 1.1]]).forEach(([ix, s], i) => A.island(ctx, ix, sy - 250 - i * 30, 240 * s, { seed: 40 + i, trees: 3, lw: 0.8, domes: [] }));
-      ctx.restore();
-    } };
-  }
-  function mangroveProp(seed) {
-    return { layer: 'mid', draw(ctx, t, room) {
-      const img = sprite('mangrove:' + (seed % 3), 400, 700, (c) => {
-        const r = U.rng(seed % 3);
-        c.strokeStyle = '#4a3a2a'; c.lineCap = 'round';
-        for (let i = 0; i < 9; i++) { c.lineWidth = 6 + r() * 4; c.beginPath(); c.moveTo(200 + (r() - 0.5) * 60, 200); c.quadraticCurveTo(200 + (r() - 0.5) * 300, 420, 200 + (r() - 0.5) * 380, 700); c.stroke(); }
-        c.lineWidth = 22; c.beginPath(); c.moveTo(200, 210); c.lineTo(205, 0); c.stroke();
-        c.fillStyle = '#3a5a2a'; c.beginPath(); c.ellipse(205, 10, 160, 60, 0, 0, TAU); c.fill();
-      });
-      for (let i = 0; i < 3; i++) { const x = 300 + i * 900 + seed % 300; ctx.drawImage(img, x - 200, floorAt(room, x) - 690); }
-    } };
   }
 
   // ════════════════════════════════════════════════════════════════════════════
@@ -1449,6 +1390,6 @@
     'hookbill': (c, t) => { c.save(); c.scale(0.42, 0.42); c.translate(0, -30); SO.actorTypes.hookbill.draw(c, { x: 0, y: 0, seed: 1, state: 'circle' }, null, t); c.restore(); },
     'spearneck': (c, t) => { c.save(); c.scale(0.18, 0.18); c.translate(-40, -150); SO.actorTypes.spearneck.draw(c, { x: 0, strike: 0.5 + 0.5 * Math.sin(t), tx: 120, ty: 260 }, fakeRoom(0, 200), t); c.restore(); },
   });
-  SO.westlands = { enrich, LANDS, FEATURES, KINDS, IN, B };
+  SO.westlands = { enrich, DRESS, KINDS, IN, B };
 
 })();

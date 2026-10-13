@@ -1315,8 +1315,13 @@
         const fired = {};
         cv.style.opacity = '1';
         const t0 = U.now();
+        SO.cutscene.begin();
         const frame = () => {
           const t = (U.now() - t0) / 1000;
+          if (SO.cutscene.skipped) {// skipped: no more of it (and no more of its words)
+            SO.cutscene.end(); SO.ui.clear && SO.ui.clear();
+            cv.style.opacity = '0'; setTimeout(resolve, 260); return;
+          }
           cues.forEach((cu, i) => { if (!fired[i] && t >= cu[0]) { fired[i] = true; try { cu[1](); } catch (err) { /* a missing sound is fine */ } } });
           ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
           ctx.clearRect(0, 0, W, H);
@@ -1325,6 +1330,7 @@
             ctx.save(); sc.draw.call(sc, ctx, W, H, t); ctx.restore();
           } catch (err) { console.error(err); }
           if (t < sc.dur) { requestAnimationFrame(frame); return; }
+          SO.cutscene.end();
           cv.style.opacity = '0';
           setTimeout(resolve, 260);
         };

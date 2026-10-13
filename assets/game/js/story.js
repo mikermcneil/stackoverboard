@@ -209,7 +209,7 @@
     'The most-discussed Sails issue ever is #124, “Associations,” from February 2013. Over 250 comments. Everyone wanted to be connected to something.',
     'Mike McNeil has made more than 4,000 commits to Sails. If each one were an arm, it would be a very busy squid.',
     'Someone asked for Sails to move from Grunt to Gulp in 2014. Nearly a hundred comments. Down here, a grunt is a kind of fish.',
-    'Issue #6191 asked Sails to populate things recursively. Associations inside associations inside associations. Like the spirals in the dark.',
+    'Issue #6191 asked Sails to populate things recursively. Associations inside associations inside associations. Like a squid inside a whale inside the sea.',
     'Sails.js hit the Hacker News front page in March 2013: “Realtime MVC framework for Node.js.” 186 points. The fish noticed.',
     'In December 2015, a Hacker News thread asked “Is Sails.js dying?” It wasn’t. It still isn’t. It comes up a lot.',
     'On Hacker News, someone called Sails “basically Node on Rails.” Rails are for trains. Sails are for boats. Squids are for neither.',
@@ -443,9 +443,10 @@
       }
       if (this.rt.lastProgressAt === undefined) { this.rt.lastProgressAt = E.t; }
       const stuckAfter = this.ch === 3 ? 60 : 120;// (getting to chapter 4 is the easiest place to get lost)
+      if (UI._hint && E.t - this.rt.lastProgressAt < stuckAfter) { UI.setHint(null); }// (moving along again: never mind)
       if (!E.locked && !UI.talking && E.t - this.rt.lastProgressAt > stuckAfter && (!this.rt.hintAt || E.t - this.rt.hintAt > stuckAfter * 0.8)) {
         this.rt.hintAt = E.t;
-        UI.thought(this.hint());
+        UI.setHint(this.hint());// (a small thought bubble; the hint is only said if it's clicked)
       }
     },
 

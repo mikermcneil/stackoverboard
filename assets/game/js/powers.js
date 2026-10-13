@@ -49,7 +49,7 @@
     crawl: { name: 'Spidercrawl', line: 'Push along rock and I go flat to it, all arms, and fast. Out of the water too, for a moment.' },
     drift: { name: 'Drift', line: 'Out of the water, holding a direction, I spread out and fall slowly. Rising air carries me up.' },
     burrow: { name: 'Burrow', line: 'Press hard into soft rock or sand and I go through it, a little way.' },
-    warp: { name: 'The folded place', line: 'Light a spiral and it takes me to the next one. They are all one place.' },
+    warp: { name: 'The folded place', line: 'Touch a fold and it takes me to another one I’ve been near. They are all one place.' },
   };
 
   // Which way the player wants to go right now (keys, or where they pointed), and how much.
@@ -266,6 +266,11 @@
     ctx.restore();
   }
 
+  // Words the story teaches (in their own time, from someone who matters). A creature never
+  // gets there first: until the story has taught it, the creature just goes about its life.
+  const PLOT_WORDS = ['glow', 'open', 'calm', 'cloud', 'wake', 'call'];
+  const plotLocked = (K) => PLOT_WORDS.includes(K.word) && !knows(K.word);
+
   SO.actorTypes.watchling = {
     r: 50, touch: true, talk: true,
     init(a, room) {
@@ -282,14 +287,18 @@
       const range = a === E.inspected ? 1000 : 560;
       const d = U.dist(a.x, a.y, sq.x, sq.y);
       a.watch = d < range && !sq.inAir ? (a.watch || 0) + dt : Math.max(0, (a.watch || 0) - dt * 3);
-      const time = E.t + a.phase, cyc = Math.floor(time / K.period);
-      if (a.cycle !== cyc && !a.perf) {
-        a.cycle = cyc;
-        // (It only bothers saying it when something's around to see.)
-        if (d < 1100 && !E.locked && !(SO.ui.important)) {
-          a.perf = { t: 0, saw: d < range, said: K.word };
-          E.showPattern(a.x, a.y, K.word, { voice: 9, gap: 520, above: 70 });
-        }
+      // It says its word (and then does it) only: once, the first time a squid that doesn't know the
+      // word comes by; and whenever it's picked. Never on its own, over and over.
+      a.touch = !plotLocked(K);
+      const picked = E.inspected === a;
+      if (!picked) { a._pickedPerf = false; }
+      let go = false;
+      if (picked && !a._pickedPerf && !a.perf) { a._pickedPerf = true; go = true; }
+      else if (!plotLocked(K) && !knows(K.word) && !has('pw:shown:' + a.kind) && d < 900 && !a.perf) { save().flag('pw:shown:' + a.kind); go = true; }
+      if (a._again && !a.perf) { a._again = false; go = true; }
+      if (go && !plotLocked(K) && !E.locked && !SO.ui.important) {
+        a.perf = { t: 0, saw: d < range, said: K.word };
+        E.showPattern(a.x, a.y, K.word, { voice: 9, gap: 520, above: 70 });
       }
       if (a.perf) {
         const P = a.perf, seq = 1.7;
@@ -313,7 +322,12 @@
     },
     draw(ctx, a, room, t) { WATCH[a.kind].draw(ctx, a, t, a.k || 0); },
     light(a) { const K = WATCH[a.kind]; return K.light ? K.light(a) : null; },
-    onTouch(a) { SO.ui.thought(WATCH[a.kind].look); },
+    onTouch(a) {
+      const K = WATCH[a.kind];
+      if (!a._looked) { a._looked = true; SO.ui.thought(K.look); }
+      a._again = true;// (and it says it again, for you)
+      if (!knows(K.word) && !has('q:watch:' + a.kind)) { S.flag('q:watch:' + a.kind); setTimeout(() => SO.ui.aside('It said something with its skin, and then it did it. If I stay close and watch it all the way through, I could learn that.'), 2500); }
+    },
   };
 
   // ══════════════════════════════════════════════════════════════════════════

@@ -35,7 +35,7 @@
       if (E.mode !== 'play' || document.hidden || !E.room || (SO.journal && SO.journal.open)) { return; }
       if (!this.active) {
         const ch = SO.story.ch || 0;
-        if (ch < 2 || ch >= 8 || E.locked || (SO.fp && SO.fp.playing) || SO.ui.important || E.room.def.region === 'home' || E.room.def.safe) { return; }
+        if (ch < 2 || ch >= 8 || E.locked || (SO.fp && SO.fp.playing) || SO.ui.important || E.room.def.region === 'home' || E.room.def.safe || (SO.danger && !SO.danger.at(0.6))) { return; }
         this.nextIn -= dt;
         if (this.nextIn < 0) { this.start(); }
         return;

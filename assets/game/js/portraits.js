@@ -1350,7 +1350,7 @@
       const held = !!E.locked && !E._going;
       if (who === 'gold') { return cut; }
       // the squid's own face only in real scenes, or answering someone mid-conversation
-      if (who === 'squid') { return cut || (held && U.now() - (SO.ui._creatureAt || -1e9) < 15000); }
+      if (who === 'squid') { return false; }// (never the squid's own face: the squid on screen acts it out)
       return cut || held;
     },
 

@@ -71,8 +71,8 @@
   // above it). climbs: { local: 'up' | 'down' | 'aq' } between place `local` and the next one.
   // enter: how you come into the region from the east. phases: names, three places each.
   const REGIONS = [
-    { key: 'reef', name: 'The western reef', screens: 2, kind: 'water', dims: 'water', depth: [130, 180], palette: 'warm', sand: '#e2d3a0', fish: 14, phases: ['The western reef'] },
-    { key: 'tidepools', name: 'The tidepool coast', screens: 2, kind: 'shore', dims: 'water', depth: [110, 170], palette: 'glass', sand: '#bdb39a', fish: 8, phases: ['The tidepool coast'] },
+    { key: 'reef', name: 'The western reef', screens: 2, kind: 'water', dims: 'water', depth: [130, 180], palette: 'warm', sand: '#e2d3a0', fish: 10, phases: ['The western reef'] },
+    { key: 'tidepools', name: 'The tidepool coast', screens: 2, kind: 'shore', dims: 'water', depth: [110, 170], palette: 'glass', sand: '#bdb39a', fish: 6, phases: ['The tidepool coast'] },
     { key: 'shore', name: 'The shore', screens: 1, kind: 'shore', dims: 'land', depth: [60, 120], palette: 'warm', sand: '#e6d6a8', fish: 3, phases: ['The shore'] },
     { key: 'desert', name: 'The wet desert', screens: 10, kind: 'land', dims: 'land', depth: [-30, 60], palette: 'warm', sand: '#efe2bd', fish: 1, land: true, phases: ['The wet desert', 'The dune sea', 'The cactus flats', 'The dry pan'] },
     { key: 'river', name: 'The river', screens: 8, kind: 'river', dims: 'land', depth: [150, 240], palette: 'kelp', sand: '#b8a07a', fish: 4, land: true, elev: [10, 90], phases: ['The river mouth', 'The red gorge', 'Below the falls'], climbs: { 7: 'up' } },
@@ -238,19 +238,6 @@
   // ════════════════════════════════════════════════════════════════════════════
   // SCENERY: things drawn behind and on the land. Nothing here is solid.
   // ════════════════════════════════════════════════════════════════════════════
-  const SPR = new Map();
-  function sprite(key, w, h, fn) {
-    let c = SPR.get(key);
-    if (c) { return c; }
-    if (typeof document === 'undefined' || !document.createElement) { return null; }
-    c = document.createElement('canvas'); c.width = Math.ceil(w); c.height = Math.ceil(h);
-    const g = c.getContext && c.getContext('2d');
-    if (!g) { return null; }
-    fn(g, w, h);
-    SPR.set(key, c);
-    if (SPR.size > 80) { SPR.delete(SPR.keys().next().value); }
-    return c;
-  }
   const camX = () => (SO.E && SO.E.cam ? SO.E.cam.x : 0);
 
   // A far range behind everything: mountains, mesas, hills, forest, standing up from `base`.
@@ -600,7 +587,8 @@
   }
 
   // Places for things on the ground, and the stretches between water.
-  const wetAt = (ctx, d, x) => (ctx.depthAt(x) >= 45) || (d.waterRects || []).some((w) => x > w.x && x < w.x + w.w && ctx.groundY(x) - 10 < w.y + w.h && ctx.groundY(x) + 60 > w.y);
+  const wetAt = (ctx, d, x) => (ctx.depthAt(x) >= 45) || (d.waterRects || []).some((w) => x > w.x && x < w.x + w.w && ctx.groundY(x) - 10 < w.y + w.h && ctx.groundY(x) + 60 > w.y)
+    || (d.rain || []).some((z) => x > z.x0 && x < z.x1 && (z.bot === undefined || z.bot >= ctx.groundY(x) - 20));// (rain on the ground: nearly breathing)
   function dryRuns(ctx, d) {
     const runs = [];
     let start = null;
@@ -611,7 +599,6 @@
     }
     return runs;
   }
-  function land(ctx, kind, x, o) { return Object.assign({ id: kind + '-' + Math.round(x), type: 'thing', kind, x, y: ctx.groundY(x) - 14, seed: ctx.r() * 10 }, o || {}); }
 
   // Puddles on dry ground: little pools (water above the water line) where the ground is high.
   function puddle(ctx, d, x, w, deep) {
@@ -668,9 +655,8 @@
         d.solids.push({ type: 'rect', x: x - w / 2, y: top, w, h: g - top + 60 });
         if (i !== 1) { d.actors.push({ id: 'lungfish-' + i, type: 'lungfish', x, y: top - 14, seed: r() * 10 }); }
       });
-      // A tidepool up on the sand, with something floating in it (see items.js: the float).
+      // A tidepool up on the sand.
       puddle(ctx, d, ctx.W * 0.56, 220, 80);
-      d.floatAt = [ctx.W * 0.56, ctx.groundY(ctx.W * 0.56) - 10];
     });
     const list = [];
     for (let i = 0; i < 10; i++) { list.push(['grass', 900 + i * 90 + r() * 40, 0.7, Math.floor(r() * 1000), { dry: true, col: '#a8a868' }]); }
@@ -744,6 +730,8 @@
     } else { ctx.depth = (u) => 200 + 60 * noise(u, 4, s); }
     return r;
   }
+  // Which climb of its region this is (0, 1, 2...), by the place it starts from.
+  const climbIndex = (ctx, local) => Object.keys(ctx.R.climbs || {}).map(Number).sort((a, b) => a - b).indexOf(local);
   M.mountains = (ctx, d) => {
     const r = highShape(ctx, d), ph = ctx.phase;
     if (ph === 2 && !/falls|pooltop|brink/.test(d.htype)) { d.htype = 'ridge'; const s = ctx.n; ctx.depth = (u) => 210 - 300 * bump(u, 0.5 + 0.1 * noise(0, 1, s), 0.15); }
@@ -751,20 +739,26 @@
     const list = [];
     for (let i = 0; i < 9; i++) { const x = 150 + i * 280 + r() * 100; list.push([ph >= 2 ? (i % 2 ? 'grass' : 'snowpile') : (i % 3 ? 'pine' : 'shrub'), x, 0.6 + r() * 0.4, Math.floor(r() * 1000), { dry: true, col: ph >= 2 ? '#8a9a6a' : undefined, snow: ph >= 3 }]); }
     d.props.push(plants(list));
-    d.name = ({ falls: 'The foot of a waterfall', pooltop: 'The pool above the falls' })[d.htype] || d.name;
+    const fallsN = ['Under the first falls', 'Under the lake falls', 'Under the scree falls'], topN = ['Above the first falls', 'The lake above the falls', 'Above the scree falls'];
+    if (d.htype === 'falls') { d.name = fallsN[climbIndex(ctx, ctx.local)] || d.name; }
+    if (d.htype === 'pooltop') { d.name = ctx.local === 0 ? 'The top of the great falls' : (topN[climbIndex(ctx, ctx.local - 1)] || d.name); }
     if (ph >= 2) { d.snow = 0.3; }
   };
   M.snow = (ctx, d) => {
     const r = highShape(ctx, d), ph = ctx.phase;
     d.props.push(range({ seed: 51 + ph, col: '#9fb0be', h: 520, par: 0.3, snow: 0.6, n: 9 }), range({ seed: 57 + ctx.n, col: '#7d8fa0', h: 300, par: 0.5, snow: 0.4 }));
-    if (d.htype === 'lake' || (ph === 1 && d.htype === 'stream')) {// a frozen lake: ice across the top, with holes to breathe at
+    if (d.htype === 'snowfield' && (ctx.local === 1 || ctx.local === 5)) {// a frozen lake: ice across the top, with holes to breathe at
       d.htype = 'frozen';
+      const s = ctx.n * 1.7;
+      ctx.depth = (u) => 220 + 220 * Math.sin(U.clamp(u, 0, 1) * Math.PI) + 40 * noise(u, 4, s);
       ctx.after.push(() => {
         const W = ctx.W;
         for (let i = 0; i < 3; i++) { const x0 = W * (0.12 + i * 0.3), w = W * 0.2; d.solids.push({ type: 'rect', x: x0, y: ctx.sY - 14, w, h: 34, color: '#cfe6f0', ice: true }); }
       });
       d.name = 'A frozen lake';
     }
+    if (ph === 1 && d.htype === 'snowfield') { d.name = 'Over the ice caves'; }
+    if (ph === 2 && d.htype === 'snowfield') { d.name = ctx.local === ctx.screens - 2 ? 'The top of the pass' : 'The pass'; }
     if (d.htype === 'sinkhole') { d.name = 'The ice caves, above'; }
     if (d.htype === 'spring') { d.name = 'Out of the ice'; }
     if (d.htype === 'brink') { d.name = 'The mouth of the mountain'; }
@@ -775,8 +769,8 @@
   };
   M.conifer = (ctx, d) => {
     const r = highShape(ctx, d), ph = ctx.phase;
-    if (d.htype === 'brink') { d.name = 'Where the stream goes over'; }
-    if (d.htype === 'falls') { d.name = 'Under the falls, in the pines'; }
+    if (d.htype === 'brink') { d.name = ['Where the high stream goes over', 'Where the pine stream goes over'][climbIndex(ctx, ctx.local)] || 'Where the stream goes over'; }
+    if (d.htype === 'falls') { d.name = ['Under the high falls, in the pines', 'Under the pine falls'][climbIndex(ctx, ctx.local - 1)] || 'Under the falls, in the pines'; }
     if (d.htype === 'spring') { d.name = 'The spring under the pines'; }
     d.props.push(range({ seed: 61, col: '#7d8f9a', h: 420 - ph * 100, par: 0.3, snow: 0.3 }), range({ seed: 67 + ctx.n, col: '#2e4636', h: 160, par: 0.5, shape: 'trees', n: 30 }));
     const list = [];
@@ -864,6 +858,7 @@
       ctx.depth = (u) => Math.max(base(u), ...wells.map((c) => 380 * bump(u, c, 0.04)));
     }
     if (ph === 1) { d.dryLong = true; }
+    if (ctx.local === 1) { ctx.after.push(() => { const x = wells[0] * ctx.W; d.floatAt = [x, ctx.sY - 8]; }); }// a float, caught in the first well, before the long dry (westlife.js)
     d.props.push(range({ seed: 81, col: 'rgba(160,150,110,0.55)', h: 70, par: 0.6, shape: 'round', n: 8 }), skyWash('#8ab8d8', '#e8dcc0'));
     const list = [];
     for (let i = 0; i < 26; i++) { list.push(['grass', 60 + i * 96 + r() * 40, 0.9 + r() * 0.6, Math.floor(r() * 1000), { dry: true, col: ph === 1 ? '#c8b060' : '#a8a050' }]); }
@@ -953,16 +948,19 @@
       const n = ph === 1 ? 3 : 4;
       for (let i = 0; i < n; i++) {
         const x = W * ((i + 0.6) / (n + 0.4)) + (r() - 0.5) * 80;
-        if (ctx.right === 'up' && x > W * 0.22 && x < W * 0.6) { continue; }
+        if (ctx.right === 'up' && x > W * 0.2) { continue; }// (the trunk we came up, and the hole in it)
         const g = ctx.groundY(x);
         d.waterRects.push({ x: x - 70, y: g - 76, w: 140, h: 80, look: 'brom' });
       }
-      if (ph >= 1) {// a cloud drifting over, low enough to get into
-        d.waterRects.push({ x: W * 0.4, y: ctx.groundY(W * 0.5) - 330, w: 420, h: 170, look: 'cloud', drift: { x0: W * 0.2, x1: W * 0.62, sp: 0.12 } });
+      if (ph >= 1) {// a cloud drifting over, low enough to get into, raining as it goes
+        const cy = ctx.groundY(W * 0.5) - 330;
+        d.waterRects.push({ x: W * 0.4, y: cy, w: 420, h: 170, look: 'cloud', drift: { x0: W * 0.2, x1: W * 0.62, sp: 0.12 } });
+        d.rain.push({ x0: W * 0.36, x1: W * 0.56, top: cy + 150, bot: ctx.groundY(W * 0.46) + 10, a: 0.3 });
       }
       if (ctx.local === ctx.screens - 1 || ph === 2) { edgeClouds(ctx, d); }
     });
-    d.actors.push({ id: 'troop', type: 'thing', kind: 'monkey-troop', x: W * 0.7, y: ctx.H * 0.35 });
+    // A troop of monkeys, here and there in the crowns (westlife.js). They answer to the old one.
+    if ([1, 3, 5, 6].includes(ctx.local)) { ctx.after.push(() => { const x = W * (ctx.local % 2 ? 0.62 : 0.4); d.actors.push({ id: 'troop', type: 'thing', kind: 'monkey-troop', x, y: ctx.groundY(x) - 30 }); }); }
   };
 
   // ── The cloud sea: clouds to swim in, gaps to cross (rainbows), the old one's tree, the rain road ──
@@ -975,14 +973,19 @@
     ctx.after.push(() => {
       edgeClouds(ctx, d);
       const B = CLOUD_BAND;
-      if (local === 6) {// the old one's tree: a great crown in the middle, clouds east, a gap west
-        d.waterRects.push({ x: 320, y: B[0] + 20, w: 520, h: 220, look: 'cloud' });
-        d.waterRects.push({ x: 1380, y: 600, w: 340, h: 160, look: 'cloud' });
-        d.solids.push({ type: 'ellipse', x: 1150, y: 980, rx: 420, ry: 60, color: '#4a3424', branch: true });
-        d.solids.push({ type: 'rect', x: 1110, y: 1000, w: 80, h: 600, color: '#4a3424' });
-        d.rain.push({ x0: 1380, x1: 1720, top: 760, bot: 980, a: 0.4 });
-        d.arena = { x0: 300, x1: 2100, branchY: 920, rainbow: [320, 760, 1020, 820] };
-        d.actors.push({ id: 'old-one', type: 'monkeyBoss', x: 900, y: 860 });
+      if (local === 6) {// the old one's tree: a great crown in the middle, a cloud bank east, a gap west (westlife.js: the old one)
+        d.waterRects.push({ x: 1650, y: 600, w: 640, h: 300, look: 'cloud' });// the cloud bank, east
+        d.waterRects.push({ x: 920, y: 450, w: 380, h: 150, look: 'cloud' });// a little cloud over the crown
+        d.waterRects.push({ x: 1880, y: 890, w: 110, h: ctx.groundY(1935) - 890 + 20, look: 'rain' });// the way back up, if you fall
+        d.solids.push({ type: 'ellipse', x: 1110, y: 960, rx: 470, ry: 40, color: '#4a3424', branch: true });
+        d.solids.push({ type: 'rect', x: 1060, y: 980, w: 100, h: 600, color: '#4a3424' });
+        d.rain.push({ x0: 1500, x1: 1650, top: 700, bot: 1100, a: 0.4 });
+        d.arena = { x0: 300, x1: 2300, branchY: 920, crown: [1110, 880], home: [2050, 740], rainbow: [660, 905, 230, 760, 560] };
+        d.actors.push({ id: 'old-one', type: 'monkeyBoss', x: 1110, y: 878, plot: true });
+        d.props.push({ layer: 'back', draw(c, t) {// the crown of the tallest tree, around the branch
+          c.fillStyle = 'rgba(60,96,52,0.95)';
+          for (let i = 0; i < 9; i++) { const a = i / 9 * TAU; c.beginPath(); c.ellipse(1110 + Math.cos(a) * 380, 900 + Math.sin(a) * 90 + Math.sin(t * 0.3 + i) * 3, 150, 80, 0, 0, TAU); c.fill(); }
+        } });
         d.name = 'The old one’s tree';
         return;
       }
@@ -1004,6 +1007,8 @@
         if (local % 2 === 0) { d.actors.push({ id: 'rainbow-0', type: 'rainbow', x: (gx0 + gx1) / 2, y: B[0] - 120, a: [gx0 - 30, B[0] + 60], b: [gx1 + 30, B[0] + 60] }); }
         else { d.waterRects.push({ x: gx0, y: B[0] - 10, w: 300, h: 180, look: 'cloud', drift: { x0: gx0 - 120, x1: gx1 - 180, sp: 0.16 } }); }
       }
+      // Rain out of the bottom of the first cloud (out in it, it's nearly breathing).
+      if (pieces[0][1] - pieces[0][0] > 300) { d.rain.push({ x0: pieces[0][0] + 80, x1: Math.min(pieces[0][1] - 80, pieces[0][0] + 420), top: B[1] + 10, bot: ctx.groundY(pieces[0][0] + 200) + 10, a: 0.3 }); }
       // A rain column from the clouds to the treetops: the way back up, if you fall.
       const rx = W * (ph === 0 ? 0.5 : 0.25);
       d.waterRects.push({ x: rx - 50, y: B[1], w: 100, h: ctx.groundY(rx) - B[1] + 20, look: 'rain' });
@@ -1068,8 +1073,19 @@
     if (d.waterRects.some((w) => w.drift) || d.rain.length || d.gauntlet) { d.onUpdate = tick; }
     if (!d.waterRects.length) { delete d.waterRects; }
     // How long the longest stretch without water is here (west.js's own guess; westlife.js uses it).
-    if (!R.cave && ctx.depths) { d.dryRuns = dryRuns(ctx, d).filter(([a, b]) => b - a > 200); }
+    if (!R.cave && ctx.depths) {
+      d.dryRuns = dryRuns(ctx, d).filter(([a, b]) => b - a > 200);
+      // Dew, out in the middle of any long way dry (on the grass, on the stones, in the fog): a little wet, once (westlife.js).
+      if (R.land && !R.sky) { d.dew = d.dryRuns.filter(([a, b]) => b - a > 640).map(([a, b]) => { const c = (a + b) / 2 + (ctx.r() - 0.5) * 120; return [c - 90, c + 90]; }); }
+    }
     if (d.landmark) { d.name = d.landmark.name; }
+    // The sea's own little fish thin out going west, and only live where there's water all the way across
+    // (they'd be left high and dry otherwise). No sea jellies inland at all.
+    if (R.land || R.key === 'shore') {
+      const minD = ctx.depths ? Math.min(...ctx.depths) : 0;
+      d.ambient.fish = minD >= 70 && !R.sky ? Math.max(0, Math.round((d.ambient.fish || 0) * U.clamp(1.2 - n / 100, 0, 1))) : 0;
+      d.ambient.jelly = 0;
+    }
     if (R.sea) { d.ambient.fish = Math.max(2, Math.round((R.fish || 4) * (R.index > REG['cold-sea'].index ? 0.6 : 1))); }
     return d;
   }

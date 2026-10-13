@@ -142,7 +142,7 @@
   SO.nightlife = {
     update(dt, room) {
       if (!night() || !room) { return; }
-      const shallow = room.surfaceY !== null || (room.def.depth || 0) < 0.3;
+      const shallow = (room.surfaceY !== null || (room.def.depth || 0) < 0.3) && !E.squid.inAir;
       if (!shallow) { return; }
       const glowAt = (x, y, sp) => {
         if (sp < 60 || E.particles.length > 650) { return; }
@@ -157,6 +157,7 @@
 
     populate(room) {
       const r = Math.random;
+      if (room.def.land) { return; }// (out on the land in the far west: none of the sea's night things)
       if (night()) {
         const depth = room.def.depth || 0;
         if (depth < 0.7 && r() < 0.6) { E.addActor(room, { id: 'night-lanternfish', type: 'lanternfish', x: r() * room.w, y: room.h * (0.3 + r() * 0.4), home: { y: room.h * (0.3 + r() * 0.4) }, dir: r() < 0.5 ? 1 : -1 }); }

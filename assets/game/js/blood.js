@@ -117,7 +117,7 @@
         this.nextKill -= dt * (0.2 + this.level * 1.5);
         // (on the same schedule for everyone in this place: one every couple of minutes, at the same moment)
         const slot = Math.floor(SO.api.serverNow() / 150000), at = slot * 150000 + U.hash('kill:' + E.roomKey + ':' + slot) % 150000;
-        if (this.killSlot !== slot && SO.api.serverNow() >= at && SO.api.serverNow() - at < 8000 && !hush) { this.killSlot = slot; this.huntFish(room, U.rng('prey:' + E.roomKey + ':' + slot)); }
+        if (this.killSlot !== slot && SO.api.serverNow() >= at && SO.api.serverNow() - at < 8000 && !hush && (!SO.danger || SO.danger.at(0.25))) { this.killSlot = slot; this.huntFish(room, U.rng('prey:' + E.roomKey + ':' + slot)); }
       }
       // The dead seep: now and then a little cloud of blood from a body on the bottom (rub against it
       // and it's on you).
@@ -147,13 +147,13 @@
       }
       // Blood draws strikers, and they go for the biggest glob, or you if you're bloody.
       this.rogueIn = (this.rogueIn === undefined ? 600 + Math.random() * 900 : this.rogueIn) - dt;// once in a long while, one comes for you anyway
-      if (this.rogueIn < 0 && !E.locked && !hush && !air) { this.rogueIn = 900 + Math.random() * 1500; this.spawnStriker(room, null).rogue = true; }
+      if (this.rogueIn < 0 && !E.locked && !hush && !air && (!SO.danger || SO.danger.at(0.6))) { this.rogueIn = 900 + Math.random() * 1500; this.spawnStriker(room, null).rogue = true; }
       const want = Math.floor(this.level * 1.2 + (sq.blood > 0.4 ? 1 : 0));
       this.strikers = (this.strikers || []).filter((s) => s.t < s.life);
-      if (!hush && !air && this.strikers.length < Math.min(5, want) && Math.random() < dt * 0.5) { this.spawnStriker(room, null); }
+      if (!hush && !air && (!SO.danger || SO.danger.at(0.4)) && this.strikers.length < Math.min(5, want) && Math.random() < dt * 0.5) { this.spawnStriker(room, null); }
       this.strikers.forEach((s) => this.stepStriker(s, dt, room));
       // A lot of blood in one place: something much bigger comes.
-      if (this.level > 2.6 && !E.actor('frenzy-shark') && !E.locked && !hush && !air) { this.callShark(room); }
+      if (this.level > 2.6 && !E.actor('frenzy-shark') && !E.locked && !hush && !air && (!SO.danger || SO.danger.at(0.7))) { this.callShark(room); }
       const shark = E.actor('frenzy-shark');
       if (shark) { this.stepShark(shark, dt, room); }
     },

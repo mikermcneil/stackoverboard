@@ -200,7 +200,7 @@
         if (this.drinkT > 0.6) { this.drinkT = 0; this.take(1); if (once('stalkerDrinks')) { aside('It’s drinking it. What I kept. It’s drinking it.'); } }
       }
       // Too much kept, and the strikers smell it.
-      if (this.amount > 20 && !E.locked && !SO.ui.important && SO.blood && SO.blood.strikers && (room.surfaceY === null || sq.y > room.surfaceY + 160)) {
+      if (this.amount > 20 && !E.locked && !SO.ui.important && SO.blood && SO.blood.strikers && (!SO.danger || SO.danger.at(0.4)) && (room.surfaceY === null || sq.y > room.surfaceY + 160)) {
         this.smellT = (this.smellT === undefined ? 90 : this.smellT) - dt * (this.amount / CAP);
         if (this.smellT < 0) {
           this.smellT = 70 + Math.random() * 90;
@@ -286,7 +286,7 @@
     enter0.call(this, room, prev, entry);
     try {
       const P = SO.purse;
-      if (ch() >= 2 && P.amount >= 4 && deepish(room) && !room.def.safe && room.def.region !== 'home' && room.key !== 'keeper-hall' && Math.random() < 0.18 + P.amount / 240) {
+      if (ch() >= 2 && P.amount >= 4 && deepish(room) && !room.def.safe && (!SO.danger || SO.danger.at(0.5, room)) && room.def.region !== 'home' && room.key !== 'keeper-hall' && Math.random() < 0.18 + P.amount / 240) {
         const left = Math.random() < 0.5, sq = E.squid;
         const y = U.clamp(sq.y + (Math.random() - 0.5) * 300, (room.surfaceY || 0) + 160, room.h - 120);
         setTimeout(() => { if (E.room === room) { E.addActor(room, { id: 'leech-' + Math.round(U.now()), type: 'purseLeech', x: left ? E.cam.x - 60 : E.cam.x + E.W / E.scale + 60, y }); } }, 4000 + Math.random() * 8000);

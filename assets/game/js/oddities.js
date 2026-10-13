@@ -194,10 +194,10 @@
       },
     },
 
-    // Strange spiral marks scratched into the rock, with colored dots in a row.
-    // Flash the same colors at it and it lights up. That's all it does.
+    // A fold: a place where the water is thin, and the other folds are just the other side of
+    // it. Only a squid that knows how to warp can see them at all (volcano.js puts them out).
     spiral: {
-      desc: 'Spiral marks', r: 70,
+      desc: 'A fold in the water', r: 70,
       draw(ctx, a, room, t) {
         ctx.save(); ctx.translate(a.x, a.y);
         const lit = a.lit || 0;
@@ -206,7 +206,6 @@
         for (let k = 0; k < 4 * TAU; k += 0.2) { const r = 3 + k * 4; ctx.lineTo(Math.cos(k) * r, Math.sin(k) * r); }
         ctx.stroke();
         if (lit > 0.01) { ctx.globalCompositeOperation = 'lighter'; A.glow(ctx, 0, 0, 120, '#bff8ea', lit * 0.6); ctx.globalCompositeOperation = 'source-over'; }
-        a.seq.forEach((c, i) => A.circle(ctx, -24 + i * 24, 76, 7, SKIN_HEX[c], 'rgba(0,0,0,0.4)', 1));
         ctx.restore();
       },
       update(a, dt) { a.lit = Math.max(0, (a.lit || 0) - dt * 0.15); },
@@ -566,13 +565,11 @@
     'tether-twilight': [{ kind: 'chain-link', x: 960, y: 720 }],
     'tether-curtain': [{ kind: 'far-lights', x: 1560, y: 320 }],
     'tether-anchor': [{ kind: 'anchor-marks', x: 1100, y: 560 }],
-    'stone-choir': [{ kind: 'spiral', x: 1250, y: 380, seq: ['W', 'B', 'W'] }],
     'abyssal-plain': [{ kind: 'tracks', x: 2700 }, { kind: 'cucumbers', x: 600 }],
     'whale-fall': [{ kind: 'hagfish', x: 2150 }],
     'hadal': [{ kind: 'amphipods', x: 900, y: 1000 }],
     'hadal-floor': [{ kind: 'squid-shape', x: 900 }],
     'smokers': [{ kind: 'bubble-rings', x: 2150 }],
-    'glass-caves': [{ kind: 'spiral', x: 1250, y: 420, seq: ['B', 'G', 'B'] }],
     'hatchery': [{ kind: 'hatchlings', x: 1100, y: 560 }],
   };
 
@@ -582,24 +579,12 @@
       (PLACES[room.key] || []).forEach((o, i) => {
         E.addActor(room, Object.assign({}, o, { id: 'odd-' + i, type: 'oddity', kind: o.kind, x: o.x, y: o.y === undefined ? room.h / 2 : o.y }));
       });
-      // About one dark tile in six has spiral marks with its own color sequence.
-      if (room.key.startsWith('below:') && U.hash(room.key + 'spiral') % 6 === 0) {
-        const r = U.rng(room.key + 'seq');
-        const seq = [0, 1, 2].map(() => 'WRBG'[Math.floor(r() * 4)]);
-        E.addActor(room, { id: 'odd-spiral', type: 'oddity', kind: 'spiral', x: 300 + r() * 1000, y: 330 + r() * 160, seq });
-      }
     },
-    // Raw skin flashes, for the spiral marks (their sequences aren't real skin-words).
+    // Raw skin flashes, one color at a time.
     onSkin(c) {
       const room = E.room;
       if (!room) { return; }
       this.buf = (this.buf || []).concat(c).slice(-3);
-      room.actors.forEach((a) => {
-        if (a.kind === 'spiral' && U.dist(E.squid.x, E.squid.y, a.x, a.y) < 700 && this.buf.join('') === a.seq.join('')) {
-          a.lit = 1; this.buf = [];
-          [76, 81, 86].forEach((n, i) => AU.marimba(AU.NOTE(n), { when: i * 0.15, gain: 0.06, dur: 2 }));
-        }
-      });
       // Anything else that hears single notes (see the life in actors.js).
       room.actors.forEach((a) => {
         const T = SO.actorTypes[a.type];

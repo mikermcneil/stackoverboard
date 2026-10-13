@@ -31,7 +31,6 @@
     'oddity:whale-fall': { more: ['Worms with no mouths, all over the bones, like red fur.', 'Something glows in the jaw, then goes out. Far off, in the dark, something glows back, the same color, at the same moment.'], night: 'It glows faintly at night. The bones themselves. One blinks out here and on again somewhere else.' },
     'oddity:drummer': { more: ['It’s drumming a different rhythm today.', 'The drumming answers itself, from somewhere much too far away to hear.'], night: 'At night it drums slower. Like it’s tired.' },
     'oddity:juggler': { more: ['It dropped one. It didn’t pick it back up.'] },
-    'oddity:spiral': { more: ['The same spirals as in the other dark places. Exactly the same. As if they’re all one place, folded.'], ask: { key: 'spiral-marks', q: 'Who drew the spirals?', a: ['Squid', 'Something older', 'The water'] } },
     'lightDrinker': { ask: { key: 'light-drinker', q: 'Is it alive?', a: ['Yes', 'No', 'Worse'] } },
     'buddy': { ask: { key: 'bead', q: 'Is Bead my friend, or am I just its?', a: ['Both', 'Just mine', 'Just its'] } },
   };

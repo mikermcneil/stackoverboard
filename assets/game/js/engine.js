@@ -144,14 +144,16 @@
       // Clicking something interesting: swim to it. (While something's being said, clicks only move you.)
       const hit = SO.ui.talking ? null : this.pick(this.pointer.wx, this.pointer.wy);
       if (hit && hit === this.inspected) { this.interact(hit); return; }// a second click: do something with it
-      if (hit) { this.inspected = hit; }// a first click: it shows up in the corner
-      this.target = hit ? { x: hit.x, y: hit.y, hit } : this.exitAware(this.pointer.wx, this.pointer.wy);
+      if (hit) { this.select(hit); return; }// a first click: picked (it shows up in the corner), and off we go to it
+      this.target = this.exitAware(this.pointer.wx, this.pointer.wy);
       this.spur();
       SO.story && SO.story.onActivity && SO.story.onActivity();
     });
     window.addEventListener('pointermove', (e) => {
       if (this.mode !== 'play') { return; }
       toWorld(e);
+      // With a mouse, hovering over something shows its picture in the corner (no words, nothing picked).
+      this.hover = e.pointerType === 'mouse' && e.target === c && !this.locked ? this.pick(this.pointer.wx, this.pointer.wy) : (e.target === c ? null : this.hover);
       if (this.holding && Math.hypot(e.clientX - this.holding.x, e.clientY - this.holding.y) > 24) { this.holding = null; this.holdK = 0; }
       if (this.pointer.down && !this.locked && this.target && !this.target.hit) { const t = this.exitAware(this.pointer.wx, this.pointer.wy); this.target.x = t.x; this.target.y = t.y; this.target.exit = t.exit; }
     });
@@ -233,12 +235,23 @@
     return false;
   };
 
+  // Pick something (a first click on it, or on its preview in the corner): it shows up in the
+  // corner, and the squid swims over. Nothing is said until it's clicked again.
+  E.select = function (o) {
+    if (!o || o.hidden) { return; }
+    this.inspected = o; this.hover = null;
+    this.target = { x: o.x, y: o.y, hit: o };
+    this.spur();
+    SO.story && SO.story.onActivity && SO.story.onActivity();
+  };
+
   // What's under the pointer? Actors and hotspots that can be touched.
   E.pick = function (wx, wy) {
     if (!this.room) { return null; }
     let best = null, bd = Infinity;
+    // (Food and bubbles are taken just by swimming into them: they're never picked by clicking.)
     const consider = (o) => {
-      if (!o || o.hidden || !o.touch) { return; }
+      if (!o || o.hidden || !o.touch || o.type === 'food' || o.type === 'bubble') { return; }
       const d = U.dist(wx, wy, o.x, o.y);
       if (d < Math.max(36, (o.r || 60) * 0.85) && d < bd) { bd = d; best = o; }// (right on it: fewer accidental clicks)
     };
@@ -336,6 +349,7 @@
     let col = A.SKIN.base;
     if (sq.fear > 0.01) { col = A.mixHsl(col, A.SKIN.fear, sq.fear * 0.8); }
     if (sq.flash && sq.flashAmt > 0) { col = A.mixHsl(col, A.SKIN[sq.flash], U.smooth(Math.min(1, sq.flashAmt * 1.4))); }
+    if (sq.tint && sq.tint.amt > 0.01) { col = A.mixHsl(col, sq.tint.col, U.smooth(Math.min(1, sq.tint.amt)) * 0.6); sq.tint.amt -= dt * 0.7; }// (a feeling showing, see emote)
     if (sq.hidden > 0.01) { col = A.mixHsl(col, A.SKIN.dark, sq.hidden * 0.8); }
     if (sq.glow > 0.01) { col = A.mixHsl(col, [40, 80, 80], sq.glow * 0.15); }
     sq.color = col;
