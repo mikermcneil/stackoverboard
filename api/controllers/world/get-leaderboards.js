@@ -1,7 +1,7 @@
 const BOARDS = {
   westFarthest: { title: 'Farthest west', unit: 'places west of the Bright', about: 'How far west each squid has been, in places ("west:N").  The west never ends (see get-west-path).' },
   deepest: { title: 'Deepest dive', unit: '0 (surface) to 1 (the bottom)', about: 'How deep each squid has been, from 0 at the surface to 1 at the very bottom.' },
-  climb: { title: 'Highest climb', unit: 'meters climbed', about: 'How high each squid has climbed into the western highlands (from west:15 on), in meters, worked out from how far west it has been.' },
+  climb: { title: 'Highest climb', unit: 'meters climbed', about: 'The highest point each squid has reached on the way west (over the mountains, up into the clouds), in meters, worked out from how far west it has been.' },
   bestAirTime: { title: 'Longest leap', unit: 'seconds out of the water', about: 'The longest single leap out of the water.' },
   bestAirHeight: { title: 'Highest leap', unit: 'game units', about: 'The highest single leap out of the water.' },
   nativesMet: { title: 'Most natives met', unit: 'natives', about: 'How many native creatures, plants and things each squid has met (its journal keeps them across playthroughs; see get-species).' },
@@ -137,14 +137,16 @@ when records changed hands).`,
     for (let b of wanted) {
       let sorted = rows[b].slice().sort((x, y) => y.value - x.value || (seen[y.squidName] || 0) - (seen[x.squidName] || 0));
       if (b === 'climb') {
-        // Height only grows with distance west, so the farthest-west squids are the highest climbers.
-        // Work out heights for the leaders (and the asked-for squid) only.
-        let memo = {};
+        // The way west climbs over the mountains and comes back down to the far sea, so a squid's
+        // climb is the highest point on the way to the farthest it has been (not the height there).
+        // Heights along the land half are worked out once (past it, it's all sea).
+        let peak = [0];
+        let LAND_END = 130;
+        let heightAt = (k) => { try { let at = sails.helpers.world.getWestPath.with({ n: k }).at; return at && typeof at.elevation === 'number' ? at.elevation : 0; } catch (unusedErr) { return 0; } };
         let elevation = (n) => {
-          if (memo[n] !== undefined) { return memo[n]; }
-          memo[n] = 0;
-          try { let at = sails.helpers.world.getWestPath.with({ n: Math.min(Math.floor(n), 100000) }).at; memo[n] = at && typeof at.elevation === 'number' ? at.elevation : 0; } catch (unusedErr) { /* no height */ }
-          return memo[n];
+          let m = Math.min(Math.floor(n), LAND_END);
+          while (peak.length <= m) { peak.push(Math.max(peak[peak.length - 1], heightAt(peak.length))); }
+          return peak[Math.max(0, m)] || 0;
         };
         let keep = sorted.slice(0, limit * 2);
         let mine = target ? sorted.find((r) => r.squidName === target) : null;

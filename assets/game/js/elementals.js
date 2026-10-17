@@ -104,7 +104,7 @@
       const n = (SO.save.data.flags.elementalGrabs || 0) + 1;
       SO.save.flag('elementalGrabs', n);
       if (tw < 0.5) { SO.ui.aside(n === 1 ? 'Something cold just wrapped around me. The water itself?' : 'That water again. Cold. It can’t really hold me.'); }
-      else { SO.ui.thought(n < 6 ? 'It’s got me. It’s squeezing. Thrash. Thrash!' : 'Not again. Get off me!'); }
+      else if (n < 6 || !this._saidAt || E.t - this._saidAt > 120) { this._saidAt = E.t; SO.ui.thought(n < 6 ? 'It’s got me. It’s squeezing. Thrash. Thrash!' : 'Not again. Get off me!'); }// (not every time: the squid's lines stay few)
     },
 
     hold(a, dt) {
@@ -145,6 +145,7 @@
     // Some rooms have one (more as the story goes on, and twice as many near the end).
     populate(room) {
       if ((room.surfaceY !== null && room.def.region === 'surface') || room.def.region === 'home' || room.def.safe) { return; }
+      if (SO.danger && !SO.danger.at(0.5, room)) { return; }// (a later danger; out west, only well out)
       const c = ch();
       if (c < 2) { return; }
       const p = c >= 6 ? 0.45 : c >= 5 ? 0.35 : c >= 4 ? 0.3 : 0.17;

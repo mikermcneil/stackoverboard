@@ -655,12 +655,13 @@
   // What each region (and phase) of the way west gets (west.js names the places; this only dresses them).
   // things: kinds of thing (westlands' own); props: dunes, bones, columns, glassy, dead; birds: sea birds, near the coasts.
   const DRESS = {
-    tidepools: [{ things: ['sea-star', 'sea-star', 'mudskipper'], birds: ['tern'] }],
-    shore: [{ things: ['mudskipper', 'ghost-crab'], birds: ['tern', 'pelican'] }],
+    // (The first of the west stays quiet: a thing or two to look at, not a crowd.)
+    tidepools: [{ things: ['sea-star'] }],
+    shore: [{ things: ['ghost-crab'], birds: ['tern'] }],
     desert: [
-      { things: ['flying-fish', 'ghost-crab'], birds: ['tern'] },
-      { things: ['ghost-crab', 'ghost-crab', 'booming-dune'], dunes: '#e8d4a0', heads: true, birds: ['frigate'] },
-      { things: ['fulgurite', 'fulgurite', 'spine-sponge'], glassy: true },
+      { things: ['ghost-crab'] },
+      { things: ['ghost-crab', 'booming-dune'], dunes: '#e8d4a0', heads: true },
+      { things: ['fulgurite', 'spine-sponge'], glassy: true, birds: ['frigate'] },
       { things: ['salt-crust', 'fulgurite'], bones: true, columns: true, sand: '#f2ece0' },
     ],
     plains: [
@@ -827,28 +828,41 @@
     try { if (SO.local && SO.local.now) { const v = SO.local.now(); return v instanceof Date ? v : new Date(v); } } catch (err) { /* fall back */ }
     return new Date();
   };
+  // Twelve little rafts of sargassum, in a ring on the water, each cupping a pool of rain on top.
+  // They fill and drain one after another, all day: the time, wherever you really are.
   KINDS['tide-clock'] = {
-    desc: 'A ring of tidepools', r: 220,
+    desc: 'A ring of floating weed', r: 250,
+    update(a, dt, room) { a.y = top(room) + 4; },
     draw(ctx, a, room, t) {
       const now = localNow(), h = now.getHours() % 12, m = now.getMinutes() / 60;
       const sy = top(room);
+      const pads = [];
       for (let i = 0; i < 12; i++) {
-        const an = -Math.PI / 2 + i / 12 * TAU, x = a.x + Math.cos(an) * 360, y = sy - 70 + Math.sin(an) * 50;
-        const fill = i === h ? 1 : i === (h + 1) % 12 ? m : i === (h + 11) % 12 ? 1 - m : 0;
-        A.ellipse(ctx, x, y, 48, 20, 0, '#7a7466', 'rgba(40,40,36,0.5)', 2);
-        if (fill > 0.02) { ctx.fillStyle = `rgba(150,215,220,${0.4 + 0.5 * fill})`; ctx.beginPath(); ctx.ellipse(x, y - 2, 40 * fill, 13 * fill, 0, 0, TAU); ctx.fill(); }
-        if (i === h) { ctx.save(); ctx.globalCompositeOperation = 'lighter'; A.glow(ctx, x, y, 40, '#ffffff', 0.25 + 0.1 * Math.sin(t * 3)); ctx.restore(); }
+        const an = -Math.PI / 2 + i / 12 * TAU;
+        pads.push({ i, an, x: a.x + Math.cos(an) * 200, y: sy + 2 + Math.sin(an) * 9 + Math.sin(t * 1.3 + i * 0.9) * 2.5, k: 0.8 + 0.2 * Math.sin(an) });
       }
+      pads.sort((p, q) => p.y - q.y);// (the far side of the ring first)
+      pads.forEach(({ i, x, y, k }) => {
+        const fill = i === h ? 1 : i === (h + 1) % 12 ? m : i === (h + 11) % 12 ? 1 - m : 0;
+        // the mat: gold-brown weed, flat on the water, little air berries around the rim
+        A.ellipse(ctx, x, y, 30 * k, 8 * k, 0, '#8a6a2e', 'rgba(60,40,14,0.55)', 1.5);
+        ctx.fillStyle = '#c7a24a';
+        for (let b = 0; b < 7; b++) { const ba = b / 7 * TAU + i; ctx.beginPath(); ctx.arc(x + Math.cos(ba) * 26 * k, y + Math.sin(ba) * 6 * k - 1, 2.6 * k, 0, TAU); ctx.fill(); }
+        // the cup of rain it holds
+        if (fill > 0.02) { ctx.fillStyle = `rgba(160,220,228,${0.45 + 0.5 * fill})`; ctx.beginPath(); ctx.ellipse(x, y - 2, 20 * k * fill, 4.5 * k * fill, 0, 0, TAU); ctx.fill(); }
+        if (i === h) { ctx.save(); ctx.globalCompositeOperation = 'lighter'; A.glow(ctx, x, y - 2, 34, '#ffffff', 0.22 + 0.08 * Math.sin(t * 3)); ctx.restore(); }
+      });
     },
     touch() {
+      SO.story.remember('sargassum');
       const now = localNow(), h = now.getHours() % 12 || 12, m = now.getMinutes();
       const ORD = ['', 'first', 'second', 'third', 'fourth', 'fifth', 'sixth', 'seventh', 'eighth', 'ninth', 'tenth', 'eleventh', 'twelfth'];
-      say('The ' + ORD[h] + ' pool is full' + (m > 10 ? ', and the next one is ' + (m > 45 ? 'nearly full' : m > 25 ? 'half full' : 'starting to fill') : '') + '. It’s ' + (m < 10 ? 'just after ' : m > 45 ? 'nearly ' : 'past ') + (m > 45 ? (h % 12) + 1 : h) + ', then. Wherever I really am.');
+      say('Little rafts of weed, in a ring, each holding a cup of water. The ' + ORD[h] + ' one is full' + (m > 10 ? ', and the next is ' + (m > 45 ? 'nearly full' : m > 25 ? 'half full' : 'starting to fill') : '') + '. It’s ' + (m < 10 ? 'just after ' : m > 45 ? 'nearly ' : 'past ') + (m > 45 ? (h % 12) + 1 : h) + ', then. Wherever I really am.');
     },
   };
   B['tide-clock'] = (d) => {
-    d.actors.push(lmThing('tide-clock', 1280, 150));
-    d.actors.push(thing('sea-star', 700, fy(d, 700) - 10), thing('sea-star', 1900, fy(d, 1900) - 10), thing('mudskipper', 1100, 120));
+    d.actors.push(lmThing('tide-clock', 1280, (d.surfaceY || 150) + 4, { r: 230 }));// (the whole ring is the thing: click any of it)
+    d.actors.push(thing('sea-star', 1900, fy(d, 1900) - 10));
   };
 
   // ── 10: the weed king. The biggest mat, and a hollow under it full of eels. ──
@@ -903,14 +917,17 @@
     },
   };
   B['first-lungfish'] = (d, n) => {
-    // The highest step is the second plateau, by convention: put the cocoon on top of whichever is tallest.
-    const plats = d.solids.filter((s) => s.type === 'rect');
-    const hi = plats.reduce((m, s) => (!m || s.y < m.y ? s : m), null);
-    const x = hi ? hi.x + hi.w / 2 : 1300, y = hi ? hi.y : 140, W = d.w * RW;
-    // The burrow opens in the water beside the step (never inside the rock).
-    const right = hi ? hi.x + hi.w + 80 : x + 300, doorX = right < W - 150 ? right : (hi ? hi.x - 80 : x - 300), doorY = y + 230;
+    // The cocoon lies on the top of the sand bar (the highest dry ground here).
+    const W = d.w * RW;
+    let x = W / 2, y = fy(d, x);
+    for (let xx = 300; xx <= W - 300; xx += 20) { const g = fy(d, xx); if (g < y) { y = g; x = xx; } }
+    // The burrow opens in the water just east of the bar (never inside the rock).
+    // (and so is where you come out, a little way off it: quests.js puts you on the bar's side)
+    let doorX = x + 200;
+    while (doorX < W - 200 && Math.min(fy(d, doorX), fy(d, doorX - 160)) < (d.surfaceY || 0) + 90) { doorX += 20; }
+    const doorY = Math.min(fy(d, doorX) - 45, (d.surfaceY || 0) + 60);
     const awake = SO.save.data && SO.save.data.flags['woke:' + n];
-    d.actors.push(lmThing('cocoon', x, y, { awake, wokeAt: -99, doorX, doorY }));
+    d.actors.push(lmThing('cocoon', x, y + 4, { awake, wokeAt: -99, doorX, doorY }));
     if (awake) { d.hotspots = (d.hotspots || []).concat(door(n, 1, doorX, doorY, 'A burrow in the mud', 110)); d.entries.fromIn = [doorX + (doorX > W / 2 ? -160 : 160), doorY]; }
   };
 
@@ -996,15 +1013,15 @@
   // ── 27, 31: caves. Spines pointing in; walls that are insects. ──
   B['cactus-caves'] = (d, n) => {
     const x = 1400;
-    d.hotspots = (d.hotspots || []).concat(door(n, 1, x, fy(d, x) - 110, 'A cave mouth, full of spines'));
-    d.entries.fromIn = [x + 260, fy(d, x) - 180];
+    d.hotspots = (d.hotspots || []).concat(door(n, 1, x, fy(d, x) - 110, 'A cave mouth, full of spines', 100));
+    d.entries.fromIn = [x - 260, fy(d, x - 260) - 120];// (out on the west side: on your way, not back into it)
     d.props.push({ layer: 'mid', draw(ctx, t, room) { const y = floorAt(room, x); ctx.fillStyle = '#0c1208'; ctx.beginPath(); ctx.ellipse(x, y - 60, 140, 120, 0, Math.PI, TAU); ctx.fill(); } });
     for (let i = 0; i < 5; i++) { const xx = 500 + i * 450; if (Math.abs(xx - x) < 250) { continue; } d.actors.push(thing('spine-sponge', xx, fy(d, xx), { s: 1.2, seed: i })); }
   };
   B['bug-walls'] = (d, n) => {
     const x = 1300;
-    d.hotspots = (d.hotspots || []).concat(door(n, 1, x, fy(d, x) - 110, 'A cave. The walls are moving'));
-    d.entries.fromIn = [x + 260, fy(d, x) - 180];
+    d.hotspots = (d.hotspots || []).concat(door(n, 1, x, fy(d, x) - 110, 'A cave. The walls are moving', 100));
+    d.entries.fromIn = [x - 260, fy(d, x - 260) - 120];// (out on the west side: on your way, not back into it)
     d.props.push({ layer: 'mid', draw(ctx, t, room) { const y = floorAt(room, x); ctx.fillStyle = '#100c08'; ctx.beginPath(); ctx.ellipse(x, y - 60, 150, 130, 0, Math.PI, TAU); ctx.fill(); bugsOn(ctx, x, y - 60, 170, 150, t, 60); } });
     d.actors.push(thing('sea-skaters', 800, 148), thing('sea-skaters', 2000, 148));
   };
@@ -1045,7 +1062,7 @@
     } });
     const my = fy(d, x) - H2 * 0.75 + H2 * 0.6;
     d.hotspots = (d.hotspots || []).concat(door(n, 1, x + W2 * 0.4, my, 'Its mouth, open'));
-    d.entries.fromIn = [x + W2 * 0.4 + 220, my];
+    d.entries.fromIn = [x + W2 * 0.4 - 260, my];// (out on the west side of its mouth: on your way, not back into it)
   };
   function bigWhale(ctx, w, h) {
     ctx.save(); ctx.translate(w * 0.5, h * 0.6);
@@ -1162,7 +1179,7 @@
     const x = 1280;
     d.actors.push(lmThing('pipes', 900, fy(d, 900) - 100), lmThing('runners', 2100, fy(d, 2100) - 20));
     d.props.push(columnsProp(U.hash('engine' + n)));
-    d.hotspots = (d.hotspots || []).concat(door(n, 1, x + 600, fy(d, x + 600) - 100, 'A way down, into it'));
+    d.hotspots = (d.hotspots || []).concat(door(n, 1, x + 600, fy(d, x + 600) - 100, 'A way down, into it', 100));
     d.entries.fromIn = [x + 400, fy(d, x + 400) - 200];
     d.props.push({ layer: 'mid', draw(ctx, t, room) { const xx = x + 600, y = floorAt(room, xx); ctx.fillStyle = '#120e0a'; ctx.beginPath(); ctx.ellipse(xx, y - 40, 150, 100, 0, Math.PI, TAU); ctx.fill(); } });
   };

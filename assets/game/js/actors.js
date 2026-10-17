@@ -139,6 +139,7 @@
 
   // A lumen on its pedestal: a crystal of light. Level 0..1.
   T.lumen = {
+    contact: true,// (it happens when you bump into it)
     r: 70, touch: true,
     draw(ctx, a, room, t) {
       const lv = a.level === undefined ? 1 : a.level;
@@ -163,6 +164,7 @@
 
   // Something small and bright you can carry.
   T.spark = {
+    contact: true,// (it happens when you bump into it)
     r: 40, touch: true,
     draw(ctx, a, room, t) {
       const y = a.y + bob(a, 10, 1.6);
@@ -236,6 +238,7 @@
 
   // A glass panel from the mural in Hollowglass.
   T.panel = {
+    contact: true,// (it happens when you bump into it)
     r: 80, touch: true,
     draw(ctx, a, room, t) {
       ctx.save(); ctx.translate(a.x, a.y); ctx.rotate(a.tilt || 0);
@@ -257,6 +260,7 @@
 
   // Glass debris from the isles, floating at the surface.
   T.raft = {
+    contact: true,// (it happens when you bump into it)
     r: 90, touch: false,
     update(a, dt, room) {
       a.x = a.home.x + Math.sin(a.t * 0.2) * 60;
@@ -283,6 +287,7 @@
   };
 
   T.clam = {
+    contact: true,// (it happens when you bump into it)
     r: 90, touch: true,
     update(a, dt) { a.open = U.lerp(a.open || 0, a.isOpen ? 1 : 0, dt * 1.2); },
     draw(ctx, a, room, t) {
@@ -307,6 +312,7 @@
 
   // The Forge: a black chimney in the deep that sometimes remembers it's a volcano.
   T.vent = {
+    contact: true,// (it happens when you bump into it)
     r: 120, touch: true,
     update(a, dt, room) {
       const ph = a.phase || 'dormant';
@@ -354,6 +360,7 @@
 
   // Red devils: a pack of Humboldt squid. They talk fast, all in red and white.
   T.humboldt = {
+    contact: true,// (it happens when you bump into it)
     r: 120, touch: true,
     update(a, dt, room) {
       if (a.leaving) { a.x += 400 * dt * (a.dir || 1); if (a.x < -300 || a.x > room.w + 300) { a.hidden = true; } return; }
@@ -406,6 +413,7 @@
 
   // The thing in the dark. Drawn as arms and absence; the story moves it.
   T.dimmer = {
+    contact: true,// (it happens when you bump into it)
     r: 400, touch: false,
     draw(ctx, a, room, t) {
       const st = a.state;
@@ -434,6 +442,7 @@
 
   // A sperm whale: a huge square head, a narrow jaw, wrinkled skin. It hunts squid by clicking.
   T.whale = {
+    contact: true,// (it happens when you bump into it)
     r: 500, touch: false,
     // It doesn't glow, but the stirred-up water around it is a little lighter, so you can see its shape.
     light(a) { const al = a.alpha === undefined ? 1 : a.alpha; return al > 0.05 ? { x: a.x, y: a.y, r: 900 * (a.scale || 1), a: 0.4 * al, color: '#6f8fa8', add: 0 } : null; },
@@ -496,6 +505,7 @@
 
   // Crown jellies: deep-sea jellies that flash blue. They light the dome.
   T.jellies = {
+    contact: true,// (it happens when you bump into it)
     r: 110, touch: true,
     draw(ctx, a, room, t) {
       for (let i = 0; i < (a.n || 6); i++) {

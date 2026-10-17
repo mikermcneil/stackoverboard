@@ -118,7 +118,10 @@
   const Q = SO.quests = {
     carrying() { return (save.data && save.data.flags.carry) || null; },
     carry(item, line) {
-      if (this.carrying()) { say('My arms are full.'); return false; }
+      const held = this.carrying();
+      if (held && SO.items && SO.items.KEEP[held] && !SO.items.KEEP[item]) {// a keepsake gets set down here, to take this instead
+        this.drop(); SO.items.putDown(held, E.squid.x, E.squid.y + 30);
+      } else if (held) { say('My arms are full. I’d have to take this one where it goes first.'); return false; }
       flag('carry', item);
       addCarried(E.room);
       if (AU().pickup) { AU().pickup(); }
@@ -240,7 +243,7 @@
       a.buf = (a.buf || []).concat(c).slice(-4);
       if (a.buf.join('') !== PHRASE.join('')) { return; }
       flag('q:bells:done');
-      S.remember('singing-shard');
+      S.remember('singing-shard', { earned: true });
       ['W', 'R', 'B', 'G'].forEach((cc, i) => { a.swing[cc] = 1; if (AU().skin) { AU().skin(cc, { gain: 0.08, dur: 5, when: 0.2 + i * 0.12 }); } });
       E.ring(a.x, a.y - 100, '#bfe8ff', 1600, 2.5);
       for (let i = 0; i < 26; i++) { setTimeout(() => { E.cam.y += (Math.random() - 0.5) * 10; }, i * 50); }
@@ -294,7 +297,7 @@
       if (AU().bell) { AU().bell(AU().NOTE({ W: 74, R: 78, B: 81, G: 83 }[c] - 12), { gain: 0.05, dur: 4 }); }
       if (['W', 'R', 'B', 'G'].every((k) => a.tuned[k])) {
         flag('q:reeds:done');
-        S.remember('reed-stalk');
+        S.remember('reed-stalk', { earned: true });
         E.ring(a.x, a.y - 120, '#f4f8ff', 900, 2.2);
         still();
         setTimeout(() => { say('All four, on the beat. The water between them stood still. And held.'); S.learnSkin('still', true); say(S.SKIN_WORDS.still.learn); }, 1200);
@@ -320,7 +323,7 @@
     desc: () => (has('egg:hungAt') && !has('q:egg:done') ? 'The egg case, back on the root' : 'A bare place on the roots'), r: 70,
     draw(ctx, a, room, t) { if (has('egg:hungAt') && !has('q:egg:done')) { drawItem(ctx, 'egg', a.x, a.y, t); } },
     touch(a, room) {
-      if (Q.carrying() === 'egg') { Q.drop(); flag('egg:hungAt', SO.api.serverNow()); S.remember('egg-case'); say('There. Back on the roots, with the others. Now it waits. So do I.'); return; }
+      if (Q.carrying() === 'egg') { Q.drop(); flag('egg:hungAt', SO.api.serverNow()); S.remember('egg-case', { earned: true }); say('There. Back on the roots, with the others. Now it waits. So do I.'); return; }
       if (has('egg:hungAt') && !has('q:egg:done')) { say('It’s still in there. Wriggling. Not yet.'); return; }
       const L = ['A bare place on the root, where an egg case hung. The little curly strings are still wound round for one.', 'One of the other cases has a neat round hole in it. A snail drilled through, and ate what was inside.'];
       say(L[Math.min(L.length, a._i = (a._i || 0) + 1) - 1]);
@@ -346,7 +349,7 @@
       flag('q:egg:done');
       const hook = room.actors.find((a) => a.kind === 'egg-hook');
       E.addActor(room, { id: 'hatchling', type: 'hatchling', x: hook ? hook.x : 1380, y: hook ? hook.y : 430 });
-      S.remember('swell-shark');
+      S.remember('swell-shark', { earned: true });
       say('It’s out! A tiny shark, all spots. It’s glowing green. Just a little.');
       setTimeout(() => say('It didn’t look back. It just went.'), 4500);
       setTimeout(() => SO.things.reward('pearl:egg', 'Where the case hung, tucked in the roots: a pearl.'), 7000);
@@ -408,14 +411,14 @@
   Q.wakeLungfish = function (a, room) {
     Q.drop();
     flag('q:rain:done');
-    S.remember('rain-float');
+    S.remember('rain-float', { earned: true });
     say('It’s raining on it. Rain from home, on the hot mud.');
     for (let i = 0; i < 80; i++) { E.particles.push({ kind: 'drop', x: a.x + (Math.random() - 0.5) * 160, y: a.y - 120 - Math.random() * 60, vx: (Math.random() - 0.5) * 40, vy: 100 + Math.random() * 200, t: 0, life: 1.5, r: 2 + Math.random() * 2 }); }
     setTimeout(() => {
       a.awake = true; a.wokeAt = E.t;
       const n = room.def.west;
       flag('woke:' + n);
-      S.remember('lungfish');
+      S.remember('lungfish', { earned: true });
       if (AU().tone) { AU().tone(90, { dur: 1.5, gain: 0.08, glide: 1.4, verb: 0.5 }); }
       say('It moved. The mud cracked. An eye, opening.');
       room.hotspots.push({ id: 'door-1', x: a.doorX, y: a.doorY, r: 110, touch: true, door: 'west-in:' + n + ':1', at: 'fromOut', label: 'A burrow in the mud' });
@@ -571,7 +574,7 @@
           if (a.fleeing || U.dist(a.tx, a.ty, E.squid.x, E.squid.y) > 200) { return; }
           E.squid.vx += 560; E.squid.vy += 40; E.squid.fear = 1;
           if (SO.blood) { SO.blood.wound(E.squid.x, E.squid.y, 0.25, { blue: true }); }
-          S.remember('cormorant');
+          S.remember('cormorant', { earned: true });
           once('stranger', 'Strangers. Big dark birds, in our stream. In our pool. They won’t let me past.');
         }, 600);
       }
@@ -707,7 +710,7 @@
       const s = a.buf.join('');
       if (s === 'WBGB') {
         a.knew = true; a.knewAt = E.t; flag('homecoming');
-        S.remember('waiting-swan');
+        S.remember('waiting-swan', { earned: true });
         say('She knows me. She bent her neck all the way down to the water. She knows me.');
         setTimeout(() => S.ending('return'), 6000);
       } else if (s === 'BGBW') {

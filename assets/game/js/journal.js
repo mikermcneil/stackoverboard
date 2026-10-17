@@ -183,6 +183,7 @@
         return;
       }
       this.renderGrid(tab);
+      if (tab === 'memory') { this.renderSquidFacts(); }
     },
 
     renderGrid(tab, given) {
@@ -295,11 +296,17 @@
       back.addEventListener('click', () => { this.detail = null; this.render(); });
       wrap.appendChild(back);
       const top = div('j-dtop');
-      const pic = div('j-dpic');
+      // The picture: hover (or, on a phone, the little magnifier) says it can be looked at closer.
+      const pic = div('j-dpic j-zoom');
+      pic.tabIndex = 0; pic.setAttribute('role', 'button'); pic.setAttribute('aria-label', 'Look closer at ' + (e.name || N.name || 'it'));
       const cv = document.createElement('canvas'); cv.width = 440; cv.height = 440; cv.className = 'j-bigportrait';
-      cv.title = 'View portrait';
-      cv.addEventListener('click', () => this.openLightbox(e));
       pic.appendChild(cv);
+      const hint = document.createElement('span'); hint.className = 'j-zoomhint'; hint.textContent = 'Click to look closer'; pic.appendChild(hint);
+      const icon = document.createElement('span'); icon.className = 'j-zoomicon'; icon.setAttribute('aria-hidden', 'true');
+      icon.innerHTML = '<svg viewBox="0 0 24 24" width="18" height="18"><circle cx="10.5" cy="10.5" r="6" fill="none" stroke="currentColor" stroke-width="2"/><path d="M15 15l5 5M10.5 8v5M8 10.5h5" stroke="currentColor" stroke-width="2" stroke-linecap="round"/></svg>';
+      pic.appendChild(icon);
+      pic.addEventListener('click', () => this.openLightbox(e));
+      pic.addEventListener('keydown', (ev) => { if (ev.key === 'Enter' || ev.key === ' ') { ev.preventDefault(); this.openLightbox(e); } });
       this.canvases.push({ cv, e });
       top.appendChild(pic);
       const side = div('j-dside');
@@ -326,13 +333,22 @@
       const btns = div('j-dbtns');
       const hear = document.createElement('button'); hear.className = 'j-pill'; hear.textContent = '♪ Hear it';
       hear.addEventListener('click', () => this.playSound(f.s, hear));
-      const look = document.createElement('button'); look.className = 'j-pill'; look.textContent = 'View portrait';
-      look.addEventListener('click', () => this.openLightbox(e));
+      // Where I first met it: a little map, folded away until asked for.
+      const whereBtn = document.createElement('button'); whereBtn.className = 'j-pill'; whereBtn.textContent = '◎ Where I first met ' + (one === 'one' ? 'one' : nm);
+      whereBtn.setAttribute('aria-expanded', 'false');
+      const whereBox = div('j-dwhere'); whereBox.hidden = true;
+      whereBtn.addEventListener('click', () => {
+        const open = whereBox.hidden;
+        whereBox.hidden = !open; whereBtn.setAttribute('aria-expanded', open ? 'true' : 'false'); whereBtn.classList.toggle('on', open);
+        if (open && !whereBox.children.length) { this.renderFirstPlace(e, whereBox); }
+        if (open) { SO.audio.page(); }
+      });
       if (f.s) { btns.appendChild(hear); }
-      btns.appendChild(look);
+      btns.appendChild(whereBtn);
       side.appendChild(btns);
       top.appendChild(side);
       wrap.appendChild(top);
+      wrap.appendChild(whereBox);
       // What there is to know.
       const know = div('j-dknow');
       const sec = (title, text) => { if (!text) { return; } const s = div('j-dsec'); s.appendChild(p('j-kicker', title)); s.appendChild(p('j-dtext', text)); know.appendChild(s); };
@@ -348,8 +364,45 @@
         const lv = this.levelsOf(e.key);
         if (lv) { sec('Where it lives', lv); }
       }
+      // Squids and kin: something true about squids (about me, then), most about this one first.
+      if (f.g === 'squids' && SO.lifefacts && SO.lifefacts.squidFactsFor) {
+        SO.lifefacts.squidFactsFor(e.key, 2).forEach((x) => sec('Squids: ' + x.title.charAt(0).toLowerCase() + x.title.slice(1), x.text));
+      }
       if (!know.children.length) { know.appendChild(p('j-small', 'That’s all I know about it, so far.')); }
       wrap.appendChild(know);
+      this.body.appendChild(wrap);
+    },
+    // The little map of where I first met something (if I remember: older memories didn't keep it).
+    renderFirstPlace(e, box) {
+      const room = e.room;
+      if (!room) {
+        box.appendChild(p('j-small', 'I don’t remember where I first met it. That was before I kept track of such things.'));
+        return;
+      }
+      const cap = p('j-small j-wherecap', '');
+      this.renderMap({ focus: room, into: box, onPlace: (name, level, onMap) => {
+        if (!cap.isConnected) { return; }
+        const lv = level ? level.replace(/^The /, 'the ') : '';
+        const inLv = lv === 'the surface' ? 'at the surface' : 'in ' + lv;
+        cap.textContent = name ? 'I first met it here: ' + name.replace(/^The /, 'the ') + (lv && name.indexOf(level) === -1 ? ', ' + inLv : '') + '.' : lv ? 'I first met it somewhere ' + inLv + '.' : 'I first met it somewhere I can’t find on my map any more.';
+        if (!onMap) { box.querySelector('.j-map') && box.querySelector('.j-map').remove(); }
+      } });
+      box.appendChild(cap);
+    },
+    // Everything I know about being a squid (the memories page).
+    renderSquidFacts() {
+      const LF = SO.lifefacts;
+      if (!LF || !LF.SQUID_FACTS) { return; }
+      const wrap = div('j-squidfacts');
+      wrap.appendChild(p('j-kicker', 'Squids'));
+      wrap.appendChild(p('j-small', 'Things I know about being a squid. All of them true.'));
+      const item = (x) => { const d = div('j-sfact'); const h = document.createElement('h4'); h.textContent = x.title; d.appendChild(h); d.appendChild(p('j-dtext', x.text)); return d; };
+      const list = div('j-sfacts');
+      LF.SQUID_FACTS.slice(0, 4).forEach((x) => list.appendChild(item(x)));
+      wrap.appendChild(list);
+      const rest = div('j-sfacts');
+      LF.SQUID_FACTS.slice(4).forEach((x) => rest.appendChild(item(x)));
+      wrap.appendChild(more(this, 'squids', [rest], 'More about squids'));
       this.body.appendChild(wrap);
     },
     // The levels of the world it's known to live in, in words ('' if none).
@@ -471,17 +524,16 @@
       const wrap = div('j-now');
       wrap.appendChild(p('j-kicker', d.chapter >= 8 ? 'After' : (d.chapter ? SO.story.CARDS[d.chapter].join(': ') : 'Before')));
       wrap.appendChild(p('j-big', SO.story.hint()));
+      // (my name is in the row above: once is enough)
       const facts = [];
-      if (d.gems) { facts.push(`Shine carried: ${d.gems}`); }
-      if (d.hearts.length) { facts.push(`Hearts lit: ${d.hearts.length} of 3`); }
-      if (save.squidName) { facts.push(`My name: ${save.squidName}`); }
-      if (save.playthrough > 1) { facts.push(`Fall number ${save.playthrough}`); }
-      facts.forEach((f) => wrap.appendChild(p('j-fact', f)));
+      if (d.gems) { facts.push(`${d.gems} shine carried`); }
+      if (d.hearts.length) { facts.push(`${d.hearts.length} of 3 hearts lit`); }
+      if (save.playthrough > 1) { facts.push(`fall number ${save.playthrough}`); }
+      if (facts.length) { const t = facts.join(' · '); wrap.appendChild(p('j-fact j-stats', t.charAt(0).toUpperCase() + t.slice(1))); }
       const P = SO.purse;// the blood I keep, quietly, once I know I keep it
       if (P && P.shown) { const n = Math.max(0, Math.floor(P.amount || 0)); wrap.appendChild(p('j-blood', n ? `${n.toLocaleString()} drop${n === 1 ? '' : 's'} of blood, kept` : 'No blood kept, right now')); }
       const doing = SO.quests && SO.quests.list ? SO.quests.list() : [];
       if (doing.length) { wrap.appendChild(p('j-kicker', 'On the side')); doing.forEach((q) => wrap.appendChild(p('j-fact', q))); }
-      wrap.appendChild(p('j-small', 'Click where you want me to go, or use the arrow keys. Hold down on me to open this.' + (d.flags.skinRevealed ? ' A, B, C and D (or 1 to 4) change my skin.' : '') + ' M mutes the sound.'));
       if (d.chapter >= 8) {
         const b = document.createElement('button'); b.className = 'j-btn'; b.textContent = 'Fall again';
         b.onclick = () => { if (window.confirm('Start a new fall? You keep everything you remember.')) { this.close(); SO.main.fallAgain(); } };
@@ -494,20 +546,24 @@
     // One band for each level of the world I've been to (more open up as I go), from the sky down;
     // inside a band, places sit where they are, left to right. It's as wide as the way west is
     // long, so only what's in view is drawn: drag it, use the wheel, or the arrows.
-    async renderMap() {
-      const wrap = div('j-map');
+    // opts.focus: a place to center on and mark instead of where I am (the close look's little map),
+    // into: where to put it, onPlace(name, levelName): told what that place is called.
+    async renderMap(opts) {
+      opts = opts || {};
+      const focus = opts.focus || null, mini = !!focus;
+      const wrap = div('j-map' + (mini ? ' j-minimap' : ''));
       const view = div('j-mapview');
       const cv = document.createElement('canvas'); cv.className = 'j-mapcanvas';
       const mkArrow = (cls, label, txt) => { const b = document.createElement('button'); b.className = 'j-maparrow ' + cls; b.setAttribute('aria-label', label); b.textContent = txt; view.appendChild(b); return b; };
       view.appendChild(cv);
       const leftB = mkArrow('j-west', 'Look west', '‹'), rightB = mkArrow('j-east', 'Look east', '›');
       wrap.appendChild(view);
-      const legend = p('j-small j-maplegend', '');
-      wrap.appendChild(legend);
       const who = p('j-small', '');
-      wrap.appendChild(who);
-      this.body.appendChild(wrap);
-      const [r, on] = await Promise.all([SO.api.get('/api/v1/world/get-map'), SO.api.get('/api/v1/world/get-online')]);
+      if (!mini) { wrap.appendChild(who); }
+      const legend = p('j-small j-maplegend', '');
+      if (!mini) { wrap.appendChild(more(this, 'map', [legend, p('j-small j-maplegend', 'Click where you want me to go, or use the arrow keys. Hold down on me to open this.' + (save.data.flags.skinRevealed ? ' A, B, C and D (or 1 to 4) change my skin.' : '') + ' M mutes the sound.')], 'How to read it')); }
+      (opts.into || this.body).appendChild(wrap);
+      const [r, on] = await Promise.all([SO.api.get('/api/v1/world/get-map'), mini ? { ok: false } : SO.api.get('/api/v1/world/get-online')]);
       if (!cv.isConnected) { return; }
       const tiles = (r.ok && r.body && r.body.tiles) || [];
       const topD = (r.ok && r.body && r.body.topDiscoverers) || [];
@@ -520,7 +576,8 @@
       const levelOf = (d) => (L ? L.of(d) : null);
       // Which levels show: the ones I've been to (and the one I'm in). The rest aren't on my map yet.
       const hereL = SO.E.room ? levelOf(SO.E.room) : null;
-      const showL = LV.filter((l) => (L.been ? L.been(l.key) : true) || (hereL && hereL.key === l.key));
+      const focusL = focus ? (L ? L.of(defs[focus] || focus) : null) : null;
+      const showL = LV.filter((l) => (L.been ? L.been(l.key) : true) || (hereL && hereL.key === l.key) || (focusL && focusL.key === l.key));
       if (!showL.length) { const s = LV.find((l) => l.key === 'surface'); if (s) { showL.push(s); } }
       const shown = {}; showL.forEach((l) => { shown[l.key] = true; });
       // Rows inside each band.
@@ -531,7 +588,7 @@
       addRow('highwater', 0);
       const nRows = showL.reduce((a, l) => a + (rowsBy[l.key] || [0]).length, 0);
       // Zoomed in while the world I know is small; it settles as more of it opens up. (Only up and down: across, it's always the same.)
-      const rowH = nRows <= 6 ? 30 : nRows <= 12 ? 23 : nRows <= 20 ? 18 : 15;
+      const rowH = mini ? (nRows <= 8 ? 16 : nRows <= 16 ? 12 : 9) : nRows <= 6 ? 30 : nRows <= 12 ? 23 : nRows <= 20 ? 18 : 15;
       const cellX = 38, boxW = 28, boxH = Math.round(rowH * 0.7), PAD = 54;
       let LABEL = 136;// (the top strip: where I am, the areas' names, the compass)
       const band = {};
@@ -598,8 +655,17 @@
       };
       // The legend, and who's out there.
       legend.textContent = 'Each band is a level of the world I’ve been to, from the sky down. Flashing: where I am. Bright: places I’ve been. Small lights: insides. Pale dots: other squids, right now. Drag, or use the arrows, to look east and west.';
-      if (online.length) { who.textContent = 'Out there now: ' + online.slice(0, 6).map((o) => o.squidName + (o.place && o.place !== 'unknown' ? ' (' + o.place + ')' : '')).join(', ') + (online.length > 6 ? ', and more' : '') + '.'; }
-      if (topD.length && shown.below) { wrap.appendChild(p('j-small', 'Most of the dark was found by: ' + topD.slice(0, 3).map((x) => `${x.squidName} (${x.count})`).join(', '))); }
+      if (online.length) { who.textContent = 'Out there now: ' + online.slice(0, 6).map((o) => { const f = fromShort(o); return o.squidName + (f ? ' (' + f + ')' : ''); }).join(', ') + (online.length > 6 ? ', and more' : '') + '.'; }
+      if (topD.length && shown.below && !mini) { legend.parentNode.appendChild(p('j-small j-maplegend', 'Most of the dark was found by ' + topD.slice(0, 3).map((x) => `${me(x.squidName)} (${x.count})`).join(', ') + '.')); }
+      let focusName = null;
+      if (mini) {
+        const m = /^(?:west|aq2?|west-in):(\d+)/.exec(focus);
+        let nm = defs[focus] && defs[focus].name;
+        if (!nm && /^below:/.test(focus)) { nm = 'A dark place in the Below'; }
+        if (!nm && m) { const n = +m[1], lm = landmark(n); nm = /^aq/.test(focus) ? 'The high waters, ' + n + ' west' : (lm ? lm.name : areaName(n)) + ', ' + n + ' west'; }
+        focusName = nm || null;
+        if (opts.onPlace) { opts.onPlace(focusName, focusL ? focusL.name : null, !!where(focus)); }
+      }
       const ctx = cv.getContext('2d');
       const dpr = Math.min(window.devicePixelRatio || 1, 2);
       let vw = 0;
@@ -611,9 +677,10 @@
       fit();
       // Where the view is: kept between visits to this page, so it stays where I left it.
       const clampX = (x) => U.clamp(x, minX, Math.max(minX, maxX - vw));
-      const meAt0 = where(SO.E.roomKey);
-      const cam = { x: clampX(this._mapCamX !== undefined && this._mapRoom === SO.E.roomKey ? this._mapCamX : (meAt0 ? meAt0[0] - vw / 2 : maxX - vw)), to: null, v: 0 };
-      this._mapRoom = SO.E.roomKey;
+      const meKey = focus || SO.E.roomKey;// (the place this map is about: where I am, or where I first met something)
+      const meAt0 = where(meKey);
+      const cam = { x: clampX(!mini && this._mapCamX !== undefined && this._mapRoom === SO.E.roomKey ? this._mapCamX : (meAt0 ? meAt0[0] - vw / 2 : maxX - vw)), to: null, v: 0 };
+      if (!mini) { this._mapRoom = SO.E.roomKey; }
       const glide = (dx) => { cam.to = clampX((cam.to !== null ? cam.to : cam.x) + dx); cam.v = 0; };
       leftB.addEventListener('click', () => glide(-vw * 0.7));
       rightB.addEventListener('click', () => glide(vw * 0.7));
@@ -638,8 +705,8 @@
         cam.v = 0;
         const rc = cv.getBoundingClientRect(), x = e.clientX - rc.left, y = e.clientY - rc.top;
         if (Math.hypot(x - compass.x, y - compass.y) < compass.r + 8) {// the compass: back to where I am
-          const me = where(SO.E.roomKey);
-          if (me) { cam.to = clampX(me[0] - vw / 2); }
+          const meP = where(meKey);
+          if (meP) { cam.to = clampX(meP[0] - vw / 2); }
         }
       };
       cv.addEventListener('pointerup', up);
@@ -653,7 +720,9 @@
         cam.to = null; cam.v = 0; cam.x = after;
       }, { passive: false });
       const compass = { x: 0, y: 0, r: 17 };
-      const hereRoom = SO.E.room, hereName = (hereRoom && hereRoom.def && hereRoom.def.name) || (hereL ? hereL.name : '');
+      const hereRoom = SO.E.room;
+      let hereName = (hereRoom && hereRoom.def && hereRoom.def.name) || (hereL ? hereL.name : '');
+      if (mini) { hereName = focusName || (focusL ? focusL.name : ''); }
       const box = (x, y, w, h, rr) => { ctx.beginPath(); if (ctx.roundRect) { ctx.roundRect(x, y, w, h, rr); } else { ctx.rect(x, y, w, h); } };
       // A color for each level: pale sky at the top, sea-blue, then deeper and darker down to the bottom.
       const tint = (l) => {
@@ -669,7 +738,7 @@
         if (cam.to !== null) { cam.x += (cam.to - cam.x) * 0.16; if (Math.abs(cam.to - cam.x) < 0.5) { cam.x = cam.to; cam.to = null; } }
         else if (!drag && Math.abs(cam.v) > 5) { cam.x = clampX(cam.x + cam.v / 60); cam.v *= 0.92; }
         cam.x = clampX(cam.x);
-        this._mapCamX = cam.x;
+        if (!mini) { this._mapCamX = cam.x; }
         const X0 = cam.x, X1 = cam.x + vw;
         const sx = (x) => x - X0;
         const inView = (x, m = 40) => x > X0 - m && x < X1 + m;
@@ -762,11 +831,16 @@
           ctx.fillStyle = `rgba(230,236,245,${pulse})`; ctx.strokeStyle = 'rgba(10,20,30,0.8)'; ctx.lineWidth = 1.5;
           ctx.beginPath(); ctx.arc(sx(pos[0]) + ox, pos[1] + oy, 4, 0, U.TAU); ctx.fill(); ctx.stroke();
         });
-        // Me: my place flashes. (Off the side? An arrow at the edge points the way.)
-        const me = where(SO.E.roomKey);
+        // Me: my place flashes. (Off the side? An arrow at the edge points the way.) On the little
+        // map, it's the place I first met something that's marked, in gold.
+        const me = where(meKey);
         if (me) {
-          const k = 0.5 + 0.5 * Math.sin(t * 6), x = sx(me[0]);
-          if (x > LABEL - 10 && x < vw + 20) {
+          const k = 0.5 + 0.5 * Math.sin(t * (mini ? 3 : 6)), x = sx(me[0]);
+          if (mini && x > LABEL - 10 && x < vw + 20) {
+            ctx.strokeStyle = `rgba(255,214,140,${0.5 + 0.5 * k})`; ctx.lineWidth = 2.5;
+            ctx.beginPath(); ctx.arc(x, me[1], 10 + 4 * k, 0, U.TAU); ctx.stroke();
+            ctx.fillStyle = 'rgba(255,214,140,0.95)'; ctx.beginPath(); ctx.arc(x, me[1], 3.5, 0, U.TAU); ctx.fill();
+          } else if (x > LABEL - 10 && x < vw + 20) {
             ctx.strokeStyle = `rgba(255,154,118,${0.4 + 0.6 * k})`; ctx.lineWidth = 3;
             box(x - boxW / 2 - 5, me[1] - boxH / 2 - 5, boxW + 10, boxH + 10, 5); ctx.stroke();
             ctx.fillStyle = `rgba(255,154,118,${0.25 + 0.5 * k})`;
@@ -791,7 +865,7 @@
         // Which way is which: no north or south down here, only west and east, up and down.
         compass.x = vw - 30; compass.y = 27;
         { const hg = ctx.createLinearGradient(0, 0, LABEL + 30, 0); hg.addColorStop(0, 'rgba(6,12,18,0.97)'); hg.addColorStop(0.8, 'rgba(6,12,18,0.9)'); hg.addColorStop(1, 'rgba(6,12,18,0)'); ctx.fillStyle = hg; ctx.fillRect(0, 0, LABEL + 30, PAD - 4); }
-        ctx.font = '600 10px Inter, sans-serif'; ctx.fillStyle = 'rgba(255,154,118,0.9)'; ctx.fillText('HERE', 10, 20);
+        ctx.font = '600 10px Inter, sans-serif'; ctx.fillStyle = mini ? 'rgba(255,214,140,0.95)' : 'rgba(255,154,118,0.9)'; ctx.fillText(mini ? 'FIRST MET' : 'HERE', 10, 20);
         ctx.font = '12px Inter, sans-serif'; ctx.fillStyle = 'rgba(244,237,228,0.85)';
         ctx.fillText(hereName.length > 20 ? hereName.slice(0, 19) + '…' : hereName, 10, 36);
         const cxp = compass.x, cyp = compass.y, cr = compass.r;
@@ -859,11 +933,11 @@
       else if (!B('clouds')) { lines.push('I climbed up into the rain. It goes higher, all the way to the cloud, if I keep swimming up.'); }
       else if (!B('keels')) { lines.push('Above the cloud, under the island where it rains, there’s wind pouring off the rock. It pushes me back down. For now.'); }
       if (!B('highwater') && Object.keys(d.visited).some((k) => /^west:/.test(k))) { lines.push('Far out west, the land rises out of the sea. Streams and lakes, higher and higher, and waterfalls to climb between them.'); }
+      let head = null;
       if (been.length) {
-        lines.push(been.length === 1 ? 'I\u2019ve been to one level of the world so far.' : `I\u2019ve been to ${been.length} levels of the world, from ${been[0].name.replace(/^The /, 'the ')} down to ${been[been.length - 1].name.replace(/^The /, 'the ')}.`);
+        head = (been.length === 1 ? 'I\u2019ve been to one level of the world so far.' : `I\u2019ve been to ${been.length} levels of the world, from ${been[0].name.replace(/^The /, 'the ')} down to ${been[been.length - 1].name.replace(/^The /, 'the ')}.`);
       }
-      lines.forEach((l) => wrap.appendChild(p('j-line', l)));
-      been.forEach((l) => wrap.appendChild(p('j-fact', l.name + ': ' + ((L.MEMORY && L.MEMORY[l.key]) || 'I\u2019ve been there.'))));
+      const fine = lines.map((l) => p('j-line', l)).concat(been.map((l) => p('j-fact', l.name + ': ' + ((L.MEMORY && L.MEMORY[l.key]) || 'I\u2019ve been there.'))));
       const facts = [];
       const places = Object.keys(d.visited).filter((k) => SO.rooms.defs[k] && !/:/.test(k)).length;
       if (places) { facts.push(`Places I\u2019ve been: ${places}.`); }
@@ -879,7 +953,10 @@
       const words = (d.patterns || []).map((k) => (SO.story.SKIN_WORDS[k] && SO.story.SKIN_WORDS[k].name) || k);
       facts.push(words.length ? `Skin-words I know: ${words.join(', ')}.` : 'I don\u2019t know any skin-words yet.');
       if (d.memories && d.memories.length) { facts.push(`Pieces of glass from home I\u2019ve found: ${d.memories.length}.`); }
-      facts.forEach((f) => wrap.appendChild(p('j-fact', f)));
+      // Up front: one line or two. The rest is there if I want it.
+      const top = [head, far ? `I\u2019ve swum ${far} place${far === 1 ? '' : 's'} west of the rain.` : null].filter(Boolean);
+      top.forEach((l) => wrap.appendChild(p('j-line', l)));
+      wrap.appendChild(more(this, 'known', fine.concat(facts.map((f) => p('j-fact', f)))));
       this.body.appendChild(wrap);
     },
 
@@ -887,25 +964,25 @@
       this.renderKnown();
       const wrap = div('j-world');
       wrap.appendChild(p('j-kicker', 'In the sea, right now'));
-      wrap.appendChild(p('j-small', 'Not my memories: what all the squids in this sea have found between them, and what\u2019s going on out there.'));
       this.body.appendChild(wrap);
       const [r, rec, on] = await Promise.all([SO.api.get('/api/v1/world/get-overview'), SO.api.get('/api/v1/world/get-records'), SO.api.get('/api/v1/world/get-online')]);
       if (!r.ok || !r.body) { wrap.appendChild(p('j-line', 'The sea isn\u2019t answering right now. Try again in a bit.')); return; }
       const o = r.body, st = o.state || {};
-      const lines = [];
+      const top = [], lines = [];
       const online = (on.ok && on.body && on.body.online) || [];
       const others = online.filter((x) => x.squidName !== save.squidName).length;
-      lines.push(others ? `${others} other squid${others === 1 ? ' is' : 's are'} in the sea right now.` : 'No other squids are in the sea right now.');
-      lines.push(`${o.squids} squid${o.squids === 1 ? ' has' : 's have'} fallen into this sea. ${o.finishedSquids} found an ending.`);
+      top.push(others ? `${others} other squid${others === 1 ? ' is' : 's are'} in the sea right now.` : 'No other squids are in the sea right now.');
+      top.push(`${o.squids} squid${o.squids === 1 ? ' has' : 's have'} fallen into this sea. ${o.finishedSquids} found an ending.`);
+      lines.push('Not my memories: what all the squids in this sea have found between them, and what\u2019s going on out there.');
       const t = o.endingsTally || {};
       lines.push(`${t.return || 0} went home up the thread · ${t.lantern || 0} stayed below · ${t.gift || 0} gave their light away · ${t.song || 0} sang.`);
       lines.push(`${o.tilesDiscovered} of ${o.tilesTotal} dark places in the Below have been found.`);
-      lines.push(`The volcano has erupted ${o.eruptionsTotal} time${o.eruptionsTotal === 1 ? '' : 's'}. Right now it is ${st.vent ? st.vent.phase : 'quiet'}${st.vent && st.vent.wokenBy && st.vent.phase !== 'dormant' ? ' (' + st.vent.wokenBy + ' woke it)' : ''}.`);
+      lines.push(`The volcano has erupted ${o.eruptionsTotal} time${o.eruptionsTotal === 1 ? '' : 's'}. Right now it is ${st.vent ? st.vent.phase : 'quiet'}${st.vent && st.vent.wokenBy && st.vent.phase !== 'dormant' ? ' (' + (st.vent.wokenBy === save.squidName ? 'I' : st.vent.wokenBy) + ' woke it)' : ''}.`);
       if (SO.age && SO.age.bornAt) {// how old the sea is, and what it's doing
         const n = SO.age.now();
-        if (n.stage) { lines.push(`The sea is in ${n.stage.name.toLowerCase()}${n.endsAt ? ', for another ' + inTime(n.endsAt).replace(/^in /, '') : ''}. ${n.stage.during}`); }
+        if (n.stage) { top.push(`The sea is in ${n.stage.name.toLowerCase()}.`); lines.push(`${n.stage.during}${n.endsAt ? ' (For another ' + inTime(n.endsAt).replace(/^in /, '') + '.)' : ''}`); }
       }
-      if (st.shoal) { lines.push(st.shoal.passing ? 'The Shoal is passing over the reef. Right now.' : `The Shoal will pass the reef again ${inTime(st.shoal.nextAt)}.`); }
+      if (st.shoal && st.shoal.passing) { top.push('The Shoal is passing over the reef. Right now.'); } else if (st.shoal) { lines.push(st.shoal.passing ? 'The Shoal is passing over the reef. Right now.' : `The Shoal will pass the reef again ${inTime(st.shoal.nextAt)}.`); }
       if (st.seaDay) { lines.push(`Up top, it is ${st.seaDay.name}.`); }
       const sc = o.speciesCount || {};
       lines.push(`New kinds of life found so far: ${sc.creature || 0} creatures, ${sc.plant || 0} growing things, ${sc.item || 0} curious objects.`);
@@ -915,23 +992,25 @@
         const n = R.westFarthest.value, Wd = SO.rooms.WEST, path = SO.rooms.WEST_PATH || [];
         let lm = null;// the last landmark anyone has passed out west
         if (Wd && Wd.landmarkAt) { for (let k = n; k >= 1 && !lm; k--) { if (path.some((q) => q.n === ((k - 1) % (Wd.CROSSING || 60)) + 1)) { lm = Wd.landmarkAt(k); } } }
-        lines.push(`The way west goes on and on. The farthest any squid has gone is ${n.toLocaleString()} places, by ${R.westFarthest.squidName}${lm ? ', past ' + lm.name.replace(/^The /, 'the ') : ''}.`);
+        lines.push(`The way west goes on and on. The farthest any squid has gone is ${n.toLocaleString()} places, by ${me(R.westFarthest.squidName)}${lm ? ', past ' + lm.name.replace(/^The /, 'the ') : ''}.`);
       }
       if (R && R.deepest && R.deepest.value && SO.levels) {
         const l = SO.levels.of({ depth: R.deepest.value });
-        if (l) { lines.push(`The deepest any squid has been: ${l.name.replace(/^The /, 'the ')} (${R.deepest.squidName}).`); }
+        if (l) { lines.push(`The deepest any squid has been: ${l.name.replace(/^The /, 'the ')} (${me(R.deepest.squidName)}).`); }
       }
-      if (R && R.bestAirTime && R.bestAirTime.value) { lines.push(`The longest anyone has stayed in the air: ${R.bestAirTime.value.toFixed(1)} seconds (${R.bestAirTime.squidName}).`); }
-      lines.forEach((l) => wrap.appendChild(p('j-line', l)));
+      if (R && R.bestAirTime && R.bestAirTime.value) { lines.push(`The longest anyone has stayed in the air: ${R.bestAirTime.value.toFixed(1)} seconds (${me(R.bestAirTime.squidName)}).`); }
+      top.forEach((l) => wrap.appendChild(p('j-line', l)));
+      const fine = lines.map((l) => p('j-line', l));
       if (o.recent && o.recent.length) {
-        wrap.appendChild(p('j-kicker', 'Lately'));
-        o.recent.slice(0, 8).forEach((ev) => wrap.appendChild(p('j-event', describe(ev))));
+        fine.push(p('j-kicker', 'Lately'));
+        o.recent.slice(0, 8).forEach((ev) => fine.push(p('j-event', describe(ev))));
       }
       const mcp = div('j-mcp');
       mcp.appendChild(p('j-small', 'The sea remembers everything that\u2019s happened in it, and it answers questions. Connect an MCP client to:'));
       const code = document.createElement('code'); code.textContent = location.origin + '/mcp/safe'; mcp.appendChild(code);
       mcp.appendChild(p('j-small', 'Ask it things like: Has the mountain ever erupted? Who found the most of the dark? What are the levels of the world? What did other squids choose?'));
-      wrap.appendChild(mcp);
+      fine.push(mcp);
+      wrap.appendChild(more(this, 'world', fine));
     },
 
     _loop() {
@@ -1020,6 +1099,28 @@
     },
   };
 
+  // The fine print, folded away behind a quiet "more" (and left open or closed as I left it).
+  function more(self, id, nodes, label) {
+    self._more = self._more || {};
+    const box = div('j-morewrap');
+    const btn = document.createElement('button'); btn.className = 'j-more';
+    const inner = div('j-moreinner');
+    nodes.filter(Boolean).forEach((n) => inner.appendChild(n));
+    const set = (open) => { self._more[id] = open; inner.hidden = !open; btn.textContent = open ? 'Less' : (label || 'More'); btn.setAttribute('aria-expanded', open ? 'true' : 'false'); };
+    btn.addEventListener('click', () => set(!self._more[id]));
+    set(!!self._more[id]);
+    box.appendChild(btn); box.appendChild(inner);
+    return box;
+  }
+  // Another squid's name (or "me", so my own name is only ever shown once).
+  function me(name) { return name && name === save.squidName ? 'me' : name; }
+  // Where another squid is from, in a word or two (for lists of names).
+  function fromShort(o) {
+    if (o.locatedIn && !/^(somewhere|an unknown)/.test(o.locatedIn)) { return o.locatedIn.split(',')[0]; }
+    if (/^(geolocation|ip|cloudflare)$/.test(o.placeSource || '') && o.place && o.place !== 'unknown') { return o.place.split(',')[0]; }
+    if (o.timeZone && /\//.test(o.timeZone)) { return o.timeZone.split('/').pop().replace(/_/g, ' ') + ' time'; }
+    return '';
+  }
   function div(cls) { const d = document.createElement('div'); d.className = cls; return d; }
   function p(cls, text) { const d = document.createElement('p'); d.className = cls; d.textContent = text; return d; }
   function ago(ms) {
@@ -1035,7 +1136,7 @@
     return 'in about ' + Math.round(s / 60) + ' minute' + (Math.round(s / 60) === 1 ? '' : 's');
   }
   function describe(ev) {
-    const who = ev.squidName || 'Someone';
+    const who = ev.squidName && ev.squidName === save.squidName ? 'I' : ev.squidName || 'Someone';
     const when = ago(ev.startsAt);
     switch (ev.kind) {
       case 'arrival': return `${who} fell from the sky. (${when})`;
@@ -1045,7 +1146,7 @@
       case 'eruption': return `${who} woke the Forge. (${when})`;
       case 'gem-gathered': return `${who} gathered shine. (${when})`;
       case 'ending': return `${who} ${({ return: 'went home', lantern: 'stayed below', gift: 'gave their light away', song: 'sang the isles down' })[ev.subject] || 'found an ending'}. (${when})`;
-      default: return `${who}: ${ev.kind} (${when})`;
+      default: return ev.line ? `${ev.squidName ? ev.line.split(ev.squidName).join(who) : ev.line} (${when})`.replace(/^I: /, '') : `${who}: ${ev.kind.replace(/-/g, ' ')} (${when})`;
     }
   }
 

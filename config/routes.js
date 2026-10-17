@@ -80,6 +80,7 @@ module.exports.routes = {
   'PUT   /api/v1/game/rename-squid':                  { action: 'game/rename-squid' },
   'POST  /api/v1/game/say':                           { action: 'game/say' },
   'GET   /api/v1/game/get-local-conditions':          { action: 'game/get-local-conditions' },
+  'PUT   /api/v1/game/set-place':                     { action: 'game/set-place' },
   'POST  /api/v1/game/note-interaction':              { action: 'game/note-interaction' },
 
 

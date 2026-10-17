@@ -54,6 +54,7 @@ save-game), and get-timeline tells it back.`,
 
     var token = this.req.session.saveToken;
     var save = token ? await Save.findOne({ token }) : undefined;
+    var created = !save;
 
     if (!save) {
       // Derive the token from the session id (keyed with the session secret) when possible, so
@@ -71,7 +72,11 @@ save-game), and get-timeline tells it back.`,
         values: Object.assign({ token, squidName, revision: 0, playthrough: 1, chapter: 0, data: {}, endings: [], lastSeenAt: now }, client)
       })).record;
       this.req.session.saveToken = token;
-    } else if (newPlaythrough) {
+    } else if (['geolocation', 'declined'].includes(save.placeSource)) {
+      // (the player told us where they are, or said no: a guess from their address doesn't replace that)
+      client = _.omit(client, ['place', 'placeSource']);
+    }
+    if (!created && newPlaythrough) {
       let carried = save.data && save.data.carried !== undefined ? save.data.carried : undefined;
       let updated = await sails.helpers.world.swapSave.with({ token, revision: save.revision, values: Object.assign({
         playthrough: save.playthrough + 1,

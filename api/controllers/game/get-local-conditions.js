@@ -12,7 +12,8 @@ module.exports = {
 sunrise and sunset, clouds, rain, snow, fog, thunder, and wind.  It's about the person asking (from
 their session and request), not about the shared world, so it's not much use to other callers.
 
-Where the player is comes from (in order) Cloudflare's location headers, an offline city-level IP
+Where the player is comes from (in order) the browser's own location, if the player chose to share it
+(see set-place), Cloudflare's location headers, an offline city-level IP
 lookup, or the browser's time zone (see \`source\`).  Their IP address is never stored or sent
 anywhere.  The weather comes from Open-Meteo, asked about a spot rounded to about 10 km, and is
 cached for 20 minutes.  If there are no coordinates, or the weather can't be fetched, every field of
@@ -37,7 +38,7 @@ Related: get-squid and get-squids (\`place\`, \`timeZone\` for other players), g
     success: {
       outputDescription:
         '`{ place, timeZone, source, localHour, isNight, sunrise, sunset, weather: { code, label, cloudCover, precipitation, rain, snow, fog, thunder, windKph, tempC }, serverNow }`.  '+
-        '`source` is "cloudflare", "ip", "timezone", or "none".  `localHour` is 0 to 24 (with fractions) in the player\'s time zone.  `sunrise` and `sunset` are today\'s, as epoch ms, or null.  '+
+        '`source` is "geolocation", "cloudflare", "ip", "timezone", or "none".  `localHour` is 0 to 24 (with fractions) in the player\'s time zone.  `sunrise` and `sunset` are today\'s, as epoch ms, or null.  '+
         '`weather.code` is a WMO weather code; `label` is "Clear", "Partly cloudy", "Cloudy", "Fog", "Drizzle", "Rain", "Snow", or "Thunderstorm"; `cloudCover` is 0 to 100 (percent); '+
         '`precipitation` is mm in the last hour; `windKph` is wind speed at 10 m; `tempC` is air temperature at 2 m.'
     },
@@ -55,7 +56,12 @@ Related: get-squid and get-squids (\`place\`, \`timeZone\` for other players), g
     };
 
     var geo = sails.helpers.world.locateClient.with({ req: this.req });
-    var located = geo.source === 'cloudflare' || geo.source === 'ip';
+    // The browser's own location, if the player shared it (a city name, and a spot rounded to 10 km).
+    var chosen = session.placeChoice;
+    if (chosen && chosen.placeSource === 'geolocation' && chosen.place) {
+      geo = Object.assign({}, geo, { source: 'geolocation', place: chosen.place, lat: chosen.lat, lon: chosen.lon });
+    }
+    var located = geo.source === 'cloudflare' || geo.source === 'ip' || geo.source === 'geolocation';
     var zone = validZone(timeZone) || validZone(session.timeZone) || validZone(geo.timeZone);
 
     var source = located ? geo.source : zone ? 'timezone' : 'none';

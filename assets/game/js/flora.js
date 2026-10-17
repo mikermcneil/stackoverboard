@@ -51,15 +51,22 @@
       plant: kind, x, w: (30 + v.clump * 26) * v.s, h: tall * v.s, top: kind === 'sargassum' ? v.hue : null,
       draw(ctx, t, room) {
         const f = room.floorY ? room.floorY(x) : Infinity;
-        const base = isFinite(f) ? Math.min(f, room.h - 30) + 6 : room.h - 30;
+        const base0 = isFinite(f) ? Math.min(f, room.h - 30) + 6 : room.h - 30;
         for (let c = 0; c <= v.clump; c++) {
           const cx = x + c * 26 * v.flip, cs = v.s * (1 - c * 0.18);
+          // Each stem stands on its own bit of ground (and if there's no ground there, it isn't there).
+          let base = base0;
+          if (kind !== 'sargassum' && c > 0) {
+            const fc = room.floorY ? room.floorY(cx) : Infinity;
+            if (!isFinite(fc) || !room.solidAt(cx, Math.min(fc, room.h - 30) + 14)) { continue; }
+            base = Math.min(fc, room.h - 30) + 6;
+          }
           ctx.save();
           ctx.translate(cx, base); ctx.rotate(v.lean * (1 - c * 0.3)); ctx.scale(v.flip, 1); ctx.translate(-cx, -base);
           if (v.old) { ctx.globalAlpha *= 0.82; }
           if (kind === 'kelp') { A.kelp(ctx, cx, base + 4, (220 + v.hue * 380) * cs, t, v.seed + c, { hue: 60 + v.hue * 50, dark: v.old }); }
           else if (kind === 'seagrass') { A.seagrass(ctx, cx, base, cs * 1.1, t, v.seed + c); }
-          else if (kind === 'sargassum') { const sy = room.surfaceY !== null ? room.surfaceY + 40 + v.hue * 90 : base - 120; A.sargassum(ctx, cx + Math.sin(t * 0.2 + v.seed) * 18, sy, cs, t, v.seed + c); }
+          else if (kind === 'sargassum') { const sy = room.surfaceY !== null ? room.surfaceY + 40 + v.hue * 90 : base - 120; if (sy > base - 30) { ctx.restore(); continue; } A.sargassum(ctx, cx + Math.sin(t * 0.2 + v.seed) * 18, sy, cs, t, v.seed + c); }
           else if (kind === 'lantern-weed') { A.lanternWeed(ctx, cx, base, cs, t, v.seed + c, v.old ? 0.35 : 0.8); }
           else if (kind === 'glass-coral') { A.glassCoral(ctx, cx, base, cs, t, v.seed + c); }
           else if (kind === 'bone-fan') { A.boneFan(ctx, cx, base, cs, t, v.seed + c); }
@@ -110,7 +117,7 @@
         const x = 80 + r() * (room.w - 160);
         if (kind !== 'sargassum') {// only where there's ground to grow on (not inside rock, not over a gap)
           const f = room.floorY ? room.floorY(x) : Infinity;
-          if (!isFinite(f) || room.solidAt(x, f - 30)) { r(); continue; }
+          if (!isFinite(f) || room.solidAt(x, f - 30) || !room.solidAt(x, Math.min(f, room.h - 30) + 14)) { r(); continue; }// (real ground under it, open water over it)
         }
         const bare = room.def.barren;// (an urchin barren: nothing left growing)
         if (bare && x > bare[0] && x < bare[1]) { r(); continue; }

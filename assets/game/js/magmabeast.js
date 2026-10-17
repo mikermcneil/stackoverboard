@@ -316,7 +316,7 @@
       return out;
     },
     onTouch(a) {
-      S.remember('magmabeast');
+      S.remember('magmabeast', { earned: true });
       if (S.has(QUENCHED)) { UI.thought('Stone now. Black glass, and the light from the cell growing on it. It’s still warm, a little, inside.'); return; }
       UI.thought(BEAST.first);
     },
@@ -399,7 +399,7 @@
       if (this.fight || S.has(QUENCHED)) { return; }
       this.shellUsed = {};
       this.fight = { phase: 'intro', sub: 'intro', t: 0, hits: 0, rage: 0, crust: 0, vents: [], embers: [], count: 0, want: null, aim: null, under: null, side: 1, said: {} };
-      S.remember('magmabeast');
+      S.remember('magmabeast', { earned: true });
       this.intro();
     },
     endFight() {

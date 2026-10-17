@@ -57,9 +57,10 @@
       await this.afterTalk();
       const quiet = silent();
       // Another squid was here (and recently).
-      if (t.lastOtherBy && t.lastOtherAt && now - t.lastOtherAt < 3 * 86400000 && Math.random() < 0.6) { SO.ui.say(`${t.lastOtherBy} was here ${ago(now - t.lastOtherAt)}.`, { who: 'world' }); return; }
+      this._toldOther = this._toldOther || {};
+      if (t.lastOtherBy && t.lastOtherAt && now - t.lastOtherAt < 3 * 86400000 && quiet && !this._toldOther[key]) { this._toldOther[key] = true; SO.ui.say(`${t.lastOtherBy} was here ${ago(now - t.lastOtherAt)}.`, { who: 'world' }); return; }
       if (!info) { if (quiet) { this.remark(o); } return; }
-      if (night && info.night && Math.random() < 0.8) { SO.ui.say(info.night, { who: 'world' }); return; }
+      if (night && info.night && !this._toldOther['night:' + key]) { this._toldOther['night:' + key] = true; SO.ui.say(info.night, { who: 'world' }); return; }
       if (t.mine >= 2 && info.more && info.more[t.mine - 2]) { SO.ui.say(info.more[t.mine - 2], { who: 'world' }); }
       else if (quiet && !(info.ask && t.mine >= 2)) { this.remark(o); }
       // A question, the second time you look (once; you can see the tally after).
@@ -88,6 +89,9 @@
 
     // The squid says something to itself about a thing it's looked at (again).
     remark(o) {
+      // (No filler. Looking at something again only says more if there's actually more to see:
+      // "still here" every time you click is just noise.)
+      if (o.type !== 'otherSquid') { return; }
       if (o.type === 'otherSquid') { return; }// (other squids have their own remarks)
       const NATIVE_OF = { combJelly: 'comb-jelly', lanternfish: 'lanternfish', moonReeds: 'moon-reeds', polyps: 'coral-polyps', lightDrinker: 'light-drinker', seaSpider: null, lungfish: 'lungfish' };
       const key = o.lifeKind || NATIVE_OF[o.type] || o.type;

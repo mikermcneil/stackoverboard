@@ -38,7 +38,7 @@
     'smokers': [['vent', 0.78]],
     'whale-fall': [['eel', 0.32, 0.62]],
     'hadal-floor': [['ray', 0.66]],
-    'west:3': [['ray', 0.55, 0.3]],
+    'west:86': [['eel', 0.55, 0.6]],// (the rainforest rivers)
     'deep:5': [['ray', 0.5]],
     'deep:12': [['eel', 0.45, 0.6]],
     'deep:17': [['vent', 0.35]],
@@ -256,6 +256,8 @@
   SO.oddities.populate = function (room) {
     populate(room);
     try {
+      // (Electricity is a later danger: nothing that shocks before the octopus garden, except far out.)
+      if ((S.ch || 0) < 5 && !/^(west|deep):/.test(room.key)) { return; }
       (PLACES[room.key] || []).forEach(([kind, fx, fy], i) => {
         E.addActor(room, { id: 'zap-' + kind + '-' + i, type: 'zapper', kind, x: room.w * fx, y: fy === undefined ? room.h / 2 : room.h * fy });
       });

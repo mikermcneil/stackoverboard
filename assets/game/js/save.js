@@ -49,6 +49,7 @@
       this.squidName = save.squidName;
       this.playthrough = save.playthrough;
       this.endings = save.endings || [];
+      this.place = save.place || ''; this.placeSource = save.placeSource || ''; this.timeZone = save.timeZone || '';
       const d = Object.assign(this.defaults(), save.data || {});
       d.carried = Object.assign({ remembered: {} }, d.carried || {});
       d.carried.remembered = d.carried.remembered || {};
@@ -165,7 +166,9 @@
     remember(key, entry) {
       const R = this.data.carried.remembered;
       if (R[key]) { return false; }
-      R[key] = Object.assign({ at: api.serverNow() }, entry);
+      // (and where: the place I first met it, for the little map in the journal's close look)
+      const room = SO.E && SO.E.roomKey;
+      R[key] = Object.assign({ at: api.serverNow() }, room && !/^(skin|memory|place):/.test(key) ? { room } : {}, entry);
       this.touch();
       return true;
     },

@@ -609,7 +609,7 @@
       if (Math.random() < dt * 40) { SO.E.particles.push({ kind: 'bubble', x: 1110 + Math.random() * 160, y: room.surfaceY + 20 + Math.random() * 200, vx: (Math.random() - 0.5) * 200, vy: 40 + Math.random() * 120, life: 1.6, t: 0, r: 2 + Math.random() * 6 }); }
       if (Math.random() < dt * 12) { SO.E.particles.push({ kind: 'drop', x: 1110 + Math.random() * 160, y: room.surfaceY - 10, vx: (Math.random() - 0.5) * 400, vy: -100 - Math.random() * 300, t: 0, life: 2, r: 2 + Math.random() * 3 }); }
     },
-    hotspots: [{ id: 'thread', x: 1190, y: 220, r: 100, hidden: true }],
+    hotspots: [{ id: 'thread', x: 1190, y: 220, r: 100, hidden: true, contact: true }],
     ambient: { fish: 6 },
   });
 

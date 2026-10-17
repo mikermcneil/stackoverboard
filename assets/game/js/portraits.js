@@ -1370,9 +1370,13 @@
       const ui = SO.ui;
       const who = ui.current ? ui.current.who : this._who;
       const covered = SO.closeups && now - (SO.closeups.coverAt || -1e9) < 200;// a close-up already fills the screen
-      const want = !!(who && FACES[who] && !covered && this.inScene(who) && (ui.current || ui.queue.length || now - (this._lineAt || -1e9) < 900) && !(SO.journal && SO.journal.open));
+      // Only for the lines that really matter: then the speaker fills the screen (like the close-ups in
+      // Loom). Everything else is just the small portrait by the words. Never the squid.
+      const big = !!(ui.current && ui.significant && ui.significant(ui.current));
+      const want = !!(who && who !== 'squid' && FACES[who] && !covered && big && !(SO.journal && SO.journal.open));
       if (want) { this._ensureBig(); }
       if (!this.big$) { return; }
+      this.big$.classList.add('full');
       if (want !== !!this._bigOn) {
         this._bigOn = want;
         this.big$.classList.toggle('show', want);

@@ -152,7 +152,7 @@
     if (!held) { last = ''; return; }
     const skin = document.getElementById('skin');
     if (skin && skin.offsetWidth) { slot.style.right = (slot.parentElement.clientWidth - skin.offsetLeft + 18) + 'px'; }
-    if (held !== last) { last = held; nameEl.textContent = (Q.ITEM_NAMES[held] || '').replace(/^an? /, ''); slot.classList.toggle('keep', isKeep(held)); }
+    if (held !== last) { last = held; nameEl.textContent = ''; const nm = (Q.ITEM_NAMES[held] || '').replace(/^an? /, ''); slot.title = isKeep(held) ? nm.charAt(0).toUpperCase() + nm.slice(1) + '. Click to set it down here.' : nm.charAt(0).toUpperCase() + nm.slice(1) + '. It belongs somewhere: take it there.'; slot.classList.toggle('keep', isKeep(held)); }// (the name's a tooltip: words in the ribbon are for what's said)
     const ctx = cv.getContext('2d');
     ctx.clearRect(0, 0, 96, 96);
     ctx.save(); ctx.translate(48, 48); ctx.scale(1.2, 1.2);

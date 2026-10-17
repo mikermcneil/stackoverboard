@@ -99,7 +99,8 @@ squids by a stat), get-records (the single best), get-online (who's playing righ
 
     success: {
       outputFriendlyName: 'Squids',
-      outputDescription: '`{ squids: [{ squidName, playthrough, chapter, endings, arrivedAt, lastSeenAt, skinWords, skinWordsEverLearned, nativesMet, placesVisited, levelsReached, location, pearls, memories, device, os, browser, place, placeSource, timeZone, language, userAgent, personality: { summary, traits, strongest } | null, stats: { playSeconds, roomsEntered, westFarthest, bestAirTime, deepest, interactions, answers, chats } }] }` sorted by lastSeenAt, most recent first (or by the trait, with `trait`).  `device` is phone, tablet, desktop or unknown.  `place` is roughly (city level) where the player is playing from, e.g. "Austin, Texas, US".  `placeSource` says how: "ip" (an offline lookup of their IP address in a city database, done once per session; the address is never stored), "cloudflare" (Cloudflare\'s location headers), or "timezone" (guessed from the browser\'s time zone, e.g. "Chicago, America", which only names the zone\'s main city).  Older squids may only have a time zone guess.  Exact locations are never stored.'
+      outputDescription: '`{ squids: [{ squidName, playthrough, chapter, endings, arrivedAt, lastSeenAt, skinWords, skinWordsEverLearned, nativesMet, placesVisited, levelsReached, location, pearls, memories, device, os, browser, place, placeSource, timeZone, locatedIn, language, userAgent, personality: { summary, traits, strongest } | null, stats: { playSeconds, roomsEntered, westFarthest, bestAirTime, deepest, interactions, answers, chats } }] }` sorted by lastSeenAt, most recent first (or by the trait, with `trait`).  `device` is phone, tablet, desktop or unknown.  `place` is roughly (city level) where the player is playing from, e.g. "Austin, Texas, US".  `placeSource` says how: "geolocation" (the player let their browser say where they are, once; only the city-level name is kept), "ip" (an offline lookup of their IP address in a city database, done once per session; the address is never stored), "cloudflare" (Cloudflare\'s location headers), or "timezone" (guessed from the browser\'s time zone, e.g. "Chicago, America", which only names the zone\'s main city).  Older squids may only have a time zone guess.  Exact locations are never stored.'+
+        '  `locatedIn` says where they are in plain words, ready to use: the city-level place, or "somewhere in America/Chicago time" when only their time zone is known (they said no to sharing their location, or it couldn\'t be worked out), or "an unknown place".'
     },
 
   },
@@ -152,6 +153,7 @@ squids by a stat), get-records (the single best), get-online (who's playing righ
         place: save.place || 'unknown',
         placeSource: save.placeSource || (save.place ? 'timezone' : ''),
         timeZone: save.timeZone || '',
+        locatedIn: sails.helpers.world.describePlace.with({ place: save.place || '', placeSource: save.placeSource || (save.place ? 'timezone' : ''), timeZone: save.timeZone || '' }),
         language: save.language || '',
         userAgent: save.userAgent || '',
       }, (() => {

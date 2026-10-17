@@ -206,7 +206,7 @@
         (a.m || []).forEach((m) => drawMonkey(ctx, m.x, m.y, t, { s: m.s, dir: m.dir, col: m.col, ph: m.ph, mouth: Math.max(0, Math.sin(t * 3 + m.ph)) > 0.95 ? 1 : 0 }));
       },
       touch(a) {
-        SO.story.remember('cloud-monkeys', { kind: 'creature', name: 'Cloud monkeys', line: 'Monkeys that live in the very tops of the trees, under the clouds, and never come down. They belong to the old one.' });
+        SO.story.remember('cloud-monkeys', { earned: true, kind: 'creature', name: 'Cloud monkeys', line: 'Monkeys that live in the very tops of the trees, under the clouds, and never come down. They belong to the old one.' });
         const L = has('west:oldOne')
           ? ['They don’t throw things at me anymore. Word gets around, up here.', 'One of them is wearing a piece of island glass on a string. It held it up to show me.']
           : ['Monkeys, in the crowns. They watch me the whole time, and talk to each other about me.', 'They keep looking up at the clouds. Something big lives up there, and they’re afraid of it, and they belong to it.', 'If anything big goes over, a shadow, a cloud, they scream and run.'];
@@ -380,7 +380,7 @@
     // What matters happens now, whatever the pictures do.
     flag('west:oldOne');
     if (SO.save.remember('memory:old-one', { kind: 'memory', name: 'The old one', line: 'In the tallest tree, in the clouds, an old monkey that watches the sky. Things fall out of the sky, it says, with its hands: glass, seeds, and once something small and wet and red, like me. It let me by.' })) { if (AU().page) { AU().page(); } }
-    SO.story.remember('old-one', { kind: 'creature', name: 'The old one', line: 'An old monkey in the tallest tree, up in the cloud sea. It has watched the sky its whole life.' });
+    SO.story.remember('old-one', { earned: true, kind: 'creature', name: 'The old one', line: 'An old monkey in the tallest tree, up in the cloud sea. It has watched the sky its whole life.' });
     addBow(room, 0);
     // it climbs back to its branch, and sits
     a.x = a.cx; a.y = a.cy;
@@ -1068,6 +1068,46 @@
       }
       if (found && (!ASIDE.water || E.t - ASIDE.water > 240)) { ASIDE.water = E.t; SO.ui.aside(['Water. Up ahead.', 'Wet, up there. Keep going.', 'There. Something shining.'][Math.floor(Math.random() * 3)]); }
     }
+    gates(dt, room);
+  }
+
+  // ── The ways west that can't be done yet (on purpose) ──────────────────────
+  // Reaching one without what it takes, the squid notices, once (a short thought), and leaves a hint
+  // (the bubble, said only if it's clicked) about what kind of thing might help. Never the recipe.
+  //   - a long way dry: too far to walk on one breath (spidercrawl, or something wet to carry)
+  //   - the sky: too far to jump between the clouds (drift)
+  // (The orcas, at the far end of the sea, are westsea.js's.)
+  const GATE = {
+    dry: { line: 'Too far over dry ground. I’d never make it. Not like this.', hint: (crawl) => (crawl ? 'Even flat and fast, that’s a long way dry. Something wet to carry with me might do it.' : 'Too far to walk on one breath. Something that runs flat and fast over rock might show me how.') },
+    sky: { line: 'Too far to jump. I’d just fall. Not like this.', hint: () => 'Nothing up here jumps the gaps. The little things let the air carry them.' },
+  };
+  function gate(key, arg) {
+    const G = GATE[key];
+    if (E.locked || (SO.ui && SO.ui.important)) { return; }
+    const R = (SO.story.rt.westGate = SO.story.rt.westGate || {});
+    if (R[key] && E.t - R[key] < 90) { return; }
+    R[key] = E.t;
+    if (!has('west:gate:' + key)) { flag('west:gate:' + key); say(G.line); }
+    SO.ui.setHint(G.hint(arg));
+  }
+  function gates(dt, room) {
+    const s0 = sq(), d = room.def, reg = regionOf(room);
+    if (!reg || reg.sea || !s0.inAir || E.locked) { return; }
+    const P = SO.powers || {}, can = (k) => !!(P.has && P.has(k));
+    if (SKYISH.test(reg.key)) {
+      // Falling, a long way, out of the clouds, with no way to slow down.
+      if (!can('drift') && s0.vy > 650 && !(d.waterRects || []).some((w) => s0.x > w.x && s0.x < w.x + w.w && s0.y < w.y + w.h + 400 && s0.y > w.y - 40)) { gate('sky'); }
+      return;
+    }
+    if (!landRoom(room) || !s0._touchingRock || s0.vx > -20) { return; }
+    // Heading west, on the ground, in a dry stretch: how far is it still to water, and how far will the air go?
+    const run = (d.dryRuns || []).find(([a, b]) => s0.x >= a - 20 && s0.x <= b + 20);
+    if (!run || run[1] - run[0] < 700) { return; }
+    const left = s0.x - run[0], air = SO.breath ? SO.breath.air : 8;
+    const crawl = can('crawl'), carrying = SO.quests && SO.quests.carrying && SO.quests.carrying() === 'rain-float';
+    if (carrying) { return; }
+    const reach = air * (crawl ? 340 / 0.55 : 130);
+    if (air < 6 && left > reach) { gate('dry', crawl); }
   }
   // Coming into a place with a long way dry ahead, with nothing to carry and no way to hurry: the squid notices.
   function noticeDry(room) {

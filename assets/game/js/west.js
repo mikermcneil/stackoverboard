@@ -74,7 +74,7 @@
     { key: 'reef', name: 'The western reef', screens: 2, kind: 'water', dims: 'water', depth: [130, 180], palette: 'warm', sand: '#e2d3a0', fish: 10, phases: ['The western reef'] },
     { key: 'tidepools', name: 'The tidepool coast', screens: 2, kind: 'shore', dims: 'water', depth: [110, 170], palette: 'glass', sand: '#bdb39a', fish: 6, phases: ['The tidepool coast'] },
     { key: 'shore', name: 'The shore', screens: 1, kind: 'shore', dims: 'land', depth: [60, 120], palette: 'warm', sand: '#e6d6a8', fish: 3, phases: ['The shore'] },
-    { key: 'desert', name: 'The wet desert', screens: 10, kind: 'land', dims: 'land', depth: [-30, 60], palette: 'warm', sand: '#efe2bd', fish: 1, land: true, phases: ['The wet desert', 'The dune sea', 'The cactus flats', 'The dry pan'] },
+    { key: 'desert', name: 'The wet desert', screens: 10, kind: 'land', dims: 'land', depth: [40, 90], palette: 'warm', sand: '#efe2bd', fish: 1, land: true, phases: ['The wet desert', 'The dune sea', 'The cactus flats', 'The dry pan'] },
     { key: 'river', name: 'The river', screens: 8, kind: 'river', dims: 'land', depth: [150, 240], palette: 'kelp', sand: '#b8a07a', fish: 4, land: true, elev: [10, 90], phases: ['The river mouth', 'The red gorge', 'Below the falls'], climbs: { 7: 'up' } },
     { key: 'mountains', name: 'The mountains', screens: 10, kind: 'high', dims: 'tall', depth: [150, 260], palette: 'kelp', sand: '#8f8676', fish: 2, land: true, highland: true, elev: [250, 1400], enter: 'up', phases: ['The foothills', 'The high lakes', 'The scree', 'The snowline'], climbs: { 2: 'up', 5: 'up', 8: 'up' } },
     { key: 'snow', name: 'The snow', screens: 8, kind: 'high', dims: 'tall', depth: [140, 220], palette: 'glass', sand: '#f2f5f7', rock: '#8c98a4', rockHi: '#c8d4dc', floorTop: '#f4f8fa', fish: 0, land: true, highland: true, snowy: true, elev: [1500, 2400], phases: ['The snowfields', 'The ice caves', 'The pass'], climbs: { 3: 'aq', 7: 'down' } },
@@ -409,9 +409,10 @@
         } else if (w.look === 'pool' || w.look === 'brom') {
           const g = ctx.createLinearGradient(0, w.y, 0, w.y + w.h);
           g.addColorStop(0, 'rgba(120,190,200,0.55)'); g.addColorStop(1, 'rgba(30,90,110,0.7)');
-          ctx.fillStyle = g; ctx.fillRect(w.x, w.y + 4, w.w, w.h - 4);
+          if (w.look === 'brom') { ctx.fillStyle = g; ctx.fillRect(w.x, w.y + 4, w.w, w.h - 4); }// (held in the leaves)
+          else { ctx.fillStyle = g; poolShape(ctx, room, w, true); }// (a pool on the ground: only where the ground is under its top)
           ctx.strokeStyle = 'rgba(230,250,255,0.7)'; ctx.lineWidth = 2; ctx.beginPath();
-          for (let x = w.x; x <= w.x + w.w; x += 12) { const y = w.y + 4 + Math.sin(t * 2 + x * 0.05) * 1.5; if (x === w.x) { ctx.moveTo(x, y); } else { ctx.lineTo(x, y); } }
+          poolShape(ctx, room, w, false, t);
           ctx.stroke();
           if (w.look === 'brom') {// a bromeliad, holding it: stiff leaves all around
             ctx.fillStyle = '#4a8a3a'; ctx.strokeStyle = 'rgba(20,40,10,0.4)'; ctx.lineWidth = 1.5;
@@ -424,6 +425,28 @@
         }
       });
     } };
+  }
+  // A pool's water, shaped to the ground: from its top down to the ground (or its bottom), only over
+  // ground that's lower than its top (nothing hangs in the air over a slope). fill: the body; else the
+  // top line (to stroke).
+  function poolShape(ctx, room, w, fill, t) {
+    const top = w.y + 4, bot = w.y + w.h, xs = [];
+    for (let x = w.x; x <= w.x + w.w + 0.1; x += 8) { const f = room.floorY ? room.floorY(x) : Infinity; xs.push([x, Math.min(isFinite(f) ? f : bot, bot)]); }
+    let run = [];
+    const flush = () => {
+      if (run.length < 2) { run = []; return; }
+      if (fill) {
+        ctx.beginPath(); ctx.moveTo(run[0][0], top);
+        run.forEach(([x]) => ctx.lineTo(x, top));
+        for (let i = run.length - 1; i >= 0; i--) { ctx.lineTo(run[i][0], run[i][1] + 2); }
+        ctx.closePath(); ctx.fill();
+      } else {
+        run.forEach(([x], i) => { const y = top + Math.sin(t * 2 + x * 0.05) * 1.5; if (i === 0) { ctx.moveTo(x, y); } else { ctx.lineTo(x, y); } });
+      }
+      run = [];
+    };
+    xs.forEach((p) => { if (p[1] > top + 2) { run.push(p); } else { flush(); } });
+    flush();
   }
   function rainIn(ctx, x, y, w, h, t, a) {
     ctx.save(); ctx.strokeStyle = `rgba(210,230,240,${a})`; ctx.lineWidth = 1.2; ctx.beginPath();
@@ -601,12 +624,6 @@
     return runs;
   }
 
-  // Puddles on dry ground: little pools (water above the water line) where the ground is high.
-  function puddle(ctx, d, x, w, deep) {
-    const g = Math.min(ctx.groundY(x - w / 2), ctx.groundY(x), ctx.groundY(x + w / 2));
-    d.waterRects.push({ x: x - w / 2, y: g - 6, w, h: (deep || 70) + 10, look: 'pool', puddle: true });
-  }
-
   // ════════════════════════════════════════════════════════════════════════════
   // THE REGIONS
   // ════════════════════════════════════════════════════════════════════════════
@@ -625,42 +642,39 @@
     d.isles = [[400, 0.6], [1500, 0.5]];
   };
 
-  // ── The tidepool coast: rocks breaking the surface, kelp, gulls ──
+  // ── The tidepool coast: kelp, a few low rocks on the bottom, gulls ──
+  // (Easy water: nothing breaks the surface here, so it's all swimming.)
   M.tidepools = (ctx, d) => {
     const r = ctx.r, W = ctx.W;
-    ctx.depth = (u) => 140 + noise(u, 5, ctx.n) * 60 - 60 * bump(u, 0.5, 0.25);
+    ctx.depth = (u) => 150 + noise(u, 4, ctx.n) * 35 - 30 * bump(u, 0.5, 0.25);
     ctx.after.push(() => {
-      for (let i = 0; i < 3; i++) {// rocks standing up out of the water (on the floor)
-        const x = 450 + i * 760 + r() * 160, g = ctx.groundY(x), top = ctx.sY - 60 - r() * 60;
-        d.solids.push({ type: 'ellipse', x, y: g + 40, rx: 90 + r() * 50, ry: g + 40 - top });
+      for (let i = 0; i < 2; i++) {// low rocks, well under the water, with room to swim over
+        const x = 650 + i * 1250 + r() * 200, g = ctx.groundY(x);
+        d.solids.push({ type: 'ellipse', x, y: g + 16, rx: 110 + r() * 40, ry: 52 });
       }
     });
-    for (let i = 0; i < 8; i++) { d.props.push({ type: 'kelp', x: 150 + i * 300 + r() * 80, h: 120 + r() * 80, seed: Math.floor(r() * 1000) }); }
+    for (let i = 0; i < 5; i++) { d.props.push({ type: 'kelp', x: 200 + i * 480 + r() * 120, h: 110 + r() * 70, seed: Math.floor(r() * 1000) }); }
     if (ctx.local === 0) { d.actors.push({ id: 'seaspider-0', type: 'seaSpider', x: 900 + r() * 400, y: 0, seed: r() * 10 }, { id: 'seaspider-1', type: 'seaSpider', x: 1900 + r() * 300, y: 0, seed: r() * 10 }); }
-    for (let i = 0; i < 2; i++) { d.actors.push({ id: 'bird-' + i, type: 'gull', x: r() * W, y: -200, seed: r() * 10, home: { x: r() * W } }); }
+    d.actors.push({ id: 'bird-0', type: 'gull', x: r() * W, y: -200, seed: r() * 10, home: { x: r() * W } });
   };
 
-  // ── The shore: out of the sea for the first time. The lungfish steps, a short walk on the sand ──
+  // ── The shore: out of the sea for the first time. One sand bar, a short way over it ──
   M.shore = (ctx, d) => {
     const r = ctx.r;
-    // East: the tidepools' water. The middle: a bar of sand, out of the water. West: down into
-    // the shallow sheet of the wet desert.
-    ctx.depth = (u) => {
-      const beach = -70 * bump(u, 0.48, 0.17);
-      return U.lerp(70, 140, U.clamp((u - 0.55) / 0.4, 0, 1)) * (u > 0.55 ? 1 : 0) + (u <= 0.55 ? 60 : 0) + beach - (u > 0.3 && u < 0.66 ? 60 : 0) * bump(u, 0.48, 0.2);
-    };
+    // East: the tidepools' water. The middle: a bar of sand, just out of the water (a short, plain
+    // crossing). West: down into the shallow sheet of the wet desert.
+    ctx.depth = (u) => 100 + 12 * noise(u, 3, ctx.n) - 150 * bump(u, 0.5, 0.12);
     ctx.after.push(() => {
-      // The lungfish steps: stone shelves standing in the shallows, tops at the water line.
-      [0.16, 0.24, 0.74, 0.84].forEach((u, i) => {
-        const x = ctx.W * u, g = ctx.groundY(x), top = ctx.sY - 20 - i % 2 * 30, w = 160 + r() * 60;
+      // The lungfish steps: low stone shelves on the bottom, tops just under the water.
+      [0.24, 0.78].forEach((u, i) => {
+        const x = ctx.W * u, g = ctx.groundY(x), top = ctx.sY + 26, w = 170 + r() * 40;
+        if (g < top + 30) { return; }
         d.solids.push({ type: 'rect', x: x - w / 2, y: top, w, h: g - top + 60 });
-        if (i !== 1) { d.actors.push({ id: 'lungfish-' + i, type: 'lungfish', x, y: top - 14, seed: r() * 10 }); }
+        d.actors.push({ id: 'lungfish-' + i, type: 'lungfish', x, y: top - 12, seed: r() * 10 });
       });
-      // A tidepool up on the sand.
-      puddle(ctx, d, ctx.W * 0.56, 220, 80);
     });
     const list = [];
-    for (let i = 0; i < 10; i++) { list.push(['grass', 900 + i * 90 + r() * 40, 0.7, Math.floor(r() * 1000), { dry: true, col: '#a8a868' }]); }
+    for (let i = 0; i < 5; i++) { list.push(['grass', 1150 + i * 60 + r() * 30, 0.7, Math.floor(r() * 1000), { dry: true, col: '#a8a868' }]); }
     d.props.push(plants(list), range({ seed: 5, col: 'rgba(170,160,130,0.55)', h: 120, par: 0.7, shape: 'round' }));
   };
 
@@ -668,12 +682,15 @@
   M.desert = (ctx, d) => {
     const r = ctx.r, ph = ctx.phase, W = ctx.W, lm = landmarkAt(ctx.n);
     const s = ctx.n * 3.1;
-    if (ph === 0) {// the wet desert: shallow water everywhere, low bars of sand
-      ctx.depth = (u) => 70 - 110 * Math.max(0, noise(u, 5, s) - 0.55) * 2.4;
-    } else if (ph === 1) {// the dune sea: dunes out of the water, pools between
-      ctx.depth = (u) => -70 + 190 * Math.pow(Math.max(0, Math.sin(u * TAU * 2.2 + s)), 2);
+    // (It ramps: the wet desert is all swimming, with one low bar to flop over; the dunes are one
+    // short way over each; the cactus flats are dry between pools; the dry pan is the long way.)
+    const c1 = 0.3 + 0.12 * noise(0, 1, s), c2 = 0.68 + 0.1 * noise(1, 1, s);
+    if (ph === 0) {// the wet desert: shallow water everywhere, one low bar of sand
+      ctx.depth = (u) => 88 + 14 * noise(u, 4, s) - 125 * bump(u, ctx.local === 1 ? c2 : c1, 0.07);
+    } else if (ph === 1) {// the dune sea: two dunes out of the water, pools between
+      ctx.depth = (u) => 110 + 15 * noise(u, 4, s) - 175 * Math.max(bump(u, c1, 0.1), bump(u, c2, 0.1));
     } else if (ph === 2) {// the cactus flats: dry, with dips that hold water
-      ctx.depth = (u) => -55 + 160 * Math.max(bump(u, 0.22 + noise(0, 1, s) * 0.06, 0.08), bump(u, 0.52, 0.08), bump(u, 0.8, 0.08));
+      ctx.depth = (u) => -40 + 170 * Math.max(bump(u, 0.2 + noise(0, 1, s) * 0.04, 0.11), bump(u, 0.5, 0.11), bump(u, 0.8, 0.11));
     } else {// the dry pan: a long way with no water. One cracked hollow halfway, nearly dry
       ctx.depth = (u) => -60 + 10 * noise(u, 8, s) + 140 * bump(u, 0.12, 0.08) + 140 * bump(u, 0.92, 0.06);
       d.dryLong = true;
@@ -688,12 +705,12 @@
     d.isles = [];
     const list = [];
     if (ph === 2) { for (let i = 0; i < 5; i++) { list.push(['cactus', 300 + i * 480 + r() * 160, 0.8 + r() * 0.5, Math.floor(r() * 100), { dry: true }]); } }
-    if (ph <= 1) { for (let i = 0; i < 8; i++) { list.push(['shrub', 200 + i * 300 + r() * 100, 0.6, Math.floor(r() * 100), { dry: true, col: '#a8a07a' }]); } }
+    if (ph <= 1) { for (let i = 0; i < 5; i++) { list.push(['shrub', 250 + i * 480 + r() * 100, 0.6, Math.floor(r() * 100), { dry: true, col: '#a8a07a' }]); } }
     if (ph === 3) { for (let i = 0; i < 3; i++) { list.push(['bones', 500 + i * 700 + r() * 200, 0.8, i, { dry: true }]); } }
     d.props.push(plants(list));
     d.ambient.fish = ph === 0 ? 3 : 0;
     // Dark birds over the water from the dunes on (they dive at anything near the top).
-    if (ph >= 1 && ph <= 2) { d.actors.push({ id: 'bird-0', type: 'scaryBird', x: r() * W, y: -200, seed: r() * 10, home: { x: r() * W } }); }
+    if (ph === 2) { d.actors.push({ id: 'bird-0', type: 'scaryBird', x: r() * W, y: -200, seed: r() * 10, home: { x: r() * W } }); }
   };
 
   // ── The river: the mouth, the red gorge, the great falls ──
@@ -703,7 +720,7 @@
     // the water thick with its mud; then black wet rock, moss, and the mist off the falls.
     if (ph === 0) {// the mouth: wide and shallow, sand bars, reed banks, the sky over everything
       const c1 = 0.28 + 0.12 * noise(0, 1, s), c2 = 0.62 + 0.12 * noise(1, 1, s);
-      ctx.depth = (u) => 170 + 50 * noise(u, 4, s) - 240 * bump(u, c1, 0.06) - (ctx.local % 3 === 1 ? 0 : 215 * bump(u, c2, 0.05));
+      ctx.depth = (u) => 170 + 30 * noise(u, 4, s) - 205 * bump(u, c1, 0.06) - (ctx.local % 3 === 1 ? 0 : 195 * bump(u, c2, 0.05));// (bars just out of the water: one flop over each)
       d.palette = 'warm'; d.sand = '#e4cf94'; d.rock = '#9c8456'; d.rockHi = '#c9ad74'; d.floorTop = '#e8d49c';
       d.props.push(range({ seed: 41 + ctx.n, col: 'rgba(170,150,120,0.35)', h: 60, par: 0.15, n: 20 }));
       d.props.push({ layer: 'back', draw(c, t, room) {// the light low and gold over the delta
@@ -922,7 +939,7 @@
     const r = ctx.r, ph = ctx.phase, s = ctx.n * 2.9;
     if (ph === 0) { ctx.depth = (u) => 200 + 120 * noise(u, 3, s) - 290 * bump(u, 0.5, 0.12); }// lakes, a spit of land between
     else if (ph === 1) { ctx.depth = (u) => 60 + 50 * noise(u, 7, s) - 100 * Math.max(0, noise(u, 4, s + 3) - 0.6) * 2.5; }// the bog: shallow, moss islands
-    else { ctx.depth = (u) => -50 + 230 * Math.max(bump(u, 0.3, 0.1), bump(u, 0.72, 0.1)); d.palette = 'warm'; }// burnt: drier, ponds
+    else { ctx.depth = (u) => -50 + 230 * Math.max(bump(u, 0.3, 0.1), 0.75 * bump(u, 0.51, 0.07), bump(u, 0.72, 0.1)); d.palette = 'warm'; }// burnt: drier, ponds (none so far apart you can't walk it: the long dry is the plains')
     d.props.push(range({ seed: 71, col: 'rgba(60,80,60,0.75)', h: 150, par: 0.5, shape: 'trees', n: 40 }));
     if (ph === 0) { d.props.push(range({ seed: 73, col: 'rgba(130,140,150,0.6)', h: 300, par: 0.25, snow: 0.15 })); }
     const list = [];
@@ -1183,6 +1200,8 @@
     // How long the longest stretch without water is here (west.js's own guess; westlife.js uses it).
     if (!R.cave && ctx.depths) {
       d.dryRuns = dryRuns(ctx, d).filter(([a, b]) => b - a > 200);
+      // (a long way dry is only long if it really is: a landmark's pool can break it up)
+      if (d.dryLong && !d.dryRuns.some(([a, b]) => b - a > 700)) { delete d.dryLong; }
       // Dew, out in the middle of any long way dry (on the grass, on the stones, in the fog): a little wet, once (westlife.js).
       if (R.land && !R.sky) { d.dew = d.dryRuns.filter(([a, b]) => b - a > 640).map(([a, b]) => { const c = (a + b) / 2 + (ctx.r() - 0.5) * 120; return [c - 90, c + 90]; }); }
     }

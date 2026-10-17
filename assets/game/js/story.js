@@ -261,6 +261,12 @@
     remember(key, extra) {
       const base = NATIVE[key] || extra;
       if (!base) { return false; }
+      // Living things are only remembered once you've chosen to look at them (picked them, then
+      // clicked again): just swimming past isn't knowing.
+      const kind = (extra && extra.kind) || base.kind;
+      const earned = !!(extra && extra.earned);// (something you did: a quest finished, a story moment)
+      if (extra && 'earned' in extra) { extra = Object.assign({}, extra); delete extra.earned; }
+      if ((kind === 'creature' || kind === 'plant') && !earned && !E.deliberate(key)) { return false; }
       const fresh = save.remember(key, Object.assign({}, base, extra || {}));
       if (fresh) { AU.page(); }
       // A little note with its picture and name, so every name has a face (Bead gets its own).
@@ -294,8 +300,8 @@
     },
     onLearnedByAccident(name) {
       save.remember('skin:' + name, { kind: 'skin', name: SKIN_WORDS[name].name, line: SKIN_WORDS[name].line, colors: SKIN_WORDS[name].colors });
-      AU.learned();
-      UI.thought('Huh. I didn’t know I could do that.');
+      AU.learned();// (it was shown to me, and now I've done it myself)
+      if (SKIN_WORDS[name] && SKIN_WORDS[name].learn) { UI.thought(SKIN_WORDS[name].learn, { key: true }); }
     },
 
     async chapter(n, opts = {}) {
@@ -443,10 +449,11 @@
       }
       if (this.rt.lastProgressAt === undefined) { this.rt.lastProgressAt = E.t; }
       const stuckAfter = this.ch === 3 ? 60 : 120;// (getting to chapter 4 is the easiest place to get lost)
-      if (UI._hint && E.t - this.rt.lastProgressAt < stuckAfter) { UI.setHint(null); }// (moving along again: never mind)
+      if (UI._hint && UI._hint === this.rt.autoHint && E.t - this.rt.lastProgressAt < stuckAfter) { UI.setHint(null); }// (moving along again: never mind. Only this hint: hints set elsewhere, at a wall, say, stay)
       if (!E.locked && !UI.talking && E.t - this.rt.lastProgressAt > stuckAfter && (!this.rt.hintAt || E.t - this.rt.hintAt > stuckAfter * 0.8)) {
         this.rt.hintAt = E.t;
-        UI.setHint(this.hint());// (a small thought bubble; the hint is only said if it's clicked)
+        this.rt.autoHint = this.hint();
+        UI.setHint(this.rt.autoHint);// (a small thought bubble; the hint is only said if it's clicked)
       }
     },
 
@@ -793,11 +800,12 @@
         if (save.knows('glow')) { return; }
         if (this.rt.roomT > 3 && !this.rt.glowTaught && !E.locked && !UI.talking) {
           this.rt.glowTaught = true;
+          save.flag('seen:glow');// (the blinking light is showing me: gold, gold, gold)
           UI.say('That light down there is blinking. Three times, then nothing. Then three times again.', { who: 'squid' }).then(() => {
             this.flag('skinRevealed');
             SO.main.showSkin(true);
           });
-          UI.thought('My skin is doing something. Four colors? I didn’t know I had four colors.');
+          UI.thought('My skin is doing something. Four colors? I didn’t know I had four colors.', { key: true });
         }
         if (this.rt.glowTaught) { SO.main.breatheSkin('G', this.glowPulse(E.t)); }
       },

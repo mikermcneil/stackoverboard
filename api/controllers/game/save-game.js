@@ -111,7 +111,7 @@ Example: a save that adds "lvl:abyss" to \`data.flags\` and "wake" to \`data.pat
     reported = Number.isFinite(reported) ? Math.max(0, Math.min(8, Math.floor(reported))) : 0;
     var chapter = Math.max(save.chapter, reported);
 
-    var updated = await sails.helpers.world.swapSave.with({ token, revision, values: Object.assign({ data, chapter, lastSeenAt: now }, sails.helpers.world.describeRequest.with({ req: this.req, timeZone, language, touch })) });
+    var updated = await sails.helpers.world.swapSave.with({ token, revision, values: Object.assign({ data, chapter, lastSeenAt: now }, _.omit(sails.helpers.world.describeRequest.with({ req: this.req, timeZone, language, touch }), ['geolocation', 'declined'].includes(save.placeSource) ? ['place', 'placeSource'] : [])) });
     if (!updated) {
       let current = await Save.findOne({ token });
       if (!current) {

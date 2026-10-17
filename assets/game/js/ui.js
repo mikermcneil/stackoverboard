@@ -67,10 +67,10 @@
       this.inspectCanvas$.addEventListener('pointerdown', (e) => {
         e.stopPropagation();
         const E = SO.E;
-        if (this.busy || E.locked) { return; }
+        if (this.talking || E.locked) { this.advance(); return; }
         // (like Loom's icon box: clicking the picture is the same as using the thing itself)
         const o = E.inspected || (this._preview && !this._preview.hidden ? this._preview : null);
-        if (!o) { return; }
+        if (!o || !o.touch) { return; }// (some things you can only look at)
         if (o !== E.inspected) { E.select(o); }
         E.interact(o);
       });
@@ -126,11 +126,26 @@
       // (and for a little while after a creature has spoken: that's usually 'now you try')
       return creature(this.current) || this.queue.some(creature) || U.now() - (this._creatureAt || -1e9) < 20000 || !!(SO.story && SO.story.rt && SO.story.rt.lesson);
     },
+    // A line that really matters (a creature teaching a word, a key moment in the story): the speaker
+    // gets a full-screen close-up instead of the small portrait by the words.
+    // (A creature passing on a skin word, colors and all, always counts.)
+    significant(item) {
+      if (!item || item.who === 'squid' || ['world', 'gold', 'other'].includes(item.who) || (item.opts && item.opts.casual)) { return false; }
+      return !!(item.opts && (item.opts.key || item.opts.closeup)) || /\b(red|pale|shimmer|gold|blue)\b[^.]*,[^.]*\b(red|pale|shimmer|gold|blue)\b/i.test(item.text);
+    },
     // Busy right now (for clicks): a scene, or someone other than the squid actually speaking.
     get busy() {
       const E = SO.E;
       if ((E && E.locked && !E._going) || (SO.fp && SO.fp.playing)) { return true; }
-      const creature = (q) => q && q.who && !['squid', 'world', 'gold', 'other'].includes(q.who);
+      // A conversation isn't over between its lines: only once it's been quiet for a little while.
+      if (E && E._conversing) {
+        if (this.talking || E.locked) { E._quietSince = 0; return true; }
+        if (!E._quietSince) { E._quietSince = U.now(); }
+        if (U.now() - E._quietSince < 1500) { return true; }
+        E._conversing = null;
+      }
+      // (and while what you're interacting with is still answering, the rest waits)
+      const creature = (q) => q && q.who && (!['squid', 'world', 'gold', 'other'].includes(q.who) || (q.opts && q.opts.deliberate));
       return creature(this.current) || this.queue.some(creature);
     },
     // A passing remark: only if nothing important is going on and nobody else is talking.
@@ -164,7 +179,7 @@
       const color = COLORS[item.who] || COLORS.other;
       this.line$.style.color = color;
       // (The squid never gets a portrait: the squid on screen acts the line out instead.)
-      this.speaker = item.who !== 'squid' && (PORTRAITS[item.who] || (SO.portraits && SO.portraits.has(item.who))) ? item.who : null;
+      this.speaker = item.who !== 'squid' && !this.significant(item) && (PORTRAITS[item.who] || (SO.portraits && SO.portraits.has(item.who))) ? item.who : null;// (one portrait at a time)
       if (item.who === 'squid' && SO.E && SO.E.emote) { SO.E.emote(item.opts.mood || (SO.portraits && SO.portraits.moodFor ? SO.portraits.moodFor(item) : 'neutral')); }
       this.portrait$.classList.toggle('show', !!this.speaker);
       this.portrait$.style.borderColor = color;
@@ -267,10 +282,15 @@
         try { PORTRAITS[this.speaker](c, t); } catch (err) { /* a portrait failing shouldn't stop the talking */ }
       }
       const E = SO.E;
+      // A conversation or a scene (the game holding still): it plays like a cutscene, letterboxed,
+      // with nothing to pick until it's your turn again.
+      const scene = !!(E.locked && !E._going && E.mode === 'play');
+      if (scene !== this._scene) { this._scene = scene; document.body.classList.toggle('in-scene', scene); }
+      if (scene) { this.inspect$.classList.remove('show'); E.hover = null; return; }
       // Nothing picked, but hovering over something (or right next to it, as on a phone, where
       // there's no hovering): just its picture, no words.
-      let preview = !E.inspected && E.hover && !E.hover.hidden && !this.busy ? E.hover : null;
-      if (!E.inspected && !preview && !this.busy && E.room && E.squid && E.mode === 'play') {
+      let preview = !E.inspected && E.hover && !E.hover.hidden && !this.talking ? E.hover : null;
+      if (!E.inspected && !preview && !this.talking && E.room && E.squid && E.mode === 'play') {
         let bd = Infinity;
         E.room.actors.forEach((a) => {
           if (!a.touch || a.hidden || a.type === 'food' || a.type === 'bubble' || a.door) { return; }
@@ -294,7 +314,10 @@
       const near = U.dist(E.squid.x, E.squid.y, o.x, o.y) < (o.r || 60) + 420;
       const c = this.inspectCanvas$.getContext('2d');
       const T = SO.actorTypes[o.type];
-      if (T && T.draw && !o.door && !this._noCloseUp[o.type]) {// always a close-up of the thing itself
+      const faceKey = o.type === 'talkingBird' ? o.key : (faces && faces.has && faces.has(o.type) ? o.type : null);
+      if (faceKey && faces && faces.has(faceKey)) {// someone with a face: their face (never their tail end)
+        try { faces.draw(c, faceKey, 240, t); } catch (err) { /* fall through to the picture next time */ }
+      } else if (T && T.draw && !o.door && !this._noCloseUp[o.type]) {// always a close-up of the thing itself
         // Close enough: a proper close-up, drawn again, bigger, on its own.
         c.save();
         c.setTransform(1, 0, 0, 1, 0, 0);
@@ -302,7 +325,11 @@
         g.addColorStop(0, '#16384a'); g.addColorStop(1, '#040a10');
         c.fillStyle = g; c.fillRect(0, 0, 240, 240);
         const zoom = U.clamp(150 / Math.max(40, (o.r || 60) * 1.6), 0.4, 2.6);
-        c.translate(120, 128); c.scale(zoom, zoom); c.translate(-o.x, -o.y);
+        // (a creature: lean toward its head end, the way it's facing)
+        const alive = !['thing', 'oddity', 'gem', 'keepsake', 'memory', 'trace', 'species'].includes(o.type);
+        const dir = o.dir || o.facing || (o.vx ? Math.sign(o.vx) : 0) || (o.flip ? -1 : 1);
+        const fx = alive ? dir * (o.r || 60) * 0.3 : 0, fy = alive ? -(o.r || 60) * 0.12 : 0;
+        c.translate(120, 128); c.scale(zoom, zoom); c.translate(-o.x - fx, -o.y - fy);
         try { T.draw(c, o, E.room, E.t); } catch (err) { this._noCloseUp[o.type] = true; }
         c.restore();
       } else {

@@ -96,6 +96,12 @@ Pass \`key\` for one thing (a native key like "nautilus" or "kelp", a bird like 
 generated species like "species:<key>"; see get-species).  Generated species' facts are worked out from
 their traits, the same for everyone.
 
+Squids: pass \`squidFacts: true\` for the list of real, surprising facts about squids that the game
+knows (three hearts, blue copper blood, color-changing skin, jet propulsion, the giant and colossal
+squid, the vampire squid, firefly and glass squid, statoliths, ink, beaks, sleep, how long they live,
+and so on), as \`{ squidFacts: [{ key, title, text, for }] }\`.  They're also included with
+\`group: "squids"\`, and a thing in that group gets the two most fitting as \`aboutSquids\`.
+
 Use the text as it is.  How the sky islands stay up is an open question on purpose: never explain it.`,
 
 
@@ -109,6 +115,12 @@ Use the text as it is.  How the sky islands stay up is an open question on purpo
       maxLength: 100,
       example: 'nautilus',
       description: 'Only this thing (e.g. "nautilus", "kelp", "bird-mags", "species:abc123").'
+    },
+
+    squidFacts: {
+      type: 'boolean',
+      example: true,
+      description: 'Only the real-world facts about squids (three hearts, blue blood, ink, the giant squid, and so on).'
     },
 
     group: {
@@ -125,7 +137,7 @@ Use the text as it is.  How the sky islands stay up is an open question on purpo
 
     success: {
       outputFriendlyName: 'Life facts',
-      outputDescription: '`{ groups: [{ key, name, parent, path }], things: [{ key, name, kind, group, path, like, lore, fact, sex, tell, means, where, levels, sound }], count, source }`.'
+      outputDescription: '`{ groups: [{ key, name, parent, path }], things: [{ key, name, kind, group, path, like, lore, fact, sex, tell, means, where, levels, sound, aboutSquids? }], count, source, squidFacts? }`.  With `squidFacts: true`: `{ squidFacts: [{ key, title, text, for }], count, source }`.  `for` lists the things in the sea a squid fact is most about.'
     },
 
     notFound: {
@@ -136,11 +148,16 @@ Use the text as it is.  How the sky islands stay up is an open question on purpo
   },
 
 
-  fn: async function ({ key, group }) {
+  fn: async function ({ key, group, squidFacts }) {
 
     var SO = sails.helpers.world.runClientScripts.with({ files: ['lifefacts.js'] });
     var LF = SO && SO.lifefacts;
     if (!LF) { throw new Error('Could not read assets/game/js/lifefacts.js.'); }
+    var squidList = () => straighten(JSON.parse(JSON.stringify(LF.SQUID_FACTS || []))).map((x) => ({ key: x.key, title: x.title, text: x.text, for: x.for || [] }));
+    if (squidFacts) {
+      let list = squidList();
+      return { squidFacts: list, count: list.length, source: 'assets/game/js/lifefacts.js' };
+    }
     var levels = sails.helpers.world.getLevels.with({}).levels || [];
     var natives = {};
     try { natives = _.indexBy(sails.helpers.world.getNativeSpecies(), 'key'); } catch (unusedErr) { /* names only */ }
@@ -174,6 +191,7 @@ Use the text as it is.  How the sky islands stay up is an open question on purpo
         levels: lv,
         sound,
         generated: f.generated || undefined,
+        aboutSquids: f.g === 'squids' && LF.squidFactsFor ? straighten(JSON.parse(JSON.stringify(LF.squidFactsFor(k, 2)))).map((x) => x.title+': '+x.text) : undefined,
       }, _.isUndefined));
     };
 
@@ -204,6 +222,9 @@ Use the text as it is.  How the sky islands stay up is an open question on purpo
       if (!g) { throw 'notFound'; }
       things = things.filter((t) => t.path === g.path || t.path.indexOf(g.path+' » ') === 0);
       groups = groups.filter((x) => x.path === g.path || x.path.indexOf(g.path+' » ') === 0);
+      if (g.key === 'squids') {
+        return { groups, things, count: things.length, source: 'assets/game/js/lifefacts.js', squidFacts: squidList() };
+      }
     }
 
     return { groups, things, count: things.length, source: 'assets/game/js/lifefacts.js' };

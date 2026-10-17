@@ -114,6 +114,42 @@
     if (room.surfaceY !== null) { E.addActor(room, { id: 'weather-layer', type: 'weatherLayer', x: 0, y: 0, front: true, touch: false }); }
   };
 
+  // ── Where in the world the player is (roughly) ────────────────────────────
+  // Once, as a fall begins, the browser is asked where it is (with a word first about why). Only a
+  // city-level name is kept (the server turns the spot into one, and forgets the spot), so other
+  // squids can see roughly where this one is from. Saying no is fine: they'll only see the time zone.
+  // Already allowed? It's refreshed quietly, once a session, in case the player has moved.
+  const ASKED = 'so:placeAsked';
+  const store = { get: (k) => { try { return localStorage.getItem(k); } catch (err) { return null; } }, set: (k, v) => { try { localStorage.setItem(k, v); } catch (err) { /* private window */ } } };
+  SO.local.locate = function (quiet) {
+    if (this._locating) { return; }
+    this._locating = true;
+    const send = async (body) => {
+      const r = await SO.api.put('/api/v1/game/set-place', body);
+      if (r.ok && r.body && SO.save) { SO.save.place = r.body.place; SO.save.placeSource = r.body.placeSource; this.refresh(); }
+    };
+    if (!navigator.geolocation) { if (!quiet) { send({ declined: true }); } return; }
+    store.set(ASKED, String(Date.now()));
+    if (!quiet) { SO.ui.say('(Your browser may ask where you are. Only the town is kept, so other squids can see roughly where you’re from. No is fine too.)', { who: 'world' }); }
+    navigator.geolocation.getCurrentPosition(
+      (pos) => send({ lat: Math.round(pos.coords.latitude * 100) / 100, lon: Math.round(pos.coords.longitude * 100) / 100 }),
+      (err) => { if (err && err.code === 1 && SO.save.placeSource !== 'declined') { send({ declined: true }); } },
+      { enableHighAccuracy: false, timeout: 20000, maximumAge: 6 * 3600 * 1000 }
+    );
+  };
+  (async function waitToAsk() {
+    const save = SO.save;
+    // (wait until there's a squid, swimming, a little while into it)
+    for (let i = 0; i < 600 && !(save && save.enabled && E.mode === 'play' && E.room && save.data && save.data.location !== 'splash'); i++) { await new Promise((r) => setTimeout(r, 2000)); }
+    if (!save || !save.enabled || !navigator.geolocation) { return; }
+    let state = 'prompt';
+    try { state = navigator.permissions ? (await navigator.permissions.query({ name: 'geolocation' })).state : 'prompt'; } catch (err) { state = 'prompt'; }
+    if (state === 'granted') { SO.local.locate(true); return; }
+    if (state === 'denied') { if (save.placeSource !== 'declined') { SO.api.put('/api/v1/game/set-place', { declined: true }); } return; }
+    if (store.get(ASKED) || save.placeSource === 'geolocation' || save.placeSource === 'declined') { return; }
+    setTimeout(() => SO.local.locate(false), 6000);
+  })();
+
   // Ask now, and every 15 minutes.
   setTimeout(() => SO.local.refresh(), 1500);
   setInterval(() => { if (!document.hidden) { SO.local.refresh(); } }, 15 * 60 * 1000);

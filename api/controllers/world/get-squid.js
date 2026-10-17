@@ -50,7 +50,8 @@ Bead (e.g. \`fate\`), which is a story-ending spoiler (\`buddySpoiler\` is true)
 
 Online: \`online\` is true if its game reported in during the last 30 seconds, with \`room\` (where it is
 in the sea).  \`place\` is roughly (city level) where the player is in the real world; \`placeSource\`
-says how it was worked out (see get-squids).  Exact locations are never stored.
+says how it was worked out (see get-squids); \`locatedIn\` says it in plain words ("Austin, Texas,
+US", or "somewhere in America/Chicago time" when only the time zone is known).  Exact locations are never stored.
 
 History: \`events\` are the 20 most recent things the world's history remembers this squid doing (no
 spoilers), each with a plain-language \`line\`; \`names\` lists every name it has gone by.  For its whole
@@ -75,7 +76,7 @@ moray eel?" -> \`nativesMet\` includes "moray".  "What did it do last?" -> \`eve
 
     success: {
       outputDescription:
-        '`{ squidName, bio, playthrough, chapter, chapterTitle, endings, arrivedAt, lastSeenAt, place, placeSource, timeZone, device, os, browser, language, online, room, onlineSeenAt, '+
+        '`{ squidName, bio, playthrough, chapter, chapterTitle, endings, arrivedAt, lastSeenAt, place, placeSource, timeZone, locatedIn, device, os, browser, language, online, room, onlineSeenAt, '+
         'personality: { seed, traits: { curious, brave, gentle, playful, wistful, social, wanderer }, summary, evolvedAt, strongest } | null, stats, '+
         'skinWords, skinWordsEverLearned, nativesMet, placesVisited, levelsReached: [{ key, firstAt }], location, pearls, memories, blood: { kept, cap, mostKept, lost, known, tollPaid }, buddy, buddySpoiler, '+
         'chats: [{ room, text, at }], interactions: [{ key, room, kind, at, localHour, isNight, questionKey, answer }], answers: [{ key, questionKey, answer, at }], events: [{ kind, subject, startsAt, line }], names }`.  '+
@@ -129,6 +130,7 @@ moray eel?" -> \`nativesMet\` includes "moray".  "What did it do last?" -> \`eve
       place: save.place || 'unknown',
       placeSource: save.placeSource || (save.place ? 'timezone' : ''),
       timeZone: save.timeZone || '',
+      locatedIn: sails.helpers.world.describePlace.with({ place: save.place || '', placeSource: save.placeSource || (save.place ? 'timezone' : ''), timeZone: save.timeZone || '' }),
       device: save.device || 'unknown',
       os: save.os || 'unknown',
       browser: save.browser || 'unknown',

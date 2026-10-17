@@ -213,11 +213,18 @@
     }
   } });
   // Meltwater in a pocket of the ice (drawn; the water itself is a waterRect).
-  const poolProp = (rects) => ({ layer: 'mid', draw(ctx, t) {
+  // (shaped to the ice: only over ground lower than the pool's top, never hanging over a slope)
+  const poolProp = (rects) => ({ layer: 'mid', draw(ctx, t, room) {
     rects.forEach((p) => {
-      ctx.fillStyle = 'rgba(120,190,215,0.55)'; ctx.fillRect(p.x, p.y + 6, p.w, p.h - 6);
+      const top = p.y + 6, bot = p.y + p.h, pts = [];
+      for (let x = p.x; x <= p.x + p.w + 0.1; x += 8) { const f = room.floorY(x); const y = Math.min(isFinite(f) ? f : bot, bot); if (y > top + 2) { pts.push([x, y]); } }
+      if (pts.length < 2) { return; }
+      ctx.fillStyle = 'rgba(120,190,215,0.55)';
+      ctx.beginPath(); ctx.moveTo(pts[0][0], top); pts.forEach(([x]) => ctx.lineTo(x, top));
+      for (let i = pts.length - 1; i >= 0; i--) { ctx.lineTo(pts[i][0], pts[i][1] + 2); }
+      ctx.closePath(); ctx.fill();
       ctx.strokeStyle = 'rgba(235,250,255,0.8)'; ctx.lineWidth = 2; ctx.beginPath();
-      for (let x = p.x; x <= p.x + p.w; x += 12) { const y = p.y + 6 + Math.sin(x * 0.05 + t * 2) * 2; if (x === p.x) { ctx.moveTo(x, y); } else { ctx.lineTo(x, y); } }
+      pts.forEach(([x], i) => { const y = top + Math.sin(x * 0.05 + t * 2) * 2; if (i === 0) { ctx.moveTo(x, y); } else { ctx.lineTo(x, y); } });
       ctx.stroke();
     });
   } });
@@ -1114,7 +1121,7 @@
           }
           break;
         }
-        case 'rise': if (a.st > 1.6) { a.state = 'stalk'; a.st = 0; a.cool = 1.2; S.remember('great-crab'); } break;
+        case 'rise': if (a.st > 1.6) { a.state = 'stalk'; a.st = 0; a.cool = 1.2; S.remember('great-crab', { earned: true }); } break;
         case 'stalk': {
           a.dir = s.x > a.x ? 1 : -1;
           const want = U.clamp(s.x - a.dir * 260, a.lo, a.hi);
@@ -1225,7 +1232,7 @@
     else if (P) { aside(pried ? 'I pried at it. Something gave.' : 'I got its mouth. It felt that.'); }
   }
   function beaten(a, room) {
-    a.state = 'leaving'; a.st = 0; flag('ws:crab'); S.remember('great-crab');
+    a.state = 'leaving'; a.st = 0; flag('ws:crab'); S.remember('great-crab', { earned: true });
     (room.actors || []).forEach((q) => { if (q.kind === 'crab-spawn') { q.gone = true; q.touch = false; } });
     if (AU().dread) { AU().dread(0); }
     setTimeout(() => say('It’s going. It’s breaking through its own wall to get away from me.'), 600);
@@ -1406,6 +1413,11 @@
     if (back) { await E.goto(back, { from: 'left', depthBelow: 260, instant: true }); }
     await SO.ui.fade(0, 1400);
     room.state.catching = false;
+    // (The orcas are a wall, on purpose: you don't get past them by swimming harder.)
+    setTimeout(() => {
+      if (n === 0) { say('They’ll never let me by. Not like this.'); }
+      if (SO.ui.setHint) { SO.ui.setHint('They find me by looking. If they couldn’t see me, they couldn’t take their turns.'); }
+    }, 1600);
     const L = ['I don’t know how I got away. I don’t think I did. I think they let me go.', 'Again. They let me go again. They’re teaching their young on me.', 'I can’t get past them. Nothing gets past them.'];
     say(L[Math.min(n, L.length - 1)]);
   }

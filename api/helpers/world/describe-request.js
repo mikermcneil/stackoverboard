@@ -45,6 +45,12 @@ Empty values are left out, so they never overwrite something already stored.`,
       req.session.timeZone = client.timeZone;
     }
 
+    // The player already told us (or said no, with the browser's location prompt): that stands.
+    var chosen = req.session && req.session.placeChoice;
+    if (chosen) {
+      return _.omit(client, (v, k) => (!v && k !== 'userAgent') || k === 'place' || k === 'placeSource');
+    }
+
     var geo = sails.helpers.world.locateClient.with({ req });
     if (geo.source !== 'none' && geo.place) {
       client.place = geo.place;

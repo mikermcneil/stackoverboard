@@ -28,11 +28,16 @@
     r: 90, touch: true, talk: true,
     // Click another squid: your squid thinks something about them (a different thing each time).
     onTouch(a) {
-      const info = (SO.others.info && SO.others.info[a.name]) || {};
-      if (!SO.others.info[a.name]) { SO.api.get('/api/v1/world/get-online').then((r) => { if (r.ok && r.body && r.body.online) { r.body.online.forEach((o) => { SO.others.info[o.squidName] = o; }); } }); }
-      const city = info.place && info.place !== 'unknown' ? info.place.split(',')[0] : null;
+      const known = SO.others.info[a.name];
+      if (!known && !a._asked) {// (who they are and where they're from: asked once, then this click is answered)
+        a._asked = true;
+        SO.others.refreshInfo().then(() => SO.actorTypes.otherSquid.onTouch(a), () => SO.actorTypes.otherSquid.onTouch(a));
+        return;
+      }
+      const info = known || {};
       const lines = [];
-      if (city) { lines.push(`Hmm. They seem to be from ${city}.`); }
+      const from = SO.others.whereFrom(info);
+      if (from) { lines.push(from); }
       lines.push('I guess I could try saying something to them.');
       if (info.device === 'phone') { lines.push('They move like they’re on something small. A phone, maybe.'); }
       if (a.goal && a.goal.grime && (a.goal.dirt || 0) > 0.25) { lines.push({ sand: 'They’re all sandy.', silt: 'They’ve been rolling in silt.', mud: 'Covered in mud. Where have they been?', muck: 'They’re slimy. Kelp, probably.', soot: 'Sooty. They’ve been near the volcano.', glass: 'They glitter. Glass dust.' }[a.goal.grime] || 'They’re filthy.'); }
@@ -115,12 +120,30 @@
     busy: false,
 
     info: {},
+    // Who's online, and where they're from (kept by name).
+    async refreshInfo() {
+      const r = await SO.api.get('/api/v1/world/get-online');
+      if (r.ok && r.body && r.body.online) { r.body.online.forEach((o) => { this.info[o.squidName] = o; }); }
+    },
+    // Where another squid's player is, as my squid would put it ('' if there's nothing to say).
+    whereFrom(info) {
+      const exact = /^(geolocation|ip|cloudflare)$/.test(info.placeSource || '') && info.place && info.place !== 'unknown';
+      if (exact) {
+        const parts = info.place.split(',').map((x) => x.trim()).filter(Boolean);
+        const city = parts[0], rest = parts.length > 2 ? parts[1] : '';
+        const pick = U.hash(info.squidName || city) % 3;
+        if (pick === 1 && rest) { return `They seem to be from ${city}. In ${rest}.`; }
+        if (pick === 2) { return `${city}. I think that’s where they’re from.`; }
+        return `They seem to be from ${city}.`;
+      }
+      if (info.timeZone && /\//.test(info.timeZone)) { return `They’re from somewhere in ${info.timeZone} time. That’s all I can tell.`; }
+      return info.squidName ? 'I can’t tell where they’re from. Somewhere up there.' : '';
+    },
     start() {
       setInterval(() => this.tick(), 600);
       setInterval(async () => {// now and then, where the squids around you are from
         if (!E.room || !E.room.actors.some((a) => a.type === 'otherSquid')) { return; }
-        const r = await SO.api.get('/api/v1/world/get-online');
-        if (r.ok && r.body && r.body.online) { r.body.online.forEach((o) => { this.info[o.squidName] = o; }); }
+        await this.refreshInfo();
       }, 20000);
     },
 

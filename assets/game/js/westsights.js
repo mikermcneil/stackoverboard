@@ -27,13 +27,23 @@
     feathers: ['Swan feathers. From home. They floated all the way out here.', 'They’re still white.'],
   };
 
+  // How deep the water is at x (the ground below the water line; a lot, where there's no ground).
+  const waterAt = (room, x) => { const f = room.floorY ? room.floorY(x) : Infinity; return isFinite(f) ? f - (room.surfaceY || 150) : 9999; };
+
   SO.actorTypes.westSight = {
     r: 160, touch: true, talk: true,
     init(a) { a.t = 0; a.n = 0; },
     update(a, dt, room) {
       const sY = room.surfaceY || 150;
-      if (a.kind === 'whaleShark') { a.x += (a.dir || 1) * 40 * dt; if (a.x < -800 || a.x > room.w + 800) { a.x = a.dir > 0 ? -700 : room.w + 700; } a.y = sY + 240 + Math.sin(a.t * 0.2) * 20; }
-      if (a.kind === 'turtles') { a.x += (a.dir || 1) * 34 * dt; if (a.x < -1200 || a.x > room.w + 1200) { a.x = a.dir > 0 ? -1100 : room.w + 1100; } a.y = sY + 180; }
+      // (The big ones keep to water deep enough for them: never down in the ground. Where it's too
+      // shallow, the whale shark is just somewhere else for a while.)
+      if (a.kind === 'whaleShark') {
+        a.x += (a.dir || 1) * 40 * dt; if (a.x < -800 || a.x > room.w + 800) { a.x = a.dir > 0 ? -700 : room.w + 700; }
+        let deep = 9999; for (let k = -480; k <= 260; k += 120) { deep = Math.min(deep, waterAt(room, a.x + k * (a.dir || 1))); }
+        a.hidden = deep < 190;
+        a.y = sY + Math.min(240, deep - 95) + Math.sin(a.t * 0.2) * 12;
+      }
+      if (a.kind === 'turtles') { a.x += (a.dir || 1) * 34 * dt; if (a.x < -1200 || a.x > room.w + 1200) { a.x = a.dir > 0 ? -1100 : room.w + 1100; } a.y = sY + Math.max(40, Math.min(180, waterAt(room, a.x) - 50)); }
       if (a.kind === 'feathers') { a.x = a.home + Math.sin(a.t * 0.08) * 200; a.y = sY; }
       if (a.kind === 'flyingFish') {// a burst every few seconds, near you
         a.next = (a.next === undefined ? 1 : a.next) - dt;
@@ -51,6 +61,7 @@
     draw(ctx, a, room, t) {
       const sY = room.surfaceY || 150;
       if (a.kind === 'whaleShark') {
+        if (a.hidden) { return; }
         ctx.save(); ctx.translate(a.x, a.y); ctx.scale(a.dir || 1, 1);
         const sw = Math.sin(t * 1.2) * 14;
         ctx.fillStyle = 'rgba(70,88,104,0.9)';
@@ -61,7 +72,11 @@
         ctx.fillStyle = 'rgba(20,24,30,0.85)'; ctx.beginPath(); ctx.ellipse(250, 8, 12, 26 + Math.sin(t * 0.8) * 4, 0, 0, TAU); ctx.fill();// the open mouth
         ctx.restore();
       } else if (a.kind === 'turtles') {
-        for (let i = 0; i < 6; i++) { A.turtle(ctx, a.x - (a.dir || 1) * i * 190, a.y + Math.sin(t * 0.6 + i) * 18 + (i % 2) * 40, 0.8 - i * 0.05, t + i, { dir: a.dir || 1 }); }
+        for (let i = 0; i < 6; i++) {
+          const x = a.x - (a.dir || 1) * i * 190, deep = waterAt(room, x);
+          if (deep < 70) { continue; }// (not through the ground: that one's out of sight for now)
+          A.turtle(ctx, x, sY + Math.min(180 + (i % 2) * 40, deep - 45) + Math.sin(t * 0.6 + i) * 10, 0.8 - i * 0.05, t + i, { dir: a.dir || 1 });
+        }
       } else if (a.kind === 'feathers') {
         ctx.fillStyle = 'rgba(250,250,246,0.92)';
         for (let i = 0; i < 18; i++) { const x = a.x - 160 + (i * 41 % 320), y = sY - 2 + Math.sin(t * 1.3 + i) * 3; ctx.save(); ctx.translate(x, y); ctx.rotate(Math.sin(t * 0.5 + i) * 0.4 + i); ctx.beginPath(); ctx.ellipse(0, 0, 9, 2.6, 0, 0, TAU); ctx.fill(); ctx.restore(); }
@@ -92,9 +107,10 @@
     onTouch(a) { a.n = (a.n || 0) % LINES[a.kind].length; SO.ui.thought(LINES[a.kind][a.n]); a.n++; },
   };
 
-  // Every one of the first dozen places west has one (the same for everyone); farther out, now and then.
+  // Every other one of the first dozen places west has one (the same for everyone); farther out, now
+  // and then. (Not every place: the first of the west stays calm.)
   function sightFor(n) {
-    if (n <= 12) { return KINDS[(n * 7 + 3) % KINDS.length]; }
+    if (n <= 12) { return n % 2 ? KINDS[(n * 7 + 3) % KINDS.length] : null; }
     return (U.hash('sight:' + n) % 100) < 30 ? KINDS[U.hash('sightkind:' + n) % KINDS.length] : null;
   }
   const populate = SO.oddities.populate.bind(SO.oddities);

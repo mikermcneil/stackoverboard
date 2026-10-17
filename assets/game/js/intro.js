@@ -69,6 +69,7 @@
     window.scrollTo(0, 0);
     AU.whoosh();
     this.cues = {};
+    if (SO.cutscene) { SO.cutscene.begin(); }// (the fall can be skipped too)
   };
 
   // ── Camera ─────────────────────────────────────────────────────────────────
@@ -202,6 +203,11 @@
     if (!this.falling) { this.drawWebsite(ctx, W, H, t, dt, S); return; }
 
     const tt = t - this.fallT0;
+    if (SO.cutscene && SO.cutscene.skipped && !this.done) {// skipped: straight to waking up in the water
+      this.done = true; this.active = false; SO.cutscene.end(); AU.ambience({ depth: 0.5, air: 0, dread: 0 });
+      if (this.onDone) { this.onDone(); }
+      return;
+    }
     this.cue(tt);
     if (tt >= T_EYES) { this.drawEyes(ctx, W, H, t, tt - T_EYES); return; }
     if (tt >= T_UNDER) { this.drawSink(ctx, W, H, t, tt - T_UNDER, dt, S); return; }
@@ -493,6 +499,7 @@
     if (k >= end && !this.done) {
       this.done = true;
       this.active = false;
+      if (SO.cutscene) { SO.cutscene.end(); }
       if (this.onDone) { this.onDone(); }
     }
   };

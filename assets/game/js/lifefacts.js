@@ -1395,6 +1395,51 @@
     return out;
   }
 
+  // ── Squids ────────────────────────────────────────────────────────────────
+  // Real things about squids (and their nearest kin), as the squid knows them about itself. For the
+  // close look at any of the squids and kin, the "Squids" list in the memories, and get-life-facts.
+  // `for`: the things in the sea each one is most about (shown first in their close look).
+  const SQUID_FACTS = [
+    { key: 'hearts', title: 'Three hearts', text: 'I have three hearts. Two of them only pump blood through my gills. The third sends it everywhere else.' },
+    { key: 'blood', title: 'Blue blood', text: 'My blood is blue. It carries oxygen on copper, not iron, and copper turns blue when it holds on to air. It works best in cold water.' },
+    { key: 'chromatophores', title: 'Skin that changes', text: 'My skin is covered in tiny elastic bags of color, thousands of them. Muscles pull each one open, wired straight to my brain, so I can change my whole skin in less than a second.' },
+    { key: 'shimmer', title: 'Shimmer and white', text: 'Under the colors there are more layers: shiny cells that bend light into rainbows, and plain white cells that reflect whatever light is around. That’s where the shimmer comes from.' },
+    { key: 'jet', title: 'Jet propulsion', text: 'I swim by breathing. I pull water into my mantle and squeeze it out through my funnel, and the funnel points whichever way I want. Backwards is fastest.' },
+    { key: 'flying', title: 'Flying squid', text: 'Some squid jet right out of the sea, spread their fins and arms like wings, and glide. The Japanese flying squid can go 30 m through the air.', for: ['humboldt'] },
+    { key: 'giant', title: 'The giant squid', text: 'The giant squid grows as long as a bus, most of it tentacle. Nobody saw a living one in the deep until 2004. Everything known before that came from dead ones, and from whales’ stomachs.', for: ['squid-beaks', 'whale'] },
+    { key: 'colossal', title: 'The colossal squid', text: 'The colossal squid is the heaviest animal without a backbone: one weighed almost 500 kg. The hooks on its arms swivel. Nobody filmed a living one until 2025, and that one was a baby.', for: ['squid-beaks'] },
+    { key: 'eyes', title: 'The biggest eyes', text: 'The giant and colossal squid have the biggest eyes of any animal that has ever lived, as wide as a dinner plate. Probably to see a sperm whale coming, in the dark, by the glowing things it stirs up.', for: ['whale'] },
+    { key: 'vampire', title: 'Not a vampire, not a squid', text: 'The vampire squid isn’t a squid, or an octopus. It is the last one left of a line of its own, from long ago, and it lives where there is almost no oxygen at all.', for: ['vampire-squid'] },
+    { key: 'firefly', title: 'Firefly squid', text: 'Every spring, firefly squid come up into one bay in Japan to spawn, and the whole shore glows blue with them. Each is about as long as a finger.', for: ['firefly-squid'] },
+    { key: 'humboldt', title: 'Red devils', text: 'Humboldt squid hunt in packs, flashing red and white at each other as they go. Fishers call them red devils. They grow nearly as long as a person.', for: ['humboldt'] },
+    { key: 'glass', title: 'Glass squid', text: 'Glass squid are see-through, all but their eyes and their gut. Some keep the gut standing straight up, so it casts the smallest shadow from below, and fill their bodies with a light fluid to float.', for: ['glass-squid', 'bead'] },
+    { key: 'counterlight', title: 'Hiding with light', text: 'From below, anything above is a dark shape against the light. So lots of squid glow on their bellies, matching the light from above, and vanish.', for: ['firefly-squid', 'glass-squid', 'strawberry-squid'] },
+    { key: 'bobtail', title: 'Borrowed light', text: 'The bobtail squid can’t make its own light. It keeps glowing bacteria in a pocket in its body, and every morning it pours most of them out and grows a new batch by night.' },
+    { key: 'statoliths', title: 'Stones that keep count', text: 'I have two tiny stones in my head that tell me which way is down. They grow a ring every day, like a tree, so you can count every day of a squid’s life in them.' },
+    { key: 'ink', title: 'Ink', text: 'My ink is mostly melanin, the same stuff as dark hair. Mixed with slime, it holds together in a blob about my size and shape, and whatever was chasing me chases that instead.' },
+    { key: 'beak', title: 'A beak', text: 'My only hard part is my beak, like a parrot’s, hidden among my arms. It is hard at the tip and softer toward the base, so it never cuts into me.', for: ['squid-beaks'] },
+    { key: 'brain', title: 'A brain like a ring', text: 'My brain is wrapped around my throat, in a ring. Everything I eat goes through the middle of it, so I have to bite my food small.' },
+    { key: 'axon', title: 'The giant nerve', text: 'For a fast escape, squid have nerves as wide as a pencil lead. People studied them to learn how every nerve, theirs too, sends a signal, and won a Nobel prize for it.' },
+    { key: 'arms', title: 'Arms and tentacles', text: 'I have eight arms and two longer tentacles, which shoot out to grab. My suckers have rings of little teeth inside, made of a protein as tough as some plastics.' },
+    { key: 'eyesight', title: 'Eyes like yours, made separately', text: 'Squid eyes are cameras, like yours, but they grew that way separately. Ours have no blind spot. Most squid can’t see color, but they can see which way light is twisted.' },
+    { key: 'clever', title: 'Clever, for a mollusc', text: 'Squids are molluscs, like snails and clams. Squids, octopuses and cuttlefish have the biggest brains, for their size, of any animal without a backbone.' },
+    { key: 'sleep', title: 'Sleep', text: 'Cuttlefish, my cousins, sleep. While they do, their skin flickers through patterns, the way people’s eyes move when they dream.', for: ['sepia'] },
+    { key: 'editing', title: 'Rewriting themselves', text: 'Squid rewrite their own genetic messages, after they’re copied, far more than almost any other animal. Some of it happens right out in the nerves, far from the cell.' },
+    { key: 'lifespan', title: 'A short life', text: 'Most squid live about a year. Even the giant squid probably doesn’t make it to five. We grow fast, because there isn’t much time.' },
+    { key: 'once', title: 'Only once', text: 'Most squid breed once, at the end of their lives, and die soon after. Market squid gather in their millions to do it, all on the same nights.' },
+    { key: 'mating', title: 'In the dark', text: 'A male squid passes packets of sperm to a female with a special arm. In the deep, where it’s too dark to tell who’s who, some males just give them to every squid they meet.' },
+    { key: 'space', title: 'Squids in space', text: 'Baby bobtail squid have been to space, on the space station, to see how living with bacteria changes without gravity.' },
+    { key: 'ammonia', title: 'Floating', text: 'Deep squid can’t afford the work of swimming all the time. Many fill their bodies with ammonia, which is lighter than sea water, so they float. It makes them taste awful.' },
+  ];
+  // The squid facts most about one thing (first), then others, the same for everyone. n: how many.
+  function squidFactsFor(key, n) {
+    const mine = SQUID_FACTS.filter((x) => (x.for || []).indexOf(key) !== -1);
+    const rest = SQUID_FACTS.filter((x) => mine.indexOf(x) === -1);
+    const r = rng('squidfacts:' + key);
+    for (let i = rest.length - 1; i > 0; i--) { const j = Math.floor(r() * (i + 1)); const t = rest[i]; rest[i] = rest[j]; rest[j] = t; }
+    return mine.concat(rest).slice(0, n || 2);
+  }
+
   // Everything known about one thing. `e` is what the journal knows about it ({ key, kind,
   // name, generated, traits, lore, region }); `bird` is its birds.js roster entry, if it’s a bird.
   function facts(key, e, bird) {
@@ -1426,6 +1471,6 @@
     return f;
   }
 
-  SO.lifefacts = { GROUPS, FACTS, BIRDS, BIRD_ALIAS, facts, generate, path, top, hash, rng };
+  SO.lifefacts = { GROUPS, FACTS, BIRDS, BIRD_ALIAS, SQUID_FACTS, squidFactsFor, facts, generate, path, top, hash, rng };
 
 })();

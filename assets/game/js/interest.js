@@ -42,8 +42,40 @@
     });
   }
 
+  // New creatures come one at a time: in any one place, at most one kind you've never seen before
+  // shows itself. The rest stay out of sight until you've met that one (seen it up close a moment).
+  const LIFE_TYPES = { life: 1, seaLife: 1, deepFish: 1, lanternfish: 1, combJelly: 1, lightDrinker: 1, purseLeech: 0 };
+  const flags = () => (SO.save.data && SO.save.data.flags) || {};
+  function lifeKey(a) {
+    if (LIFE_TYPES[a.type]) { return a.type + ':' + (a.kind || a.lifeKind || ''); }
+    if (a.type === 'thing') {
+      const K = SO.things && SO.things.KINDS[a.kind], N = K && K.native && SO.story.NATIVE && SO.story.NATIVE[K.native];
+      if (N && N.kind === 'creature' && !QUEST[a.kind] && !a.lm && !a.plot) { return 'thing:' + a.kind; }
+    }
+    return null;
+  }
+  function oneNew(room) {
+    const f = flags();
+    let newKind = null;
+    room.actors.slice().sort((a, b) => U.hash(E.roomKey + ':' + a.id) - U.hash(E.roomKey + ':' + b.id)).forEach((a) => {
+      const k = lifeKey(a);
+      if (!k || f['met:' + k]) { return; }
+      if (newKind === null) { newKind = k; }
+      if (k !== newKind) { a.hidden = true; a._notYet = true; }
+    });
+  }
+  setInterval(() => {// up close for a couple of seconds: met
+    if (E.mode !== 'play' || !E.room || !SO.save.data || document.hidden) { return; }
+    E.room.actors.forEach((a) => {
+      const k = !a.hidden && lifeKey(a);
+      if (!k || flags()['met:' + k]) { return; }
+      a._near = U.dist(a.x, a.y, E.squid.x, E.squid.y) < 600 ? (a._near || 0) + 0.5 : 0;
+      if (a._near >= 2) { SO.save.flag('met:' + k); }
+    });
+  }, 500);
+
   const populate = SO.oddities.populate.bind(SO.oddities);
-  SO.oddities.populate = function (room) { populate(room); sort(room); };
+  SO.oddities.populate = function (room) { populate(room); oneNew(room); sort(room); };
   setInterval(() => { if (E.mode === 'play' && E.room) { sort(E.room); } }, 500);// (things that turn up later)
 
   SO.interest = { scenery, sort };

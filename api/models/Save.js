@@ -65,7 +65,7 @@ module.exports = {
     userAgent: { type: 'string', defaultsTo: '', description: 'Their browser\'s full user agent (first 255 characters).' },
     timeZone: { type: 'string', defaultsTo: '', description: 'Their browser\'s IANA time zone, e.g. "America/Chicago".' },
     place: { type: 'string', defaultsTo: '', description: 'Roughly (city level) where they\'re playing from, e.g. "Austin, Texas, US" from an offline IP lookup, or "Chicago, America" when only their time zone is known.  See `placeSource`.  Never their IP address or exact location.' },
-    placeSource: { type: 'string', defaultsTo: '', isIn: ['', 'ip', 'cloudflare', 'timezone'], description: 'Where `place` came from: "ip" (offline city-level IP lookup), "cloudflare" (Cloudflare\'s location headers), "timezone" (guessed from the browser\'s time zone, less accurate), or "" (not known yet).' },
+    placeSource: { type: 'string', defaultsTo: '', isIn: ['', 'geolocation', 'ip', 'cloudflare', 'timezone', 'declined'], description: 'Where `place` came from: "geolocation" (the browser\'s own location, asked for with permission, turned into a city name; the coordinates are never stored), "declined" (the player said no: `place` stays empty and only the time zone is shown), "ip" (offline city-level IP lookup), "cloudflare" (Cloudflare\'s location headers), "timezone" (guessed from the browser\'s time zone, less accurate), or "" (not known yet).' },
     language: { type: 'string', defaultsTo: '', description: 'Their browser\'s language, e.g. "en-US".' },
 
     lastSeenAt: {

@@ -243,8 +243,7 @@
     'bright-reef': [['giant-clam', 1500]],
     'meadow': [['giant-clam', 1100]],
     'shoal-reef': [['pufferfish', 1350, 520]],
-    'kelp-edge': [['pufferfish', 950, 480], ['whirligig', 1500, 420]],
-    'cliff-foot': [['whirligig', 900, 500]],
+    'kelp-edge': [['pufferfish', 950, 480]],
     'holdfasts': [['mimic-octopus', 700]],
     'abyssal-plain': [['mimic-octopus', 1900]],
     'blue-dusk': [['sea-butterfly', 900, 420]],
@@ -269,7 +268,8 @@
   // Words the story teaches (in their own time, from someone who matters). A creature never
   // gets there first: until the story has taught it, the creature just goes about its life.
   const PLOT_WORDS = ['glow', 'open', 'calm', 'cloud', 'wake', 'call'];
-  const plotLocked = (K) => PLOT_WORDS.includes(K.word) && !knows(K.word);
+  // (And spin is a late thing: nothing teaches it before the octopus garden.)
+  const plotLocked = (K) => (PLOT_WORDS.includes(K.word) && !knows(K.word)) || ((K.word === 'spin' || K.word === 'chill') && !knows(K.word) && ((S.ch || 0) < 5));// (spin and chill: later things)
 
   SO.actorTypes.watchling = {
     r: 50, touch: true, talk: true,

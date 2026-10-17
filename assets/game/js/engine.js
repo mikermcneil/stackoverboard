@@ -141,9 +141,13 @@
         this.holding = { x: e.clientX, y: e.clientY, t: U.now() };
         return;
       }
-      // Clicking something interesting: swim to it. (While something important is being said, clicks
-      // only move you; the squid's own passing thoughts don't get in the way.)
-      const hit = SO.ui.busy ? null : this.pick(this.pointer.wx, this.pointer.wy);
+      // Clicking something interesting: swim to it. (While anything at all is being said, nothing can
+      // be picked: a click on a thing just hurries the words along. Clicks in open water still swim.)
+      if (SO.ui.talking) {
+        const over = this.pick(this.pointer.wx, this.pointer.wy);
+        if (over) { SO.ui.advance(); this.pointer.down = false; return; }
+      }
+      const hit = SO.ui.talking ? null : this.pick(this.pointer.wx, this.pointer.wy);
       if (hit && hit === this.inspected) { this.interact(hit); return; }// a second click: do something with it
       if (hit) { this.select(hit); return; }// a first click: picked (it shows up in the corner), and off we go to it
       this.target = this.exitAware(this.pointer.wx, this.pointer.wy);
@@ -154,7 +158,7 @@
       if (this.mode !== 'play') { return; }
       toWorld(e);
       // With a mouse, hovering over something shows its picture in the corner (no words, nothing picked).
-      this.hover = e.pointerType === 'mouse' && e.target === c && !this.locked ? this.pick(this.pointer.wx, this.pointer.wy) : (e.target === c ? null : this.hover);
+      this.hover = e.pointerType === 'mouse' && e.target === c && !this.locked && !SO.ui.talking ? this.pickHover(this.pointer.wx, this.pointer.wy) : (e.target === c ? null : this.hover);
       if (this.holding && Math.hypot(e.clientX - this.holding.x, e.clientY - this.holding.y) > 24) { this.holding = null; this.holdK = 0; }
       if (this.pointer.down && !this.locked && this.target && !this.target.hit) { const t = this.exitAware(this.pointer.wx, this.pointer.wy); this.target.x = t.x; this.target.y = t.y; this.target.exit = t.exit; }
     });
@@ -240,10 +244,27 @@
   // corner, and the squid swims over. Nothing is said until it's clicked again.
   E.select = function (o) {
     if (!o || o.hidden) { return; }
+    // (whatever you'd asked to go and do before is off: it's this one now)
+    if (this.room) { this.room.actors.concat(this.room.hotspots).forEach((a) => { if (a !== o) { a._pending = false; } }); }
     this.inspected = o; this.hover = null;
     this.target = { x: o.x, y: o.y, hit: o };
     this.spur();
     SO.story && SO.story.onActivity && SO.story.onActivity();
+  };
+
+  // What the pointer is over, for a look (hovering): anything you could pick, and anything alive that
+  // can do something to you (or you to it), even if it can't be picked. Pickable things first.
+  const NO_LOOK = { bloodLayer: 1, chatLayer: 1, weatherLayer: 1, carried: 1, food: 1, bubble: 1 };
+  E.pickHover = function (wx, wy) {
+    const p = this.pick(wx, wy);
+    if (p || !this.room) { return p; }
+    let best = null, bd = Infinity;
+    this.room.actors.forEach((o) => {
+      if (!o || o.hidden || NO_LOOK[o.type] || o.door || !(SO.actorTypes[o.type] || {}).draw || (o.alpha !== undefined && o.alpha < 0.2)) { return; }
+      const d = U.dist(wx, wy, o.x, o.y);
+      if (d < Math.max(36, (o.r || 60) * 0.85) && d < bd) { bd = d; best = o; }
+    });
+    return best;
   };
 
   // What's under the pointer? Actors and hotspots that can be touched.
@@ -315,6 +336,16 @@
     }
     const px = -by, py = bx;
     const pull = 1 - Math.exp(-dt * (opts.pull || 3.2));
+    // Little lives of their own: at rest, now and then one arm reaches out, feels around and comes
+    // back; the two long tentacles coil and uncoil; on each push of the jet the arms bunch together
+    // and then flare. (Only the real squid, not portraits or other squids' copies.)
+    const rest = U.clamp(1 - speed / 160, 0, 1);
+    if (!opts.trail && dt > 0) {
+      sq._reachT = (sq._reachT === undefined ? 2 + Math.random() * 4 : sq._reachT) - dt;
+      if (sq._reachT < 0) { sq._reachT = 3 + Math.random() * 6; sq._reach = { i: Math.floor(Math.random() * 8), t: 0, dur: 1.6 + Math.random() * 1.4, side: Math.random() < 0.5 ? -1 : 1 }; }
+      if (sq._reach) { sq._reach.t += dt; if (sq._reach.t > sq._reach.dur) { sq._reach = null; } }
+    }
+    const jet = U.clamp(sq.jet || 0, 0, 1);
     sq.arms.forEach((arm, i) => {
       const tent = i >= 8;
       const ly = tent ? (i === 8 ? -5 : 5) : (i - 3.5) * 3.4;
@@ -326,15 +357,26 @@
       // Curling: each arm bends a little more along its length, outward from the middle (a flower opening).
       const curl = (opts.curl || 0) * (tent ? (i === 8 ? -1 : 1) : (i < 4 ? -1 : 1));
       let cx = ax, cy = ay, dbx = bx, dby = by;
-      for (let k = 1; k < arm.length; k++) {
-        const p = arm[k], prev = arm[k - 1];
+      const n = arm.length;
+      // (this arm's own slow searching drift, the tentacles' coiling, and a reach if it's this arm's turn)
+      const drift = U.noise1 ? (U.noise1(sq.t * 0.35 + i * 7.31, i + 3) - 0.5) : Math.sin(sq.t * 0.3 + i * 2.1) * 0.5;
+      const coil = tent ? Math.max(0, Math.sin(sq.t * 0.55 + i * 2.4)) * rest : 0;
+      const R = sq._reach && sq._reach.i === i && !opts.trail ? Math.sin(Math.PI * U.clamp(sq._reach.t / sq._reach.dur, 0, 1)) * rest : 0;
+      const squeeze = 1 - jet * 0.45 + (1 - jet) * 0.08 * Math.sin(sq.t * 2.4);// bunched on the push, flared between
+      for (let k = 1; k < n; k++) {
+        const p = arm[k], prev = arm[k - 1], f = k / (n - 1);
         let wave = Math.sin(sq.t * (opts.flutter || 2.4) + i * 0.9 - k * 0.5) * k * (opts.wiggle || 1.5) * s;
+        wave += drift * k * 2.2 * s * (0.4 + rest);// each arm searching on its own
+        wave += Math.sin(sq.t * (5.1 + (i % 3) * 0.7) + i * 1.7 - k * 0.9) * Math.pow(f, 3) * 6 * s * (0.3 + rest);// the tips flick and taste the water
+        if (R) { wave += (sq._reach.side) * R * f * 26 * s; }// reaching out to feel something
+        if (coil) { const a = coil * 0.32 * f * (i === 8 ? -1 : 1), ca = Math.cos(a), sa = Math.sin(a); const nbx = dbx * ca - dby * sa; dby = dbx * sa + dby * ca; dbx = nbx; }
         if (opts.twist) { wave += Math.cos(sq.t * 9 + i * 0.63 - k * 0.8) * k * opts.twist * s; }// a corkscrew running down the arms
         if (curl) { const a = curl * 0.16, ca = Math.cos(a), sa = Math.sin(a); const nbx = dbx * ca - dby * sa; dby = dbx * sa + dby * ca; dbx = nbx; }
         cx += dbx * seg; cy += dby * seg;
-        const tx = cx + px * (spread * k * 1.7 * s + wave);
-        const ty = cy + py * (spread * k * 1.7 * s + wave);
-        p.x += (tx - p.x) * pull; p.y += (ty - p.y) * pull;
+        const tx = cx + px * (spread * squeeze * k * 1.7 * s + wave);
+        const ty = cy + py * (spread * squeeze * k * 1.7 * s + wave);
+        const pk = pull * (1 - 0.45 * f);// (the tips lag behind, so the arms ripple and follow through)
+        p.x += (tx - p.x) * pk; p.y += (ty - p.y) * pk;
         const dx = p.x - prev.x, dy = p.y - prev.y, d = Math.hypot(dx, dy) || 1;
         p.x = prev.x + dx / d * seg; p.y = prev.y + dy / d * seg;
       }
@@ -634,9 +676,11 @@
     // Longest match wins. A pattern played backwards undoes it, unless it reads the same both
     // ways: those (glow, open, calm) can't be taken back. They just wear off, or stay done.
     const names = Object.keys(PATTERNS).sort((a, b) => PATTERNS[b].length - PATTERNS[a].length);
+    // (Only words you know, or have at least been shown by something. The rest are just colors.)
+    const can = (name) => SO.save.data && (SO.save.knows(name) || SO.save.data.flags['seen:' + name]);
     for (const name of names) {
       const p = PATTERNS[name];
-      if (this.skinBuffer.length < p.length) { continue; }
+      if (this.skinBuffer.length < p.length || !can(name)) { continue; }
       const tail = this.skinBuffer.slice(-p.length);
       if (tail.every((v, i) => v === p[i])) {
         this.skinBuffer = [];
@@ -687,12 +731,13 @@
       sq.hideUntil = this.t + 6;
       AU.noise({ dur: 1.2, freq: 260, q: 1.2, gain: 0.08, sweep: 0.5 });
     }
-    const wasNew = SO.save.data && SO.save.learn(name);
-    if (wasNew && SO.story.onLearnedByAccident) { SO.story.onLearnedByAccident(name); }
-    // Let the story and the room respond.
+    // Let the story and the room respond first (a lesson says its own "now I know it" line), and
+    // only then, if it's still new, it's learned here.
     let handled = false;
     if (this.room && this.room.def.onPattern) { handled = this.room.def.onPattern(this.room, name) || false; }
     if (!handled) { handled = SO.story.onPattern(name, this.room) || false; }
+    const wasNew = SO.save.data && SO.save.learn(name);
+    if (wasNew && SO.story.onLearnedByAccident) { SO.story.onLearnedByAccident(name); }
     // The thing you have selected (in the corner) hears it from much farther away, and the notes go to it.
     const target = this.inspected && !this.inspected.hidden ? this.inspected : null;
     if (target && U.dist(target.x, target.y, sq.x, sq.y) < 1500) {
@@ -711,6 +756,10 @@
   // An NPC (or an object) says a pattern: you see and hear it.
   E.showPattern = async function (x, y, pattern, opts = {}) {
     const colors = PATTERNS[pattern] || pattern;
+    // Something showed you this word: now you can try it yourself.
+    // (by name, or by its colors)
+    const named = typeof pattern === 'string' && PATTERNS[pattern] ? pattern : Object.keys(PATTERNS).find((k) => PATTERNS[k].join('') === colors.join(''));
+    if (named && SO.save.data) { SO.save.flag('seen:' + named); }
     for (let i = 0; i < colors.length; i++) {
       const c = colors[i];
       this.effects.push({ kind: 'dot', x: x + (i - (colors.length - 1) / 2) * 34, y: y - (opts.above || 110), color: SKIN_HEX[c], t: 0, life: 2.6 + (colors.length - i) * 0.35 });
@@ -1082,11 +1131,12 @@
       sq0.vy = -240 - Math.random() * 60; sq0.vx += Math.sign(tx - sq0.x || 1) * 160;
       AU.tock && AU.tock(AU.NOTE(52), { gain: 0.06 });
     }
-    const gap = now - (this.lastSpurAt || -99);
-    // Click again soon to go up a gait (to a gallop). Past that, only frantic clicking goes faster.
-    if (this.gait >= 3 && gap < 0.3) { this.gait = Math.min(5, this.gait + 1); }
-    else if (gap < 1.5) { this.gait = Math.max(this.gait, Math.min(3, this.gait + 1)); }
+    // (Clicking doesn't make it faster any more: holding the press down does. See updateGait.)
     this.lastSpurAt = now;
+    this.spurBurst();
+  };
+  // A kick of the jet, with bubbles (each time it goes up a gait, or a flop on land).
+  E.spurBurst = function () {
     const sq = this.squid;
     sq.jetKick = 0.6 + this.gait * 0.13;
     if (this.gait > 0) {
@@ -1111,7 +1161,14 @@
     this.keyHeld = 0;
     // The two frantic gaits fade fast unless you keep it up.
     if (this.gait > 3 && this.t - (this.lastSpurAt || 0) > 0.75) { this.gait -= 1; this.lastSpurAt = this.t - 0.4; return; }
-    if (this.pointer.down) { if (this.gait <= 3) { this.lastSpurAt = this.t; } return; }
+    // Holding the press (mouse or finger) down: faster and faster, a gait at a time.
+    if (this.pointer.down && this.mode === 'play' && !this.locked) {
+      const held = (U.now() - (this.pointer.downAt || U.now())) / 1000;
+      const want = held < 0.5 ? 0 : held < 1.1 ? 1 : held < 1.8 ? 2 : held < 2.6 ? 3 : 4;
+      if (want > this.gait) { this.gait = want; this.spurBurst(); }
+      this.lastSpurAt = this.t;
+      return;
+    }
     // Settle down a gait at a time: slowly while still heading somewhere, faster once idle.
     const wait = this.target ? 4.5 : 2;
     if (this.gait > 0 && this.t - (this.lastSpurAt || 0) > wait) { this.gait -= 1; this.lastSpurAt = this.t - wait * 0.5; }
@@ -1245,6 +1302,8 @@
       if (now - (this._lastTalkAt || 0) < 2200 || now - (o._lastTalkAt || 0) < 2500) { return; }
       this._lastTalkAt = now; o._lastTalkAt = now;
     }
+    this._touchAt = U.now(); this._touched = o;
+    if (T && T.talk) { this._conversing = o; this._quietSince = 0; }// (until it's been quiet a moment: see ui.busy)
     SO.ui._deliberate = true;// (what's said now is an answer to something you chose to do)
     try {
       if (T && T.onTouch) { T.onTouch(o, room); }
@@ -1254,10 +1313,27 @@
     if (this.target && this.target.hit === o) { this.target = null; }
   };
 
+  // Is the squid doing something you chose (interacting with the thing you picked), right now or
+  // just now? (Remembering a living thing needs that: see story.remember.)
+  // With a key: is that what you're interacting with? (Conversations with the ones who talk to you
+  // can name others, so anything they mention counts for a little while; otherwise it has to be the
+  // very thing you clicked.)
+  const TALKERS = { archivist: 1, nautilus: 1, sepia: 1, turtle: 1, keeper: 1, dumbo: 1, buddy: 1, talkingBird: 1, otherSquid: 1 };
+  E.deliberate = function (key) {
+    const o = this._touched;
+    if (!o || U.now() - (this._touchAt || 0) > 25000 || (this.inspected && this.inspected !== o)) { return false; }
+    if (!key || TALKERS[o.type]) { return !!(SO.ui && SO.ui._deliberate) || TALKERS[o.type] || !key; }
+    const K = o.type === 'thing' && SO.things && SO.things.KINDS[o.kind];
+    const NATIVE_OF = { combJelly: 'comb-jelly', lanternfish: 'lanternfish', moonReeds: 'moon-reeds', polyps: 'coral-polyps', lightDrinker: 'light-drinker' };
+    const keys = [o.kind, o.lifeKind, o.type, o.key, o.spKey, o.native, K && K.native, NATIVE_OF[o.type], o.kind && 'deep-' + o.kind].filter(Boolean);
+    return keys.includes(key) || (SO.ui && SO.ui._deliberate && keys.length === 0);
+  };
+
   // Asked to interact (a second click, or a click on it in the corner): do it
   // now if we're close enough, or swim over and do it on arrival.
   E.interact = function (o) {
-    if (!o || o.hidden || this.locked) { return; }
+    if (!o || o.hidden || this.locked || (SO.ui && SO.ui.busy)) { return; }
+    if (o !== this.inspected) { this.select(o); return; }// (only ever the thing you picked)
     const sq = this.squid;
     const d = U.dist(sq.x, sq.y, o.x, o.y);
     // Close enough already (just beside it)? Now. Otherwise swim over, and do it on arrival.
@@ -1277,9 +1353,13 @@
     const check = (o) => {
       if (!o.touch || o.hidden) { return; }
       const T = SO.actorTypes[o.type];
-      const talker = T && T.talk;
+      // Only doors, food and bubbles happen just by bumping into them. Everything else (picking
+      // things up, talking, looking) waits until you've picked it and clicked it again.
+      const bump = o.door || o.type === 'food' || o.type === 'bubble' || o.contact || (T && T.contact);
+      const talker = (T && T.talk) || !bump;
       const d = Math.min(U.dist(sq.x, sq.y, o.x, o.y), U.dist(mx, my, o.x, o.y));
       if (talker) {
+        if (o._pending && o !== this.inspected) { o._pending = false; }// (you picked something else since)
         if (o._pending && d < (o.r || 60) + 70) { o._pending = false; this.doTouch(o); }// (once we're beside it)
         return;
       }
