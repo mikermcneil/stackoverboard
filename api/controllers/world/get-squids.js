@@ -10,7 +10,7 @@ module.exports = {
   extendedDescription:
 `Use this to list players and compare them ("who's been playing lately?", "who knows wake?", "who are the most curious squids?").  For one squid in depth (with a bio), use get-squid.
 
-Only public information is included: each squid's generated name (e.g. "Pale-Ember-Drift"), which
+Only public information is included: each squid's name (e.g. "Squidney"), which
 playthrough it's on, the furthest chapter (0-8) it has reached in this playthrough, the endings it
 has reached across all playthroughs ("return", "lantern", "gift", "song", "magma"), when it first arrived, and
 when it was last seen.  Times are JS timestamps (epoch ms).

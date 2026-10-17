@@ -58,7 +58,7 @@ Examples:
 - "Who first reached chapter 8?" -> kind=chapter-reached, subject="8", order=oldest, limit=1 (or get-firsts).
 - "What has happened in the abyss?" -> level="abyss".
 - "What happened at west:123?" -> room="west:123".
-- "What did Pale-Ember-Drift do yesterday?" -> squidName, since, until.
+- "What did Squidney do yesterday?" -> squidName, since, until.
 - "Which records have been broken?" -> kind=record-broken.
 - "How active has the world been this week?" -> summary=true, since=<a week ago>.`,
 
@@ -90,7 +90,7 @@ Examples:
 
     squidName: {
       type: 'string',
-      example: 'Pale-Ember-Drift',
+      example: 'Squidney',
       description: 'Only return events caused by this squid.  Its other names (before or after a rename) are included too, unless `followRenames` is false.  Matched exactly, or ignoring capital letters.'
     },
 

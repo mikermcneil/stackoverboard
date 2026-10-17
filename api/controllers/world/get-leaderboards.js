@@ -62,7 +62,7 @@ when records changed hands).`,
 
     board: { type: 'string', isIn: Object.keys(BOARDS), example: 'westFarthest', description: 'Only this board (all of them if left out).' },
     limit: { type: 'number', defaultsTo: 10, min: 1, max: 100, example: 3, description: 'How many squids to list on each board.' },
-    squidName: { type: 'string', maxLength: 60, example: 'Pale-Ember-Drift', description: 'Also say where this squid ranks on each board (as `squid`), even if it\'s not in the top.' },
+    squidName: { type: 'string', maxLength: 60, example: 'Squidney', description: 'Also say where this squid ranks on each board (as `squid`), even if it\'s not in the top.' },
 
   },
 

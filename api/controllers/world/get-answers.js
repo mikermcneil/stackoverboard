@@ -30,7 +30,7 @@ Related: get-interactions (every visit), get-squid (\`answers\`), get-world-fact
 
     questionKey: { type: 'string', maxLength: 60, example: 'glass-city', description: 'Only this question.' },
     key: { type: 'string', maxLength: 120, example: 'hollowglass-hall:mural', description: 'Only questions asked by this thing.' },
-    squidName: { type: 'string', maxLength: 60, example: 'Pale-Ember-Drift', description: 'Only answers by this squid (its name when it last answered).' },
+    squidName: { type: 'string', maxLength: 60, example: 'Squidney', description: 'Only answers by this squid (its name when it last answered).' },
 
   },
 

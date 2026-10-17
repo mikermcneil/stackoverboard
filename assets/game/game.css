@@ -406,3 +406,10 @@ body::before { top: 0; }
 body::after { bottom: var(--ribbon-h, 0px); }
 body.game-mode.in-scene::before { height: 7vh; }
 body.game-mode.in-scene::after { height: 4vh; }
+
+/* Phones: the journal's title never runs under its close button. */
+@media (max-width: 620px) {
+  #journal .j-head { padding: 0 40px; box-sizing: border-box; }
+  #journal .j-head h2 { font-size: 24px; text-align: center; }
+  #journal .j-close { right: 4px; }
+}

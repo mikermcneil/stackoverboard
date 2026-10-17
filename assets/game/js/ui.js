@@ -142,6 +142,7 @@
         if (this.talking || E.locked) { E._quietSince = 0; return true; }
         if (!E._quietSince) { E._quietSince = U.now(); }
         if (U.now() - E._quietSince < 1500) { return true; }
+        if (E.inspected === E._conversing) { E.inspected = null; }// (the conversation's over: let them go from the corner)
         E._conversing = null;
       }
       // (and while what you're interacting with is still answering, the rest waits)
@@ -284,7 +285,8 @@
       const E = SO.E;
       // A conversation or a scene (the game holding still): it plays like a cutscene, letterboxed,
       // with nothing to pick until it's your turn again.
-      const scene = !!(E.locked && !E._going && E.mode === 'play');
+      // (A conversation counts the whole way through, the squid's own answers included, until it's over.)
+      const scene = E.mode === 'play' && !E._going && (!!E.locked || !!(E._conversing && this.busy));
       if (scene !== this._scene) { this._scene = scene; document.body.classList.toggle('in-scene', scene); }
       if (scene) { this.inspect$.classList.remove('show'); E.hover = null; return; }
       // Nothing picked, but hovering over something (or right next to it, as on a phone, where

@@ -11,7 +11,7 @@ module.exports = {
 `Use this first: it says what the game is, gives the headline numbers, and ends with a guide to which tool answers which kind of question.
 
 Stack Overboard is an underwater adventure.  Each player is a squid (with a public name like
-"Pale-Ember-Drift") who lived in a pool on one of the floating sky islands, under glass domes, with
+"Squidney") who lived in a pool on one of the floating sky islands, under glass domes, with
 swans, until the island shook and it slipped over the edge of the waterfall into the sea.  It wants to
 go home.  Everyone it meets is a real sea creature.
 

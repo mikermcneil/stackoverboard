@@ -788,6 +788,7 @@
         if (gate && gate.map && band.surface) {
           const nA = Math.max(1, Math.floor(gx - X1 / cellX) - 1), nB = Math.min(far + AHEAD, Math.ceil(gx - X0 / cellX) + 1);
           ctx.save();
+          const named = [];// (where area names are already written along the top: they never overlap each other, where I am, or the compass)
           for (let n = nB; n >= nA; n--) {
             const pos = westRow(n);
             if (!pos) { continue; }
@@ -810,7 +811,9 @@
               ctx.beginPath(); ctx.moveTo(ax, PAD - 12); ctx.lineTo(ax, pos[1] + boxH); ctx.stroke();
               ctx.setLineDash([]);
               ctx.font = 'italic 12px Georgia, serif'; ctx.fillStyle = 'rgba(244,224,190,0.78)'; ctx.textAlign = 'right';
-              ctx.fillText(areaName(n), ax - 5, PAD - 14);
+              const nm = areaName(n), w = ctx.measureText(nm).width, r1 = ax - 5, l1 = r1 - w;
+              const clear = l1 > LABEL + 40 && r1 < vw - 64 && !named.some(([a, b]) => l1 < b + 10 && r1 > a - 10);
+              if (clear) { ctx.fillText(nm, r1, PAD - 14); named.push([l1, r1]); }
               ctx.textAlign = 'left';
             }
           }

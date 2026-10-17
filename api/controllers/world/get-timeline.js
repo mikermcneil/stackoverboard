@@ -36,7 +36,7 @@ Related: get-squid (the squid's profile right now: bio, personality, stats, what
 
   inputs: {
 
-    squidName: { type: 'string', required: true, maxLength: 60, example: 'Pale-Ember-Drift', description: 'Any name the squid has gone by (see get-squids or get-online).' },
+    squidName: { type: 'string', required: true, maxLength: 60, example: 'Squidney', description: 'Any name the squid has gone by (see get-squids or get-online).' },
     includeSpoilers: { type: 'boolean', defaultsTo: false, example: true, description: 'Include story-ending spoilers (warn before sharing them).' },
     kind: { type: 'string', isIn: Object.keys(require('../../../config/event-kinds').eventKinds.kinds), example: 'skin-word-learned', description: 'Only events of this kind (see get-history for the list).' },
     order: { type: 'string', isIn: ['oldest', 'newest'], defaultsTo: 'oldest', example: 'newest', description: '"oldest" first (a life story, the default) or "newest" first (what it has done lately).' },

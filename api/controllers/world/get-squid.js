@@ -58,7 +58,7 @@ spoilers), each with a plain-language \`line\`; \`names\` lists every name it ha
 life story in order, use get-timeline; for what it did before anyone else, get-firsts with
 \`squidName\`; for where it ranks, get-leaderboards with \`squidName\`.
 
-Examples: "What is Pale-Ember-Drift like?" -> \`bio\` and \`personality\`.  "Has Pale-Ember-Drift met the
+Examples: "What is Squidney like?" -> \`bio\` and \`personality\`.  "Has Squidney met the
 moray eel?" -> \`nativesMet\` includes "moray".  "What did it do last?" -> \`events[0].line\`.`,
 
 
@@ -67,7 +67,7 @@ moray eel?" -> \`nativesMet\` includes "moray".  "What did it do last?" -> \`eve
 
   inputs: {
 
-    name: { type: 'string', required: true, maxLength: 60, example: 'Pale-Ember-Drift', description: 'The squid\'s name, exactly (see get-squids or get-online).' },
+    name: { type: 'string', required: true, maxLength: 60, example: 'Squidney', description: 'The squid\'s name, exactly (see get-squids or get-online).' },
 
   },
 

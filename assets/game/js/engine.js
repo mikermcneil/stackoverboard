@@ -135,8 +135,11 @@
       toWorld(e);
       this.pointer.down = true;
       this.pointer.downAt = U.now();
-      // Right-click on the squid: it does a crazy spin. Left: maybe a long press (memories).
-      if (this.squidHit(this.pointer.wx, this.pointer.wy)) {
+      // Right-click on the squid: it does a crazy spin. Left: maybe a long press (memories). (But if
+      // the squid is right beside something and you clicked squarely on that, it's that you meant.)
+      const onThing = this.pick(this.pointer.wx, this.pointer.wy);
+      const squarely = onThing && U.dist(this.pointer.wx, this.pointer.wy, onThing.x, onThing.y) < Math.max(30, (onThing.r || 60) * 0.55);
+      if (!squarely && this.squidHit(this.pointer.wx, this.pointer.wy)) {
         if (e.button === 2) { this.pointer.down = false; this.spinSquid(); return; }
         this.holding = { x: e.clientX, y: e.clientY, t: U.now() };
         return;
@@ -147,7 +150,14 @@
         const over = this.pick(this.pointer.wx, this.pointer.wy);
         if (over) { SO.ui.advance(); this.pointer.down = false; return; }
       }
-      const hit = SO.ui.talking ? null : this.pick(this.pointer.wx, this.pointer.wy);
+      // (Clicking fast to swim fast never picks anything up by accident: a click that comes hard on the
+      // heels of a click in open water is just more swimming.)
+      const rapid = U.now() - (this._waterClickAt || -1e9) < 700;
+      const hit = SO.ui.talking || rapid ? null : this.pick(this.pointer.wx, this.pointer.wy);
+      if (!hit) {// a click in open water: swimming, and whatever was picked is let go
+        this._waterClickAt = U.now();
+        if (this.inspected) { this.inspected._pending = false; this.inspected = null; }
+      }
       if (hit && hit === this.inspected) { this.interact(hit); return; }// a second click: do something with it
       if (hit) { this.select(hit); return; }// a first click: picked (it shows up in the corner), and off we go to it
       this.target = this.exitAware(this.pointer.wx, this.pointer.wy);
@@ -1131,7 +1141,11 @@
       sq0.vy = -240 - Math.random() * 60; sq0.vx += Math.sign(tx - sq0.x || 1) * 160;
       AU.tock && AU.tock(AU.NOTE(52), { gain: 0.06 });
     }
-    // (Clicking doesn't make it faster any more: holding the press down does. See updateGait.)
+    // Click again soon to go up a gait (to a gallop); past that, only frantic clicking goes faster.
+    // (Holding the press down works too: see updateGait.)
+    const gap = now - (this.lastSpurAt || -99);
+    if (this.gait >= 3 && gap < 0.3) { this.gait = Math.min(5, this.gait + 1); }
+    else if (gap < 1.5) { this.gait = Math.max(this.gait, Math.min(3, this.gait + 1)); }
     this.lastSpurAt = now;
     this.spurBurst();
   };

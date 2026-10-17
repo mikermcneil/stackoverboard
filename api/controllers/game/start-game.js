@@ -65,7 +65,7 @@ save-game), and get-timeline tells it back.`,
       } else {
         token = await sails.helpers.strings.random('url-friendly');
       }
-      let squidName = sails.helpers.world.generateSquidName(token);
+      let squidName = await sails.helpers.world.claimSquidName.with({ token });
       save = (await sails.helpers.world.createOnce.with({
         model: 'save',
         uniqueBy: 'token',

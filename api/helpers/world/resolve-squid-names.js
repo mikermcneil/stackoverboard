@@ -9,7 +9,7 @@ module.exports = {
 
   extendedDescription:
 `World events keep the name a squid had at the time, so one squid's history can be spread over several
-names (e.g. its generated name "Pale-Ember-Drift", then "Lantern Bob").  Names are matched exactly
+names (e.g. its generated name "Squidney", then "Lantern Bob").  Names are matched exactly
 first, then ignoring capital letters (claimed names are kept lowercased too; see rename-squid).`,
 
 

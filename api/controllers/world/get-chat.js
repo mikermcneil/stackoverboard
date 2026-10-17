@@ -31,7 +31,7 @@ get-squid (\`chats\`), get-leaderboards (board "chats").`,
   inputs: {
 
     room: { type: 'string', maxLength: 80, example: 'kelp-deep', description: 'Only messages said in this room.' },
-    squidName: { type: 'string', maxLength: 60, example: 'Pale-Ember-Drift', description: 'Only messages said by this squid.' },
+    squidName: { type: 'string', maxLength: 60, example: 'Squidney', description: 'Only messages said by this squid.' },
     limit: { type: 'number', defaultsTo: 50, min: 1, max: 200, example: 20, description: 'The most messages to return (newest first).' },
     since: { type: 'number', example: 1760000000000, description: 'Only messages said after this moment (JS epoch ms).' },
 

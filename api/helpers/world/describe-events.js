@@ -1,4 +1,4 @@
-// Plain-language lines for world events, e.g. "Pale-Ember-Drift reached the abyss." or "Mcp Ink was the
+// Plain-language lines for world events, e.g. "Squidney reached the abyss." or "Mcp Ink was the
 // first squid in the world to learn calm."  Used by get-history, get-timeline, get-firsts and
 // get-world-story.
 //

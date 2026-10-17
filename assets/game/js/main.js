@@ -126,7 +126,6 @@
       E.mode = 'play';
       this.fixRibbon();
       E.squid.glowOn = false;
-      E.lock();
       UI.fade(1, 0, '#000');
       await E.goto('sinking', { pos: [760, 300], instant: true });
       E.squid.vx = 20; E.squid.vy = 60; E.squid.angle = 0.6; E.squid.yaw = undefined;
@@ -135,8 +134,7 @@
       save.touch(100);
       await U.wait(1800);
       await UI.say('Ow.', { who: 'squid' });
-      await UI.say('Okay. Wet. Everything is wet now.', { who: 'squid' });
-      E.unlock();
+      await UI.say('Okay. Wet. Everything is wet now.', { who: 'squid' });// (you can swim the whole time: nothing holds you still)
       await UI.say('Where am I? I was up there a minute ago.', { who: 'squid' });
     },
 

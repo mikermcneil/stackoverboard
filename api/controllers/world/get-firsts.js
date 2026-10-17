@@ -55,7 +55,7 @@ get-species and get-west-path (what each thing is).`,
     squidName: {
       type: 'string',
       maxLength: 60,
-      example: 'Pale-Ember-Drift',
+      example: 'Squidney',
       description: 'Only firsts by this squid (any of its names; renames are followed).'
     },
 

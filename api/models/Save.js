@@ -19,8 +19,8 @@ module.exports = {
     squidName: {
       type: 'string',
       required: true,
-      example: 'Pale-Ember-Drift',
-      description: 'The public name of this squid, generated deterministically from the token.'
+      example: 'Squidney',
+      description: 'The public name of this squid: a squid pun from a list (see the claim-squid-name helper), or one the player chose. Unique among squids (see NameClaim).'
     },
 
     revision: {

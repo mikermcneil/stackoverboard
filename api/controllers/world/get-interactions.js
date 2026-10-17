@@ -40,7 +40,7 @@ clicking).`,
 
     key: { type: 'string', maxLength: 120, example: 'mouth-deep:odd-0', description: 'Only interactions with this thing.' },
     room: { type: 'string', maxLength: 80, example: 'kelp-deep', description: 'Only interactions in this room.' },
-    squidName: { type: 'string', maxLength: 60, example: 'Pale-Ember-Drift', description: 'Only interactions by this squid (its name at the time).' },
+    squidName: { type: 'string', maxLength: 60, example: 'Squidney', description: 'Only interactions by this squid (its name at the time).' },
     kind: { type: 'string', maxLength: 60, example: 'sad:', description: 'Only this kind of thing (e.g. "oddity:hermit"), or every kind starting with it if it ends with a colon (e.g. "oddity:").' },
     limit: { type: 'number', defaultsTo: 50, min: 1, max: 200, example: 20, description: 'The most interactions to return (newest first).' },
 

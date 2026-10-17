@@ -495,7 +495,7 @@
       if (o.type === 'species') { this.touchSpecies(o); }
       if (o.type === 'gem') { this.touchPearl(o, room); }
       if (o.type === 'memory') { this.touchMemory(o); }
-      if (o.type === 'trace') { UI.thought(`Someone else came through here. Their colors are still in the water: ${o.by.split('-').join(', ')}.`); }
+      if (o.type === 'trace') { UI.thought(`Someone else came through here. ${o.by}. Their colors are still in the water.`); }
       if (o.type === 'dumbo') { this.touchDumbo(o); }
       if (o.type === 'life') { this.sight(o.kind); }
       if (o.type === 'bubble') { this.popBubble(o, room); }
