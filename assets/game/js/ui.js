@@ -62,6 +62,7 @@
       this.inspect$ = $('inspect');
       this.inspectCanvas$ = $('inspect-canvas');
       this.inspectLabel$ = $('inspect-label');
+      window.addEventListener('resize', () => this.fitLine());
       // The picture in the corner: if it's only a preview (hovering), clicking it picks that thing
       // and goes to it; once it's picked, clicking it again does something with it.
       this.inspectCanvas$.addEventListener('pointerdown', (e) => {
@@ -179,6 +180,7 @@
       this.line$.appendChild(item.shown$); this.line$.appendChild(item.rest$);
       const color = COLORS[item.who] || COLORS.other;
       this.line$.style.color = color;
+      this.fitLine();
       // (The squid never gets a portrait: the squid on screen acts the line out instead.)
       this.speaker = item.who !== 'squid' && !this.significant(item) && (PORTRAITS[item.who] || (SO.portraits && SO.portraits.has(item.who))) ? item.who : null;// (one portrait at a time)
       if (item.who === 'squid' && SO.E && SO.E.emote) { SO.E.emote(item.opts.mood || (SO.portraits && SO.portraits.moodFor ? SO.portraits.moodFor(item) : 'neutral')); }
@@ -346,6 +348,18 @@
       }
       const text = near && !preview && SO.story.describe ? SO.story.describe(o) : '';
       if (this.inspectLabel$.textContent !== text) { this.inspectLabel$.textContent = text; }
+    },
+
+    // A long line on a small screen gets smaller letters, until it fits between the rows above and
+    // below it in the ribbon (the whole line is already laid out, held invisible, so it can be measured).
+    fitLine() {
+      const l = this.line$, r = this.ribbon$;
+      if (!l || !r) { return; }
+      l.style.fontSize = '';
+      const cs = getComputedStyle(r);
+      const room = r.clientHeight - parseFloat(cs.paddingTop) - parseFloat(cs.paddingBottom);
+      let px = parseFloat(getComputedStyle(l).fontSize);
+      while (l.offsetHeight > room && px > 12) { px -= 1; l.style.fontSize = px + 'px'; }
     },
 
     // A choice, shown in the ribbon once everything queued has been said.

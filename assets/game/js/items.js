@@ -133,6 +133,7 @@
 
   // ── The slot ──────────────────────────────────────────────────────────────
   let slot = null, cv = null, nameEl = null, last = '';
+  const PHONE = window.matchMedia('(max-width: 900px), (max-height: 500px) and (orientation: landscape)');// (same as game.css)
   function setup() {
     const hud = document.getElementById('ribbon');// (in the bar at the bottom, just left of the skin colors)
     if (!hud || slot) { return; }
@@ -151,7 +152,8 @@
     slot.classList.toggle('show', !!held && !(SO.journal && SO.journal.open));
     if (!held) { last = ''; return; }
     const skin = document.getElementById('skin');
-    if (skin && skin.offsetWidth) { slot.style.right = (slot.parentElement.clientWidth - skin.offsetLeft + 18) + 'px'; }
+    const beside = skin && skin.offsetWidth && !PHONE.matches;// (on phones and short screens, the stylesheet puts it somewhere of its own)
+    slot.style.right = beside ? (slot.parentElement.clientWidth - skin.offsetLeft + 18) + 'px' : '';
     if (held !== last) { last = held; nameEl.textContent = ''; const nm = (Q.ITEM_NAMES[held] || '').replace(/^an? /, ''); slot.title = isKeep(held) ? nm.charAt(0).toUpperCase() + nm.slice(1) + '. Click to set it down here.' : nm.charAt(0).toUpperCase() + nm.slice(1) + '. It belongs somewhere: take it there.'; slot.classList.toggle('keep', isKeep(held)); }// (the name's a tooltip: words in the ribbon are for what's said)
     const ctx = cv.getContext('2d');
     ctx.clearRect(0, 0, 96, 96);

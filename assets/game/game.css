@@ -69,8 +69,6 @@ body.game-mode #sound-hint { display: none; }
 #held canvas { width: 44px; height: 44px; border-radius: 50%; border: 1px solid rgba(255, 255, 255, 0.22); background: rgba(5, 11, 18, 0.55); cursor: default; }
 #held.keep canvas { cursor: pointer; border-color: rgba(255, 236, 190, 0.45); }
 #held span { font: 500 11px var(--mono, monospace); letter-spacing: 0.04em; color: rgba(244, 237, 228, 0.75); max-width: 140px; text-align: right; }
-@media (max-width: 900px) { #held { top: 34px; transform: none; } #held span { display: none; } #held canvas { width: 36px; height: 36px; } }
-@media (max-width: 900px) { #skin { right: 16px; top: 34px; transform: none; } }
 #skin button {
   width: 32px; height: 32px; border-radius: 50%; border: 1.5px solid rgba(255, 255, 255, 0.35); cursor: pointer; position: relative;
   box-shadow: 0 0 0 0 transparent; transition: transform 0.15s, box-shadow 0.4s; opacity: 0.78;
@@ -97,7 +95,6 @@ body.game-mode #sound-hint { display: none; }
 #skin-seq.show { opacity: 1; }
 #skin-seq i { display: inline-block; width: 10px; height: 10px; border-radius: 50%; border: 1px solid rgba(255, 255, 255, 0.4); }
 #skin-seq b { font-weight: 600; color: #fff; }
-@media (max-width: 900px) { #skin-seq { right: 0; bottom: calc(100% + 6px); font-size: 11px; } }
 @keyframes echo { 0% { box-shadow: 0 0 0 0 rgba(255, 255, 255, 0.8); opacity: 1; } 100% { box-shadow: 0 0 0 16px rgba(255, 255, 255, 0); } }
 
 
@@ -148,15 +145,46 @@ body.game-mode #sound-hint { display: none; }
 .ribbon-choices button { border: 1px solid rgba(255, 154, 118, 0.6); background: transparent; color: #ff9a76; border-radius: 999px; padding: 10px 20px; font: 500 18px var(--sans); cursor: pointer; }
 .ribbon-choices button:hover { background: rgba(255, 154, 118, 0.12); }
 body.ribbon-fixed #stage { height: calc(100vh - var(--ribbon-h)); }
+/* Phones: the ribbon stacks in three rows, so nothing sits on top of anything else. Along the top,
+   what's picked (left) and what's held (right); the words in the middle; and along the bottom,
+   under your thumb, the four skin colors and Say. What you've played is written just above the ribbon. */
 @media (max-width: 900px) {
-  :root { --ribbon-h: 230px; }
-  #ribbon { padding: 96px 16px 12px; align-items: flex-start; }
-  #inspect { top: 12px; transform: none; flex-direction: row; align-items: center; width: auto; }
-  #inspect-canvas { width: 72px; height: 72px; }
-  #inspect-label { font-size: 13px; max-width: 150px; }
-  #portrait { width: 64px; height: 64px; }
+  :root { --ribbon-h: 250px; }
+  #ribbon { padding: 78px 16px calc(72px + env(safe-area-inset-bottom)); align-items: flex-start; }
+  #inspect { left: 16px; top: 10px; transform: none; flex-direction: row; align-items: center; width: auto; max-width: calc(100% - 92px); }
+  #inspect-canvas { width: 58px; height: 58px; flex: 0 0 auto; }
+  #inspect-label { font-size: 13px; max-width: none; min-width: 0; }
+  #held { right: 16px; top: 21px; transform: none; }
+  #held span { display: none; }
+  #held canvas { width: 36px; height: 36px; }
+  #portrait { width: 56px; height: 56px; }
   #speech { gap: 12px; }
-  #ribbon-line { font-size: 18px; }
+  #ribbon-line { font-size: 17px; line-height: 1.4; }
+  #skin { left: 16px; right: auto; top: auto; bottom: calc(14px + env(safe-area-inset-bottom)); transform: none; gap: 14px; }
+  #skin button { width: 44px; height: 44px; }
+  #skin-seq { position: fixed; left: 16px; right: 16px; bottom: calc(var(--ribbon-h) + 10px); flex-wrap: wrap; white-space: normal; font-size: 11px; text-shadow: 0 1px 3px #000, 0 0 8px #000; }
+  #say-btn { bottom: calc(22px + env(safe-area-inset-bottom)); }
+}
+@media (max-width: 340px) { #skin { gap: 10px; } #skin button { width: 42px; height: 42px; } }
+/* Phones on their side (and other short screens): one slim band. The picture of what's picked
+   on the left, the words in the middle, the colors top right with Say under them. */
+@media (max-height: 500px) and (orientation: landscape) {
+  :root { --ribbon-h: 128px; }
+  #ribbon { padding: 12px 232px 12px 88px; padding-bottom: max(12px, env(safe-area-inset-bottom)); align-items: center; }
+  #inspect { left: 16px; top: 12px; transform: none; width: auto; }
+  #inspect-canvas { width: 56px; height: 56px; }
+  #inspect-label { display: none; }
+  #held { left: 26px; right: auto; top: auto; bottom: 12px; transform: none; }
+  #held span { display: none; }
+  #held canvas { width: 36px; height: 36px; }
+  #portrait { width: 48px; height: 48px; }
+  #speech { gap: 12px; }
+  #ribbon-line { font-size: 16px; line-height: 1.4; }
+  #skin { left: auto; right: 16px; top: 14px; bottom: auto; transform: none; gap: 10px; }
+  #skin button { width: 42px; height: 42px; }
+  #skin-seq { position: fixed; left: auto; right: 16px; bottom: calc(var(--ribbon-h) + 8px); font-size: 11px; text-shadow: 0 1px 3px #000, 0 0 8px #000; }
+  #say-btn { bottom: 12px; }
+  #portrait-big { --pb: 160px; }
 }
 #card { position: fixed; inset: 0; z-index: 8; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 18px; background: radial-gradient(ellipse at center, rgba(2, 6, 11, 0.55), rgba(2, 6, 11, 0.85)); opacity: 0; transition: opacity 1.4s; pointer-events: none; padding: 0 24px; text-align: center; }
 #card.show { opacity: 1; }
@@ -221,9 +249,6 @@ body.ribbon-fixed #stage { height: calc(100vh - var(--ribbon-h)); }
 
 @media (max-width: 600px) {
   #say { bottom: 84px; }
-  #skin { gap: 18px; }
-  #skin button { width: 40px; height: 40px; }
-  
 }
 @media (prefers-reduced-motion: reduce) {
   .scroll-cue i { animation: none; }
