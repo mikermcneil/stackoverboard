@@ -1,0 +1,6 @@
+{
+  "version": "0.0.1",
+  "configurations": [
+    { "name": "sails", "runtimeExecutable": "node", "runtimeArgs": ["app.js"], "port": 1337 }
+  ]
+}
